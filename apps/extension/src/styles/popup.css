@@ -1,0 +1,18 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+.popup-container {
+  width: 400px;
+  max-height: 600px;
+  background: white;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.popup-container button {
+  transition: all 0.2s ease;
+}
+
+.popup-container button:active {
+  transform: scale(0.98);
+}

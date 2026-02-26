@@ -1,0 +1,39 @@
+{
+  "name": "@sweepbot/extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SweepBot Browser Extension — Real-time sweepstakes casino analytics overlay",
+  "scripts": {
+    "dev": "wxt dev",
+    "dev:firefox": "wxt dev --browser firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build --browser firefox",
+    "build:zip": "wxt zip",
+    "build:zip:firefox": "wxt zip --browser firefox",
+    "typecheck": "wxt prepare && tsc --noEmit",
+    "lint": "eslint src --ext .ts,.tsx",
+    "postinstall": "wxt prepare"
+  },
+  "dependencies": {
+    "@sweepbot/types": "workspace:*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^5.0.2",
+    "recharts": "^2.13.3",
+    "lucide-react": "^0.462.0",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.4"
+  },
+  "devDependencies": {
+    "@wxt-dev/module-react": "^1.0.0",
+    "@types/chrome": "^0.0.279",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.7.2",
+    "wxt": "^0.19.10"
+  }
+}

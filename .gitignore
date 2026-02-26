@@ -1,0 +1,75 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+.output/
+.nuxt/
+
+# Environment files — NEVER commit these
+.env
+.env.local
+.env.production
+.env.*.local
+!.env.example
+!.env.test.example
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json.example
+.idea/
+*.swp
+*.swo
+*.suo
+*.user
+
+# TypeScript
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Turbo cache
+.turbo/
+
+# Tauri
+apps/desktop/src-tauri/target/
+
+# Extension
+apps/extension/.output/
+apps/extension/.wxt/
+
+# Playwright
+playwright-report/
+test-results/
+
+# Misc
+*.pem
+.cache/
+tmp/
+temp/
+
+# Sentry
+.sentryclirc

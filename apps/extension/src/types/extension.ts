@@ -1,0 +1,51 @@
+/**
+ * Extension-specific type definitions.
+ */
+
+export interface ExtensionMessage<T = unknown> {
+  type: string
+  payload?: T
+}
+
+export type ContentScriptMessage =
+  | { type: 'GET_SESSION_STATS'; payload?: undefined }
+  | { type: 'START_SESSION'; payload: { platformSlug: string; gameId: string } }
+  | { type: 'END_SESSION'; payload?: undefined }
+  | { type: 'TRANSACTION_DETECTED'; payload: { gameId: string; bet: number; win: number; result: 'win' | 'loss' | 'push' } }
+  | { type: 'BALANCE_UPDATED'; payload: { scBalance: number; gcBalance: number } }
+  | { type: 'HUD_TOGGLE'; payload: { enabled: boolean } }
+  | { type: 'HUD_POSITION_CHANGE'; payload: { position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' } }
+
+export type BackgroundMessage =
+  | { type: 'BACKGROUND_READY'; payload?: undefined }
+  | { type: 'GET_AUTH_STATE'; payload?: undefined }
+  | { type: 'SET_AUTH_STATE'; payload: { token: string; userId: string; refCode: string } }
+  | { type: 'CLEAR_AUTH'; payload?: undefined }
+  | { type: 'LOG_ANALYTICS'; payload: Record<string, unknown> }
+  | { type: 'SYNC_TO_SERVER'; payload?: undefined }
+
+export interface HudSessionState {
+  isActive: boolean
+  platformSlug: string
+  startedAt: number
+  coinsStart: { sc: number; gc: number }
+  coinsCurrent: { sc: number; gc: number }
+  transactionCount: number
+  lastActivityAt: number
+  rtp: number
+  volatility: 'low' | 'medium' | 'high'
+}
+
+export interface HudToastMessage {
+  id: string
+  type: 'success' | 'warning' | 'error' | 'info'
+  title: string
+  message: string
+  duration?: number
+}
+
+export interface MessageResponse<T = unknown> {
+  success: boolean
+  data?: T
+  error?: string
+}

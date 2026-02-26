@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm install)",
+      "Bash(pnpm install --filter @sweepbot/extension)",
+      "Bash(pnpm run postinstall)",
+      "Bash(git init)",
+      "Bash(git add .)",
+      "Bash(git commit:*)"
+    ]
+  }
+}
