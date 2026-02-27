@@ -30,6 +30,15 @@ const envSchema = z.object({
   // Stripe
   STRIPE_SECRET_KEY: z.string().min(1),
   STRIPE_WEBHOOK_SECRET: z.string().min(1),
+  STRIPE_PRICE_STARTER_MONTHLY: z.string().optional(),
+  STRIPE_PRICE_STARTER_ANNUAL: z.string().optional(),
+  STRIPE_PRICE_PRO_MONTHLY: z.string().optional(),
+  STRIPE_PRICE_PRO_ANNUAL: z.string().optional(),
+  STRIPE_PRICE_ANALYST_MONTHLY: z.string().optional(),
+  STRIPE_PRICE_ANALYST_ANNUAL: z.string().optional(),
+  STRIPE_PRICE_ELITE_MONTHLY: z.string().optional(),
+  STRIPE_PRICE_ELITE_ANNUAL: z.string().optional(),
+  STRIPE_PRICE_LIFETIME: z.string().optional(),
 
   // Email
   RESEND_API_KEY: z.string().optional(),

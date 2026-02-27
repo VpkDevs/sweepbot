@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { db } from '../db/client.js'
+import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { sql } from 'drizzle-orm'
 import type { WSMessage } from '@sweepbot/types'
 
@@ -58,7 +58,7 @@ export async function jackpotRoutes(app: FastifyInstance): Promise<void> {
             ? sql`ORDER BY js.last_hit_at DESC NULLS LAST`
             : sql`ORDER BY js.amount DESC`
 
-      const rows = await db.execute(sql`
+      const rows = await dbQuery(sql`
         WITH latest_snapshots AS (
           SELECT DISTINCT ON (platform_id, game_id, jackpot_name)
             id,
@@ -139,7 +139,7 @@ export async function jackpotRoutes(app: FastifyInstance): Promise<void> {
       const { gameId } = request.params as { gameId: string }
 
       // Downsample to hourly for chart performance
-      const history = await db.execute(sql`
+      const history = await dbQuery(sql`
         SELECT
           DATE_TRUNC('hour', captured_at) AS hour,
           jackpot_name,
@@ -155,7 +155,7 @@ export async function jackpotRoutes(app: FastifyInstance): Promise<void> {
       `)
 
       // Also get all recorded hit events (where amount dropped significantly)
-      const hitEvents = await db.execute(sql`
+      const hitEvents = await dbQuery(sql`
         SELECT DISTINCT
           jackpot_name,
           last_hit_at,
@@ -225,7 +225,7 @@ export async function jackpotRoutes(app: FastifyInstance): Promise<void> {
 
         try {
           const ids = [...subscribedGameIds]
-          const updates = await db.execute(sql`
+          const updates = await dbQuery(sql`
             SELECT DISTINCT ON (game_id, jackpot_name)
               game_id,
               jackpot_name,
@@ -270,7 +270,7 @@ export async function jackpotRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     async (_request, reply) => {
-      const stats = await db.execute(sql`
+      const stats = await dbQuery(sql`
         SELECT
           COUNT(DISTINCT (platform_id, game_id, jackpot_name)) AS total_jackpots_tracked,
           COUNT(DISTINCT platform_id) AS platforms_tracked,

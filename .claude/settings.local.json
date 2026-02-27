@@ -6,7 +6,12 @@
       "Bash(pnpm run postinstall)",
       "Bash(git init)",
       "Bash(git add .)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(pnpm --filter @sweepbot/types typecheck)",
+      "Bash(pnpm --filter @sweepbot/utils typecheck)",
+      "Bash(pnpm --filter @sweepbot/api typecheck)",
+      "Bash(grep -n \"db.execute\\\\|from ''../db/client\" /c/Users/MQ420_OL/DEV/web/Sweepbot/apps/api/src/routes/*.ts)",
+      "Bash(grep -n \"sql.raw\" /c/Users/MQ420_OL/DEV/web/Sweepbot/apps/api/src/routes/*.ts)"
     ]
   }
 }

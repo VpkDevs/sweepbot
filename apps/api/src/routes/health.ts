@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify'
-import { db } from '../db/client.js'
+import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { sql } from 'drizzle-orm'
 
 export async function healthRoutes(app: FastifyInstance): Promise<void> {
@@ -30,7 +30,7 @@ export async function healthRoutes(app: FastifyInstance): Promise<void> {
     async (_request, _reply) => {
       let dbStatus = 'ok'
       try {
-        await db.execute(sql`SELECT 1`)
+        await dbQuery(sql`SELECT 1`)
       } catch {
         dbStatus = 'error'
       }
@@ -56,7 +56,7 @@ export async function healthRoutes(app: FastifyInstance): Promise<void> {
     },
     async (_request, reply) => {
       try {
-        await db.execute(sql`SELECT 1`)
+        await dbQuery(sql`SELECT 1`)
         return reply.code(200).send({ ready: true })
       } catch {
         return reply.code(503).send({ ready: false })

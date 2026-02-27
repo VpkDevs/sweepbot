@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { SubscriptionTier } from './subscription'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROFILE
@@ -67,8 +68,6 @@ export type UpdateUserSettingsInput = z.infer<typeof UpdateUserSettingsSchema>
 // ─────────────────────────────────────────────────────────────────────────────
 // SUBSCRIPTION TIER FEATURES (for feature-gating)
 // ─────────────────────────────────────────────────────────────────────────────
-
-export type SubscriptionTier = 'free' | 'starter' | 'pro' | 'analyst' | 'elite' | 'lifetime'
 
 export interface TierFeatures {
   maxPlatforms: number

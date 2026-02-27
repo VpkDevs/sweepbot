@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { db } from '../db/client.js'
+import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { requireAuth } from '../middleware/auth.js'
 import { sql } from 'drizzle-orm'
 
@@ -68,7 +68,7 @@ export async function redemptionRoutes(app: FastifyInstance): Promise<void> {
       const userId = request.user!.id
       const body = CreateRedemptionBody.parse(request.body)
 
-      const result = await db.execute(sql`
+      const result = await dbQuery(sql`
         INSERT INTO redemptions
           (user_id, user_platform_id, platform_id, amount_sc, payment_method, submitted_at, notes)
         VALUES
@@ -138,11 +138,9 @@ export async function redemptionRoutes(app: FastifyInstance): Promise<void> {
       }
 
       values.push(id, userId)
-      const result = await db.execute(
-        sql.raw(
-          `UPDATE redemptions SET ${updates.join(', ')} WHERE id = $${idx++} AND user_id = $${idx} RETURNING *`,
-          values
-        )
+      const result = await unsafeQuery(
+        `UPDATE redemptions SET ${updates.join(', ')} WHERE id = $${idx++} AND user_id = $${idx} RETURNING *`,
+        values
       )
 
       if (!result.rows.length) {
@@ -177,7 +175,7 @@ export async function redemptionRoutes(app: FastifyInstance): Promise<void> {
 
       const statusFilter = query.status ? sql`AND r.status = ${query.status}` : sql``
 
-      const rows = await db.execute(sql`
+      const rows = await dbQuery(sql`
         SELECT
           r.*,
           -- Compute processing days inline
@@ -217,7 +215,7 @@ export async function redemptionRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const userId = request.user!.id
 
-      const stats = await db.execute(sql`
+      const stats = await dbQuery(sql`
         SELECT
           COUNT(*) AS total_redemptions,
           COUNT(*) FILTER (WHERE status = 'completed') AS completed_count,
@@ -262,7 +260,7 @@ export async function redemptionRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     async (_request, reply) => {
-      const rows = await db.execute(sql`
+      const rows = await dbQuery(sql`
         SELECT
           p.id AS platform_id,
           p.name AS platform_name,

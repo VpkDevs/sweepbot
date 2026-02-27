@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { db } from '../db/client.js'
+import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { sql } from 'drizzle-orm'
 
 const TrustQuerySchema = z.object({
@@ -63,7 +63,7 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
       const orderClause = orderMap[query.sortBy] ?? orderMap['overall_score']!
 
       const [rows, countResult] = await Promise.all([
-        db.execute(sql`
+        dbQuery(sql`
           SELECT
             p.id AS platform_id,
             p.name AS platform_name,
@@ -120,7 +120,7 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
           ORDER BY ${orderClause}
           LIMIT ${query.pageSize} OFFSET ${offset}
         `),
-        db.execute(sql`
+        dbQuery(sql`
           SELECT COUNT(*) AS total
           FROM platforms p
           INNER JOIN trust_index_scores ti ON ti.platform_id = p.id
@@ -164,7 +164,7 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
 
       const [current, history, breakdown] = await Promise.all([
         // Current score with full component breakdown
-        db.execute(sql`
+        dbQuery(sql`
           SELECT
             p.id AS platform_id,
             p.name AS platform_name,
@@ -183,7 +183,7 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
         `),
 
         // 90-day history
-        db.execute(sql`
+        dbQuery(sql`
           SELECT
             overall_score,
             redemption_speed_score,
@@ -197,7 +197,7 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
         `),
 
         // What's driving the score — data sources breakdown
-        db.execute(sql`
+        dbQuery(sql`
           SELECT
             'redemption_timing' AS factor,
             COUNT(*) AS data_points,
@@ -292,7 +292,7 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
       }
 
       // The scoring logic — this gets called by cron job / BullMQ worker in production
-      const scoreData = await db.execute(sql`
+      const scoreData = await dbQuery(sql`
         WITH redemption_data AS (
           SELECT
             platform_id,
@@ -367,7 +367,7 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
         50 * TRUST_WEIGHTS.support_responsiveness + // placeholder
         75 * TRUST_WEIGHTS.regulatory_standing // default assumption for licensed platforms
 
-      await db.execute(sql`
+      await dbQuery(sql`
         INSERT INTO trust_index_scores
           (platform_id, overall_score, redemption_speed_score, redemption_rejection_rate_score,
            tos_stability_score, bonus_generosity_score, community_satisfaction_score,

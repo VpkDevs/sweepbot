@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { db } from '../db/client.js'
+import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { requireAuth } from '../middleware/auth.js'
 import { sql } from 'drizzle-orm'
 
@@ -36,7 +36,7 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
 
       const [totals, platformBreakdown, recentActivity, streaks] = await Promise.all([
         // All-time totals
-        db.execute(sql`
+        dbQuery(sql`
           SELECT
             COUNT(DISTINCT s.platform_id) AS active_platforms,
             COUNT(*) AS total_sessions,
@@ -56,7 +56,7 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
         `),
 
         // Per-platform breakdown
-        db.execute(sql`
+        dbQuery(sql`
           SELECT
             p.id AS platform_id,
             p.name AS platform_name,
@@ -81,7 +81,7 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
         `),
 
         // Last 7 days activity summary
-        db.execute(sql`
+        dbQuery(sql`
           SELECT
             DATE(s.started_at) AS play_date,
             COUNT(*) AS session_count,
@@ -97,7 +97,7 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
         `),
 
         // Win/loss streak data
-        db.execute(sql`
+        dbQuery(sql`
           WITH session_results AS (
             SELECT
               id,
@@ -188,7 +188,7 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
 
       const [overall, timeSeries, byGame, byPlatform] = await Promise.all([
         // Overall RTP with confidence
-        db.execute(sql`
+        dbQuery(sql`
           SELECT
             COUNT(*) AS session_count,
             SUM(s.total_bets) AS total_bets,
@@ -215,8 +215,7 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
         `),
 
         // RTP over time
-        db.execute(
-          sql.raw(`
+        unsafeQuery(`
           SELECT
             ${truncExpr} AS period,
             COUNT(*) AS session_count,
@@ -230,12 +229,10 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
             AND s.total_wagered > 0
           GROUP BY ${truncExpr}
           ORDER BY period ASC
-        `,
-            [userId])
-        ),
+        `, [userId]),
 
         // RTP by game (top 10 by wagered)
-        db.execute(sql`
+        dbQuery(sql`
           SELECT
             g.id AS game_id,
             g.name AS game_name,
@@ -262,7 +259,7 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
         `),
 
         // RTP by platform
-        db.execute(sql`
+        dbQuery(sql`
           SELECT
             p.id AS platform_id,
             p.name AS platform_name,
@@ -308,7 +305,7 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
       const userId = request.user!.id
 
       const [byHour, byDayOfWeek] = await Promise.all([
-        db.execute(sql`
+        dbQuery(sql`
           SELECT
             EXTRACT(HOUR FROM s.started_at)::int AS hour_of_day,
             COUNT(*) AS session_count,
@@ -321,7 +318,7 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
           GROUP BY EXTRACT(HOUR FROM s.started_at)
           ORDER BY hour_of_day ASC
         `),
-        db.execute(sql`
+        dbQuery(sql`
           SELECT
             EXTRACT(DOW FROM s.started_at)::int AS day_of_week,
             TO_CHAR(s.started_at, 'Day') AS day_name,
@@ -360,7 +357,7 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const userId = request.user!.id
 
-      const rows = await db.execute(sql`
+      const rows = await dbQuery(sql`
         SELECT
           p.id AS platform_id,
           p.name AS platform_name,

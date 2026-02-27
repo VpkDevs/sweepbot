@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { db } from '../db/client.js'
+import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { requireAuth } from '../middleware/auth.js'
 import { sql } from 'drizzle-orm'
 
@@ -56,7 +56,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const userId = request.user!.id
 
-      const result = await db.execute(sql`
+      const result = await dbQuery(sql`
         SELECT
           pr.id,
           pr.email,
@@ -134,8 +134,9 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       }
 
       values.push(userId)
-      const result = await db.execute(
-        sql.raw(`UPDATE profiles SET ${updates.join(', ')} WHERE id = $${idx} RETURNING *`, values)
+      const result = await unsafeQuery(
+        `UPDATE profiles SET ${updates.join(', ')} WHERE id = $${idx} RETURNING *`,
+        values
       )
 
       return reply.send({ success: true, data: result.rows[0] })
@@ -155,7 +156,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const userId = request.user!.id
 
-      const result = await db.execute(sql`
+      const result = await dbQuery(sql`
         SELECT * FROM user_settings WHERE user_id = ${userId}
       `)
 
@@ -204,7 +205,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       const userId = request.user!.id
       const body = UpdateSettingsBody.parse(request.body)
 
-      await db.execute(sql`
+      await dbQuery(sql`
         INSERT INTO user_settings (user_id) VALUES (${userId})
         ON CONFLICT (user_id) DO NOTHING
       `)
@@ -241,11 +242,9 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       }
 
       values.push(userId)
-      const result = await db.execute(
-        sql.raw(
-          `UPDATE user_settings SET ${updates.join(', ')} WHERE user_id = $${idx} RETURNING *`,
-          values
-        )
+      const result = await unsafeQuery(
+        `UPDATE user_settings SET ${updates.join(', ')} WHERE user_id = $${idx} RETURNING *`,
+        values
       )
 
       return reply.send({ success: true, data: result.rows[0] })
@@ -265,7 +264,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const userId = request.user!.id
 
-      const rows = await db.execute(sql`
+      const rows = await dbQuery(sql`
         SELECT
           up.id,
           up.platform_id,
@@ -340,7 +339,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       }
       const limit = tierLimits[tier] ?? 2
 
-      const currentCount = await db.execute(sql`
+      const currentCount = await dbQuery(sql`
         SELECT COUNT(*) AS count FROM user_platforms
         WHERE user_id = ${userId} AND is_active = TRUE
       `)
@@ -357,7 +356,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
         })
       }
 
-      const result = await db.execute(sql`
+      const result = await dbQuery(sql`
         INSERT INTO user_platforms
           (user_id, platform_id, platform_username, display_name)
         VALUES
@@ -390,7 +389,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       const userId = request.user!.id
       const { id } = request.params as { id: string }
 
-      await db.execute(sql`
+      await dbQuery(sql`
         UPDATE user_platforms
         SET is_active = FALSE, updated_at = NOW()
         WHERE id = ${id} AND user_id = ${userId}

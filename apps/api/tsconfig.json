@@ -4,7 +4,11 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "lib": ["ES2022"],
-    "target": "ES2022"
+    "target": "ES2022",
+    "paths": {
+      "@sweepbot/types": ["../../packages/types/src/index.ts"],
+      "@sweepbot/utils": ["../../packages/utils/src/index.ts"]
+    }
   },
   "include": ["src"]
 }

@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import Stripe from 'stripe'
-import { db } from '../db/client.js'
+import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { sql } from 'drizzle-orm'
 import { env } from '../utils/env.js'
 
@@ -66,7 +66,7 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
       const customerId = subscription.customer as string
       const tier = getTierFromPriceId(subscription.items.data[0]?.price.id ?? '')
 
-      await db.execute(sql`
+      await dbQuery(sql`
         UPDATE subscriptions
         SET
           status = ${subscription.status},
@@ -87,7 +87,7 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
       const customerId = subscription.customer as string
       const tier = getTierFromPriceId(subscription.items.data[0]?.price.id ?? '')
 
-      await db.execute(sql`
+      await dbQuery(sql`
         UPDATE subscriptions
         SET
           status = ${subscription.status},
@@ -106,7 +106,7 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
       const subscription = event.data.object as Stripe.Subscription
       const customerId = subscription.customer as string
 
-      await db.execute(sql`
+      await dbQuery(sql`
         UPDATE subscriptions
         SET
           status = 'cancelled',
@@ -125,7 +125,7 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
 
       // Ensure subscription is marked active on successful payment
       if (invoice.subscription) {
-        await db.execute(sql`
+        await dbQuery(sql`
           UPDATE subscriptions
           SET status = 'active', updated_at = NOW()
           WHERE stripe_customer_id = ${customerId}
@@ -133,7 +133,7 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
       }
 
       // Log payment in billing_events for audit trail
-      await db.execute(sql`
+      await dbQuery(sql`
         INSERT INTO billing_events
           (stripe_customer_id, event_type, amount_cents, currency, stripe_invoice_id, created_at)
         VALUES
@@ -155,7 +155,7 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
       const invoice = event.data.object as Stripe.Invoice
       const customerId = invoice.customer as string
 
-      await db.execute(sql`
+      await dbQuery(sql`
         UPDATE subscriptions
         SET status = 'past_due', updated_at = NOW()
         WHERE stripe_customer_id = ${customerId}
@@ -174,7 +174,7 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
       if (!userId) break
 
       // Upsert customer ID on profile
-      await db.execute(sql`
+      await dbQuery(sql`
         UPDATE subscriptions
         SET stripe_customer_id = ${customerId}, updated_at = NOW()
         WHERE user_id = ${userId}
@@ -182,7 +182,7 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
 
       // Handle lifetime purchase (one-time payment mode)
       if (session.mode === 'payment') {
-        await db.execute(sql`
+        await dbQuery(sql`
           UPDATE subscriptions
           SET
             tier = 'pro',

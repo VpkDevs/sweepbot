@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { db } from '../db/client.js'
+import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { requireAuth } from '../middleware/auth.js'
 import { sql } from 'drizzle-orm'
 
@@ -88,7 +88,7 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
       const body = CreateSessionBody.parse(request.body)
       const userId = request.user!.id
 
-      const result = await db.execute(sql`
+      const result = await dbQuery(sql`
         INSERT INTO sessions
           (user_id, platform_id, user_platform_id, started_at, device_info)
         VALUES
@@ -194,11 +194,9 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
       const whereId = paramIdx++
       const whereUserId = paramIdx
 
-      const result = await db.execute(
-        sql.raw(
-          `UPDATE sessions SET ${updates.join(', ')} WHERE id = $${whereId} AND user_id = $${whereUserId} RETURNING *`,
-          values
-        )
+      const result = await unsafeQuery(
+        `UPDATE sessions SET ${updates.join(', ')} WHERE id = $${whereId} AND user_id = $${whereUserId} RETURNING *`,
+        values
       )
 
       if (!result.rows.length) {
@@ -241,7 +239,7 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
         : sql``
 
       const [rows, countResult] = await Promise.all([
-        db.execute(sql`
+        dbQuery(sql`
           SELECT
             s.*,
             p.name AS platform_name,
@@ -256,7 +254,7 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
           ORDER BY s.started_at DESC
           LIMIT ${query.pageSize} OFFSET ${offset}
         `),
-        db.execute(sql`
+        dbQuery(sql`
           SELECT COUNT(*) AS total FROM sessions s
           WHERE s.user_id = ${userId}
             ${platformClause} ${gameClause} ${startClause} ${endClause}
@@ -293,13 +291,13 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
       const userId = request.user!.id
 
       const [session, transactions] = await Promise.all([
-        db.execute(sql`
+        dbQuery(sql`
           SELECT s.*, p.name AS platform_name, p.logo_url AS platform_logo_url
           FROM sessions s
           INNER JOIN platforms p ON p.id = s.platform_id
           WHERE s.id = ${id} AND s.user_id = ${userId}
         `),
-        db.execute(sql`
+        dbQuery(sql`
           SELECT t.*, g.name AS game_name
           FROM transactions t
           LEFT JOIN games g ON g.id = t.game_id
@@ -347,7 +345,7 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
       const userId = request.user!.id
 
       // Verify session belongs to this user
-      const sessionCheck = await db.execute(sql`
+      const sessionCheck = await dbQuery(sql`
         SELECT id FROM sessions WHERE id = ${body.sessionId} AND user_id = ${userId}
       `)
 
@@ -373,7 +371,7 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
         )`
       )
 
-      await db.execute(sql`
+      await dbQuery(sql`
         INSERT INTO transactions
           (session_id, type, amount, game_id, multiplier, balance_before, balance_after, occurred_at, metadata)
         VALUES ${sql.join(valuesList, sql`, `)}
@@ -381,7 +379,7 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
       `)
 
       // Update session running totals in a single UPDATE
-      await db.execute(sql`
+      await dbQuery(sql`
         UPDATE sessions
         SET
           total_bets = total_bets + (

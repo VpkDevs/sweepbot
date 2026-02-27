@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { db } from '../db/client.js'
+import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { requireAuth } from '../middleware/auth.js'
 import { sql } from 'drizzle-orm'
 
@@ -63,7 +63,7 @@ export async function platformRoutes(app: FastifyInstance): Promise<void> {
             : sql`ORDER BY p.name ${query.sortDir === 'asc' ? sql`ASC` : sql`DESC`}`
 
       const [rows, countResult] = await Promise.all([
-        db.execute(sql`
+        dbQuery(sql`
           SELECT
             p.id,
             p.name,
@@ -94,7 +94,7 @@ export async function platformRoutes(app: FastifyInstance): Promise<void> {
           ${orderClause}
           LIMIT ${query.pageSize} OFFSET ${offset}
         `),
-        db.execute(sql`
+        dbQuery(sql`
           SELECT COUNT(*) AS total
           FROM platforms p
           WHERE 1=1 ${searchClause} ${statusClause}
@@ -134,7 +134,7 @@ export async function platformRoutes(app: FastifyInstance): Promise<void> {
       const { id } = PlatformParamsSchema.parse(request.params)
 
       const [platform, trustHistory, recentRedemptions] = await Promise.all([
-        db.execute(sql`
+        dbQuery(sql`
           SELECT
             p.*,
             ti.overall_score AS trust_score,
@@ -156,14 +156,14 @@ export async function platformRoutes(app: FastifyInstance): Promise<void> {
             )
           WHERE p.id = ${id}
         `),
-        db.execute(sql`
+        dbQuery(sql`
           SELECT overall_score, calculated_at
           FROM trust_index_scores
           WHERE platform_id = ${id}
           ORDER BY calculated_at DESC
           LIMIT 30
         `),
-        db.execute(sql`
+        dbQuery(sql`
           SELECT
             payment_method,
             AVG(EXTRACT(EPOCH FROM (completed_at - submitted_at)) / 86400)::numeric(5,2) AS avg_days,
@@ -221,7 +221,7 @@ export async function platformRoutes(app: FastifyInstance): Promise<void> {
         ? sql`AND g.volatility = ${query.volatility}`
         : sql``
 
-      const rows = await db.execute(sql`
+      const rows = await dbQuery(sql`
         SELECT
           g.id,
           g.name,
@@ -269,7 +269,7 @@ export async function platformRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const { id } = PlatformParamsSchema.parse(request.params)
 
-      const rows = await db.execute(sql`
+      const rows = await dbQuery(sql`
         SELECT
           id,
           section,
@@ -323,7 +323,7 @@ export async function platformRoutes(app: FastifyInstance): Promise<void> {
       const userId = request.user!.id
 
       // Upsert community signal (1 vote per user per platform per day per category)
-      await db.execute(sql`
+      await dbQuery(sql`
         INSERT INTO platform_community_signals
           (platform_id, user_id, sentiment, category, comment, created_at)
         VALUES
