@@ -67,6 +67,37 @@ export const api = {
       request('/user/platforms', { method: 'POST', body: JSON.stringify(data) }),
     removePlatform: (id: string) =>
       request(`/user/platforms/${id}`, { method: 'DELETE' }),
+
+    // Subscription & billing
+    subscription: () => request<Record<string, unknown>>('/user/subscription'),
+    createCheckoutSession: (tier: string, cycle: string) =>
+      request<{ url: string }>('/user/checkout', {
+        method: 'POST',
+        body: JSON.stringify({ tier, cycle }),
+      }),
+
+    // Notification preferences
+    notificationPrefs: () => request<Record<string, boolean>>('/user/notification-prefs'),
+    updateNotificationPrefs: (data: Record<string, boolean>) =>
+      request<Record<string, boolean>>('/user/notification-prefs', {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+
+    // Tax summary
+    taxSummary: (year: number) =>
+      request<Record<string, unknown>>(`/user/tax-summary?year=${year}`),
+
+    // Responsible play preferences
+    responsiblePlayPrefs: () => request<Record<string, unknown>>('/user/responsible-play'),
+    updateResponsiblePlayPrefs: (data: Record<string, unknown>) =>
+      request<Record<string, unknown>>('/user/responsible-play', {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+
+    // Account deletion
+    deleteAccount: () => request<{ deleted: boolean }>('/user/account', { method: 'DELETE' }),
   },
 
   // Platforms
@@ -145,6 +176,56 @@ export const api = {
     },
     get: (platformId: string) =>
       request<Record<string, unknown>>(`/trust-index/${platformId}`),
+  },
+
+  // Phase 2 Features
+  features: {
+    achievements: (params?: Record<string, string>) => {
+      const qs = params ? '?' + new URLSearchParams(params).toString() : ''
+      return request<unknown[]>(`/features/achievements${qs}`)
+    },
+    myAchievements: () => request<unknown[]>('/features/achievements/mine'),
+    achievementLeaderboard: () => request<unknown[]>('/features/achievements/leaderboard'),
+    checkAchievements: () => request<Record<string, unknown>>('/features/achievements/check', { method: 'POST' }),
+    heatmap: (params?: Record<string, string>) => {
+      const qs = params ? '?' + new URLSearchParams(params).toString() : ''
+      return request<unknown[]>(`/features/heatmap${qs}`)
+    },
+    streaks: () => request<Record<string, unknown>>('/features/streaks'),
+    records: () => request<Record<string, unknown>>('/features/records'),
+    refreshRecords: () => request<Record<string, unknown>>('/features/records/refresh', { method: 'POST' }),
+    bigWins: (params?: Record<string, string>) => {
+      const qs = params ? '?' + new URLSearchParams(params).toString() : ''
+      return request<unknown[]>(`/features/big-wins${qs}`)
+    },
+    submitBigWin: (data: Record<string, unknown>) =>
+      request<Record<string, unknown>>('/features/big-wins', { method: 'POST', body: JSON.stringify(data) }),
+    myBigWins: () => request<unknown[]>('/features/big-wins/mine'),
+    updateBigWin: (id: string, data: Record<string, unknown>) =>
+      request<Record<string, unknown>>(`/features/big-wins/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  },
+
+  // Notifications
+  notifications: {
+    list: (params?: { limit?: number; unread_only?: boolean }) => {
+      const qs = params
+        ? '?' + new URLSearchParams(
+            Object.fromEntries(
+              Object.entries(params)
+                .filter(([, v]) => v !== undefined)
+                .map(([k, v]) => [k, String(v)])
+            )
+          ).toString()
+        : ''
+      return request<unknown[]>(`/notifications${qs}`)
+    },
+    count: () => request<{ unread: number }>('/notifications/count'),
+    markRead: (id: string) =>
+      request<{ id: string }>(`/notifications/${id}/read`, { method: 'PATCH' }),
+    markAllRead: () =>
+      request<{ marked: boolean }>('/notifications/read-all', { method: 'POST' }),
+    delete: (id: string) =>
+      request<{ deleted: boolean }>(`/notifications/${id}`, { method: 'DELETE' }),
   },
 }
 

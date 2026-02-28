@@ -11,7 +11,14 @@
       "Bash(pnpm --filter @sweepbot/utils typecheck)",
       "Bash(pnpm --filter @sweepbot/api typecheck)",
       "Bash(grep -n \"db.execute\\\\|from ''../db/client\" /c/Users/MQ420_OL/DEV/web/Sweepbot/apps/api/src/routes/*.ts)",
-      "Bash(grep -n \"sql.raw\" /c/Users/MQ420_OL/DEV/web/Sweepbot/apps/api/src/routes/*.ts)"
+      "Bash(grep -n \"sql.raw\" /c/Users/MQ420_OL/DEV/web/Sweepbot/apps/api/src/routes/*.ts)",
+      "mcp__Desktop_Commander__read_file",
+      "Bash(ls -la \"/c/Users/MQ420_OL/DEV/web/Sweepbot/apps/api/src/db/{migrations}/\")",
+      "Bash(xargs grep -l \"pgTable\\\\|defineTable\\\\|sqliteTable\")",
+      "mcp__Desktop_Commander__edit_block",
+      "mcp__Desktop_Commander__write_file",
+      "Bash(ls \"C:\\\\Users\\\\MQ420_OL\\\\DEV\\\\web\\\\Sweepbot\\\\apps\\\\api\\\\src\\\\db\"\" 2>/dev/null || dir \"C:UsersMQ420_OLDEVwebSweepbotappsapisrcdb\"\")",
+      "Bash(git add -A)"
     ]
   }
 }

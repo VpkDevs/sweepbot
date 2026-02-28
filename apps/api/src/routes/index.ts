@@ -13,6 +13,9 @@ import { jackpotRoutes } from './jackpots.js'
 import { redemptionRoutes } from './redemptions.js'
 import { trustRoutes } from './trust.js'
 import { webhookRoutes } from './webhooks.js'
+import { flowRoutes } from './flows.js'
+import { featuresRoutes } from './features.js'
+import { notificationsRoutes } from './notifications.js'
 
 export async function registerRoutes(app: FastifyInstance): Promise<void> {
   await app.register(healthRoutes)
@@ -23,5 +26,8 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
   await app.register(jackpotRoutes, { prefix: '/jackpots' })
   await app.register(redemptionRoutes, { prefix: '/redemptions' })
   await app.register(trustRoutes, { prefix: '/trust-index' })
+  await app.register(flowRoutes, { prefix: '/flows' })
+  await app.register(featuresRoutes, { prefix: '/features' })
+  await app.register(notificationsRoutes, { prefix: '/notifications' })
   await app.register(webhookRoutes, { prefix: '/webhooks' })
 }

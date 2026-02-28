@@ -11,20 +11,32 @@ import {
   Menu,
   X,
   Zap,
-  Bell,
+  Award,
+  CalendarDays,
+  Star,
+  Bot,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuthStore } from '../../stores/auth'
 import { cn } from '../../lib/utils'
+import { NotificationPanel } from '../ui/NotificationPanel'
 
 const navItems = [
+  // Core
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/platforms', label: 'Platforms', icon: Gamepad2 },
   { to: '/sessions', label: 'Sessions', icon: Zap },
+  { to: '/platforms', label: 'Platforms', icon: Gamepad2 },
   { to: '/analytics', label: 'Analytics', icon: LineChart },
   { to: '/jackpots', label: 'Jackpots', icon: Trophy },
   { to: '/redemptions', label: 'Redemptions', icon: Banknote },
   { to: '/trust-index', label: 'Trust Index', icon: ShieldCheck },
+  // Automation
+  { to: '/flows', label: 'SweepBot Flows', icon: Bot },
+  // Engage
+  { to: '/achievements', label: 'Achievements', icon: Award },
+  { to: '/heatmap', label: 'Heatmap', icon: CalendarDays },
+  { to: '/records', label: 'Records', icon: Star },
+  { to: '/big-wins', label: 'Big Wins', icon: Trophy },
 ] as const
 
 export function AppShell() {
@@ -149,11 +161,7 @@ export function AppShell() {
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex-1" />
-          <button className="relative text-zinc-400 hover:text-white transition-colors">
-            <Bell className="w-5 h-5" />
-            {/* Notification dot */}
-            <span className="absolute top-0 right-0 block w-1.5 h-1.5 rounded-full bg-brand-500" />
-          </button>
+          <NotificationPanel />
         </header>
 
         {/* Page content */}

@@ -22,6 +22,13 @@ import { RedemptionsPage } from './pages/RedemptionsPage'
 import { TrustIndexPage } from './pages/TrustIndexPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { PricingPage } from './pages/PricingPage'
+import { AchievementsPage } from './pages/AchievementsPage'
+import { HeatmapPage } from './pages/HeatmapPage'
+import { RecordsPage } from './pages/RecordsPage'
+import { BigWinsPage } from './pages/BigWinsPage'
+import { FlowsPage } from './pages/FlowsPage'
+import { FlowChatPage } from './pages/FlowChatPage'
+import { FlowDetailPage } from './pages/FlowDetailPage'
 import { SignInPage } from './pages/auth/SignInPage'
 import { SignUpPage } from './pages/auth/SignUpPage'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
@@ -142,6 +149,48 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 })
 
+const achievementsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/achievements',
+  component: AchievementsPage,
+})
+
+const heatmapRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/heatmap',
+  component: HeatmapPage,
+})
+
+const recordsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/records',
+  component: RecordsPage,
+})
+
+const bigWinsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/big-wins',
+  component: BigWinsPage,
+})
+
+const flowsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/flows',
+  component: FlowsPage,
+})
+
+const flowChatRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/flows/new',
+  component: FlowChatPage,
+})
+
+const flowDetailRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/flows/$flowId',
+  component: FlowDetailPage,
+})
+
 // ── Route tree assembly ───────────────────────────────────────────────────────
 export const routeTree = rootRoute.addChildren([
   authRoute.addChildren([signInRoute, signUpRoute, forgotPasswordRoute]),
@@ -157,5 +206,12 @@ export const routeTree = rootRoute.addChildren([
     redemptionsRoute,
     trustIndexRoute,
     settingsRoute,
+    achievementsRoute,
+    heatmapRoute,
+    recordsRoute,
+    bigWinsRoute,
+    flowsRoute,
+    flowChatRoute,
+    flowDetailRoute,
   ]),
 ])

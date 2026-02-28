@@ -19,6 +19,7 @@ import {
 } from 'recharts'
 import { api } from '../lib/api'
 import { formatSC, formatRTP, timeAgo, cn } from '../lib/utils'
+import { StreakWidget } from '../components/ui/StreakWidget'
 
 export function DashboardPage() {
   const { data: portfolio, isLoading } = useQuery({
@@ -50,6 +51,9 @@ export function DashboardPage() {
         <h1 className="text-2xl font-bold text-white">Command Center</h1>
         <p className="text-zinc-400 text-sm mt-1">Your complete sweepstakes portfolio at a glance.</p>
       </div>
+
+      {/* Streak widget */}
+      <StreakWidget />
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
