@@ -15,14 +15,7 @@ const AddPlatformBody = z.object({
 })
 
 const UpdateSettingsBody = z.object({
-  sessionAlertEnabled: z.boolean().optional(),
-  sessionAlertThresholdMinutes: z.number().int().min(1).max(1440).optional(),
-  lossLimitEnabled: z.boolean().optional(),
-  lossLimitAmount: z.number().min(0).optional(),
-  lossLimitPeriod: z.enum(['session', 'daily', 'weekly', 'monthly']).optional(),
   weeklyGoalAmount: z.number().min(0).optional(),
-  responsiblePlayEnabled: z.boolean().optional(),
-  chaseDetectionEnabled: z.boolean().optional(),
   timezone: z.string().optional(),
   currencyDisplay: z.enum(['sc', 'usd_equivalent']).optional(),
   dashboardLayout: z.enum(['compact', 'standard', 'expanded']).optional(),
@@ -168,14 +161,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
           success: true,
           data: {
             user_id: userId,
-            session_alert_enabled: true,
-            session_alert_threshold_minutes: 120,
-            loss_limit_enabled: false,
-            loss_limit_amount: null,
-            loss_limit_period: 'daily',
             weekly_goal_amount: null,
-            responsible_play_enabled: true,
-            chase_detection_enabled: true,
             timezone: 'America/New_York',
             currency_display: 'sc',
             dashboard_layout: 'standard',
@@ -217,14 +203,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       let idx = 1
 
       const fieldMap: Record<string, string> = {
-        sessionAlertEnabled: 'session_alert_enabled',
-        sessionAlertThresholdMinutes: 'session_alert_threshold_minutes',
-        lossLimitEnabled: 'loss_limit_enabled',
-        lossLimitAmount: 'loss_limit_amount',
-        lossLimitPeriod: 'loss_limit_period',
         weeklyGoalAmount: 'weekly_goal_amount',
-        responsiblePlayEnabled: 'responsible_play_enabled',
-        chaseDetectionEnabled: 'chase_detection_enabled',
         timezone: 'timezone',
         currencyDisplay: 'currency_display',
         dashboardLayout: 'dashboard_layout',
@@ -681,70 +660,6 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
         by_platform: byPlatform.rows,
       },
     })
-  })
-
-  // ─── GET /user/responsible-play ───────────────────────────────────────────
-  // Read responsible play limits from user_settings
-  app.get('/responsible-play', async (request, reply) => {
-    const userId = request.user!.id
-
-    const result = await dbQuery(sql`
-      SELECT
-        session_alert_threshold_minutes AS session_time_limit_minutes,
-        loss_limit_amount AS daily_loss_limit_sc,
-        NULL::int AS reality_check_interval_minutes,
-        NULL::timestamptz AS self_exclusion_until,
-        chase_detection_enabled
-      FROM user_settings
-      WHERE user_id = ${userId}
-    `)
-
-    if (!result.rows.length) {
-      return reply.send({
-        success: true,
-        data: {
-          session_time_limit_minutes: null,
-          daily_loss_limit_sc: null,
-          reality_check_interval_minutes: null,
-          self_exclusion_until: null,
-          chase_detection_enabled: true,
-        },
-      })
-    }
-
-    return reply.send({ success: true, data: result.rows[0] })
-  })
-
-  // ─── PATCH /user/responsible-play ────────────────────────────────────────
-  // Update responsible play settings
-  app.patch('/responsible-play', async (request, reply) => {
-    const userId = request.user!.id
-    const body = z
-      .object({
-        session_time_limit_minutes: z.number().int().min(1).max(1440).nullable().optional(),
-        daily_loss_limit_sc: z.number().min(0).nullable().optional(),
-        reality_check_interval_minutes: z.number().int().min(5).max(120).nullable().optional(),
-        chase_detection_enabled: z.boolean().optional(),
-      })
-      .parse(request.body)
-
-    // Ensure settings row exists
-    await dbQuery(sql`
-      INSERT INTO user_settings (user_id) VALUES (${userId})
-      ON CONFLICT (user_id) DO NOTHING
-    `)
-
-    await dbQuery(sql`
-      UPDATE user_settings
-      SET
-        session_alert_threshold_minutes = COALESCE(${body.session_time_limit_minutes ?? null}, session_alert_threshold_minutes),
-        loss_limit_amount               = COALESCE(${body.daily_loss_limit_sc ?? null}, loss_limit_amount),
-        chase_detection_enabled         = COALESCE(${body.chase_detection_enabled ?? null}, chase_detection_enabled),
-        updated_at                      = NOW()
-      WHERE user_id = ${userId}
-    `)
-
-    return reply.send({ success: true, data: { updated: true } })
   })
 
   // ─── POST /user/self-exclude ──────────────────────────────────────────────

@@ -6,7 +6,6 @@ import {
   Bell,
   CreditCard,
   FileText,
-  Shield,
   Zap,
   CheckCircle2,
   Loader2,
@@ -24,7 +23,7 @@ import { cn, formatSC } from '../lib/utils'
 
 // ─── Tab config ───────────────────────────────────────────────────────────────
 
-type Tab = 'profile' | 'security' | 'notifications' | 'subscription' | 'tax' | 'responsible' | 'danger'
+type Tab = 'profile' | 'security' | 'notifications' | 'subscription' | 'tax' | 'danger'
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'profile', label: 'Profile', icon: User },
@@ -32,7 +31,6 @@ const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'subscription', label: 'Subscription', icon: CreditCard },
   { id: 'tax', label: 'Tax Center', icon: FileText },
-  { id: 'responsible', label: 'Responsible Play', icon: Shield },
   { id: 'danger', label: 'Danger Zone', icon: Trash2 },
 ]
 
@@ -466,161 +464,13 @@ function TaxTab() {
   )
 }
 
-// ─── Responsible Play Tab ─────────────────────────────────────────────────────
-
-type ResponsiblePrefs = {
-  session_time_limit_minutes: number | null
-  daily_loss_limit_sc: number | null
-  reality_check_interval_minutes: number | null
-  self_exclusion_until: string | null
-  chase_detection_enabled: boolean
-}
-
-function ResponsiblePlayTab() {
-  const qc = useQueryClient()
-  const { data } = useQuery({
-    queryKey: ['user', 'responsible'],
-    queryFn: () => api.user.responsiblePlayPrefs(),
-    staleTime: 300_000,
-  })
-
-  const prefs = (data as { data?: ResponsiblePrefs })?.data
-
-  const [sessionLimit, setSessionLimit] = useState<string>('')
-  const [lossLimit, setLossLimit] = useState<string>('')
-  const [realityCheck, setRealityCheck] = useState<string>('')
-  const [chaseDetection, setChaseDetection] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
-
-  useEffect(() => {
-    if (prefs) {
-      setSessionLimit(String(prefs.session_time_limit_minutes ?? ''))
-      setLossLimit(String(prefs.daily_loss_limit_sc ?? ''))
-      setRealityCheck(String(prefs.reality_check_interval_minutes ?? ''))
-      setChaseDetection(prefs.chase_detection_enabled)
-    }
-  }, [prefs])
-
-  async function handleSave() {
-    setSaving(true)
-    try {
-      await api.user.updateResponsiblePlayPrefs({
-        session_time_limit_minutes: sessionLimit ? Number(sessionLimit) : null,
-        daily_loss_limit_sc: lossLimit ? Number(lossLimit) : null,
-        reality_check_interval_minutes: realityCheck ? Number(realityCheck) : null,
-        chase_detection_enabled: chaseDetection,
-      })
-      void qc.invalidateQueries({ queryKey: ['user', 'responsible'] })
-      setSaved(true)
-      setTimeout(() => setSaved(false), 3000)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  async function handleSelfExclude() {
-    try {
-      await api.user.selfExclude(30)
-      void qc.invalidateQueries({ queryKey: ['user', 'responsible'] })
-    } catch (error) {
-      console.error('Failed to activate self-exclusion:', error)
-    }
-  }
-
-  return (
-    <Section
-      title="Responsible Play"
-      description="Set limits to help you stay in control. These limits are enforced by SweepBot."
-    >
-      <div className="px-3 py-2 rounded-lg bg-blue-950/30 border border-blue-800/50 text-blue-300 text-xs flex items-start gap-2">
-        <Shield className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-        <span>
-          SweepBot is a tracking and automation tool, not a gambling platform. These tools exist to
-          support your wellbeing — we encourage setting limits that reflect your personal goals.
-        </span>
-      </div>
-
-      <InputField
-        label="Session Time Limit (minutes, blank to disable)"
-        value={sessionLimit}
-        onChange={setSessionLimit}
-        type="number"
-        placeholder="e.g. 60"
-      />
-      <InputField
-        label="Daily Loss Limit (SC, blank to disable)"
-        value={lossLimit}
-        onChange={setLossLimit}
-        type="number"
-        placeholder="e.g. 100"
-      />
-      <InputField
-        label="Reality Check Interval (minutes, blank to disable)"
-        value={realityCheck}
-        onChange={setRealityCheck}
-        type="number"
-        placeholder="e.g. 30"
-      />
-
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-white">Chase Detection</p>
-          <p className="text-xs text-zinc-500">Alert me if my session pattern suggests chasing losses</p>
-        </div>
-        <button
-          onClick={() => setChaseDetection((v) => !v)}
-          className={cn(
-            'relative w-10 h-6 rounded-full transition-colors',
-            chaseDetection ? 'bg-brand-600' : 'bg-zinc-700'
-          )}
-        >
-          <span className={cn('absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform', chaseDetection ? 'translate-x-5' : 'translate-x-1')} />
-        </button>
-      </div>
-
-      <SaveButton saving={saving} saved={saved} onClick={handleSave} />
-
-      {prefs?.self_exclusion_until ? (
-        <div className="px-3 py-2 rounded-lg bg-red-950/30 border border-red-800/50 text-red-300 text-xs">
-          Self-exclusion active until {new Date(prefs.self_exclusion_until).toLocaleDateString()}.
-        </div>
-      ) : (
-        <button
-          onClick={() => {
-            if (confirm('Are you sure you want to activate a 30-day self-exclusion? You will be locked out until then.')) {
-              void handleSelfExclude()
-            }
-          }}
-          className="text-xs text-red-400 hover:text-red-300 transition-colors"
-        >
-          Activate self-exclusion (30 days) →
-        </button>
-      )}
-
-      {/* Resource footer */}
-      <p className="text-xs text-zinc-600">
-        If you or someone you know needs support with problem gambling, visit{' '}
-        <a
-          href="https://www.ncpgambling.org"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-zinc-400 hover:text-zinc-300 underline"
-        >
-          ncpgambling.org
-        </a>
-        {' '}or call the NCPG helpline: 1-800-522-4700.
-      </p>
-    </Section>
-  )
-}
-
 // ─── Danger Zone Tab ──────────────────────────────────────────────────────────
 
 function DangerZoneTab() {
   const { signOut } = useAuthStore()
   const [confirmText, setConfirmText] = useState('')
   const [deleting, setDeleting] = useState(false)
+  const [excluding, setExcluding] = useState(false)
 
   async function handleDeleteAccount() {
     if (confirmText !== 'delete my account') return
@@ -633,8 +483,44 @@ function DangerZoneTab() {
     }
   }
 
+  async function handleSelfExclude() {
+    setExcluding(true)
+    try {
+      await api.user.selfExclude(30)
+    } finally {
+      setExcluding(false)
+    }
+  }
+
   return (
     <Section title="Danger Zone" description="Irreversible actions. Proceed with extreme caution.">
+      {/* Self-exclusion */}
+      <div className="space-y-3 border border-zinc-700/50 rounded-xl p-4 bg-zinc-900/50">
+        <div className="flex items-start gap-2">
+          <AlertTriangle className="w-5 h-5 text-zinc-400 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-zinc-200">Self-Exclusion</p>
+            <p className="text-xs text-zinc-400 mt-1">
+              Lock yourself out of the SweepBot UI for 30 days. Automations keep running — your
+              daily bonuses will still be collected. You can contact support to lift it early.
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={() => {
+            if (confirm('Lock yourself out of SweepBot for 30 days? Automations will keep running.')) {
+              void handleSelfExclude()
+            }
+          }}
+          disabled={excluding}
+          className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-semibold rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+        >
+          {excluding && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+          Activate 30-day self-exclusion
+        </button>
+      </div>
+
+      {/* Delete account */}
       <div className="space-y-4 border border-red-800/50 rounded-xl p-4 bg-red-950/10">
         <div className="flex items-start gap-2">
           <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" />
@@ -693,7 +579,6 @@ export function SettingsPage() {
     notifications: <NotificationsTab />,
     subscription: <SubscriptionTab />,
     tax: <TaxTab />,
-    responsible: <ResponsiblePlayTab />,
     danger: <DangerZoneTab />,
   }
 

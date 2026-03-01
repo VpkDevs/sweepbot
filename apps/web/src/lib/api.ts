@@ -99,14 +99,6 @@ export const api = {
     taxSummary: (year: number) =>
       request<Record<string, unknown>>(`/user/tax-summary?year=${year}`),
 
-    // Responsible play preferences
-    responsiblePlayPrefs: () => request<Record<string, unknown>>('/user/responsible-play'),
-    updateResponsiblePlayPrefs: (data: Record<string, unknown>) =>
-      request<Record<string, unknown>>('/user/responsible-play', {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-      }),
-
     // Self-exclusion
     selfExclude: (days: number = 30) =>
       request<Record<string, unknown>>('/user/self-exclude', {
