@@ -2,10 +2,14 @@
  * Extension-specific type definitions.
  */
 
+import type { FlowDefinition, FlowStatus } from '@/lib/flows/types'
+
 export interface ExtensionMessage<T = unknown> {
   type: string
   payload?: T
 }
+
+// ── Messages sent TO content scripts ────────────────────────────────────────
 
 export type ContentScriptMessage =
   | { type: 'GET_SESSION_STATS'; payload?: undefined }
@@ -15,6 +19,11 @@ export type ContentScriptMessage =
   | { type: 'BALANCE_UPDATED'; payload: { scBalance: number; gcBalance: number } }
   | { type: 'HUD_TOGGLE'; payload: { enabled: boolean } }
   | { type: 'HUD_POSITION_CHANGE'; payload: { position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' } }
+  // Flows automation
+  | { type: 'EXECUTE_FLOW'; payload: { flow: FlowDefinition } }
+  | { type: 'FLOW_CANCEL'; payload: { flowId: string } }
+
+// ── Messages sent TO background service worker ───────────────────────────────
 
 export type BackgroundMessage =
   | { type: 'BACKGROUND_READY'; payload?: undefined }
@@ -23,6 +32,15 @@ export type BackgroundMessage =
   | { type: 'CLEAR_AUTH'; payload?: undefined }
   | { type: 'LOG_ANALYTICS'; payload: Record<string, unknown> }
   | { type: 'SYNC_TO_SERVER'; payload?: undefined }
+  // Flows management (from popup)
+  | { type: 'GET_FLOWS'; payload?: undefined }
+  | { type: 'SAVE_FLOW'; payload: { flow: FlowDefinition } }
+  | { type: 'UPDATE_FLOW_STATUS'; payload: { flowId: string; status: FlowStatus } }
+  | { type: 'DELETE_FLOW'; payload: { flowId: string } }
+  | { type: 'EXECUTE_FLOW_NOW'; payload: { flowId: string } }
+  // Flows execution feedback (from content script)
+  | { type: 'FLOW_COMPLETED'; payload: { flowId: string; success: boolean; error?: string } }
+  | { type: 'FLOW_NEED_INPUT'; payload: { flowId: string; prompt: string } }
 
 export interface HudSessionState {
   isActive: boolean

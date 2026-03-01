@@ -1,36 +1,34 @@
 import { useState, useEffect } from 'react'
-import { LogOut, Settings, BarChart3, Zap } from 'lucide-react'
+import { LogOut, Settings, BarChart3, Zap, Cpu } from 'lucide-react'
 import { storage } from '@/lib/storage'
 import type { RtpStats } from '@/lib/rtp-calculator'
+import FlowsTab from './FlowsTab'
+
+type ActiveTab = 'hud' | 'flows'
 
 export default function PopupApp() {
+  const [activeTab, setActiveTab] = useState<ActiveTab>('hud')
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [hudEnabled, setHudEnabled] = useState(false)
   const [sessionStats, setSessionStats] = useState<RtpStats | null>(null)
-  const [userEmail, setUserEmail] = useState<string>('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function loadState() {
       setLoading(true)
 
-      // Check auth
       const authToken = await storage.get('authToken')
       const userId = await storage.get('userId')
       setIsAuthenticated(!!authToken && !!userId)
 
-      // Get HUD state
       const hudState = await storage.get('hudEnabled')
       setHudEnabled(hudState ?? true)
 
-      // Get session stats from content script
       try {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
         if (tab.id) {
           const response = await chrome.tabs.sendMessage(tab.id, { type: 'GET_SESSION_STATS' })
-          if (response?.success) {
-            setSessionStats(response.data)
-          }
+          if (response?.success) setSessionStats(response.data)
         }
       } catch {
         // Content script not loaded on this tab
@@ -45,15 +43,12 @@ export default function PopupApp() {
   const handleLogout = async () => {
     await chrome.runtime.sendMessage({ type: 'CLEAR_AUTH' })
     setIsAuthenticated(false)
-    setUserEmail('')
   }
 
   const handleHudToggle = async () => {
     const newState = !hudEnabled
     setHudEnabled(newState)
     await storage.set('hudEnabled', newState)
-
-    // Notify content script
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
       if (tab.id) {
@@ -67,9 +62,7 @@ export default function PopupApp() {
     }
   }
 
-  const handleOpenDashboard = () => {
-    chrome.tabs.create({ url: 'https://app.sweepbot.app/dashboard' })
-  }
+  // ── Loading ──────────────────────────────────────────────────────────────
 
   if (loading) {
     return (
@@ -78,6 +71,8 @@ export default function PopupApp() {
       </div>
     )
   }
+
+  // ── Unauthenticated ──────────────────────────────────────────────────────
 
   if (!isAuthenticated) {
     return (
@@ -109,6 +104,8 @@ export default function PopupApp() {
     )
   }
 
+  // ── Authenticated ────────────────────────────────────────────────────────
+
   return (
     <div className="popup-container">
       {/* Header */}
@@ -126,92 +123,121 @@ export default function PopupApp() {
             <LogOut className="w-4 h-4" />
           </button>
         </div>
+
+        {/* Tab bar */}
+        <div className="flex gap-1 mt-3">
+          <button
+            onClick={() => setActiveTab('hud')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-semibold transition ${
+              activeTab === 'hud'
+                ? 'bg-white/20 text-white'
+                : 'text-white/60 hover:text-white/80'
+            }`}
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+            HUD
+          </button>
+          <button
+            onClick={() => setActiveTab('flows')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-semibold transition ${
+              activeTab === 'flows'
+                ? 'bg-white/20 text-white'
+                : 'text-white/60 hover:text-white/80'
+            }`}
+          >
+            <Cpu className="w-3.5 h-3.5" />
+            Flows
+          </button>
+        </div>
       </div>
 
-      {/* Session Stats */}
-      {sessionStats ? (
-        <div className="p-4 border-b border-gray-200">
-          <h2 className="text-sm font-semibold text-gray-900 mb-3">Current Session</h2>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-gray-50 p-2 rounded">
-              <div className="text-xs text-gray-600">Spins</div>
-              <div className="text-lg font-bold text-gray-900">{sessionStats.spinCount}</div>
-            </div>
-
-            <div className="bg-gray-50 p-2 rounded">
-              <div className="text-xs text-gray-600">RTP</div>
-              <div
-                className="text-lg font-bold"
-                style={{
-                  color:
-                    sessionStats.rtp > 95
-                      ? '#22c55e'
-                      : sessionStats.rtp > 85
-                        ? '#f59e0b'
-                        : '#ef4444',
-                }}
-              >
-                {sessionStats.rtp.toFixed(2)}%
+      {/* ── HUD Tab ──────────────────────────────────────────────────────── */}
+      {activeTab === 'hud' && (
+        <>
+          {sessionStats ? (
+            <div className="p-4 border-b border-gray-200">
+              <h2 className="text-sm font-semibold text-gray-900 mb-3">Current Session</h2>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gray-50 p-2 rounded">
+                  <div className="text-xs text-gray-600">Spins</div>
+                  <div className="text-lg font-bold text-gray-900">{sessionStats.spinCount}</div>
+                </div>
+                <div className="bg-gray-50 p-2 rounded">
+                  <div className="text-xs text-gray-600">RTP</div>
+                  <div
+                    className="text-lg font-bold"
+                    style={{
+                      color:
+                        sessionStats.rtp > 95
+                          ? '#22c55e'
+                          : sessionStats.rtp > 85
+                            ? '#f59e0b'
+                            : '#ef4444',
+                    }}
+                  >
+                    {sessionStats.rtp.toFixed(2)}%
+                  </div>
+                </div>
+                <div className="bg-gray-50 p-2 rounded">
+                  <div className="text-xs text-gray-600">Wagered</div>
+                  <div className="text-lg font-bold text-gray-900">
+                    {(sessionStats.totalWagered || 0).toFixed(0)}
+                  </div>
+                </div>
+                <div className="bg-gray-50 p-2 rounded">
+                  <div className="text-xs text-gray-600">Volatility</div>
+                  <div className="text-lg font-bold text-gray-900 capitalize">
+                    {sessionStats.volatility}
+                  </div>
+                </div>
               </div>
             </div>
-
-            <div className="bg-gray-50 p-2 rounded">
-              <div className="text-xs text-gray-600">Wagered</div>
-              <div className="text-lg font-bold text-gray-900">
-                {(sessionStats.totalWagered || 0).toFixed(0)}
-              </div>
+          ) : (
+            <div className="p-4 border-b border-gray-200 text-center text-sm text-gray-500">
+              No active session detected
             </div>
+          )}
 
-            <div className="bg-gray-50 p-2 rounded">
-              <div className="text-xs text-gray-600">Volatility</div>
-              <div className="text-lg font-bold text-gray-900 capitalize">
-                {sessionStats.volatility}
-              </div>
-            </div>
+          <div className="p-4 space-y-3">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={hudEnabled}
+                onChange={handleHudToggle}
+                className="w-4 h-4 rounded border-gray-300"
+              />
+              <span className="text-sm font-medium text-gray-900">Show HUD Overlay</span>
+            </label>
+
+            <button
+              onClick={() => chrome.tabs.create({ url: 'https://app.sweepbot.app/dashboard' })}
+              className="w-full flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-2 rounded-lg transition"
+            >
+              <BarChart3 className="w-4 h-4" />
+              Open Dashboard
+            </button>
+
+            <button
+              onClick={() => chrome.runtime.openOptionsPage()}
+              className="w-full flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 rounded-lg transition"
+            >
+              <Settings className="w-4 h-4" />
+              Settings
+            </button>
           </div>
-        </div>
-      ) : (
-        <div className="p-4 border-b border-gray-200 text-center text-sm text-gray-500">
-          No active session detected
-        </div>
+        </>
       )}
 
-      {/* Controls */}
-      <div className="p-4 space-y-3">
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={hudEnabled}
-            onChange={handleHudToggle}
-            className="w-4 h-4 rounded border-gray-300"
-          />
-          <span className="text-sm font-medium text-gray-900">Show HUD Overlay</span>
-        </label>
-
-        <button
-          onClick={handleOpenDashboard}
-          className="w-full flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-2 rounded-lg transition"
-        >
-          <BarChart3 className="w-4 h-4" />
-          Open Dashboard
-        </button>
-
-        <button
-          onClick={() => chrome.runtime.openOptionsPage()}
-          className="w-full flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 rounded-lg transition"
-        >
-          <Settings className="w-4 h-4" />
-          Settings
-        </button>
-      </div>
+      {/* ── Flows Tab ────────────────────────────────────────────────────── */}
+      {activeTab === 'flows' && <FlowsTab />}
 
       {/* Footer */}
       <div className="px-4 py-3 border-t border-gray-200 text-xs text-gray-500 text-center">
-        <p>Version 0.1.0</p>
-        <a href="https://sweepbot.app" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-          Learn more
-        </a>
+        <p>Version 0.1.0 &middot;{' '}
+          <a href="https://sweepbot.app" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+            sweepbot.app
+          </a>
+        </p>
       </div>
     </div>
   )

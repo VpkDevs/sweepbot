@@ -1,7 +1,8 @@
 /**
  * Content script.
  * Injected into sweepstakes casino pages.
- * Monitors gameplay, intercepts transactions, and injects HUD overlay.
+ * Monitors gameplay, intercepts transactions, injects HUD overlay,
+ * and executes Flow automations on behalf of the background service worker.
  */
 
 import { defineContentScript } from 'wxt/sandbox'
@@ -11,16 +12,21 @@ import { rtpCalculator } from '@/lib/rtp-calculator'
 import { affiliateManager } from '@/lib/affiliate'
 import { storage } from '@/lib/storage'
 import { extensionApi } from '@/lib/api'
+import { executeFlow } from '@/lib/flows/automation-executor'
 import type { ContentScriptMessage } from '@/types/extension'
 
 export default defineContentScript({
   matches: ['*://*.chumbacasino.com/*', '*://*.luckyland.com/*', '*://*.stake.us/*', '*://*.pulsz.com/*', '*://*.wowvegas.com/*', '*://*.fortunecoins.com/*', '*://*.funrize.com/*', '*://*.zulacasino.com/*', '*://*.crowncoinscasino.com/*', '*://*.mcluck.com/*', '*://*.nolimitcoins.com/*', '*://*.modocasino.com/*', '*://*.globalpoker.com/*', '*://*.high5casino.com/*'],
   main() {
 
-// Initialize
+// ── State ──────────────────────────────────────────────────────────────────
+
 let currentPlatform = detectPlatform(window.location.href)
 let currentSessionId: string | null = null
 let hudContainerId = 'sweepbot-hud-container'
+let activeFlowId: string | null = null
+
+// ── Initialization ─────────────────────────────────────────────────────────
 
 async function init(): Promise<void> {
   if (!currentPlatform) {
@@ -30,7 +36,6 @@ async function init(): Promise<void> {
 
   console.log(`[Content] Initialized on ${currentPlatform.name}`)
 
-  // Check if user is authenticated
   const authToken = await storage.get('authToken')
   if (!authToken) {
     console.log('[Content] User not authenticated, skipping gameplay tracking')
@@ -39,17 +44,14 @@ async function init(): Promise<void> {
 
   const hudEnabled = await storage.get('hudEnabled')
 
-  // If on a game page, start session
   if (isGamePage(window.location.href, currentPlatform)) {
     startSession()
   }
 
-  // If on signup page, inject affiliate link/banner
   if (isSignupPage(window.location.href, currentPlatform)) {
     injectAffiliateContent()
   }
 
-  // Initialize network interceptor
   networkInterceptor.initialize(currentPlatform)
 
   networkInterceptor.onTransactionDetected(async (tx) => {
@@ -68,10 +70,7 @@ async function init(): Promise<void> {
       }
     }
 
-    // Update HUD if visible
-    if (hudEnabled) {
-      updateHudStats()
-    }
+    if (hudEnabled) updateHudStats()
   })
 
   networkInterceptor.onBalanceDetected(async (balance) => {
@@ -84,12 +83,9 @@ async function init(): Promise<void> {
     }
   })
 
-  // Inject HUD if enabled
-  if (hudEnabled) {
-    injectHud()
-  }
+  if (hudEnabled) injectHud()
 
-  // Listen for messages from background/popup
+  // Message listener — handles both HUD messages and flow execution
   chrome.runtime.onMessage.addListener((message: ContentScriptMessage, sender, sendResponse) => {
     handleContentMessage(message)
       .then((result) => sendResponse({ success: true, data: result }))
@@ -98,24 +94,18 @@ async function init(): Promise<void> {
   })
 }
 
-/**
- * Start a new session
- */
+// ── Session management ─────────────────────────────────────────────────────
+
 async function startSession(): Promise<void> {
   if (!currentPlatform) return
 
   try {
-    // Get the game ID from the page (platform-specific)
     const gameId = extractGameId() || 'unknown'
-
     const result = await extensionApi.createSession(currentPlatform.slug, gameId)
     currentSessionId = result.sessionId
-
     rtpCalculator.reset()
-
     console.log(`[Content] Session started: ${currentSessionId}`)
 
-    // Store session data
     await storage.set('sessionData', {
       sessionId: currentSessionId,
       platformSlug: currentPlatform.slug,
@@ -130,9 +120,6 @@ async function startSession(): Promise<void> {
   }
 }
 
-/**
- * End the current session
- */
 async function endSession(): Promise<void> {
   if (!currentSessionId) return
 
@@ -146,21 +133,14 @@ async function endSession(): Promise<void> {
   }
 }
 
-/**
- * Extract game ID from page (platform-specific implementation)
- */
 function extractGameId(): string | null {
-  // This would be customized per platform
-  // For now, try to get from URL or page data
   const match = window.location.pathname.match(/\/(games?|play)\/([a-z0-9_-]+)/i)
   return match ? match[2] : null
 }
 
-/**
- * Inject HUD overlay
- */
+// ── HUD ────────────────────────────────────────────────────────────────────
+
 function injectHud(): void {
-  // Create container
   const container = document.createElement('div')
   container.id = hudContainerId
   container.innerHTML = `
@@ -182,15 +162,10 @@ function injectHud(): void {
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <h3 style="margin: 0; font-size: 14px; font-weight: 600;">SweepBot</h3>
         <button class="sweepbot-hud-close" style="
-          background: none;
-          border: none;
-          color: rgba(255, 255, 255, 0.6);
-          cursor: pointer;
-          font-size: 18px;
-          padding: 0;
+          background: none; border: none; color: rgba(255, 255, 255, 0.6);
+          cursor: pointer; font-size: 18px; padding: 0;
         ">✕</button>
       </div>
-
       <div style="font-size: 12px; line-height: 1.6; color: rgba(255, 255, 255, 0.8);">
         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
           <span>Spins:</span>
@@ -212,26 +187,18 @@ function injectHud(): void {
       </div>
     </div>
   `
-
   document.body.appendChild(container)
 
-  // Set up close button
   const closeBtn = container.querySelector('.sweepbot-hud-close') as HTMLButtonElement
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      container.remove()
-      storage.set('hudEnabled', false)
-    })
-  }
+  closeBtn?.addEventListener('click', () => {
+    container.remove()
+    storage.set('hudEnabled', false)
+  })
 }
 
-/**
- * Update HUD stats
- */
 function updateHudStats(): void {
   const stats = rtpCalculator.calculate()
   const container = document.getElementById(hudContainerId)
-
   if (!container) return
 
   const spinCount = container.querySelector('.sweepbot-spin-count') as HTMLElement
@@ -242,37 +209,30 @@ function updateHudStats(): void {
   if (spinCount) spinCount.textContent = stats.spinCount.toString()
   if (rtp) {
     rtp.textContent = `${stats.rtp.toFixed(2)}%`
-    // Color code RTP: green > 95%, yellow 85-95%, red < 85%
-    if (stats.rtp > 95) rtp.style.color = '#22c55e'
-    else if (stats.rtp > 85) rtp.style.color = '#f59e0b'
-    else rtp.style.color = '#ef4444'
+    rtp.style.color = stats.rtp > 95 ? '#22c55e' : stats.rtp > 85 ? '#f59e0b' : '#ef4444'
   }
   if (largestWin) largestWin.textContent = stats.largestWin.toString()
   if (volatility) volatility.textContent = stats.volatility.charAt(0).toUpperCase() + stats.volatility.slice(1)
 }
 
-/**
- * Inject affiliate content on signup pages
- */
+// ── Affiliate ──────────────────────────────────────────────────────────────
+
 async function injectAffiliateContent(): Promise<void> {
   if (!currentPlatform) return
-
   try {
-    // Try to inject affiliate link/banner
     await affiliateManager.injectAffiliateBanner(currentPlatform)
   } catch (error) {
     console.error('[Content] Failed to inject affiliate banner:', error)
   }
 }
 
-/**
- * Handle messages from background/popup
- */
+// ── Message handler ────────────────────────────────────────────────────────
+
 async function handleContentMessage(message: ContentScriptMessage): Promise<unknown> {
   switch (message.type) {
+
     case 'GET_SESSION_STATS': {
-      const stats = rtpCalculator.calculate()
-      return stats
+      return rtpCalculator.calculate()
     }
 
     case 'HUD_TOGGLE': {
@@ -286,24 +246,75 @@ async function handleContentMessage(message: ContentScriptMessage): Promise<unkn
       return { success: true }
     }
 
+    // ── Flow execution ────────────────────────────────────────────────────
+
+    case 'EXECUTE_FLOW': {
+      const { flow } = message.payload!
+      if (activeFlowId) {
+        console.warn(`[Content] Flow ${activeFlowId} already running — ignoring new request`)
+        return { success: false, error: 'A flow is already running' }
+      }
+
+      activeFlowId = flow.id
+      console.log(`[Content] Executing flow "${flow.name}" (${flow.id})`)
+
+      // Execute in the background so we can return immediately
+      executeFlow(flow)
+        .then((execution) => {
+          activeFlowId = null
+          const success = execution.status === 'completed'
+          console.log(`[Content] Flow ${flow.id} finished: ${execution.status}`, execution.error ?? '')
+
+          // Report result back to background service worker
+          chrome.runtime.sendMessage({
+            type: 'FLOW_COMPLETED',
+            payload: {
+              flowId: flow.id,
+              success,
+              error: execution.error,
+            },
+          }).catch(() => {/* background may not be listening */})
+        })
+        .catch((err) => {
+          activeFlowId = null
+          const errMsg = err instanceof Error ? err.message : String(err)
+          console.error(`[Content] Flow ${flow.id} threw:`, err)
+
+          chrome.runtime.sendMessage({
+            type: 'FLOW_COMPLETED',
+            payload: { flowId: flow.id, success: false, error: errMsg },
+          }).catch(() => {})
+        })
+
+      return { success: true, message: 'Flow execution started' }
+    }
+
+    case 'FLOW_CANCEL': {
+      const { flowId } = message.payload!
+      if (activeFlowId === flowId) {
+        // The executor checks a cancel flag — we set it via a window event
+        window.dispatchEvent(new CustomEvent('sweepbot:cancel-flow', { detail: { flowId } }))
+        activeFlowId = null
+        console.log(`[Content] Flow ${flowId} cancelled`)
+      }
+      return { success: true }
+    }
+
     default:
       return null
   }
 }
 
-// Monitor navigation
+// ── Navigation monitoring ──────────────────────────────────────────────────
+
 let lastUrl = window.location.href
 setInterval(() => {
   if (window.location.href !== lastUrl) {
     lastUrl = window.location.href
     console.log('[Content] Navigation detected:', lastUrl)
 
-    // End previous session
-    if (currentSessionId) {
-      endSession()
-    }
+    if (currentSessionId) endSession()
 
-    // Re-initialize on new page
     currentPlatform = detectPlatform(lastUrl)
     if (currentPlatform && isGamePage(lastUrl, currentPlatform)) {
       startSession()
@@ -311,7 +322,8 @@ setInterval(() => {
   }
 }, 1000)
 
-// Initialize on load
+// ── Kick off ───────────────────────────────────────────────────────────────
+
 init().catch((error) => {
   console.error('[Content] Initialization failed:', error)
 })

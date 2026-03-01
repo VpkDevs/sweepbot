@@ -26,6 +26,7 @@ export default defineConfig({
       'scripting',
       'tabs',
       'webRequest',
+      'microphone',
     ],
     host_permissions: [
       // Sweepstakes casino domains — content scripts + webRequest

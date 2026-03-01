@@ -1,0 +1,141 @@
+/**
+ * Voice recorder — wraps the Web Speech API (SpeechRecognition).
+ * Returns a promise that resolves with the final transcript.
+ * Available natively in Chrome; no API keys required.
+ */
+
+export type RecordingState = 'idle' | 'listening' | 'processing' | 'error'
+
+export interface VoiceRecorderOptions {
+  /** BCP-47 language tag, e.g. 'en-US' */
+  lang?: string
+  /** Max silence before auto-stop (ms). Default: 3000 */
+  silenceTimeout?: number
+  onInterim?: (text: string) => void
+  onStateChange?: (state: RecordingState) => void
+}
+
+export class VoiceRecorder {
+  private recognition: SpeechRecognition | null = null
+  private resolveRef: ((text: string) => void) | null = null
+  private rejectRef: ((err: Error) => void) | null = null
+  private finalTranscript = ''
+  private silenceTimer: ReturnType<typeof setTimeout> | null = null
+  private options: Required<VoiceRecorderOptions>
+
+  constructor(options: VoiceRecorderOptions = {}) {
+    this.options = {
+      lang: options.lang ?? 'en-US',
+      silenceTimeout: options.silenceTimeout ?? 3000,
+      onInterim: options.onInterim ?? (() => {}),
+      onStateChange: options.onStateChange ?? (() => {}),
+    }
+  }
+
+  /** Returns true if SpeechRecognition is available in this browser */
+  static isSupported(): boolean {
+    return 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window
+  }
+
+  /**
+   * Start recording. Returns a promise that resolves with the final transcript
+   * when the user stops speaking (or rejects on error / permission denied).
+   */
+  record(): Promise<string> {
+    if (!VoiceRecorder.isSupported()) {
+      return Promise.reject(new Error('SpeechRecognition is not supported in this browser.'))
+    }
+
+    const SR =
+      (window as unknown as { SpeechRecognition: typeof SpeechRecognition }).SpeechRecognition ??
+      (window as unknown as { webkitSpeechRecognition: typeof SpeechRecognition })
+        .webkitSpeechRecognition
+
+    this.recognition = new SR()
+    this.recognition.lang = this.options.lang
+    this.recognition.continuous = true
+    this.recognition.interimResults = true
+    this.recognition.maxAlternatives = 1
+
+    this.finalTranscript = ''
+
+    return new Promise<string>((resolve, reject) => {
+      this.resolveRef = resolve
+      this.rejectRef = reject
+
+      this.recognition!.onstart = () => {
+        this.options.onStateChange('listening')
+      }
+
+      this.recognition!.onresult = (event: SpeechRecognitionEvent) => {
+        let interimTranscript = ''
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const result = event.results[i]
+          if (result.isFinal) {
+            this.finalTranscript += result[0].transcript + ' '
+          } else {
+            interimTranscript += result[0].transcript
+          }
+        }
+
+        this.options.onInterim(this.finalTranscript + interimTranscript)
+
+        // Reset silence timer on any speech
+        this.resetSilenceTimer()
+      }
+
+      this.recognition!.onerror = (event: SpeechRecognitionErrorEvent) => {
+        this.cleanup()
+        if (event.error === 'no-speech') {
+          reject(new Error('No speech detected. Try again.'))
+        } else if (event.error === 'not-allowed') {
+          reject(
+            new Error(
+              'Microphone permission denied. Please allow microphone access and try again.',
+            ),
+          )
+        } else {
+          reject(new Error(`Speech recognition error: ${event.error}`))
+        }
+        this.options.onStateChange('error')
+      }
+
+      this.recognition!.onend = () => {
+        if (this.finalTranscript.trim()) {
+          this.options.onStateChange('processing')
+          resolve(this.finalTranscript.trim())
+        } else {
+          this.options.onStateChange('idle')
+          reject(new Error('No speech captured. Please try again.'))
+        }
+        this.cleanup()
+      }
+
+      this.recognition!.start()
+      this.resetSilenceTimer()
+    })
+  }
+
+  /** Manually stop recording */
+  stop(): void {
+    this.recognition?.stop()
+    this.cleanup()
+  }
+
+  private resetSilenceTimer(): void {
+    if (this.silenceTimer) clearTimeout(this.silenceTimer)
+    this.silenceTimer = setTimeout(() => {
+      this.recognition?.stop()
+    }, this.options.silenceTimeout)
+  }
+
+  private cleanup(): void {
+    if (this.silenceTimer) {
+      clearTimeout(this.silenceTimer)
+      this.silenceTimer = null
+    }
+    this.resolveRef = null
+    this.rejectRef = null
+  }
+}
