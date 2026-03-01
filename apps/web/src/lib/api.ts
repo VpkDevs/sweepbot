@@ -33,18 +33,29 @@ async function request<T>(
 ): Promise<T> {
   const headers = await getAuthHeaders()
 
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: { ...headers, ...options.headers },
-  })
+  try {
+    const response = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers: { ...headers, ...options.headers },
+    })
 
-  const json = (await response.json()) as ApiResponse<T>
+    const json = (await response.json()) as ApiResponse<T>
 
-  if (!json.success) {
-    throw new ApiError(json.error.code, json.error.message, response.status)
+    if (!json.success) {
+      throw new ApiError(json.error.code, json.error.message, response.status)
+    }
+
+    return json.data
+  } catch (error) {
+    if (error instanceof ApiError) throw error
+    if (error instanceof SyntaxError) {
+      throw new ApiError('PARSE_ERROR', 'Failed to parse server response', 500)
+    }
+    if (error instanceof TypeError) {
+      throw new ApiError('NETWORK_ERROR', 'Network request failed', 0)
+    }
+    throw error
   }
-
-  return json.data
 }
 
 // ─── Typed API client ─────────────────────────────────────────────────────────
@@ -94,6 +105,13 @@ export const api = {
       request<Record<string, unknown>>('/user/responsible-play', {
         method: 'PATCH',
         body: JSON.stringify(data),
+      }),
+
+    // Self-exclusion
+    selfExclude: (days: number = 30) =>
+      request<Record<string, unknown>>('/user/self-exclude', {
+        method: 'POST',
+        body: JSON.stringify({ days }),
       }),
 
     // Account deletion
@@ -203,6 +221,53 @@ export const api = {
     myBigWins: () => request<unknown[]>('/features/big-wins/mine'),
     updateBigWin: (id: string, data: Record<string, unknown>) =>
       request<Record<string, unknown>>(`/features/big-wins/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    stats: () => request<Record<string, unknown>>('/features/stats'),
+  },
+
+  // Flows
+  flows: {
+    list: (params?: { page?: number; pageSize?: number }) => {
+      const qs = params
+        ? '?' + new URLSearchParams(
+            Object.fromEntries(
+              Object.entries(params)
+                .filter(([, v]) => v !== undefined)
+                .map(([k, v]) => [k, String(v)])
+            )
+          ).toString()
+        : ''
+      return request<unknown[]>(`/flows${qs}`)
+    },
+    get: (id: string) => request<Record<string, unknown>>(`/flows/${id}`),
+    create: (data: Record<string, unknown>) =>
+      request<Record<string, unknown>>('/flows', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: string, data: Record<string, unknown>) =>
+      request<Record<string, unknown>>(`/flows/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    interpret: (rawInput: string) =>
+      request<Record<string, unknown>>('/flows/interpret', {
+        method: 'POST',
+        body: JSON.stringify({ rawInput }),
+      }),
+    converse: (conversationId: string, userMessage: string) =>
+      request<Record<string, unknown>>('/flows/converse', {
+        method: 'POST',
+        body: JSON.stringify({ conversationId, userMessage }),
+      }),
+    execute: (id: string) =>
+      request<Record<string, unknown>>(`/flows/${id}/execute`, { method: 'POST' }),
+    executions: (id: string, params?: { page?: number; pageSize?: number }) => {
+      const qs = params
+        ? '?' + new URLSearchParams(
+            Object.fromEntries(
+              Object.entries(params)
+                .filter(([, v]) => v !== undefined)
+                .map(([k, v]) => [k, String(v)])
+            )
+          ).toString()
+        : ''
+      return request<unknown[]>(`/flows/${id}/executions${qs}`)
+    },
+    delete: (id: string) => request<{ deleted: boolean }>(`/flows/${id}`, { method: 'DELETE' }),
   },
 
   // Notifications

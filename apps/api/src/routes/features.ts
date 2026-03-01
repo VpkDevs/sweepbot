@@ -9,6 +9,7 @@ import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { requireAuth } from '../middleware/auth.js'
 import { sql } from 'drizzle-orm'
 import { seedAchievements, achievementsEmpty } from '../db/seeds/achievements.js'
+import { createNotification } from './notifications.js'
 
 // ─── Zod Schemas ──────────────────────────────────────────────────────────────
 
@@ -403,7 +404,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
         ${periodFilter} ${platformFilter} ${multiplierFilter}
     `)
 
-    const total = (countResult.rows[0] as Record<string, number>)?.total ?? 0
+    const total = (countResult.rows[0] as Record<string, number>)?.['total'] as number ?? 0
 
     // Community aggregate stats banner
     const stats = await dbQuery(sql`
@@ -492,6 +493,41 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     `)
 
     return reply.send({ success: true })
+  })
+
+  // GET /features/stats
+  // Quick aggregated stats for the user dashboard
+  app.get('/stats', async (request, reply) => {
+    const userId = request.user!.id
+
+    const [sessionStats, achievementStats, bigWinStats] = await Promise.all([
+      dbQuery(sql`
+        SELECT
+          COUNT(*)::int AS total_sessions,
+          COALESCE(ROUND(AVG(rtp)::numeric, 2), 0) AS avg_rtp,
+          COALESCE(SUM(CASE WHEN total_won > total_wagered THEN 1 ELSE 0 END)::int, 0) AS winning_sessions
+        FROM sessions WHERE user_id = ${userId}
+      `),
+      dbQuery(sql`
+        SELECT COUNT(*)::int AS total_achievements FROM user_achievements WHERE user_id = ${userId}
+      `),
+      dbQuery(sql`
+        SELECT COUNT(*)::int AS total_big_wins FROM big_wins WHERE user_id = ${userId}
+      `),
+    ])
+
+    const sessions = sessionStats.rows[0] as Record<string, unknown> | undefined
+    const achievements = achievementStats.rows[0] as Record<string, unknown> | undefined
+    const bigWins = bigWinStats.rows[0] as Record<string, unknown> | undefined
+
+    return reply.send({
+      success: true,
+      data: {
+        sessions: sessions ?? { total_sessions: 0, avg_rtp: 0, winning_sessions: 0 },
+        achievements: achievements ?? { total_achievements: 0 },
+        bigWins: bigWins ?? { total_big_wins: 0 },
+      },
+    })
   })
 }
 
@@ -618,9 +654,14 @@ async function checkAndAwardAchievements(userId: string): Promise<string[]> {
     `),
   ])
 
+  const sessionRow = sessionStats.rows[0] as Record<string, number> | undefined
+  const bigWinRow = bigWinStats.rows[0] as Record<string, number> | undefined
+
   const stats = {
-    ...(sessionStats.rows[0] as Record<string, number>),
-    ...(bigWinStats.rows[0] as Record<string, number>),
+    total_sessions: sessionRow?.['total_sessions'] ?? 0,
+    unique_platforms: sessionRow?.['unique_platforms'] ?? 0,
+    bonus_sessions: sessionRow?.['bonus_sessions'] ?? 0,
+    big_win_count: bigWinRow?.['big_win_count'] ?? 0,
   }
 
   // Load all achievements and check which ones the user hasn't earned yet
@@ -643,13 +684,13 @@ async function checkAndAwardAchievements(userId: string): Promise<string[]> {
     let earned = false
 
     if (req['type'] === 'session_count') {
-      earned = stats['total_sessions'] >= (req['threshold'] as number)
+      earned = stats.total_sessions >= (req['threshold'] as number)
     } else if (req['type'] === 'unique_platforms') {
-      earned = stats['unique_platforms'] >= (req['threshold'] as number)
+      earned = stats.unique_platforms >= (req['threshold'] as number)
     } else if (req['type'] === 'bonus_sessions') {
-      earned = stats['bonus_sessions'] >= (req['threshold'] as number)
+      earned = stats.bonus_sessions >= (req['threshold'] as number)
     } else if (req['type'] === 'big_win_submitted') {
-      earned = stats['big_win_count'] >= 1
+      earned = stats.big_win_count >= 1
     }
 
     if (earned) {
@@ -659,6 +700,17 @@ async function checkAndAwardAchievements(userId: string): Promise<string[]> {
         ON CONFLICT DO NOTHING
       `)
       newlyEarned.push(ach.key)
+
+      // Create achievement notification
+      void createNotification({
+        userId,
+        type: 'achievement',
+        title: `Achievement Unlocked: ${ach.key}`,
+        body: `You've earned a new achievement! View it in your trophy case.`,
+        icon: '🏆',
+        href: '/achievements',
+        data: { achievementId: ach.id, achievementKey: ach.key },
+      })
     }
   }
 

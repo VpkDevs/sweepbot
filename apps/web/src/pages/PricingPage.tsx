@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import {
   Zap,
   CheckCircle2,
@@ -342,6 +342,13 @@ export function PricingPage() {
   const [loadingTier, setLoadingTier] = useState<string | null>(null)
   const { user } = useAuthStore()
 
+  const { data: subscriptionData } = useQuery({
+    queryKey: ['user', 'subscription'],
+    queryFn: () => api.user.subscription(),
+    enabled: !!user,
+    staleTime: 60_000,
+  })
+
   const checkoutMutation = useMutation({
     mutationFn: (tier: PlanTier) => api.user.createCheckoutSession(tier, cycle),
     onMutate: (tier) => setLoadingTier(tier),
@@ -362,8 +369,7 @@ export function PricingPage() {
     checkoutMutation.mutate(tier)
   }
 
-  // TODO: get from user subscription query
-  const currentTier = (user as Record<string, unknown> | null)?.['tier'] as string | null ?? 'free'
+  const currentTier = ((subscriptionData as { tier?: string } | undefined)?.tier ?? 'free') as string
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">

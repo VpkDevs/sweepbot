@@ -747,6 +747,40 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     return reply.send({ success: true, data: { updated: true } })
   })
 
+  // ─── POST /user/self-exclude ──────────────────────────────────────────────
+  // Activate self-exclusion (responsible play lock-out period)
+  app.post('/self-exclude', async (request, reply) => {
+    const userId = request.user!.id
+    const body = z.object({ days: z.number().int().min(1).max(365).default(30) }).parse(request.body ?? {})
+
+    // Calculate exclusion end time
+    const now = new Date()
+    const exclusionUntil = new Date(now.getTime() + body.days * 24 * 60 * 60 * 1000)
+
+    // Ensure settings row exists
+    await dbQuery(sql`
+      INSERT INTO user_settings (user_id) VALUES (${userId})
+      ON CONFLICT (user_id) DO NOTHING
+    `)
+
+    // Set self_exclusion_until timestamp
+    await dbQuery(sql`
+      UPDATE user_settings
+      SET
+        self_exclusion_until = ${exclusionUntil.toISOString()},
+        updated_at = NOW()
+      WHERE user_id = ${userId}
+    `)
+
+    return reply.send({
+      success: true,
+      data: {
+        self_exclusion_until: exclusionUntil.toISOString(),
+        message: `Self-exclusion active until ${exclusionUntil.toLocaleDateString()}`,
+      },
+    })
+  })
+
   // ─── DELETE /user/account ─────────────────────────────────────────────────
   // Hard-deletes the auth user (cascades to profiles + all user data).
   // Also cancels active Stripe subscription if present.

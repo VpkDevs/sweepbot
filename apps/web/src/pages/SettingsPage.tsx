@@ -519,6 +519,15 @@ function ResponsiblePlayTab() {
     }
   }
 
+  async function handleSelfExclude() {
+    try {
+      await api.user.selfExclude(30)
+      void qc.invalidateQueries({ queryKey: ['user', 'responsible'] })
+    } catch (error) {
+      console.error('Failed to activate self-exclusion:', error)
+    }
+  }
+
   return (
     <Section
       title="Responsible Play"
@@ -580,7 +589,7 @@ function ResponsiblePlayTab() {
         <button
           onClick={() => {
             if (confirm('Are you sure you want to activate a 30-day self-exclusion? You will be locked out until then.')) {
-              // TODO: call api.user.selfExclude()
+              void handleSelfExclude()
             }
           }}
           className="text-xs text-red-400 hover:text-red-300 transition-colors"
