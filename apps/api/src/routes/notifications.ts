@@ -4,7 +4,6 @@
  */
 
 import type { FastifyInstance } from 'fastify'
-import { z } from 'zod'
 import { sql } from 'drizzle-orm'
 import { requireAuth } from '../middleware/auth.js'
 import { query } from '../db/client.js'
@@ -15,24 +14,13 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
 
   // ── GET /notifications ───────────────────────────────────────────────────────
   // Return user's notifications, newest first.
-  app.get(
-    '/',
-    {
-      schema: {
-        querystring: z.object({
-          limit: z.coerce.number().int().min(1).max(100).default(30),
-          unread_only: z
-            .string()
-            .optional()
-            .transform((v) => v === 'true'),
-        }),
-      },
-    },
-    async (request, reply) => {
-      const { limit, unread_only } = request.query as { limit: number; unread_only: boolean }
-      const userId = request.user!.id
+  app.get('/', async (request, reply) => {
+    const query_params = request.query as { limit?: string; unread_only?: string }
+    const limit = Math.min(Math.max(parseInt(query_params.limit ?? '30', 10) || 30, 1), 100)
+    const unread_only = query_params.unread_only === 'true'
+    const userId = request.user!.id
 
-      const rows = await query<{
+    const { rows } = await query<{
         id: string
         type: string
         title: string
@@ -70,7 +58,7 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
   // Returns unread count for the bell badge.
   app.get('/count', async (request, reply) => {
     const userId = request.user!.id
-    const rows = await query<{ unread: number }>(sql`
+    const { rows } = await query<{ unread: number }>(sql`
       SELECT COUNT(*)::int AS unread
       FROM notifications
       WHERE user_id = ${userId} AND is_read = false
@@ -79,14 +67,7 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
   })
 
   // ── PATCH /notifications/:id/read ────────────────────────────────────────────
-  app.patch(
-    '/:id/read',
-    {
-      schema: {
-        params: z.object({ id: z.string().uuid() }),
-      },
-    },
-    async (request, reply) => {
+  app.patch('/:id/read', async (request, reply) => {
       const { id } = request.params as { id: string }
       const userId = request.user!.id
 
@@ -114,14 +95,7 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
   })
 
   // ── DELETE /notifications/:id ────────────────────────────────────────────────
-  app.delete(
-    '/:id',
-    {
-      schema: {
-        params: z.object({ id: z.string().uuid() }),
-      },
-    },
-    async (request, reply) => {
+  app.delete('/:id', async (request, reply) => {
       const { id } = request.params as { id: string }
       const userId = request.user!.id
 
