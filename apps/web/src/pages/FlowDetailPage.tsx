@@ -9,6 +9,14 @@ import { useParams, useNavigate } from '@tanstack/react-router'
 import { Play, Pause, Archive, ChevronDown } from 'lucide-react'
 import { api } from '../lib/api'
 
+/**
+ * Render the detail page for a single flow, showing its metadata, definition, safety guards, and execution history.
+ *
+ * Fetches flow metadata and execution history, and provides actions to execute, pause, or archive the flow. Archiving
+ * the flow navigates back to the flows list.
+ *
+ * @returns The React element for the flow detail page.
+ */
 export function FlowDetailPage() {
   const { flowId } = useParams({ from: '/flows/$flowId' })
   const navigate = useNavigate()

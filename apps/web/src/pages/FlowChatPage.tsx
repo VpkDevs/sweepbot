@@ -29,6 +29,13 @@ interface FlowConfirmation {
   warnings: any[]
 }
 
+/**
+ * Render a conversational Flow Builder page that converts natural-language descriptions into flow drafts and lets the user confirm or modify them.
+ *
+ * Renders a chat-like UI where users submit plain-English automation descriptions, receives an interpreted summary and structured flow suggestion from the server, displays a confirmation card with any warnings, and provides actions to create the flow or request modifications.
+ *
+ * @returns The React element for the Flow Builder page.
+ */
 export function FlowChatPage() {
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)

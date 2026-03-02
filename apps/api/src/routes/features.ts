@@ -39,7 +39,21 @@ const SubmitBigWinSchema = z.object({
   isPublic: z.boolean().default(true),
 })
 
-// ─── Route Registration ───────────────────────────────────────────────────────
+/**
+ * Register authenticated feature routes for achievements, heatmap, streaks, personal records, community big-wins, and dashboard stats on the given Fastify instance.
+ *
+ * This attaches handlers that implement:
+ * - Achievement catalogue, personal earned list, leaderboard, and on-demand re-evaluation/awarding
+ * - Daily win/loss heatmap with optional platform/year filtering
+ * - Current and historical win/loss streaks
+ * - Personal records retrieval and full recomputation
+ * - Paginated public big-wins board, submission, user submissions, and patching visibility/display name
+ * - Aggregate user stats for dashboard
+ *
+ * Routes are protected by the `requireAuth` preValidation hook and rely on database queries, schema validation, and internal helpers (e.g., seeding, personal record refresh, achievement checks).
+ *
+ * @param app - Fastify instance to register the feature routes on
+ */
 
 export async function featuresRoutes(app: FastifyInstance): Promise<void> {
   app.addHook('preValidation', requireAuth)
@@ -534,8 +548,14 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
 // ─── Internal Helpers ─────────────────────────────────────────────────────────
 
 /**
- * Recompute all personal records for a user from raw session data.
- * Upserts into personal_records table.
+ * Recompute and upsert a user's personal records and streak metrics from raw session data.
+ *
+ * Recalculates aggregated personal record fields (biggest single win, win date, game,
+ * platform, highest balance, and last_computed_at) and upserts them into the personal_records
+ * table for the given user. Also recomputes and updates current and longest win/loss streaks
+ * derived from per-day session results.
+ *
+ * @param userId - The ID of the user whose personal records should be refreshed (UUID)
  */
 async function refreshPersonalRecords(userId: string): Promise<void> {
   await dbQuery(sql`
@@ -632,8 +652,10 @@ async function refreshPersonalRecords(userId: string): Promise<void> {
 }
 
 /**
- * Check all achievement conditions for a user and award any not yet earned.
- * Returns list of newly awarded achievement keys.
+ * Evaluates all achievement conditions for the given user and awards any achievements they meet.
+ *
+ * @param userId - UUID of the user whose achievements should be checked
+ * @returns An array of achievement keys that were newly awarded to the user
  */
 async function checkAndAwardAchievements(userId: string): Promise<string[]> {
   // Gather user stats needed for condition checking

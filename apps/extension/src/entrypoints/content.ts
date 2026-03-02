@@ -26,7 +26,11 @@ let currentSessionId: string | null = null
 let hudContainerId = 'sweepbot-hud-container'
 let activeFlowId: string | null = null
 
-// ── Initialization ─────────────────────────────────────────────────────────
+/**
+ * Initialize the content script: validate platform and authentication, start or end sessions based on page type, set up network interception and handlers, inject the HUD or affiliate content as appropriate, and register the runtime message listener for HUD and flow messages.
+ *
+ * Sets up transaction and balance handlers that update the RTP calculator and forward session updates to the background extension API when a session is active. Also initializes the HUD state if enabled and wires incoming ContentScriptMessage handling to `handleContentMessage`.
+ */
 
 async function init(): Promise<void> {
   if (!currentPlatform) {
@@ -94,7 +98,13 @@ async function init(): Promise<void> {
   })
 }
 
-// ── Session management ─────────────────────────────────────────────────────
+/**
+ * Starts a new gameplay session for the detected platform and persists its initial metadata.
+ *
+ * Initializes session state by creating a session with the background service, storing the returned session id, resetting RTP tracking, and persisting session metadata (start time, initial/current coin counters, transaction count, and last activity timestamp).
+ *
+ * No operation is performed if no platform is detected.
+ */
 
 async function startSession(): Promise<void> {
   if (!currentPlatform) return
@@ -120,6 +130,10 @@ async function startSession(): Promise<void> {
   }
 }
 
+/**
+ * Ends the current active session by requesting the backend to close it and clears local session state.
+ *
+ * If no session is active, this function does nothing. On success it clears the in-memory session identifier and removes persisted session data. Errors are caught and logged.
 async function endSession(): Promise<void> {
   if (!currentSessionId) return
 
@@ -133,12 +147,24 @@ async function endSession(): Promise<void> {
   }
 }
 
+/**
+ * Extracts a game identifier from the current page's URL path.
+ *
+ * @returns The game id found in the path (e.g., segment after `/game` or `/play`), or `null` if no game id is present.
+ */
 function extractGameId(): string | null {
   const match = window.location.pathname.match(/\/(games?|play)\/([a-z0-9_-]+)/i)
   return match ? match[2] : null
 }
 
-// ── HUD ────────────────────────────────────────────────────────────────────
+/**
+ * Injects the SweepBot HUD overlay into the current page.
+ *
+ * The HUD is appended to document.body using the global `hudContainerId` and includes
+ * elements for displaying spins, RTP, largest win, and volatility (classes:
+ * `sweepbot-spin-count`, `sweepbot-rtp`, `sweepbot-largest-win`, `sweepbot-volatility`).
+ * Adds a close button that removes the HUD and persists `hudEnabled = false` to storage.
+ */
 
 function injectHud(): void {
   const container = document.createElement('div')
@@ -196,6 +222,11 @@ function injectHud(): void {
   })
 }
 
+/**
+ * Update the in-page HUD with the latest session statistics.
+ *
+ * If the HUD container exists, updates its spin count, RTP (formatted to two decimal places with a trailing '%' and color-coded by value), largest win, and volatility (capitalized). If the HUD container is not present, the function is a no-op.
+ */
 function updateHudStats(): void {
   const stats = rtpCalculator.calculate()
   const container = document.getElementById(hudContainerId)
@@ -215,7 +246,11 @@ function updateHudStats(): void {
   if (volatility) volatility.textContent = stats.volatility.charAt(0).toUpperCase() + stats.volatility.slice(1)
 }
 
-// ── Affiliate ──────────────────────────────────────────────────────────────
+/**
+ * Injects the platform-specific affiliate banner into the page.
+ *
+ * If no platform is detected, this function is a no-op. Errors during injection are caught and logged to the console.
+ */
 
 async function injectAffiliateContent(): Promise<void> {
   if (!currentPlatform) return
@@ -226,7 +261,20 @@ async function injectAffiliateContent(): Promise<void> {
   }
 }
 
-// ── Message handler ────────────────────────────────────────────────────────
+/**
+ * Handle a content-script message and perform the requested action (HUD toggle, session stats, flow control).
+ *
+ * Supports:
+ * - `GET_SESSION_STATS`: returns current RTP/session statistics.
+ * - `HUD_TOGGLE`: injects or removes the HUD and persists the setting; returns an acknowledgement object.
+ * - `EXECUTE_FLOW`: starts the given flow in the background (prevents concurrent runs), reports completion to the background service worker, and returns an immediate acknowledgement.
+ * - `FLOW_CANCEL`: signals cancellation for the active flow via a window event and returns an acknowledgement.
+ *
+ * Side effects include injecting/removing HUD elements, starting background flow execution, dispatching a cancel event for flows, and sending `FLOW_COMPLETED` messages to the background.
+ *
+ * @param message - The content script message describing the action to perform and any associated payload.
+ * @returns The result of the handled message: session stats for `GET_SESSION_STATS`; acknowledgement objects such as `{ success: true }` or `{ success: false, error: string }` for HUD and flow actions; or `null` for unknown message types.
+ */
 
 async function handleContentMessage(message: ContentScriptMessage): Promise<unknown> {
   switch (message.type) {

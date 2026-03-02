@@ -39,6 +39,14 @@ const navItems = [
   { to: '/big-wins', label: 'Big Wins', icon: Trophy },
 ] as const
 
+/**
+ * Render the application's shell with responsive sidebar, topbar, and main content outlet.
+ *
+ * Renders a collapsible navigation sidebar (including tier badge, nav links, user controls),
+ * a header containing the menu toggle and NotificationPanel, and an Outlet for nested routes.
+ *
+ * @returns The root JSX element for the app layout containing the sidebar, header, and page content.
+ */
 export function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { user, tier, signOut } = useAuthStore()

@@ -22,7 +22,12 @@ import type {
 } from './types'
 import { PLATFORM_SELECTORS } from './interpreter'
 
-// ─── Public entry point ───────────────────────────────────────────────────────
+/**
+ * Execute a flow definition and produce its execution record.
+ *
+ * @param flow - The flow definition to run, including steps and execution limits
+ * @returns The completed FlowExecution containing id, timestamps, final status, step results, collected variables, and error information if the run failed
+ */
 
 export async function executeFlow(flow: FlowDefinition): Promise<FlowExecution> {
   const execution: FlowExecution = {
@@ -66,7 +71,12 @@ interface ExecutionContext {
   maxDurationMs: number
 }
 
-// ─── Step runner ──────────────────────────────────────────────────────────────
+/**
+ * Executes an ordered list of flow steps sequentially, respecting abort requests and the flow's overall time limit.
+ *
+ * @param steps - The steps to execute in order.
+ * @param ctx - Execution context carrying execution state, per-flow variables, abort flag, start time, and maxDurationMs; may be updated (e.g., `ctx.aborted` or `ctx.execution.status`) if execution is halted or the time limit is reached.
+ */
 
 async function runSteps(steps: FlowStep[], ctx: ExecutionContext): Promise<void> {
   for (const step of steps) {
@@ -80,6 +90,17 @@ async function runSteps(steps: FlowStep[], ctx: ExecutionContext): Promise<void>
   }
 }
 
+/**
+ * Execute a single flow step, record its result on the execution, and apply any side effects to the execution context.
+ *
+ * Performs the action described by `step` (for example navigation, clicking, waiting, reading/storing values,
+ * control-flow constructs, platform actions, notifications, or stopping), computes a StepResult with duration,
+ * success, optional value or error information, and appends it to `ctx.execution.stepResults`. Side effects may
+ * include updates to `ctx.variables`, `ctx.aborted`, and `ctx.execution.status`.
+ *
+ * @param step - The step to execute.
+ * @param ctx - The execution context carrying the current execution state, variables, abort flag, and limits.
+ */
 async function runStep(step: FlowStep, ctx: ExecutionContext): Promise<void> {
   const t0 = Date.now()
 
@@ -194,7 +215,14 @@ async function runStep(step: FlowStep, ctx: ExecutionContext): Promise<void> {
   ctx.execution.stepResults.push(result)
 }
 
-// ─── Loop executor ────────────────────────────────────────────────────────────
+/**
+ * Executes a loop step's body repeatedly while the loop condition evaluates to true, enforcing iteration and duration limits.
+ *
+ * Repeatedly evaluates the loop condition and runs the step's body until the condition becomes false, the iteration count reaches `step.maxIterations`, the elapsed loop time exceeds `step.maxDurationMs`, or `ctx.aborted` is set. If an iteration or duration limit is reached, sets `ctx.execution.status` to `'limit_reached'`. Executing the body may modify `ctx` (for example, variables and step results).
+ *
+ * @param step - LoopStep containing the condition, body, `maxIterations`, and `maxDurationMs`
+ * @param ctx - ExecutionContext used for running steps and preserving execution state
+ */
 
 async function runLoop(step: LoopStep, ctx: ExecutionContext): Promise<void> {
   const loopStart = Date.now()
@@ -220,7 +248,12 @@ async function runLoop(step: LoopStep, ctx: ExecutionContext): Promise<void> {
   }
 }
 
-// ─── If executor ──────────────────────────────────────────────────────────────
+/**
+ * Evaluates the step's condition and executes the appropriate branch of steps.
+ *
+ * @param step - An `IfStep` containing `condition`, `then` steps, and an optional `else` branch
+ * @param ctx - Execution context whose `variables` are used to evaluate the condition and which is passed to executed steps
+ */
 
 async function runIf(step: IfStep, ctx: ExecutionContext): Promise<void> {
   const conditionMet = evaluateCondition(step.condition, ctx.variables)
@@ -231,7 +264,18 @@ async function runIf(step: IfStep, ctx: ExecutionContext): Promise<void> {
   }
 }
 
-// ─── Condition evaluator ──────────────────────────────────────────────────────
+/**
+ * Evaluates a binary condition using the resolved left and right operands.
+ *
+ * @param condition - The condition containing `left`, `right`, and an `operator` to apply.
+ * @param variables - Variable map used to resolve operand references.
+ * @returns `true` if the comparison specified by `condition.operator` holds for the resolved operands, `false` otherwise.
+ *
+ * Comparison behavior:
+ * - `>`, `<`, `>=`, `<=` convert operands to numbers and perform numeric comparison.
+ * - `==` and `!=` use JavaScript loose equality between the resolved operand values.
+ * - Any other operator returns `false`.
+ */
 
 function evaluateCondition(
   condition: Condition,
@@ -254,6 +298,16 @@ function evaluateCondition(
   }
 }
 
+/**
+ * Resolve a ValueRef to a concrete value using the provided variables.
+ *
+ * @param ref - A value reference of kind `"variable"`, `"literal"`, or `"multiply"`.
+ *   - `"variable"`: looks up the name in `variables` and returns its value or `0` if not found.
+ *   - `"literal"`: returns the literal `value`.
+ *   - `"multiply"`: resolves the nested reference and returns its numeric value multiplied by `factor`.
+ * @param variables - Mapping of variable names to their current values used for resolving `"variable"` refs.
+ * @returns The resolved value: the variable value or `0` for missing variables, the literal value, or the numeric product for `"multiply"` refs.
+ */
 function resolveValue(
   ref: ValueRef,
   variables: Record<string, unknown>,
@@ -270,7 +324,12 @@ function resolveValue(
   }
 }
 
-// ─── DOM Primitives ───────────────────────────────────────────────────────────
+/**
+ * Attempts to locate an element (by CSS selector, visible text, or ARIA label), scrolls it into view, and clicks it within a timeout.
+ *
+ * @param step - Click step configuration; `selector`, `text`, or `ariaLabel` specify the target, and `timeout` overrides the default 8000 ms wait.
+ * @returns `true` if an element was found and clicked before the timeout elapsed, `false` otherwise.
+ */
 
 async function clickElement(step: ClickStep): Promise<boolean> {
   const timeout = step.timeout ?? 8000
@@ -308,6 +367,13 @@ async function clickElement(step: ClickStep): Promise<boolean> {
   return false
 }
 
+/**
+ * Waits until an element matching the provided CSS selector appears in the document or the timeout elapses.
+ *
+ * @param selector - CSS selector to query for
+ * @param timeout - Maximum wait time in milliseconds
+ * @returns `true` if an element matching `selector` was found before `timeout` expired, `false` otherwise.
+ */
 async function waitForElement(selector: string, timeout: number): Promise<boolean> {
   const deadline = Date.now() + timeout
   while (Date.now() < deadline) {
@@ -317,6 +383,14 @@ async function waitForElement(selector: string, timeout: number): Promise<boolea
   return false
 }
 
+/**
+ * Extracts a value from the first DOM element matching the step's selector.
+ *
+ * Resolves the value from the element using `step.attribute` (`'text'`/`'innerText'` reads textual content, `'value'` reads input value, otherwise reads the named attribute). If `step.parseAs` is `'number'`, non-numeric characters are removed and the remaining text is parsed as a float.
+ *
+ * @param step - ReadValue step configuration (must include `selector`, may include `attribute` and `parseAs`)
+ * @returns A numeric value when `parseAs` is `'number'` and parsing succeeds; a trimmed string when `parseAs` is not `'number'`; `null` if the element is not found or numeric parsing fails.
+ */
 async function readValue(
   step: ReadValueStep,
   _ctx: ExecutionContext,
@@ -341,7 +415,15 @@ async function readValue(
   return raw.trim()
 }
 
-// ─── Platform-specific actions ────────────────────────────────────────────────
+/**
+ * Ensures the page is signed into the specified platform, prompting the user if automatic sign-in is not possible.
+ *
+ * Sends a background `FLOW_NEED_INPUT` request to notify the extension UI if manual login is required, then waits up to 60 seconds for login indicators to appear.
+ *
+ * @param platform - Platform identifier used to select platform-specific selectors
+ * @param ctx - Execution context for the running flow
+ * @returns `true` if the page is confirmed signed in, `false` otherwise.
+ */
 
 async function performLogin(platform: string, ctx: ExecutionContext): Promise<boolean> {
   const selectors = {
@@ -396,6 +478,12 @@ async function performLogin(platform: string, ctx: ExecutionContext): Promise<bo
   return false
 }
 
+/**
+ * Attempts to claim the configured bonus for the given platform and report the amount when available.
+ *
+ * @param platform - Platform key used to select platform-specific DOM selectors
+ * @returns The parsed bonus amount if readable; `0` if the bonus was claimed but the amount could not be determined; `null` if the bonus button could not be found or clicked
+ */
 async function claimBonus(platform: string): Promise<number | null> {
   const selectors = {
     ...(PLATFORM_SELECTORS._default),
@@ -432,6 +520,13 @@ async function claimBonus(platform: string): Promise<number | null> {
   return 0 // bonus claimed but amount unknown
 }
 
+/**
+ * Finds a game element by name and opens it by clicking the element.
+ *
+ * @param platform - Platform identifier used to scope the lookup for the game
+ * @param game - Game name or slug; dashes in `game` are treated as spaces when searching
+ * @returns `true` if a matching element was found and clicked, `false` otherwise
+ */
 async function openGame(platform: string, game: string): Promise<boolean> {
   // Try to find the game card by name
   const gameSlug = game.replace(/-/g, ' ')
@@ -448,6 +543,13 @@ async function openGame(platform: string, game: string): Promise<boolean> {
   return false
 }
 
+/**
+ * Triggers a game spin on the current page (including inside iframes) and extracts the resulting win amount.
+ *
+ * @param step - Spin step configuration containing selector hints for the spin button and win amount
+ * @param ctx - Execution context used for shared variables and execution state
+ * @returns The parsed win amount if found, `0` if the spin completed but no numeric amount was parsed, or `null` if the spin button could not be found/clicked
+ */
 async function performSpin(step: SpinStep, ctx: ExecutionContext): Promise<number | null> {
   // Determine the platform from URL
   const hostname = window.location.hostname
@@ -487,7 +589,12 @@ async function performSpin(step: SpinStep, ctx: ExecutionContext): Promise<numbe
   return 0
 }
 
-// ─── DOM helpers ──────────────────────────────────────────────────────────────
+/**
+ * Finds the first element whose visible text exactly matches the provided string (case-insensitive).
+ *
+ * @param text - The text to match against an element's visible text content
+ * @returns The first matching Element, or `null` if none is found
+ */
 
 function findByText(text: string): Element | null {
   const lowerText = text.toLowerCase()
@@ -499,6 +606,13 @@ function findByText(text: string): Element | null {
   return null
 }
 
+/**
+ * Scrolls the given element into view centered in the viewport using smooth behavior.
+ *
+ * Errors thrown by the browser (for example due to unsupported options or restricted access) are ignored.
+ *
+ * @param el - The element to bring into view
+ */
 function scrollIntoView(el: Element): void {
   try {
     el.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -507,6 +621,12 @@ function scrollIntoView(el: Element): void {
   }
 }
 
+/**
+ * Search for the first element matching a CSS selector in the main document and same-origin iframes.
+ *
+ * @param selector - A CSS selector string to match elements
+ * @returns The first matching Element if found, `null` otherwise
+ */
 function findInFrameOrDoc(selector: string): Element | null {
   const doc = document.querySelector(selector)
   if (doc) return doc
@@ -527,6 +647,14 @@ function findInFrameOrDoc(selector: string): Element | null {
   return null
 }
 
+/**
+ * Locate an element in the document or same-origin iframes by CSS selector or exact visible text and click it.
+ *
+ * @param selector - CSS selector to locate the target element within the document or same-origin iframe documents
+ * @param text - Exact visible text to match (case-insensitive, trimmed) for candidate buttons/links/role="button" elements
+ * @param timeout - Maximum time in milliseconds to keep searching and retrying before giving up
+ * @returns `true` if an element was found and clicked, `false` otherwise
+ */
 async function clickInFrameOrDoc(
   selector?: string,
   text?: string,
@@ -575,12 +703,23 @@ async function clickInFrameOrDoc(
   return false
 }
 
-// ─── Utility ──────────────────────────────────────────────────────────────────
+/**
+ * Pauses execution for the specified duration.
+ *
+ * @param ms - Delay duration in milliseconds
+ * @returns A promise that resolves after the delay
+ */
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+/**
+ * Produce a concise, human-readable description for a flow step.
+ *
+ * @param step - The flow step to describe
+ * @returns A short description string summarizing the action represented by `step`, suitable for UI labels or logs
+ */
 function describeStep(step: FlowStep): string {
   switch (step.type) {
     case 'navigate': return `Navigate to ${step.url}`
@@ -601,6 +740,12 @@ function describeStep(step: FlowStep): string {
   }
 }
 
+/**
+ * Sends a message to the Chrome extension background script.
+ *
+ * @param message - An object with a `type` string identifying the message and an optional `payload` containing any data to send
+ * @returns The response from the background script
+ */
 async function sendToBackground(message: { type: string; payload?: unknown }): Promise<unknown> {
   return chrome.runtime.sendMessage(message)
 }

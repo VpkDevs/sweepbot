@@ -35,6 +35,15 @@ const UpdateProfileBody = z.object({
   bio: z.string().max(500).optional(),
 })
 
+/**
+ * Register authenticated user-related HTTP routes on the given Fastify instance.
+ *
+ * Registers endpoints for profile, settings, connected platforms, subscription/checkout,
+ * billing portal, notification preferences, tax summary, self-exclusion, and account deletion,
+ * and applies the `requireAuth` pre-validation hook so all routes require an authenticated user.
+ *
+ * @param app - The Fastify instance to attach the user routes to
+ */
 export async function userRoutes(app: FastifyInstance): Promise<void> {
   app.addHook('preValidation', requireAuth)
 

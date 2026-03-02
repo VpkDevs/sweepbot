@@ -20,7 +20,16 @@ import type { FlowDefinition, InterpretationResult } from '@/lib/flows/types'
 
 type TabView = 'record' | 'flows'
 
-// ─── Component ────────────────────────────────────────────────────────────────
+/**
+ * Render the FlowsTab UI for recording voice-driven automations and managing saved flows.
+ *
+ * Renders a two-tab interface: a Record tab that captures voice transcripts, shows live/interim transcript
+ * and an interpretation preview for saving as a flow; and a My Flows tab that lists saved flows with controls
+ * to activate/pause, run now, or delete. Handles recording lifecycle, interpretation, persistence, scheduling,
+ * and local UI state.
+ *
+ * @returns The React element for the FlowsTab component.
+ */
 
 export default function FlowsTab() {
   const [view, setView] = useState<TabView>('record')
@@ -44,6 +53,11 @@ export default function FlowsTab() {
     loadFlows()
   }, [])
 
+  /**
+   * Load saved flows from persistent storage into the component state.
+   *
+   * Fetches all flow definitions from storage and updates the local `flows` state via `setFlows`.
+   */
   async function loadFlows() {
     const all = await flowStorage.getAllFlows()
     setFlows(all)
@@ -327,7 +341,17 @@ export default function FlowsTab() {
   )
 }
 
-// ─── Interpretation Preview ───────────────────────────────────────────────────
+/**
+ * Render a preview card for an interpreted automation flow, showing its name, human-readable summary,
+ * confidence badge, warnings/ambiguities, trigger and step count, and actions to save or discard.
+ *
+ * @param result - InterpretationResult containing the interpreted `flow`, `confidence` (0–1), and any `warnings` or `ambiguities`
+ * @param onConfirm - Called when the user confirms saving/activating the interpreted flow
+ * @param onDiscard - Called when the user discards the interpretation
+ * @param saving - Whether a save operation is currently in progress (disables the confirm action)
+ * @param saved - Whether the interpretation has already been saved (changes confirm button state and label)
+ * @returns The rendered preview card as a JSX element
+ */
 
 function InterpretationPreview({
   result,
@@ -413,7 +437,19 @@ function InterpretationPreview({
   )
 }
 
-// ─── Flow Card ────────────────────────────────────────────────────────────────
+/**
+ * Render a card summarizing a flow and provides controls to expand details, toggle status, run immediately, or delete.
+ *
+ * Displays the flow name, trigger label (scheduled human-readable or "Manual"), status/run/delete controls, and an expandable summary with runs, last executed date, and step count.
+ *
+ * @param flow - The FlowDefinition to display
+ * @param expanded - Whether the card is shown in expanded state (reveals summary and metadata)
+ * @param onToggleExpand - Called when the card header is clicked to toggle expanded state
+ * @param onToggleStatus - Called with the flow when the user toggles between active and paused
+ * @param onRunNow - Called with the flow when the user requests an immediate run
+ * @param onDelete - Called with the flow id when the user confirms deletion
+ * @returns The rendered flow card element
+ */
 
 function FlowCard({
   flow,
@@ -510,7 +546,12 @@ function FlowCard({
   )
 }
 
-// ─── Confidence Badge ─────────────────────────────────────────────────────────
+/**
+ * Renders a compact confidence badge showing a percentage and color-coded severity.
+ *
+ * @param pct - Confidence percentage from 0 to 100
+ * @returns A small styled span element displaying "`{pct}% confidence`" with green styling for >= 80, yellow for >= 60, and red for < 60
+ */
 
 function ConfidenceBadge({ pct }: { pct: number }) {
   const color =

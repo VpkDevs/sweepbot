@@ -54,7 +54,16 @@ const TYPE_COLOR: Record<NotificationType, string> = {
   system:      'text-zinc-400',
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
+/**
+ * Renders a notifications trigger and dropdown that shows recent notifications and related actions.
+ *
+ * The component displays a bell button with an unread count badge, polls the unread count periodically,
+ * loads the latest notifications when opened, and exposes actions to mark individual notifications as read,
+ * mark all as read, and dismiss notifications. The dropdown closes on outside clicks and navigates to a
+ * notification's href when a notification with a link is clicked.
+ *
+ * @returns A React element containing the notifications trigger and dropdown panel
+ */
 
 export function NotificationPanel() {
   const [open, setOpen] = useState(false)
@@ -64,6 +73,11 @@ export function NotificationPanel() {
   // Close on outside click
   useEffect(() => {
     if (!open) return
+    /**
+     * Closes the notification panel when a mouse event originates outside the panel element.
+     *
+     * @param e - The mouse event used to determine whether the click occurred outside the panel
+     */
     function handleClick(e: MouseEvent) {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
         setOpen(false)
@@ -110,7 +124,11 @@ export function NotificationPanel() {
     onSuccess: invalidate,
   })
 
-  // ── Handlers ──────────────────────────────────────────────────────────────────
+  /**
+   * Handle user click on a notification: mark it read if unread, then navigate to its target and close the panel when a link is present.
+   *
+   * @param n - The notification that was clicked
+   */
 
   function handleNotificationClick(n: Notification) {
     if (!n.is_read) markRead.mutate(n.id)

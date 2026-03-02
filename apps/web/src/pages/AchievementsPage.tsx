@@ -40,7 +40,13 @@ const TIER_STYLES = {
   platinum: { bg: 'bg-violet-900/20', border: 'border-violet-700/40', badge: 'bg-violet-900/60 text-violet-300', label: 'Platinum' },
 } as const
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+/**
+ * Renders the Achievements page with category filtering, tier summaries, and a refresh action.
+ *
+ * Displays earned counts, total points, a per-tier summary, category tabs, and a responsive grid of achievement cards.
+ *
+ * @returns The page's JSX element that presents the achievements UI, including controls for refreshing and filtering.
+ */
 
 export function AchievementsPage() {
   const [activeCategory, setActiveCategory] = useState('all')
@@ -137,7 +143,12 @@ export function AchievementsPage() {
   )
 }
 
-// ── Achievement Card ───────────────────────────────────────────────────────────
+/**
+ * Render a card that displays an achievement's tier, icon, name, description, progress, and footer metadata.
+ *
+ * @param achievement - The achievement to display; its `tier`, `is_secret`, `earned_at`, `progress`, `points`, `icon`, `name`, and `description` fields determine the card's appearance and content.
+ * @returns A React element representing the styled achievement card.
+ */
 
 function AchievementCard({ achievement: a }: { achievement: Achievement }) {
   const isEarned = a.earned_at !== null
@@ -210,7 +221,11 @@ function AchievementCard({ achievement: a }: { achievement: Achievement }) {
   )
 }
 
-// ── Skeleton ───────────────────────────────────────────────────────────────────
+/**
+ * Visual skeleton placeholder displayed while achievements data is loading.
+ *
+ * @returns The skeleton UI element containing placeholder header, category chips, and achievement card placeholders
+ */
 
 function AchievementsSkeleton() {
   return (

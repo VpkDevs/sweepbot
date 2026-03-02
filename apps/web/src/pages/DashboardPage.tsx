@@ -21,6 +21,16 @@ import { api } from '../lib/api'
 import { formatSC, formatRTP, timeAgo, cn } from '../lib/utils'
 import { StreakWidget } from '../components/ui/StreakWidget'
 
+/**
+ * Render the Command Center dashboard showing portfolio analytics, a 7-day activity chart,
+ * jackpot statistics, and a platform performance table.
+ *
+ * While portfolio data is loading, renders DashboardSkeleton. Data for analytics and
+ * jackpots is fetched internally and used to populate stat cards, the activity chart,
+ * the Jackpot Tracker panel, and the platform breakdown table.
+ *
+ * @returns The React element containing the Command Center dashboard UI.
+ */
 export function DashboardPage() {
   const { data: portfolio, isLoading } = useQuery({
     queryKey: ['analytics', 'portfolio'],

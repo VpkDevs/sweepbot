@@ -4,7 +4,6 @@
  */
 
 import type { FastifyInstance, FastifyRequest } from 'fastify'
-import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { sql } from 'drizzle-orm'
@@ -45,7 +44,15 @@ const PaginationSchema = z.object({
 
 // ============================================================================
 // ROUTE HANDLERS
-// ============================================================================
+/**
+ * Registers the Flows API routes onto a Fastify instance.
+ *
+ * Registers authenticated endpoints under /flows for interpreting natural language into flows,
+ * creating, listing, retrieving, updating, executing, viewing executions, conversing, and deleting flows.
+ *
+ * @param app - Fastify instance to which the routes will be attached; a preValidation authentication
+ *   hook is applied to all registered routes.
+ */
 
 export async function flowRoutes(app: FastifyInstance): Promise<void> {
   // ── Auth guard on all routes ─────────────────────────────────────────────────
@@ -166,7 +173,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       try {
         const validated = FlowCreateSchema.parse(request.body)
-        const flowId = randomUUID()
+        const flowId = `flow_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
         // Insert flow into database
         const { rows } = await unsafeQuery(

@@ -6,6 +6,16 @@ import FlowsTab from './FlowsTab'
 
 type ActiveTab = 'hud' | 'flows'
 
+/**
+ * Render the extension popup UI and manage authentication state, HUD visibility, session data, and tab navigation.
+ *
+ * This component initializes and persists UI state (authentication, `hudEnabled`, active tab), queries the active
+ * tab for session statistics, and communicates with the background script and content scripts via `chrome.runtime`
+ * and `chrome.tabs` messages to toggle the HUD and clear authentication. It also provides the HUD and Flows views,
+ * sign-in/sign-up flows when unauthenticated, and controls for opening the dashboard and settings.
+ *
+ * @returns The rendered popup UI element
+ */
 export default function PopupApp() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('hud')
   const [isAuthenticated, setIsAuthenticated] = useState(false)

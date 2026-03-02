@@ -19,6 +19,12 @@ type HeatmapDay = {
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
+/**
+ * Selects a Tailwind CSS background + hover class string representing a day's net P&L category.
+ *
+ * @param net - The day's net profit/loss (P&L). `undefined` indicates no data for the day.
+ * @returns A CSS class string containing background and hover classes corresponding to the net category (gain, loss, neutral, or no data).
+ */
 function getCellColor(net: number | undefined): string {
   if (net === undefined) return 'bg-zinc-800 hover:bg-zinc-700'
   if (net > 500)  return 'bg-emerald-500 hover:bg-emerald-400'
@@ -30,6 +36,12 @@ function getCellColor(net: number | undefined): string {
   return 'bg-zinc-600 hover:bg-zinc-500' // played, net 0
 }
 
+/**
+ * Builds a calendar grid of weeks that covers the specified year.
+ *
+ * @param year - The target year (e.g., 2026) to generate the calendar for
+ * @returns An array of weeks where each week is an array of seven Date objects; weeks start on Sunday and the grid begins on the Sunday on or before January 1 and extends until at least the end of December of `year` (dates outside the target year are included to fill full weeks)
+ */
 function buildCalendarGrid(year: number): Date[][] {
   const jan1 = new Date(year, 0, 1)
   const start = new Date(jan1)
@@ -54,7 +66,13 @@ function buildCalendarGrid(year: number): Date[][] {
   return weeks
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+/**
+ * Render an interactive yearly activity heatmap displaying daily P&L, session counts, and wagered amounts.
+ *
+ * Shows year navigation, aggregated stats (sessions, win days, loss days, total net), a calendar grid with color-coded day cells based on net P&L, a hover detail panel for individual days, and a legend. Prevents navigating to future years and hides cells outside the selected year or in the future.
+ *
+ * @returns The JSX element for the Heatmap page.
+ */
 
 export function HeatmapPage() {
   const currentYear = new Date().getFullYear()
@@ -237,7 +255,14 @@ export function HeatmapPage() {
   )
 }
 
-// ── Sub-components ─────────────────────────────────────────────────────────────
+/**
+ * Renders a compact stat pill showing a muted label and an emphasized value.
+ *
+ * @param label - The small, muted descriptor text for the stat
+ * @param value - The emphasized stat value shown next to the label
+ * @param color - Optional CSS class applied to the value text (defaults to `text-white`)
+ * @returns A JSX element containing the styled stat pill
+ */
 
 function StatPill({
   label,

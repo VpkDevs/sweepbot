@@ -335,7 +335,13 @@ const FEATURE_PILLARS = [
   { icon: Users, label: 'Community', description: 'Crowdsourced wisdom' },
 ]
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+/**
+ * Renders the pricing page with plan selection, billing-cycle toggle, lifetime offer, feature pillars, FAQs, and CTAs.
+ *
+ * The component reads the current subscription tier, shows plan cards for available tiers, and initiates checkout or redirects to sign-up when a plan is selected. It also displays a lifetime purchase option and reflects loading and current-plan states in the UI.
+ *
+ * @returns The pricing page UI as a JSX element.
+ */
 
 export function PricingPage() {
   const [cycle, setCycle] = useState<BillingCycle>('annual')
@@ -360,6 +366,13 @@ export function PricingPage() {
     onSettled: () => setLoadingTier(null),
   })
 
+  /**
+   * Initiates selection of a subscription plan, redirecting unauthenticated users to sign-up.
+   *
+   * If no authenticated user is present, navigates the browser to "/sign-up". If `tier` is `'free'`, no action is taken. For other tiers, starts the checkout process for the given plan.
+   *
+   * @param tier - The plan tier to select
+   */
   function handleSelectPlan(tier: PlanTier) {
     if (!user) {
       window.location.href = '/sign-up'

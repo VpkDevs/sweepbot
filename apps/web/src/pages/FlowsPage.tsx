@@ -10,6 +10,14 @@ import { Plus, Play, Pause, Trash2, Share2 } from 'lucide-react'
 import { api } from '../lib/api'
 import { useAuthStore } from '../stores/auth'
 
+/**
+ * Page component that displays and manages the current user's automation flows.
+ *
+ * Renders a header with creation control, filter tabs, a list of flows with status and metadata,
+ * and per-flow actions (view, activate, pause, share, delete). Handles navigation and status updates.
+ *
+ * @returns The React element for the Flows page UI
+ */
 export function FlowsPage() {
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
