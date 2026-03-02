@@ -318,10 +318,10 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
 
     const row = record.rows[0] as Record<string, unknown>
 
-    // Add community percentile context
+    // Add community percentile context: calculate percentile rank across ALL users
     const percentiles = await dbQuery(sql`
       SELECT
-        PERCENT_RANK() OVER (ORDER BY biggest_single_win ASC) AS win_percentile
+        ROUND((PERCENT_RANK() OVER (ORDER BY biggest_single_win ASC) * 100)::numeric, 2) AS win_percentile
       FROM personal_records
       WHERE user_id = ${userId}
     `)
@@ -330,7 +330,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
       success: true,
       data: {
         ...row,
-        percentiles: percentiles.rows[0] ?? {},
+        percentiles: percentiles.rows[0] ?? { win_percentile: null },
       },
     })
   })
