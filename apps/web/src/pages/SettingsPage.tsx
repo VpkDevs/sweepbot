@@ -371,7 +371,7 @@ function SubscriptionTab() {
       {sub?.['tier'] !== 'free' && sub?.['stripe_subscription_id'] && (
         <Section title="Billing Portal" description="Manage payment methods, view invoices, and cancel.">
           <a
-            href="/api/user/billing-portal"
+            href="/api/v1/user/billing-portal"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium rounded-lg transition-colors"
