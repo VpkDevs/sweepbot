@@ -4,6 +4,7 @@
  */
 
 import type { FastifyInstance, FastifyRequest } from 'fastify'
+import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { sql } from 'drizzle-orm'
@@ -165,7 +166,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       try {
         const validated = FlowCreateSchema.parse(request.body)
-        const flowId = `flow_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        const flowId = randomUUID()
 
         // Insert flow into database
         const { rows } = await unsafeQuery(
