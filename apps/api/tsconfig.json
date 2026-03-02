@@ -2,13 +2,13 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
     "lib": ["ES2022"],
     "target": "ES2022",
     "paths": {
       "@sweepbot/types": ["../../packages/types/src/index.ts"],
-      "@sweepbot/utils": ["../../packages/utils/src/index.ts"]
+      "@sweepbot/utils": ["../../packages/utils/src/index.ts"],
+      "@sweepbot/flows": ["../../packages/flows/src/index.ts"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "../../packages/types/src", "../../packages/utils/src", "../../packages/flows/src"]
 }
