@@ -214,7 +214,7 @@ export class FlowInterpreter {
     for (const match of conditionMatches) {
       return {
         operator: match[1],
-        right: match[2].trim(),
+        right: (match[2] ?? '').trim(),
       }
     }
 
@@ -275,7 +275,7 @@ export class FlowInterpreter {
    */
   private extractBetAmount(entities: EntityMap): string | number | null {
     if (entities.amounts.length > 0) {
-      const amount = entities.amounts[0]
+      const amount = entities.amounts[0]!
       if (amount.type === 'absolute') {
         return amount.value || null
       }
@@ -316,7 +316,7 @@ export class FlowInterpreter {
    */
   private extractTrigger(entities: EntityMap): FlowTrigger | null {
     if (entities.schedules.length > 0) {
-      const schedule = entities.schedules[0]
+      const schedule = entities.schedules[0]!
       return {
         type: 'scheduled',
         cron: schedule.cron,
@@ -456,15 +456,15 @@ export class FlowInterpreter {
    */
   private generateFlowName(entities: EntityMap): string {
     if (entities.platforms.length > 0) {
-      const platform = entities.platforms[0]
+      const platform = entities.platforms[0]!
       if (entities.games.length > 0) {
-        return `${platform.name} - ${entities.games[0].name}`
+        return `${platform.name} - ${entities.games[0]!.name}`
       }
       return `${platform.name} Routine`
     }
 
     if (entities.actions.length > 0) {
-      return `${entities.actions[0].type} Automation`
+      return `${entities.actions[0]!.type} Automation`
     }
 
     return 'Untitled Flow'

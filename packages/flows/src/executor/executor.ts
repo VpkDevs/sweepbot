@@ -172,7 +172,7 @@ export class FlowExecutor {
         timestamp: new Date(),
         nodeId: node.id,
         type: 'action_complete',
-        details: result,
+        details: typeof result === 'object' ? (result as Record<string, unknown>) : { result },
       })
 
       // Execute next node

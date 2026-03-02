@@ -12,6 +12,7 @@ let cronSchedule: any
 
 async function loadCron() {
   if (!CronJob) {
+    // @ts-ignore - node-cron doesn't have published types
     const cron = await import('node-cron')
     CronJob = cron.schedule
     cronSchedule = cron

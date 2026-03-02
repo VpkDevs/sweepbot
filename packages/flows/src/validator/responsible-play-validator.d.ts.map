@@ -1,0 +1,1 @@
+{"version":3,"file":"responsible-play-validator.d.ts","sourceRoot":"","sources":["responsible-play-validator.ts"],"names":[],"mappings":"AAAA;;;;GAIG;AAEH,OAAO,KAAK,EAAE,QAAQ,EAAE,wBAAwB,EAAE,MAAM,UAAU,CAAA;AAElE,qBAAa,wBAAwB;IACnC,QAAQ,CAAC,QAAQ,EAAE,QAAQ,EAAE,MAAM,EAAE,MAAM,GAAG,wBAAwB,EAAE;CAqBzE"}

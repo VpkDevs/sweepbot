@@ -162,10 +162,10 @@ export class EntityRecognizer {
         conditions.push({
           text: match[0],
           type: 'comparison',
-          left: match[1],
-          operator: match[2],
-          right: match[3],
-        })
+          left: match[1] ?? undefined,
+          operator: match[2] ?? undefined,
+          right: match[3] ?? undefined,
+        } as ConditionEntity)
       }
     }
 
@@ -184,7 +184,7 @@ export class EntityRecognizer {
     if (/every day|daily/i.test(text)) {
       const timeMatch = text.match(/at\s+(\d{1,2}):(\d{2})\s*(am|pm)?/i)
       if (timeMatch) {
-        const hour = this.normalizeHour(parseInt(timeMatch[1]), timeMatch[3])
+        const hour = this.normalizeHour(parseInt(timeMatch[1]!), timeMatch[3])
         const cron = `0 ${hour} * * *` // daily at specific time
         schedules.push({
           text: text.substring(0, text.indexOf('at') + 20),
