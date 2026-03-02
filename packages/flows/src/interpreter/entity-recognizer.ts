@@ -38,16 +38,16 @@ export class EntityRecognizer {
   ])
 
   private gameAliases: Map<string, string> = new Map([
-    ['sweet bo', 'sweet-bonanza'],
-    ['sweet bonanza', 'sweet-bonanza'],
-    ['sb', 'sweet-bonanza'],
-    ['gates', 'gates-of-olympus'],
-    ['gates of olympus', 'gates-of-olympus'],
-    ['olympus', 'gates-of-olympus'],
-    ['sugar rush', 'sugar-rush'],
-    ['sr', 'sugar-rush'],
-    ['wildberries', 'wild-berries'],
-    ['wild berries', 'wild-berries'],
+    ['sweet bo', 'sweet_bonanza'],
+    ['sweet bonanza', 'sweet_bonanza'],
+    ['sb', 'sweet_bonanza'],
+    ['gates', 'gates_of_olympus'],
+    ['gates of olympus', 'gates_of_olympus'],
+    ['olympus', 'gates_of_olympus'],
+    ['sugar rush', 'sugar_rush'],
+    ['sr', 'sugar_rush'],
+    ['wildberries', 'wild_berries'],
+    ['wild berries', 'wild_berries'],
   ])
 
   /**
@@ -174,11 +174,22 @@ export class EntityRecognizer {
 
   /**
    * Extract schedules from text
-   * Parses "every day at 3:30", "weekdays", "once a week", etc.
+   * Parses "every day at 3:30", "weekdays", "once a week", "every hour", etc.
    */
   extractSchedules(text: string): ScheduleEntity[] {
     const schedules: ScheduleEntity[] = []
     const lowerText = text.toLowerCase()
+
+    // Hourly patterns
+    if (/every hour|hourly/i.test(text)) {
+      schedules.push({
+        text: /every hour/i.test(text) ? 'every hour' : 'hourly',
+        cron: '0 * * * *',
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        frequency: 'custom',
+      })
+      return schedules
+    }
 
     // Daily patterns
     if (/every day|daily/i.test(text)) {
@@ -199,7 +210,7 @@ export class EntityRecognizer {
     const weeklyMatch = text.match(/every\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i)
     if (weeklyMatch) {
       const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
-      const day = dayNames.indexOf(weeklyMatch[1].toLowerCase())
+      const day = dayNames.indexOf((weeklyMatch[1] ?? '').toLowerCase())
       schedules.push({
         text: weeklyMatch[0],
         cron: `0 9 * * ${day}`,
@@ -224,7 +235,7 @@ export class EntityRecognizer {
       amounts.push({
         text: match[0],
         type: 'absolute',
-        value: parseFloat(match[1]),
+        value: match[1] ? parseFloat(match[1]) : 0,
       })
     }
 
@@ -234,8 +245,8 @@ export class EntityRecognizer {
       amounts.push({
         text: match[0],
         type: 'relative',
-        multiplier: parseInt(match[1]),
-        reference: match[2].toLowerCase(),
+        multiplier: match[1] ? parseInt(match[1]) : 1,
+        reference: (match[2] ?? '').toLowerCase(),
       })
     }
 
@@ -269,11 +280,11 @@ export class EntityRecognizer {
     // Time durations
     const timeMatches = text.matchAll(/(\d+)\s+(minutes?|hours?)/gi)
     for (const match of timeMatches) {
-      const unit = match[2].toLowerCase().startsWith('m') ? 'minutes' : 'hours'
+      const unit = (match[2] ?? 'hours').toLowerCase().startsWith('m') ? 'minutes' : 'hours'
       durations.push({
         text: match[0],
         type: 'time',
-        value: parseInt(match[1]),
+        value: match[1] ? parseInt(match[1]) : 0,
         unit,
       })
     }
@@ -281,11 +292,11 @@ export class EntityRecognizer {
     // Spin/session durations
     const spinMatches = text.matchAll(/(\d+)\s+(spins?|sessions?)/gi)
     for (const match of spinMatches) {
-      const unit = match[2].toLowerCase().startsWith('s') && match[2].length < 8 ? 'spins' : 'sessions'
+      const unit = (match[2] ?? 'sessions').toLowerCase().startsWith('s') && (match[2] ?? 'sessions').length < 8 ? 'spins' : 'sessions'
       durations.push({
         text: match[0],
         type: 'iteration',
-        value: parseInt(match[1]),
+        value: match[1] ? parseInt(match[1]) : 0,
         unit,
       })
     }
@@ -318,12 +329,14 @@ export class EntityRecognizer {
     const varMatches = text.matchAll(/\$([A-Z_]+)/g)
 
     for (const match of varMatches) {
-      const varName = match[1]
-      variables.push({
-        name: varName,
-        source: 'action_result',
-        type: 'number',
-      })
+      const varName = match[1] ?? ''
+      if (varName) {
+        variables.push({
+          name: varName,
+          source: 'action_result',
+          type: 'number',
+        })
+      }
     }
 
     return variables

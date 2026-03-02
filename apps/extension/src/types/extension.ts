@@ -12,6 +12,7 @@ export interface ExtensionMessage<T = unknown> {
 // ── Messages sent TO content scripts ────────────────────────────────────────
 
 export type ContentScriptMessage =
+  | { type: 'PAGE_LOADED'; payload?: undefined }
   | { type: 'GET_SESSION_STATS'; payload?: undefined }
   | { type: 'START_SESSION'; payload: { platformSlug: string; gameId: string } }
   | { type: 'END_SESSION'; payload?: undefined }

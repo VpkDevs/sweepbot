@@ -231,6 +231,13 @@ async function injectAffiliateContent(): Promise<void> {
 async function handleContentMessage(message: ContentScriptMessage): Promise<unknown> {
   switch (message.type) {
 
+    case 'PAGE_LOADED': {
+      // Page load notification from background service worker
+      // Used to trigger initialization if content script didn't auto-init
+      console.log('[Content] PAGE_LOADED notification received')
+      return { success: true }
+    }
+
     case 'GET_SESSION_STATS': {
       return rtpCalculator.calculate()
     }

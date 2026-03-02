@@ -129,7 +129,7 @@ export async function createNotification(opts: {
       ${opts.body},
       ${opts.icon ?? null},
       ${opts.href ?? null},
-      ${opts.data ? JSON.stringify(opts.data) : null}
+      ${opts.data ? sql.raw(`'${JSON.stringify(opts.data)}'::jsonb`) : null}
     )
   `)
 }
