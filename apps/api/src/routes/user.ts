@@ -440,9 +440,8 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
     // Look up or create Stripe customer
     const profileResult = await dbQuery(sql`
-      SELECT p.email, p.display_name, s.stripe_customer_id
+      SELECT p.email, p.display_name, p.stripe_customer_id
       FROM profiles p
-      LEFT JOIN subscriptions s ON s.user_id = p.id
       WHERE p.id = ${userId}
       LIMIT 1
     `)
@@ -458,8 +457,8 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       customerId = customer.id
 
       await dbQuery(sql`
-        UPDATE subscriptions SET stripe_customer_id = ${customerId}
-        WHERE user_id = ${userId}
+        UPDATE profiles SET stripe_customer_id = ${customerId}
+        WHERE id = ${userId}
       `)
     }
 
