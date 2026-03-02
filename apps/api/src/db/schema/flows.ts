@@ -35,7 +35,7 @@ export const flows = pgTable('flows', {
 
 export const flowExecutions = pgTable('flow_executions', {
   id: uuid('id').primaryKey().defaultRandom(),
-  flowId: uuid('flow_id').notNull(),
+  flowId: uuid('flow_id').notNull().references(() => flows.id, { onDelete: 'cascade' }),
   userId: uuid('user_id').notNull(),
   status: varchar('status', { length: 30 }).notNull(), // running, completed, failed, stopped_by_guardrail
   startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
@@ -55,7 +55,7 @@ export const flowExecutions = pgTable('flow_executions', {
 export const flowConversations = pgTable('flow_conversations', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull(),
-  flowId: uuid('flow_id'), // NULL while building
+  flowId: uuid('flow_id').references(() => flows.id, { onDelete: 'set null' }), // NULL while building
   turns: jsonb('turns').notNull(), // ConversationTurn[]
   status: varchar('status', { length: 20 }).notNull(), // building, confirming, modifying, complete
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),

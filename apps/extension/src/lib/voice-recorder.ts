@@ -40,8 +40,13 @@ export class VoiceRecorder {
   /**
    * Start recording. Returns a promise that resolves with the final transcript
    * when the user stops speaking (or rejects on error / permission denied).
+   * Rejects if already recording to prevent concurrent instances.
    */
   record(): Promise<string> {
+    if (this.recognition) {
+      return Promise.reject(new Error('Already recording. Call stop() first.'))
+    }
+
     if (!VoiceRecorder.isSupported()) {
       return Promise.reject(new Error('SpeechRecognition is not supported in this browser.'))
     }
@@ -135,6 +140,7 @@ export class VoiceRecorder {
       clearTimeout(this.silenceTimer)
       this.silenceTimer = null
     }
+    this.recognition = null
     this.resolveRef = null
     this.rejectRef = null
   }
