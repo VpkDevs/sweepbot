@@ -5,7 +5,6 @@
  */
 
 import type { PlatformConfig } from './platforms'
-import { storage } from './storage'
 
 export interface InterceptedTransaction {
   platformSlug: string
@@ -58,12 +57,11 @@ class NetworkInterceptor {
     if (!this.platform || this.originalFetch) return
 
     this.originalFetch = window.fetch
-    const platform = this.platform
     const self = this
 
-    window.fetch = function (...args: Parameters<typeof fetch>) {
+    window.fetch = function (this: typeof globalThis, ...args: Parameters<typeof fetch>) {
       const [resource] = args
-      const url = typeof resource === 'string' ? resource : resource.url
+      const url = typeof resource === 'string' ? resource : (resource as Request).url
 
       return self.originalFetch!.apply(this, args).then((response) => {
         // Clone response for parsing without consuming the stream
@@ -87,7 +85,6 @@ class NetworkInterceptor {
     if (!this.platform || this.originalXhr) return
 
     this.originalXhr = XMLHttpRequest
-    const platform = this.platform
     const self = this
 
     const originalOpen = XMLHttpRequest.prototype.open
@@ -103,7 +100,7 @@ class NetworkInterceptor {
       const originalOnReadyStateChange = this.onreadystatechange
       const url = (this as any)._sweepbot_url
 
-      this.onreadystatechange = function () {
+      this.onreadystatechange = function (ev: Event) {
         if (this.readyState === 4) {
           try {
             const data = JSON.parse(this.responseText)
@@ -113,7 +110,7 @@ class NetworkInterceptor {
           }
         }
         if (originalOnReadyStateChange) {
-          originalOnReadyStateChange.call(this)
+          originalOnReadyStateChange.call(this, ev)
         }
       }
 

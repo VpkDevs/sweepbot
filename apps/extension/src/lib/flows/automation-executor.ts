@@ -16,7 +16,6 @@ import type {
   LoopStep,
   IfStep,
   ClickStep,
-  WaitForStep,
   ReadValueStep,
   SpinStep,
 } from './types'
@@ -425,7 +424,7 @@ async function readValue(
  * @returns `true` if the page is confirmed signed in, `false` otherwise.
  */
 
-async function performLogin(platform: string, ctx: ExecutionContext): Promise<boolean> {
+async function performLogin(platform: string, _ctx: ExecutionContext): Promise<boolean> {
   const selectors = {
     ...(PLATFORM_SELECTORS._default),
     ...(PLATFORM_SELECTORS[platform] ?? {}),
@@ -523,11 +522,11 @@ async function claimBonus(platform: string): Promise<number | null> {
 /**
  * Finds a game element by name and opens it by clicking the element.
  *
- * @param platform - Platform identifier used to scope the lookup for the game
+ * @param _platform - Platform identifier used to scope the lookup for the game
  * @param game - Game name or slug; dashes in `game` are treated as spaces when searching
  * @returns `true` if a matching element was found and clicked, `false` otherwise
  */
-async function openGame(platform: string, game: string): Promise<boolean> {
+async function openGame(_platform: string, game: string): Promise<boolean> {
   // Try to find the game card by name
   const gameSlug = game.replace(/-/g, ' ')
   const el = findByText(gameSlug)
@@ -546,11 +545,11 @@ async function openGame(platform: string, game: string): Promise<boolean> {
 /**
  * Triggers a game spin on the current page (including inside iframes) and extracts the resulting win amount.
  *
- * @param step - Spin step configuration containing selector hints for the spin button and win amount
- * @param ctx - Execution context used for shared variables and execution state
+ * @param _step - Spin step configuration containing selector hints for the spin button and win amount
+ * @param _ctx - Execution context used for shared variables and execution state
  * @returns The parsed win amount if found, `0` if the spin completed but no numeric amount was parsed, or `null` if the spin button could not be found/clicked
  */
-async function performSpin(step: SpinStep, ctx: ExecutionContext): Promise<number | null> {
+async function performSpin(_step: SpinStep, _ctx: ExecutionContext): Promise<number | null> {
   // Determine the platform from URL
   const hostname = window.location.hostname
   const platform = Object.keys(PLATFORM_SELECTORS).find(

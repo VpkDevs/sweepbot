@@ -7,7 +7,7 @@ import { z } from 'zod'
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  API_PORT: z.coerce.number().int().default(3001),
+  API_PORT: z.coerce.number().int().default(8080),
   API_HOST: z.string().default('0.0.0.0'),
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),
 
@@ -25,7 +25,7 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32),
 
   // CORS
-  CORS_ORIGINS: z.string().default('http://localhost:5173'),
+  CORS_ORIGINS: z.string().default('http://localhost:3000'),
 
   // Stripe
   STRIPE_SECRET_KEY: z.string().min(1),

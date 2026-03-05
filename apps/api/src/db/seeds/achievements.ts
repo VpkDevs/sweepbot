@@ -311,8 +311,8 @@ export async function seedAchievements(): Promise<void> {
  * @returns `true` if the achievements table contains no rows, `false` otherwise.
  */
 export async function achievementsEmpty(): Promise<boolean> {
-  const result = await query<{ count: number }>(sql`
+  const { rows } = await query<{ count: number }>(sql`
     SELECT COUNT(*)::int AS count FROM achievements
   `)
-  return (result[0]?.count ?? 0) === 0
+  return (rows[0]?.count ?? 0) === 0
 }

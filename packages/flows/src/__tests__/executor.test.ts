@@ -406,7 +406,7 @@ describe('FlowExecutor', () => {
         onFailure: 'skip',
       }
 
-      expect(action.parameters.storeAs).toBe('BONUS')
+      expect(action.parameters['storeAs']).toBe('BONUS')
     })
 
     it('should reference stored variables in conditions', async () => {

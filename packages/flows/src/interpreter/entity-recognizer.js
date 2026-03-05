@@ -23,16 +23,16 @@ export class EntityRecognizer {
         ['fortunecoins', 'fortunecoins'],
     ]);
     gameAliases = new Map([
-        ['sweet bo', 'sweet-bonanza'],
-        ['sweet bonanza', 'sweet-bonanza'],
-        ['sb', 'sweet-bonanza'],
-        ['gates', 'gates-of-olympus'],
-        ['gates of olympus', 'gates-of-olympus'],
-        ['olympus', 'gates-of-olympus'],
-        ['sugar rush', 'sugar-rush'],
-        ['sr', 'sugar-rush'],
-        ['wildberries', 'wild-berries'],
-        ['wild berries', 'wild-berries'],
+        ['sweet bo', 'sweet_bonanza'],
+        ['sweet bonanza', 'sweet_bonanza'],
+        ['sb', 'sweet_bonanza'],
+        ['gates', 'gates_of_olympus'],
+        ['gates of olympus', 'gates_of_olympus'],
+        ['olympus', 'gates_of_olympus'],
+        ['sugar rush', 'sugar_rush'],
+        ['sr', 'sugar_rush'],
+        ['wildberries', 'wild_berries'],
+        ['wild berries', 'wild_berries'],
     ]);
     /**
      * Extract platforms from text
@@ -204,15 +204,15 @@ export class EntityRecognizer {
                 reference: match[2].toLowerCase(),
             });
         }
-        // Keywords: "minimum bet", "max bet", "half my balance"
-        if (/minimum\s+bet/i.test(text)) {
+        // Keywords: "minimum bet", "max bet", "half my balance" (allow some reordering)
+        if (/(minimum\s+bet)|(bet\s+the\s+minimum)/i.test(text)) {
             amounts.push({
                 text: 'minimum bet',
                 type: 'relative',
                 reference: 'min_bet',
             });
         }
-        if (/maximum\s+bet|max\s+bet/i.test(text)) {
+        if (/(maximum\s+bet|max\s+bet)|(bet\s+the\s+maximum)/i.test(text)) {
             amounts.push({
                 text: 'maximum bet',
                 type: 'relative',
@@ -247,6 +247,16 @@ export class EntityRecognizer {
                 type: 'iteration',
                 value: parseInt(match[1]),
                 unit,
+            });
+        }
+        // also catch "spin 100 times" or "run 100 spins"
+        const spinCountMatches = text.matchAll(/spin(?:s)?\s+(\d+)/gi);
+        for (const match of spinCountMatches) {
+            durations.push({
+                text: match[0],
+                type: 'iteration',
+                value: parseInt(match[1]),
+                unit: 'spins',
             });
         }
         return durations;

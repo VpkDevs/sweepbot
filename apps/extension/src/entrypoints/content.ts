@@ -90,7 +90,7 @@ async function init(): Promise<void> {
   if (hudEnabled) injectHud()
 
   // Message listener — handles both HUD messages and flow execution
-  chrome.runtime.onMessage.addListener((message: ContentScriptMessage, sender, sendResponse) => {
+  chrome.runtime.onMessage.addListener((message: ContentScriptMessage, _sender, sendResponse) => {
     handleContentMessage(message)
       .then((result) => sendResponse({ success: true, data: result }))
       .catch((error) => sendResponse({ success: false, error: String(error) }))

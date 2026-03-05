@@ -409,8 +409,8 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
 
         // Create execution record
         const { rows: execRows } = await dbQuery(
-          sql`INSERT INTO flow_executions (flow_id, user_id, status)
-              VALUES (${flowId}, ${userId}, 'running')
+          sql`INSERT INTO flow_executions (flow_id, user_id, status, started_at, metrics, log)
+              VALUES (${flowId}, ${userId}, 'running', NOW(), '{}', '[]')
               RETURNING id, created_at`
         )
 
@@ -418,12 +418,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
 
         // Execute flow asynchronously (non-blocking)
         flowExecutor
-          .execute({
-            flowId,
-            userId,
-            definition: flow.definition,
-            executionId,
-          })
+          .execute(flow.definition as Parameters<typeof flowExecutor.execute>[0], userId)
           .then(() => {
             // Mark as completed (background)
             return dbQuery(sql`UPDATE flow_executions SET status = 'completed' WHERE id = ${executionId}`)

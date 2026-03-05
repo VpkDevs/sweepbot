@@ -6,7 +6,6 @@
 
 import { defineBackground } from 'wxt/sandbox'
 import { storage } from '@/lib/storage'
-import { extensionApi } from '@/lib/api'
 import { flowStorage } from '@/lib/flows/storage'
 import { scheduleFlow, unscheduleFlow, isFlowAlarm, getFlowIdFromAlarm } from '@/lib/flows/alarm-scheduler'
 import type { BackgroundMessage, MessageResponse } from '@/types/extension'
@@ -38,11 +37,11 @@ chrome.runtime.onMessage.addListener(
  * Handle an incoming background message and perform the requested operation (authentication, analytics, flow management, or notifications).
  *
  * @param message - The background message to handle; its `type` determines the performed action and expected `payload`.
- * @param sender - The runtime message sender (originating tab or extension component).
+ * @param _sender - The runtime message sender (originating tab or extension component).
  * @returns The response for the handled message; structure varies by message type — for example, auth state objects, `{ success: true | false }` results with optional `error` or `eventCount`, or an array of flows.
  * @throws Error if `message.type` is not recognized.
  */
-async function handleMessage(message: BackgroundMessage, sender: chrome.runtime.MessageSender): Promise<unknown> {
+async function handleMessage(message: BackgroundMessage, _sender: chrome.runtime.MessageSender): Promise<unknown> {
   switch (message.type) {
 
     // ── Auth ──────────────────────────────────────────────────────────────

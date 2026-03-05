@@ -6,6 +6,8 @@
 export class ConversationManager {
     options;
     logger;
+    // in-memory backup when no persistence callbacks are provided
+    memory = new Map();
     constructor(options = {}) {
         this.options = options;
         this.logger = options.logger || {
@@ -46,6 +48,8 @@ export class ConversationManager {
         let state = null;
         if (this.options.onStateLoad) {
             state = await this.options.onStateLoad(conversationId);
+        } else {
+            state = this.memory.get(conversationId) || null;
         }
         if (!state) {
             throw new Error(`Conversation ${conversationId} not found`);
@@ -113,6 +117,8 @@ export class ConversationManager {
             // Save updated state
             if (this.options.onStateSave) {
                 await this.options.onStateSave(state);
+            } else {
+                this.memory.set(conversationId, state);
             }
             this.logger.info(`Continued conversation ${conversationId}, status: ${state.status}`);
             return state;

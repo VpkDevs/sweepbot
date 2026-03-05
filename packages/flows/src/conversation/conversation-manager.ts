@@ -16,6 +16,8 @@ export interface ConversationManagerOptions {
 export class ConversationManager {
   private options: ConversationManagerOptions
   private logger: { info: (msg: string) => void; error: (msg: string, err: any) => void }
+  // simple in-memory backup store used when no external persistence provided
+  private memory: Map<string, ConversationState> = new Map()
 
   constructor(options: ConversationManagerOptions = {}) {
     this.options = options
@@ -65,6 +67,8 @@ export class ConversationManager {
     let state: ConversationState | null = null
     if (this.options.onStateLoad) {
       state = await this.options.onStateLoad(conversationId)
+    } else {
+      state = this.memory.get(conversationId) ?? null
     }
 
     if (!state) {
@@ -101,6 +105,10 @@ export class ConversationManager {
         state.status = 'building'
       }
 
+      // Save updated state back if we're using in-memory store
+      if (!this.options.onStateSave) {
+        this.memory.set(conversationId, state)
+      }
       // Check if we have enough info to confirm
       if (state.status === 'confirming') {
         if (this.isFlowComplete(state.currentFlow)) {
@@ -125,7 +133,7 @@ export class ConversationManager {
         if (state.pendingQuestions.length > 0) {
           state.turns.push({
             role: 'assistant',
-            content: state.pendingQuestions[0],
+            content: state.pendingQuestions[0]!,
             timestamp: new Date(),
           })
         }
@@ -251,7 +259,7 @@ export class ConversationManager {
     }
 
     // If we have questions, return just the next one
-    return questions.length > 0 ? [questions[0]] : []
+    return questions.length > 0 ? [questions[0]!] : []
   }
 
   /**

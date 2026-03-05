@@ -29,7 +29,7 @@ export class FlowExecutor {
       flowId: flowDefinition.id,
       executionId: `exec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       userId,
-      variables: new Map(context || {}),
+      variables: new Map(Object.entries(context || {})),
       startedAt: new Date(),
       currentNode: flowDefinition.rootNode.id,
       status: 'running',

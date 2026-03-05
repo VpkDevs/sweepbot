@@ -284,7 +284,7 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
       }
 
       // Simple shared secret for internal calls — in production use JWT with admin role
-      if (adminSecret !== process.env.ADMIN_SECRET) {
+      if (adminSecret !== process.env['ADMIN_SECRET']) {
         return reply.code(403).send({
           success: false,
           error: { code: 'FORBIDDEN', message: 'Invalid admin secret' },

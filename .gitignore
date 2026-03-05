@@ -73,3 +73,11 @@ temp/
 
 # Sentry
 .sentryclirc
+
+# AI agent scratch files (Claude, Gemini, etc.)
+tmpclaude-*
+_tmp_*-*
+.gemini/
+
+# Personal / non-technical documents (do not commit to repo)
+docs/What\ Vince\ Did.txt

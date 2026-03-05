@@ -13,8 +13,8 @@ describe('EntityRecognizer', () => {
     it('should recognize Chumba Casino', () => {
       const entities = recognizer.recognize('Open Chumba Casino')
       expect(entities.platforms).toHaveLength(1)
-      expect(entities.platforms[0].normalized).toBe('chumba')
-      expect(entities.platforms[0].confidence).toBeGreaterThan(0.8)
+      expect(entities.platforms[0]!.normalized).toBe('chumba')
+      expect(entities.platforms[0]!.confidence).toBeGreaterThan(0.8)
     })
 
     it('should recognize platform aliases (CC, Chumba, Chumba Casino)', () => {
@@ -22,7 +22,7 @@ describe('EntityRecognizer', () => {
       for (const input of inputs) {
         const entities = recognizer.recognize(input)
         expect(entities.platforms).toHaveLength(1)
-        expect(entities.platforms[0].normalized).toBe('chumba')
+        expect(entities.platforms[0]!.normalized).toBe('chumba')
       }
     })
 
@@ -41,7 +41,7 @@ describe('EntityRecognizer', () => {
     it('should recognize Sweet Bonanza', () => {
       const entities = recognizer.recognize('throw it on Sweet Bonanza')
       expect(entities.games).toHaveLength(1)
-      expect(entities.games[0].normalized).toBe('sweet_bonanza')
+      expect(entities.games[0]!.normalized).toBe('sweet_bonanza')
     })
 
     it('should recognize Gates of Olympus', () => {
@@ -84,7 +84,7 @@ describe('EntityRecognizer', () => {
     it('should recognize greater than comparison', () => {
       const entities = recognizer.recognize('if win > 5x bonus')
       expect(entities.conditions.length).toBeGreaterThan(0)
-      const cond = entities.conditions[0]
+      const cond = entities.conditions[0]!
       expect(cond.operator).toBe('>')
     })
 
@@ -103,8 +103,8 @@ describe('EntityRecognizer', () => {
     it('should recognize daily at specific time', () => {
       const entities = recognizer.recognize('every day at 3:30 PM')
       expect(entities.schedules).toHaveLength(1)
-      expect(entities.schedules[0].frequency).toBe('daily')
-      expect(entities.schedules[0].cron).toBeDefined()
+      expect(entities.schedules[0]!.frequency).toBe('daily')
+      expect(entities.schedules[0]!.cron).toBeDefined()
     })
 
     it('should recognize weekly schedule', () => {
@@ -128,8 +128,8 @@ describe('EntityRecognizer', () => {
     it('should recognize absolute amounts', () => {
       const entities = recognizer.recognize('bet $10')
       expect(entities.amounts).toHaveLength(1)
-      expect(entities.amounts[0].type).toBe('absolute')
-      expect(entities.amounts[0].value).toBe(10)
+      expect(entities.amounts[0]!.type).toBe('absolute')
+      expect(entities.amounts[0]!.value).toBe(10)
     })
 
     it('should recognize multipliers', () => {
@@ -152,8 +152,8 @@ describe('EntityRecognizer', () => {
     it('should recognize time durations', () => {
       const entities = recognizer.recognize('run for 2 hours')
       expect(entities.durations).toHaveLength(1)
-      expect(entities.durations[0].unit).toBe('hours')
-      expect(entities.durations[0].value).toBe(2)
+      expect(entities.durations[0]!.unit).toBe('hours')
+      expect(entities.durations[0]!.value).toBe(2)
     })
 
     it('should recognize iteration counts', () => {
@@ -197,7 +197,7 @@ describe('EntityRecognizer', () => {
   describe('Confidence Scoring', () => {
     it('should score high confidence for clear entities', () => {
       const entities = recognizer.recognize('Open Chumba Casino')
-      const platform = entities.platforms[0]
+      const platform = entities.platforms[0]!
       expect(platform.confidence).toBeGreaterThan(0.8)
     })
 

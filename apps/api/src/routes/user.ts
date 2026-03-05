@@ -445,7 +445,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       })
       .parse(request.body)
 
-    const stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
+    const stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2025-02-24.acacia' })
 
     // Look up or create Stripe customer
     const profileResult = await dbQuery(sql`
@@ -527,7 +527,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       return reply.redirect('/pricing')
     }
 
-    const stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
+    const stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2025-02-24.acacia' })
     const appUrl = env.CORS_ORIGINS.split(',')[0] ?? 'https://sweepbot.app'
 
     const portalSession = await stripe.billingPortal.sessions.create({
@@ -721,7 +721,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
     if (sub?.['stripe_subscription_id']) {
       try {
-        const stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
+        const stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2025-02-24.acacia' })
         await stripe.subscriptions.cancel(sub['stripe_subscription_id'])
       } catch {
         // Non-fatal — proceed with deletion even if Stripe cancel fails

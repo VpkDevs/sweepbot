@@ -11,7 +11,6 @@ import type {
   FlowTrigger,
   InterpretationResult,
   Condition,
-  ValueRef,
   LoopStep,
   ClaimBonusStep,
   SpinStep,
@@ -69,7 +68,7 @@ export const PLATFORM_SELECTORS: Record<
 export class FlowInterpreter {
   private recognizer = new EntityRecognizer()
 
-  interpret(rawInput: string, userId = 'anonymous'): InterpretationResult {
+  interpret(rawInput: string, _userId = 'anonymous'): InterpretationResult {
     const entities = this.recognizer.recognize(rawInput)
     const warnings: string[] = []
     const ambiguities: string[] = []
@@ -100,10 +99,6 @@ export class FlowInterpreter {
       entities.platforms[0]?.canonical ?? null
     const platformUrl = entities.platforms[0]?.url ?? null
     const game = entities.games[0]?.canonical ?? null
-    const selectors = platform
-      ? { ...(PLATFORM_SELECTORS._default), ...(PLATFORM_SELECTORS[platform] ?? {}) }
-      : PLATFORM_SELECTORS._default
-
     // 1. Navigate to platform
     if (platformUrl) {
       steps.push({ type: 'navigate', url: platformUrl, waitForLoad: true })

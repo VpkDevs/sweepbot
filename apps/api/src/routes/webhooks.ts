@@ -24,7 +24,7 @@ export async function webhookRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── POST /webhooks/stripe ────────────────────────────────────────────────
   app.post('/webhooks/stripe', async (request: FastifyRequest, reply) => {
-    const stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
+    const stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2025-02-24.acacia' })
     const sig = request.headers['stripe-signature']
 
     if (!sig) {
@@ -215,14 +215,14 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
  */
 function getTierFromPriceId(priceId: string): string {
   const priceMap: Record<string, string> = {
-    [env.STRIPE_PRICE_STARTER_MONTHLY]: 'starter',
-    [env.STRIPE_PRICE_STARTER_YEARLY]: 'starter',
-    [env.STRIPE_PRICE_PRO_MONTHLY]: 'pro',
-    [env.STRIPE_PRICE_PRO_YEARLY]: 'pro',
-    [env.STRIPE_PRICE_ANALYST_MONTHLY]: 'analyst',
-    [env.STRIPE_PRICE_ANALYST_YEARLY]: 'analyst',
-    [env.STRIPE_PRICE_ELITE_MONTHLY]: 'elite',
-    [env.STRIPE_PRICE_ELITE_YEARLY]: 'elite',
+    [env.STRIPE_PRICE_STARTER_MONTHLY ?? '']: 'starter',
+    [env.STRIPE_PRICE_STARTER_ANNUAL ?? '']: 'starter',
+    [env.STRIPE_PRICE_PRO_MONTHLY ?? '']: 'pro',
+    [env.STRIPE_PRICE_PRO_ANNUAL ?? '']: 'pro',
+    [env.STRIPE_PRICE_ANALYST_MONTHLY ?? '']: 'analyst',
+    [env.STRIPE_PRICE_ANALYST_ANNUAL ?? '']: 'analyst',
+    [env.STRIPE_PRICE_ELITE_MONTHLY ?? '']: 'elite',
+    [env.STRIPE_PRICE_ELITE_ANNUAL ?? '']: 'elite',
   }
   return priceMap[priceId] ?? 'free'
 }

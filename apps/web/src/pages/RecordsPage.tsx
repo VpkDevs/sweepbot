@@ -2,6 +2,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Trophy, TrendingUp, Star, Flame, Zap, Target, Award, RefreshCw } from 'lucide-react'
 import { api } from '../lib/api'
 import { formatSC, cn } from '../lib/utils'
+import { ScrollReveal } from '../components/fx/ScrollReveal'
+import { SpotlightCard } from '../components/fx/SpotlightCard'
+import { TextReveal } from '../components/fx/TextReveal'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -51,10 +54,12 @@ export function RecordsPage() {
 
   if (!records) {
     return (
-      <div className="p-6 flex flex-col items-center justify-center min-h-[60vh] text-center">
-        <Trophy className="w-12 h-12 text-zinc-700 mb-4" />
+      <div className="p-6 flex flex-col items-center justify-center min-h-[60vh] text-center animate-reveal-up">
+        <div className="empty-icon-wrapper w-20 h-20 rounded-2xl bg-brand-500/10 flex items-center justify-center mb-5">
+          <Trophy className="w-9 h-9 text-brand-400" />
+        </div>
         <h2 className="text-xl font-bold text-white mb-2">No Records Yet</h2>
-        <p className="text-zinc-400 text-sm max-w-sm">
+        <p className="text-zinc-500 text-sm max-w-sm text-pretty">
           Start logging sessions to build your personal record book.
         </p>
       </div>
@@ -64,11 +69,12 @@ export function RecordsPage() {
   const recordCards = [
     {
       label: 'Biggest Single Win',
-      value: records.biggest_single_win != null ? `${formatSC(records.biggest_single_win)} SC` : '—',
-      sub: [records.biggest_win_game, records.biggest_win_platform].filter(Boolean).join(' · ') || undefined,
+      value: records.biggest_single_win != null ? `${formatSC(records.biggest_single_win)} SC` : '\u2014',
+      sub: [records.biggest_win_game, records.biggest_win_platform].filter(Boolean).join(' \u00b7 ') || undefined,
       date: records.biggest_win_date,
       icon: Trophy,
       color: 'text-jackpot',
+      glow: 'shadow-yellow-500/10',
       highlight: true,
     },
     {
@@ -80,21 +86,24 @@ export function RecordsPage() {
           : undefined,
       icon: Flame,
       color: 'text-emerald-400',
+      glow: 'shadow-emerald-500/10',
     },
     {
       label: 'Best RTP Session',
       value: records.best_rtp_session != null
         ? `${(Number(records.best_rtp_session) * 100).toFixed(1)}%`
-        : '—',
+        : '\u2014',
       sub: `Min. ${records.best_rtp_min_bets} bets to qualify`,
       icon: TrendingUp,
       color: 'text-brand-400',
+      glow: 'shadow-brand-500/10',
     },
     {
       label: 'Highest Balance Reached',
-      value: records.highest_balance != null ? `${formatSC(records.highest_balance)} SC` : '—',
+      value: records.highest_balance != null ? `${formatSC(records.highest_balance)} SC` : '\u2014',
       icon: Star,
       color: 'text-yellow-400',
+      glow: 'shadow-yellow-500/10',
     },
     {
       label: 'Most Bonuses in a Day',
@@ -102,6 +111,7 @@ export function RecordsPage() {
       sub: 'bonuses in one day',
       icon: Zap,
       color: 'text-violet-400',
+      glow: 'shadow-violet-500/10',
     },
     {
       label: 'Total Jackpots Hit',
@@ -112,6 +122,7 @@ export function RecordsPage() {
           : undefined,
       icon: Award,
       color: 'text-jackpot',
+      glow: 'shadow-yellow-500/10',
     },
     {
       label: 'Longest Loss Streak',
@@ -122,17 +133,19 @@ export function RecordsPage() {
           : undefined,
       icon: Target,
       color: 'text-red-400',
+      glow: 'shadow-red-500/10',
     },
   ]
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl mx-auto">
+    <div className="p-6 lg:p-8 space-y-8 max-w-6xl mx-auto">
       {/* Header */}
+      <ScrollReveal>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Personal Records</h1>
+          <TextReveal as="h1" className="heading-display text-white text-shimmer" stagger={50}>Personal Records</TextReveal>
           {records.last_computed_at && (
-            <p className="text-zinc-500 text-xs mt-1">
+            <p className="text-zinc-600 text-xs mt-1.5 tabular-nums">
               Last updated{' '}
               {new Date(records.last_computed_at).toLocaleDateString('en', {
                 month: 'short',
@@ -145,17 +158,20 @@ export function RecordsPage() {
         <button
           onClick={() => refreshMutation.mutate()}
           disabled={refreshMutation.isPending}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl glass-card text-zinc-300 text-sm font-medium transition-all hover:bg-white/[0.06] disabled:opacity-50 press-scale"
         >
           <RefreshCw className={cn('w-3.5 h-3.5', refreshMutation.isPending && 'animate-spin')} />
           Recalculate
         </button>
       </div>
+      </ScrollReveal>
 
       {/* Records grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {recordCards.map((card) => (
-          <RecordCard key={card.label} {...card} />
+        {recordCards.map((card, i) => (
+          <ScrollReveal key={card.label} delay={i * 60}>
+            <RecordCard {...card} />
+          </ScrollReveal>
         ))}
       </div>
     </div>
@@ -182,6 +198,7 @@ function RecordCard({
   date,
   icon: Icon,
   color,
+  glow,
   highlight = false,
 }: {
   label: string
@@ -190,25 +207,29 @@ function RecordCard({
   date?: string | null
   icon: React.ElementType
   color: string
+  glow?: string
   highlight?: boolean
 }) {
   return (
-    <div
+    <SpotlightCard
       className={cn(
-        'bg-zinc-900 rounded-xl border p-5 space-y-3',
-        highlight ? 'border-yellow-700/40' : 'border-zinc-800',
+        'glass-card rounded-2xl p-5 space-y-3',
+        highlight && 'gradient-border-gold holo-surface',
+        glow,
       )}
     >
-      <div className="flex items-center gap-2">
-        <Icon className={cn('w-4 h-4', color)} />
-        <span className="text-xs text-zinc-500 uppercase tracking-wide font-medium">{label}</span>
+      <div className="flex items-center gap-2.5">
+        <div className={cn('flex items-center justify-center w-8 h-8 rounded-xl bg-white/[0.04]', color)}>
+          <Icon className="w-4 h-4" />
+        </div>
+        <span className="text-[10px] text-zinc-500 uppercase tracking-[0.15em] font-bold">{label}</span>
       </div>
-      <p className={cn('text-2xl font-bold tabular-nums', value === '—' ? 'text-zinc-600' : 'text-white')}>
+      <p className={cn('text-2xl font-bold tabular-nums tracking-tight', value === '\u2014' ? 'text-zinc-700' : 'text-white')}>
         {value}
       </p>
-      {sub && <p className="text-xs text-zinc-500">{sub}</p>}
+      {sub && <p className="text-xs text-zinc-500 leading-relaxed">{sub}</p>}
       {date && (
-        <p className="text-xs text-zinc-600">
+        <p className="text-xs text-zinc-600 tabular-nums">
           {new Date(date).toLocaleDateString('en', {
             month: 'short',
             day: 'numeric',
@@ -216,7 +237,7 @@ function RecordCard({
           })}
         </p>
       )}
-    </div>
+    </SpotlightCard>
   )
 }
 
@@ -228,11 +249,11 @@ function RecordCard({
 
 function RecordsSkeleton() {
   return (
-    <div className="p-6 space-y-6 max-w-5xl mx-auto animate-pulse">
-      <div className="h-8 w-48 bg-zinc-800 rounded" />
+    <div className="p-6 lg:p-8 space-y-8 max-w-6xl mx-auto">
+      <div className="h-8 w-48 skeleton-text rounded-lg" />
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {Array.from({ length: 7 }).map((_, i) => (
-          <div key={i} className="h-32 bg-zinc-900 rounded-xl border border-zinc-800" />
+          <div key={i} className="glass-card rounded-2xl h-40 shimmer" />
         ))}
       </div>
     </div>

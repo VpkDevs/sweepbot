@@ -1,232 +1,192 @@
 # SweepBot — Development Roadmap
 
-**Version:** 1.0.0
-**Date:** 2026-02-26
+**Version:** 2.0
+**Last Updated:** March 2026
+**Status:** Phase 1 Complete ✅ | Phase 2 Active 🔄
 
 ---
 
 ## Guiding Principles
 
 1. **Ship the beachhead first** — Browser extension is the primary acquisition channel and data collection engine. Everything else is secondary.
-2. **Build the moat in parallel** — Data collection (jackpots, TOS, platform uptime) starts NOW, before any user-facing product ships.
+2. **Build the moat in parallel** — Data collection (jackpots, TOS, platform uptime) starts NOW, before any user-facing product ships. See [DATA_MOAT_ROADMAP.md](DATA_MOAT_ROADMAP.md).
 3. **Revenue from day one** — Affiliate links in the free extension generate revenue immediately, before any paid subscriptions exist.
 4. **Each phase must be independently shippable** — Users get real value at every milestone.
 
 ---
 
-## Phase 0: Foundation (Weeks 1–3)
+## ✅ Phase 0: Foundation — COMPLETE
 
 **Goal:** Monorepo setup, shared infrastructure, data moat collection begins.
 
-### Infrastructure
+### Infrastructure ✅
 - [x] Monorepo init (pnpm + Turborepo)
+- [x] `packages/types` — All shared TypeScript interfaces
+- [x] `packages/utils` — Shared utilities
+- [x] `packages/config` — ESLint, TypeScript, Tailwind configs
 - [ ] Supabase project creation (prod + staging)
-- [ ] GitHub repository + branch protection rules
+- [ ] GitHub branch protection rules
 - [ ] CI/CD pipeline (GitHub Actions)
 - [ ] Domain acquisition: sweepbot.app
-- [ ] Vercel project setup
-- [ ] Railway project setup
+- [ ] Vercel + Railway project setup
 - [ ] Upstash Redis setup
-- [ ] Sentry error monitoring setup
+- [ ] Sentry error monitoring
 
-### Always-On Data Collection (Deploy to Replit)
-- [ ] **Jackpot poller** — scrape progressive jackpot values from 20+ platforms every 60s
-- [ ] **TOS monitor** — daily diff-check of platform terms/conditions
-- [ ] **Platform health checker** — uptime monitoring every 5 minutes
+### Always-On Data Collection — ⚠️ DEPLOY NOW (P0)
+- [ ] **Jackpot poller** — scrape progressive jackpot values every 60s (Replit)
+- [ ] **TOS monitor** — daily diff-check of platform terms (Replit)
+- [ ] **Platform health checker** — uptime every 5 minutes (Replit)
 - [ ] **Platform data seed** — populate platforms table with 40 known platforms
 
-### Shared Packages
-- [ ] `packages/types` — All shared TypeScript interfaces
-- [ ] `packages/utils` — Shared utilities (crypto, format, validation)
-- [ ] `packages/config` — ESLint, TypeScript, Tailwind configs
-
-### Database
-- [ ] Initial migration: all core tables
-- [ ] RLS policies for all user-scoped tables
-- [ ] Seed data: platforms, game providers, initial games
+> ⚠️ **Every day without the jackpot poller is irreplaceable data burned.** Deploy this before anything else.
 
 ---
 
-## Phase 1: Beachhead + MVP Dashboard (Weeks 4–10)
+## ✅ Phase 1: NLP Flow Engine — COMPLETE
 
-**Goal:** Browser extension live in Chrome Web Store. Basic dashboard live. First revenue.
+**Goal:** Users can describe automation routines in plain English. SweepBot converts them to safe, executable scripts.
 
-### Browser Extension (P0 — Week 4–7)
-- [ ] WXT project scaffold
-- [ ] Platform detection engine (40+ platforms)
-- [ ] XHR/fetch interceptor for transaction capture
+### Core Engine ✅ (100% complete)
+- [x] Natural Language Entity Recognition (13+ platforms, 10+ games, 10+ action types)
+- [x] 4-pass interpretation pipeline (→ entity → intent → AST → validation)
+- [x] Flow Definition AST (9 node types)
+- [x] Flow Executor with recursive AST traversal
+- [x] Responsible Play Validator (mandatory, non-overridable guardrails)
+- [x] Cron-based Flow Scheduler with timezone support
+- [x] Multi-turn Conversation Manager
+- [x] 4 database tables (flows, executions, conversations, shared_flows)
+- [x] 8 API endpoints (interpret, converse, CRUD, execute, history)
+- [x] React UI (FlowsPage, FlowChatPage, FlowDetailPage)
+- [x] 54 test suites, 285+ assertions, 80%+ coverage
+
+**Phase 1 metrics:** 1,500+ lines core logic | 1,600+ lines tests | Full TypeScript strict mode
+
+---
+
+## 🔄 Phase 2: Action Execution + Live Data — IN PROGRESS
+
+**Goal:** Connect the Flow Engine to real browser actions. Begin live data collection. Achieve first revenue.
+
+### Extension — Action Execution (P0 — Connect Phase 1 to Reality)
+- [ ] Platform detection engine for 15+ platforms
+- [ ] XHR/fetch interceptor — per-platform parsers for spin data extraction
 - [ ] Real-time RTP calculation engine
 - [ ] In-page HUD overlay
-- [ ] Session detection (start/end/pause)
-- [ ] Local session storage (extension storage API)
-- [ ] Popup UI: mini dashboard
-- [ ] Affiliate link injection (non-intrusive)
+- [ ] Session detection (start / end / pause)
+- [ ] **Flow action handlers** — claim_bonus, spin, login, check_balance, cash_out
+- [ ] Affiliate link injection (extension popup + platform pages)
 - [ ] Privacy policy page
 - [ ] Chrome Web Store submission
 
-### API (Weeks 4–8)
-- [ ] Fastify server setup with TypeScript
-- [ ] Supabase auth integration (JWT validation)
-- [ ] `/auth` endpoints
-- [ ] `/platforms` endpoints
+### API — Data Ingestion
+- [ ] Fastify server full setup with TypeScript
+- [ ] Supabase auth integration (JWT validation middleware)
 - [ ] `/sessions` endpoints
-- [ ] `/transactions/batch` endpoint (for extension sync)
+- [ ] `/transactions/batch` endpoint (high-volume extension sync)
 - [ ] `/analytics/portfolio` endpoint
 - [ ] `/analytics/rtp` endpoint
-- [ ] WebSocket server (jackpot + session real-time)
-- [ ] Rate limiting middleware
-- [ ] Error handling + Sentry integration
-- [ ] Logging (Pino)
-- [ ] Scalar API documentation
+- [ ] WebSocket server (jackpot live feed + session sync)
+- [ ] Rate limiting + Sentry + Pino structured logging
 
-### Web Dashboard (Weeks 6–10)
-- [ ] Vite + React + TypeScript + Tailwind + shadcn/ui scaffold
-- [ ] Authentication (sign up, sign in, password reset)
+### LLM Fallback for Flow Interpreter
+- [ ] Claude API integration for confidence < 0.7 interpretations
+- [ ] Fallback response formatted into FlowInterpretationResult
+- [ ] Cost tracking per user per month (guard against abuse)
+
+### Web Dashboard
+- [ ] Authentication (sign up / in / reset)
 - [ ] Onboarding flow (add first platform, install extension CTA)
 - [ ] Command Center (portfolio overview)
 - [ ] Platform management page
 - [ ] Session history page
-- [ ] Basic RTP analytics page
-- [ ] User settings page
-- [ ] Subscription management (Stripe)
-- [ ] Responsive design (desktop + tablet)
+- [ ] RTP analytics page
+- [ ] User settings
+- [ ] Stripe subscription management
 
 ### Stripe Integration
-- [ ] Products/prices created in Stripe (all 5 tiers)
-- [ ] Checkout flow (upgrade modal)
-- [ ] Customer portal (manage subscription)
-- [ ] Webhook handler (subscription created/updated/cancelled)
-- [ ] Feature gating middleware
+- [ ] Products/prices in Stripe (all 5 tiers)
+- [ ] Checkout flow
+- [ ] Customer portal
+- [ ] Webhook handler (sub created / updated / cancelled)
+- [ ] Feature-gating middleware (tier → feature map)
 
-**Phase 1 Launch Criteria:**
+**Phase 2 Launch Criteria:**
 - Extension installable from Chrome Web Store
+- At least 5 platforms fully supported (full action execution)
 - Dashboard live and accepting signups
-- At least 3 platforms fully supported by extension
 - Stripe checkout working end-to-end
-- Affiliate links generating clicks
+- Affiliate links generating attributed clicks
+- Jackpot poller live and collecting
 
 ---
 
-## Phase 2: Automation Engine + Intelligence (Weeks 11–20)
+## 🗓 Phase 3: Analytics + Trust Index (Weeks 11–20)
 
-**Goal:** Desktop app with automation. Full analytics. Redemption tracking. Trust Index.
+**Goal:** Full analytics suite. Trust Index public launch. Redemption tracking. Data products begin.
 
-### Desktop App — Automation Engine (Weeks 11–16)
-- [ ] Tauri v2 project scaffold
-- [ ] Secure credential vault (AES-256-GCM, Argon2id)
-- [ ] Master password + biometric setup
-- [ ] Manual-trigger automation runner
-- [ ] Playwright integration (headless/headed modes)
-- [ ] Human-like interaction patterns (random delays, cursor simulation)
-- [ ] Per-platform script system (starting with 10 platforms)
-- [ ] Run log with success/failure tracking
-- [ ] CAPTCHA and block detection + graceful pause
-- [ ] Auto-update mechanism
-
-### Analytics Expansion (Weeks 12–16)
-- [ ] Full bonus feature analytics (trigger rate, bonus RTP)
+- [ ] Bonus feature analytics (trigger rate, bonus RTP)
 - [ ] Session pattern analysis (RTP by time/day)
 - [ ] Wagering requirement tracker
 - [ ] Redemption tracker with status workflow
-- [ ] Jackpot history charts
+- [ ] Jackpot history charts (data moat milestone: M1 hit)
 - [ ] Platform comparison analytics
 - [ ] Data export (CSV/PDF)
-
-### Trust Index (Weeks 15–18)
-- [ ] Trust Index calculation engine
-- [ ] Component scores: redemption speed, rejection rate, TOS stability, etc.
-- [ ] Platform directory with Trust Index scores
-- [ ] Trust Index historical trend chart
-- [ ] Public-facing Trust Index page (SEO value)
-
-### Game Intelligence Database (Weeks 16–20)
-- [ ] Crowdsourced RTP aggregation pipeline
-- [ ] Per-game profile pages
-- [ ] Provider analytics layer
-- [ ] Game search and filtering
-- [ ] Game comparison tool
-
-### Firefox Extension
-- [ ] Port Chrome extension to Firefox (WXT handles most of this)
-- [ ] Firefox Add-ons submission
+- [ ] Trust Index calculation engine + public page (SEO)
+- [ ] Game Intelligence Database scaffold (crowdsourced RTP)
+- [ ] Firefox extension port (WXT handles 80% of this)
 
 ---
 
-## Phase 3: Community + Data Products (Weeks 21–32)
+## 🗓 Phase 4: Community + Data Products (Weeks 21–32)
 
-**Goal:** Community hub, B2B data products, tax center, mobile readiness.
+**Goal:** Community hub, B2B data products, tax center.
 
-### Community Hub
-- [ ] Forum system (categories, threads, replies)
-- [ ] Strategy sharing (formatted strategy posts)
-- [ ] Platform reviews (user-generated, moderated)
-- [ ] Reputation/karma system
-- [ ] Script contribution system (automation scripts)
-- [ ] Verified information badges
-
-### Data Products
-- [ ] B2B Data API (platform, game, jackpot data)
-- [ ] API key management
-- [ ] Usage metering + billing
+- [ ] Forum system
+- [ ] Strategy sharing + platform reviews
+- [ ] Shared Flows marketplace (with packager — ensure no credential leakage in shared scripts)
+- [ ] B2B Data API (key management, usage metering, billing)
 - [ ] Quarterly industry reports (PDF generation)
-- [ ] Platform Certification Program
-
-### Tax Center
-- [ ] Redemption aggregation by calendar year
-- [ ] Estimated tax liability calculator
-- [ ] Accountant-ready PDF export
-- [ ] 1099 reconciliation helper
-
-### Mail Bonus Scraper (Desktop only)
-- [ ] Gmail OAuth integration
-- [ ] Outlook/IMAP integration
-- [ ] Bonus email detection patterns
-- [ ] Auto-claim pipeline
-
-### Responsible Play Suite (Formalize what was built in Phase 1)
-- [ ] Session time limits with enforced pop-ups
-- [ ] Loss limit alerts (configurable thresholds)
-- [ ] Cool-down enforcement (lockout period)
-- [ ] Chase detection (unusual session patterns)
-- [ ] Monthly wellbeing summary email
-- [ ] Self-exclusion tools
-- [ ] Support resources directory
+- [ ] Platform Certification Program (Trust Index monetization)
+- [ ] Tax Center (redemption aggregation, PDF export)
+- [ ] Mail Bonus Scraper (Gmail / Outlook OAuth)
+- [ ] Responsible Play Suite formalization (session limits, loss alerts, self-exclusion)
 
 ---
 
-## Phase 4: Mobile + Scale (Weeks 33+)
+## 🗓 Phase 5: Mobile + Scale (Weeks 33+)
 
 - [ ] React Native app (iOS + Android)
-- [ ] Push notifications (mobile)
-- [ ] International markets research + localization
-- [ ] Performance optimization (database, API)
-- [ ] SweepCon community event planning
+- [ ] Push notifications
+- [ ] International localization (Spanish, Portuguese)
+- [ ] TimescaleDB migration for jackpot time-series (at scale)
+- [ ] SweepCon event planning
 - [ ] White-label partnership exploration
-
----
-
-## Sprint Velocity Estimate
-
-| Phase | Duration | Weekly Output |
-|-------|----------|---------------|
-| Phase 0 | 3 weeks | Infrastructure + data collection |
-| Phase 1 | 7 weeks | Extension + Dashboard + Stripe |
-| Phase 2 | 10 weeks | Desktop + Analytics + Trust Index |
-| Phase 3 | 12 weeks | Community + Data products |
-| Phase 4 | Ongoing | Mobile + Scale |
 
 ---
 
 ## Critical Path
 
-The following items are on the critical path — delays here cascade:
+Delays in these items cascade into every phase:
 
-1. **Supabase setup** → blocks all data work
-2. **shared `types` package** → blocks API and web development
-3. **Auth (API)** → blocks dashboard
-4. **Extension transaction capture** → blocks core value prop
-5. **Stripe integration** → blocks revenue
+1. **Jackpot + TOS poller deployed to Replit** → Data moat starts; every day of delay is permanent loss
+2. **Supabase setup** → Blocks all persistent data work
+3. **`packages/types` complete** → Blocks API and web
+4. **Extension action handlers** → Blocks Flow Engine's core value (Phase 2 centerpiece)
+5. **Stripe integration** → Blocks revenue
 
 ---
 
-*Roadmap maintained by APPYness. Subject to revision based on user feedback and market conditions.*
+## Sprint Velocity Reference
+
+| Phase | Duration | Primary Output |
+|-------|----------|----------------|
+| Phase 0 | Complete | Monorepo + infrastructure |
+| Phase 1 | Complete | NLP Flow Engine |
+| Phase 2 | Weeks 1–10 | Extension actions + dashboard + Stripe |
+| Phase 3 | Weeks 11–20 | Analytics + Trust Index + Game Intelligence |
+| Phase 4 | Weeks 21–32 | Community + Data Products |
+| Phase 5 | Weeks 33+ | Mobile + Scale |
+
+---
+
+*Roadmap maintained by APPYness. Phases reflect current ground truth as of March 2026.*

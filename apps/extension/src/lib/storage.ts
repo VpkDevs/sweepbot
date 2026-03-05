@@ -14,6 +14,7 @@ export interface StorageSchema {
   notificationPrefs: NotificationPreferences
   analyticsEvents: AnalyticsEvent[]
   lastSyncedAt: number
+  affiliateNoShowUntil: Record<string, number>
 }
 
 export interface SessionStorageData {
@@ -65,6 +66,7 @@ const DEFAULT_STORAGE: StorageSchema = {
   },
   analyticsEvents: [],
   lastSyncedAt: 0,
+  affiliateNoShowUntil: {},
 }
 
 class StorageManager {

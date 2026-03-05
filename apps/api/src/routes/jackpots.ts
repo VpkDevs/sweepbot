@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { sql } from 'drizzle-orm'
-import type { WSMessage } from '@sweepbot/types'
+// import type { WSMessage } from '@sweepbot/types' // TODO: re-enable with @fastify/websocket
 
 const JackpotQuerySchema = z.object({
   platformId: z.string().uuid().optional(),
@@ -13,9 +13,9 @@ const JackpotQuerySchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 })
 
-const SubscribeBody = z.object({
-  gameIds: z.array(z.string().uuid()).min(1).max(50),
-})
+// const SubscribeBody = z.object({
+//   gameIds: z.array(z.string().uuid()).min(1).max(50),
+// }) // TODO: re-enable with @fastify/websocket
 
 export async function jackpotRoutes(app: FastifyInstance): Promise<void> {
   // ─── GET /jackpots ─────────────────────────────────────────────────────────
@@ -179,85 +179,8 @@ export async function jackpotRoutes(app: FastifyInstance): Promise<void> {
   )
 
   // ─── WebSocket /jackpots/live ──────────────────────────────────────────────
-  // Real-time jackpot push updates
-  app.get(
-    '/jackpots/live',
-    { websocket: true },
-    (socket, request) => {
-      const subscribedGameIds = new Set<string>()
-
-      socket.on('message', (rawMessage) => {
-        try {
-          const msg = JSON.parse(rawMessage.toString()) as WSMessage
-
-          if (msg.type === 'jackpot:subscribe') {
-            const payload = msg.payload as { gameIds: string[] }
-            payload.gameIds.forEach((id) => subscribedGameIds.add(id))
-            socket.send(
-              JSON.stringify({
-                type: 'session:ack',
-                payload: { subscribed: [...subscribedGameIds] },
-                timestamp: new Date().toISOString(),
-              })
-            )
-          } else if (msg.type === 'jackpot:unsubscribe') {
-            const payload = msg.payload as { gameIds: string[] }
-            payload.gameIds.forEach((id) => subscribedGameIds.delete(id))
-          } else if (msg.type === 'ping') {
-            socket.send(
-              JSON.stringify({ type: 'pong', payload: {}, timestamp: new Date().toISOString() })
-            )
-          }
-        } catch {
-          socket.send(
-            JSON.stringify({
-              type: 'error',
-              payload: { message: 'Invalid message format' },
-              timestamp: new Date().toISOString(),
-            })
-          )
-        }
-      })
-
-      // Poll for updates every 15 seconds and push to subscribed clients
-      const interval = setInterval(async () => {
-        if (subscribedGameIds.size === 0) return
-
-        try {
-          const ids = [...subscribedGameIds]
-          const updates = await dbQuery(sql`
-            SELECT DISTINCT ON (game_id, jackpot_name)
-              game_id,
-              jackpot_name,
-              amount,
-              currency,
-              last_hit_at,
-              captured_at
-            FROM jackpot_snapshots
-            WHERE game_id = ANY(${ids}::uuid[])
-              AND captured_at > NOW() - INTERVAL '1 minute'
-            ORDER BY game_id, jackpot_name, captured_at DESC
-          `)
-
-          if (updates.rows.length > 0) {
-            socket.send(
-              JSON.stringify({
-                type: 'jackpot:update',
-                payload: updates.rows,
-                timestamp: new Date().toISOString(),
-              })
-            )
-          }
-        } catch {
-          // Silently ignore poll errors — connection may be closing
-        }
-      }, 15_000)
-
-      socket.on('close', () => {
-        clearInterval(interval)
-      })
-    }
-  )
+  // TODO: Re-enable when @fastify/websocket is added for Fastify 5
+  // Real-time jackpot push updates are disabled until websocket plugin is available
 
   // ─── GET /jackpots/stats ──────────────────────────────────────────────────
   // Aggregate statistics — marketing-friendly numbers

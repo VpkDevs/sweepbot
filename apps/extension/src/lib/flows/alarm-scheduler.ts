@@ -3,7 +3,7 @@
  * Replaces node-cron from the @sweepbot/flows package — browser-safe.
  */
 
-import type { FlowDefinition, FlowTrigger } from './types'
+import type { FlowDefinition } from './types'
 
 const ALARM_PREFIX = 'sweepbot_flow_'
 
