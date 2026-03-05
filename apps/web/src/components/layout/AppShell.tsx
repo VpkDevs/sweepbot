@@ -20,6 +20,7 @@ import { useState } from 'react'
 import { useAuthStore } from '../../stores/auth'
 import { cn } from '../../lib/utils'
 import { NotificationPanel } from '../ui/NotificationPanel'
+import { OnboardingTour } from '../ui/OnboardingTour'
 
 const navItems = [
   // Core
@@ -51,6 +52,7 @@ export function AppShell() {
 
   return (
     <div className="flex h-screen bg-zinc-950 overflow-hidden">
+      <OnboardingTour />
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div

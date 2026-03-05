@@ -67,12 +67,16 @@ export const useAuthStore = create<AuthState>()(
       },
 
       refreshSession: async () => {
-        const { data, error } = await supabase.auth.getSession()
-        if (error || !data.session) {
+        try {
+          const { data, error } = await supabase.auth.getSession()
+          if (error || !data.session) {
+            set({ user: null, session: null, isLoading: false })
+            return
+          }
+          set({ user: data.session.user, session: data.session, isLoading: false })
+        } catch {
           set({ user: null, session: null, isLoading: false })
-          return
         }
-        set({ user: data.session.user, session: data.session, isLoading: false })
       },
     }),
     {
