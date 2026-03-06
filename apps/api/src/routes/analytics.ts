@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { requireAuth } from '../middleware/auth.js'
 import { sql } from 'drizzle-orm'
+import { cachedQuery } from '../db/query-helpers.js'
 
 const RTPQuerySchema = z.object({
   platformId: z.string().uuid().optional(),
@@ -34,7 +35,10 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
       const userId = request.user!.id
       const { currency } = PortfolioQuerySchema.parse(request.query)
 
-      const [totals, platformBreakdown, recentActivity, streaks] = await Promise.all([
+      const portfolioData = await cachedQuery(
+        `analytics:portfolio:${userId}:${currency}`,
+        async () => {
+          const [totals, platformBreakdown, recentActivity, streaks] = await Promise.all([
         // All-time totals
         dbQuery(sql`
           SELECT
@@ -141,16 +145,19 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
         `),
       ])
 
+          return {
+            totals: totals.rows[0],
+            platformBreakdown: platformBreakdown.rows,
+            recentActivity: recentActivity.rows,
+            streaks: streaks.rows[0] ?? { longest_win_streak: 0, longest_loss_streak: 0 },
+          }
+        },
+        { ttl: 60, prefix: 'sweepbot' }, // 60-second TTL — portfolio is expensive but needs to feel fresh
+      )
+
       return reply.send({
         success: true,
-        data: {
-          totals: totals.rows[0],
-          platformBreakdown: platformBreakdown.rows,
-          recentActivity: recentActivity.rows,
-          streaks: streaks.rows[0] ?? { longest_win_streak: 0, longest_loss_streak: 0 },
-        },
-      })
-    }
+        data: portfolioData,
   )
 
   // ─── GET /analytics/rtp ───────────────────────────────────────────────────

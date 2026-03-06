@@ -24,6 +24,7 @@ import {
 } from 'recharts'
 import { api } from '../lib/api'
 import { formatSC, formatRTP, timeAgo, cn } from '../lib/utils'
+import { usePerformanceMonitor } from '../hooks/usePerformance'
 import { StreakWidget } from '../components/ui/StreakWidget'
 import { SpotlightCard } from '../components/fx/SpotlightCard'
 import { TextReveal } from '../components/fx/TextReveal'
@@ -56,6 +57,8 @@ function getGreeting(): string {
  * @returns The React element containing the Command Center dashboard UI.
  */
 export function DashboardPage() {
+  usePerformanceMonitor('DashboardPage')
+
   const { data: portfolio, isLoading } = useQuery({
     queryKey: ['analytics', 'portfolio'],
     queryFn: () => api.analytics.portfolio(),
@@ -335,7 +338,7 @@ export function DashboardPage() {
                         <td className="px-6 py-3.5">
                           <div className="flex items-center gap-3">
                             {p['logo_url'] ? (
-                              <img src={p['logo_url'] as string} alt="" className="w-7 h-7 rounded-lg ring-1 ring-white/[0.06]" />
+                              <img src={p['logo_url'] as string} alt={`${p['name']} logo`} className="w-7 h-7 rounded-lg ring-1 ring-white/[0.06]" />
                             ) : (
                               <div className="w-7 h-7 rounded-lg bg-zinc-800/50 flex items-center justify-center">
                                 <Gamepad2 className="w-3.5 h-3.5 text-zinc-600" />

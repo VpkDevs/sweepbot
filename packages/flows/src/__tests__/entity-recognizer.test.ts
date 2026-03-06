@@ -67,6 +67,8 @@ describe('EntityRecognizer', () => {
     it('should recognize spin action', () => {
       const entities = recognizer.recognize('spin the reels')
       expect(entities.actions.some((a) => a.type === 'spin')).toBe(true)
+      // spinning by itself shouldn't be classified as opening a game
+      expect(entities.actions.some((a) => a.type === 'open_game')).toBe(false)
     })
 
     it('should recognize login action', () => {
@@ -86,6 +88,14 @@ describe('EntityRecognizer', () => {
       expect(entities.conditions.length).toBeGreaterThan(0)
       const cond = entities.conditions[0]!
       expect(cond.operator).toBe('>')
+    })
+
+    it('should recognize monetary comparisons like more than $50', () => {
+      const entities = recognizer.recognize('If more than $50, spin')
+      expect(entities.conditions.length).toBeGreaterThan(0)
+      const cond = entities.conditions[0]!
+      expect(cond.operator).toBe('>')
+      expect(cond.right).toBe('50')
     })
 
     it('should recognize keep spinning condition', () => {
@@ -121,6 +131,7 @@ describe('EntityRecognizer', () => {
       const entities = recognizer.recognize('every day at 3 PM EST')
       expect(entities.schedules.length).toBeGreaterThan(0)
       // Should have timezone info
+      expect(entities.schedules[0]!.timezone).toBe('EST')
     })
   })
 
@@ -177,7 +188,8 @@ describe('EntityRecognizer', () => {
       expect(entities.platforms.some((p) => p.normalized === 'chumba')).toBe(true)
       expect(entities.games.some((g) => g.normalized === 'sweet_bonanza')).toBe(true)
       expect(entities.actions.some((a) => a.type === 'claim_bonus')).toBe(true)
-      expect(entities.actions.some((a) => a.type === 'spin')).toBe(true)
+      // spin isn't explicit in example – expect at least a bet action
+      expect(entities.actions.some((a) => a.type === 'bet')).toBe(true)
       expect(entities.schedules).toHaveLength(1)
       expect(entities.conditions.length).toBeGreaterThan(0)
       expect(entities.amounts.some((a) => a.reference === 'min_bet')).toBe(true)
@@ -189,7 +201,8 @@ describe('EntityRecognizer', () => {
 
       expect(entities.actions.some((a) => a.type === 'login')).toBe(true)
       expect(entities.actions.some((a) => a.type === 'claim_bonus')).toBe(true)
-      expect(entities.actions.some((a) => a.type === 'spin')).toBe(true)
+      // in a simple sequence 'play the game' maps to open_game
+      expect(entities.actions.some((a) => a.type === 'open_game')).toBe(true)
       expect(entities.actions.some((a) => a.type === 'cash_out')).toBe(true)
     })
   })

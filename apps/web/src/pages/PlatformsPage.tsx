@@ -174,7 +174,7 @@ export function PlatformsPage() {
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
                           {platform.logo_url ? (
-                            <img src={platform.logo_url} alt="" className="w-7 h-7 rounded-md" />
+                            <img src={platform.logo_url} alt={`${platform.name} logo`} className="w-7 h-7 rounded-md" />
                           ) : (
                             <div className="w-7 h-7 rounded-md bg-zinc-800 flex items-center justify-center">
                               <Gamepad2 className="w-3.5 h-3.5 text-zinc-600" />

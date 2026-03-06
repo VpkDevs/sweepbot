@@ -8,15 +8,18 @@ import { defineBackground } from 'wxt/sandbox'
 import { storage } from '@/lib/storage'
 import { flowStorage } from '@/lib/flows/storage'
 import { scheduleFlow, unscheduleFlow, isFlowAlarm, getFlowIdFromAlarm } from '@/lib/flows/alarm-scheduler'
+import { createLogger } from '@/lib/logger'
 import type { BackgroundMessage, MessageResponse } from '@/types/extension'
 import type { NavigateStep } from '@/lib/flows/types'
+
+const log = createLogger('Background')
 
 export default defineBackground(() => {
 
 // ── Initialization ──────────────────────────────────────────────────────────
 
 storage.init().catch((error) => {
-  console.error('[Background] Failed to initialize storage:', error)
+  log.error('Failed to initialize storage', { error })
 })
 
 // Rehydrate Chrome alarms for any active scheduled flows on startup
@@ -84,11 +87,11 @@ async function handleMessage(message: BackgroundMessage, _sender: chrome.runtime
       const events = await storage.get('analyticsEvents')
       if (events && events.length > 0) {
         try {
-          console.log(`[Background] Syncing ${events.length} analytics events to server`)
+          log.info('Syncing analytics events to server', { count: events.length })
           // await extensionApi.syncAnalytics(events)
           return { success: true, eventCount: events.length }
         } catch (error) {
-          console.error('[Background] Failed to sync analytics:', error)
+          log.error('Failed to sync analytics', { error })    
           return { success: false, error: String(error) }
         }
       }
@@ -109,7 +112,7 @@ async function handleMessage(message: BackgroundMessage, _sender: chrome.runtime
       if (flow.status === 'active' && flow.trigger.type === 'scheduled') {
         scheduleFlow(flow)
       }
-      console.log(`[Background] Flow saved: ${flow.id} "${flow.name}"`)
+      log.info('Flow saved', { id: flow.id, name: flow.name })
       return { success: true }
     }
 
@@ -121,10 +124,10 @@ async function handleMessage(message: BackgroundMessage, _sender: chrome.runtime
 
       if (status === 'active' && flow.trigger.type === 'scheduled') {
         scheduleFlow(flow)
-        console.log(`[Background] Flow ${flowId} reactivated`)
+        log.info('Flow reactivated', { flowId })
       } else {
         unscheduleFlow(flowId)
-        console.log(`[Background] Flow ${flowId} unscheduled (status: ${status})`)
+        log.info('Flow unscheduled', { flowId, status })
       }
       return { success: true }
     }
@@ -133,7 +136,7 @@ async function handleMessage(message: BackgroundMessage, _sender: chrome.runtime
       const { flowId } = message.payload!
       unscheduleFlow(flowId)
       await flowStorage.deleteFlow(flowId)
-      console.log(`[Background] Flow ${flowId} deleted`)
+      log.info('Flow deleted', { flowId })
       return { success: true }
     }
 
@@ -143,7 +146,7 @@ async function handleMessage(message: BackgroundMessage, _sender: chrome.runtime
       if (!flow) return { success: false, error: 'Flow not found' }
       // Fire and forget — result comes back as FLOW_COMPLETED message
       dispatchFlowToTab(flow).catch((err) =>
-        console.error(`[Background] EXECUTE_FLOW_NOW failed for ${flowId}:`, err),
+        log.error('EXECUTE_FLOW_NOW failed', { flowId, error: err }),
       )
       return { success: true }
     }
@@ -152,7 +155,7 @@ async function handleMessage(message: BackgroundMessage, _sender: chrome.runtime
 
     case 'FLOW_COMPLETED': {
       const { flowId, success: ok, error } = message.payload!
-      console.log(`[Background] Flow ${flowId} completed: ${ok ? 'success' : 'error'}`, error ?? '')
+      log.info('Flow completed', { flowId, ok, error: error ?? undefined })
       if (!ok && error) {
         // Surface a notification so the user knows something went wrong
         chrome.notifications.create(`flow-error-${flowId}`, {
@@ -167,7 +170,7 @@ async function handleMessage(message: BackgroundMessage, _sender: chrome.runtime
 
     case 'FLOW_NEED_INPUT': {
       const { flowId, prompt } = message.payload!
-      console.log(`[Background] Flow ${flowId} needs input: ${prompt}`)
+      log.info('Flow needs user input', { flowId, prompt })
       // Bring the extension popup / notification to the user's attention
       chrome.notifications.create(`flow-input-${flowId}`, {
         type: 'basic',
@@ -192,7 +195,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'syncAnalytics') {
     const events = await storage.get('analyticsEvents')
     if (events && events.length > 0) {
-      console.log(`[Background] Periodic sync: ${events.length} events`)
+      log.info('Periodic analytics sync', { count: events.length })
       // await extensionApi.syncAnalytics(events)
     }
     return
@@ -205,13 +208,13 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 
     const flow = await flowStorage.getFlow(flowId)
     if (!flow || flow.status !== 'active') {
-      console.log(`[Background] Skipping alarm for inactive/missing flow: ${flowId}`)
+      log.debug('Skipping alarm for inactive/missing flow', { flowId })
       return
     }
 
-    console.log(`[Background] Alarm fired for flow: ${flowId} "${flow.name}"`)
+    log.info('Alarm fired for flow', { flowId, name: flow.name })
     dispatchFlowToTab(flow).catch((err) =>
-      console.error(`[Background] Flow alarm execution failed for ${flowId}:`, err),
+      log.error('Flow alarm execution failed', { flowId, error: err }),
     )
   }
 })
@@ -243,10 +246,10 @@ async function reactivateScheduledFlows(): Promise<void> {
       }
     }
     if (count > 0) {
-      console.log(`[Background] Reactivated ${count} scheduled flows`)
+      log.info('Reactivated scheduled flows on startup', { count })
     }
   } catch (err) {
-    console.error('[Background] Failed to reactivate scheduled flows:', err)
+    log.error('Failed to reactivate scheduled flows', { error: err })
   }
 }
 
@@ -308,7 +311,7 @@ async function dispatchFlowToTab(flow: import('@/lib/flows/types').FlowDefinitio
     payload: { flow },
   })
 
-  console.log(`[Background] Dispatched flow "${flow.name}" to tab ${tabId}`)
+  log.debug('Dispatched flow to tab', { name: flow.name, tabId })
 }
 
 /**

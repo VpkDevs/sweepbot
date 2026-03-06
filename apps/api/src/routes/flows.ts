@@ -8,12 +8,42 @@ import { z } from 'zod'
 import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { sql } from 'drizzle-orm'
 import { requireAuth } from '../middleware/auth.js'
-import { FlowInterpreter, FlowExecutor, ResponsiblePlayValidator } from '@sweepbot/flows'
+import { FlowInterpreter, FlowExecutor, ResponsiblePlayValidator, ConversationManager } from '@sweepbot/flows'
 
 // Initialize services
 const flowInterpreter = new FlowInterpreter()
 const flowExecutor = new FlowExecutor()
 const rpValidator = new ResponsiblePlayValidator()
+
+// Conversation manager with persistence helpers
+const conversationManager = new ConversationManager({
+  onStateLoad: async (conversationId: string) => {
+    const { rows } = await dbQuery(
+      sql`SELECT * FROM flow_conversations WHERE id = ${conversationId}`
+    )
+    return rows[0] ?? null
+  },
+  onStateSave: async (state) => {
+    await unsafeQuery(
+      `
+      INSERT INTO flow_conversations (id, user_id, flow_id, turns, status, created_at, updated_at)
+      VALUES ($1, $2, $3, $4::jsonb, $5, NOW(), NOW())
+      ON CONFLICT (id)
+      DO UPDATE SET turns = $4::jsonb, status = $5, updated_at = NOW()
+      `,
+      [
+        state.sessionId,
+        state.userId,
+        // flowId might be undefined while building
+        (state.currentFlow && typeof state.currentFlow === 'object' && 'id' in state.currentFlow) 
+          ? (state.currentFlow as { id: string }).id 
+          : null,
+        JSON.stringify(state.turns),
+        state.status,
+      ]
+    )
+  },
+})
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -107,6 +137,53 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
    * POST /flows/converse
    * Continue multi-turn conversation for Flow building
    */
+  // ─────────────────────────────────────────────────────────────────────────
+  // Conversation (multi-turn) helpers
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * POST /flows/conversations
+   * Start a new multi‑turn conversation for building a Flow.
+   */
+  app.post<{ Body: { initialMessage: string } }>(
+    '/conversations',
+    {
+      schema: {
+        tags: ['Flows'],
+        summary: 'Start a new flow‑building conversation',
+        body: {
+          type: 'object',
+          required: ['initialMessage'],
+          properties: {
+            initialMessage: { type: 'string', minLength: 1, maxLength: 2000 },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { initialMessage } = request.body
+      const conversationId = randomUUID()
+      try {
+        const state = await conversationManager.startConversation(
+          request.user!.id,
+          conversationId,
+          initialMessage
+        )
+        return reply.code(201).send({ success: true, data: state })
+      } catch (error) {
+        app.log.error({ error }, 'Failed to start conversation')
+        return reply.code(500).send({
+          success: false,
+          error: { code: 'INTERNAL_ERROR', message: 'Could not start conversation' },
+        })
+      }
+    }
+  )
+
+  /**
+   * POST /flows/converse
+   * Continue multi-turn conversation for Flow building
+   */
   app.post<{ Body: { conversationId: string; userMessage: string } }>(
     '/converse',
     {
@@ -126,7 +203,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
     },
     async (request, reply) => {
       try {
-        // Load conversation state from DB
+        // Ensure the conversation belongs to the user
         const { rows } = await dbQuery(
           sql`SELECT * FROM flow_conversations WHERE id = ${request.body.conversationId} AND user_id = ${request.user!.id}`
         )
@@ -138,11 +215,14 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
           })
         }
 
-        // TODO: Implement conversation manager logic
-        return reply.send({
-          success: true,
-          data: rows[0],
-        })
+        // Delegate business logic to ConversationManager which will
+        // load and save state via the hooks we configured above.
+        const updatedState = await conversationManager.continue(
+          request.body.conversationId,
+          request.body.userMessage
+        )
+
+        return reply.send({ success: true, data: updatedState })
       } catch (error) {
         app.log.error({ error }, 'Conversation error')
         return reply.code(500).send({

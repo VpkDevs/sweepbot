@@ -110,7 +110,7 @@ export function SessionsPage() {
                     {session['platform_logo_url'] ? (
                       <img
                         src={session['platform_logo_url'] as string}
-                        alt=""
+                        alt={`${session['platform_name']} logo`}
                         className="w-8 h-8 rounded-md"
                       />
                     ) : (

@@ -16,7 +16,7 @@ export interface RtpStats {
   confidenceLevel: 'low' | 'medium' | 'high'
 }
 
-class RtpCalculator {
+export class RtpCalculator {
   private wagered = 0
   private won = 0
   private spins = 0

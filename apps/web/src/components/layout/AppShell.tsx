@@ -27,6 +27,7 @@ import { NotificationPanel } from '../ui/NotificationPanel'
 import { OnboardingTour } from '../ui/OnboardingTour'
 import { CursorGlow } from '../fx/CursorGlow'
 import { NoiseOverlay } from '../fx/NoiseOverlay'
+import { ErrorBoundary } from '../ErrorBoundary'
 
 const navSections = [
   {
@@ -327,7 +328,9 @@ export function AppShell() {
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto scroll-smooth">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     </div>

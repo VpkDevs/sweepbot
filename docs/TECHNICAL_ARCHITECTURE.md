@@ -276,6 +276,7 @@ GET  /trust-index               → All platform trust scores
 GET  /trust-index/:platform_id  → Single platform trust score
 
 POST /webhooks/stripe           → Stripe webhook handler
+POST /webhooks/supabase         → Supabase auth events (welcome email on user.created)
 ```
 
 ### 5.2 WebSocket Events

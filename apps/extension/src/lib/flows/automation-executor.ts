@@ -48,7 +48,12 @@ export async function executeFlow(flow: FlowDefinition): Promise<FlowExecution> 
 
   try {
     await runSteps(flow.steps, ctx)
-    ctx.execution.status = ctx.aborted ? 'stopped' : 'completed'
+    // respect limit_reached if already set by runSteps
+    if (!ctx.aborted) {
+      ctx.execution.status = 'completed'
+    } else if (ctx.execution.status !== 'limit_reached') {
+      ctx.execution.status = 'stopped'
+    }
   } catch (err) {
     ctx.execution.status = 'failed'
     ctx.execution.error = String(err)
@@ -123,8 +128,19 @@ async function runStep(step: FlowStep, ctx: ExecutionContext): Promise<void> {
         break
 
       case 'wait':
-        await sleep(step.ms)
-        result.success = true
+        // sleep in small chunks so we can abort if the duration limit is reached
+        let remaining = step.ms
+        while (remaining > 0 && !ctx.aborted) {
+          const chunk = Math.min(100, remaining)
+          await sleep(chunk)
+          remaining -= chunk
+          if (Date.now() - ctx.startTime > ctx.maxDurationMs) {
+            ctx.aborted = true
+            ctx.execution.status = 'limit_reached'
+            break
+          }
+        }
+        result.success = !ctx.aborted
         break
 
       case 'wait_for':

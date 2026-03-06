@@ -30,7 +30,7 @@ export class FlowInterpreter {
     const flowNode = this.buildFlowAST(entities, intent, request.rawInput)
 
     // Pass 4: Responsible Play Validation
-    const guardrails = this.validateResponsiblePlay(flowNode, request.userId)
+    const guardrails = this.validateResponsiblePlay(flowNode, request.userId, request.rawInput)
 
     // Calculate confidence
     let confidence = this.calculateConfidence(entities, intent)
@@ -163,6 +163,50 @@ export class FlowInterpreter {
       }
     }
 
+    // Step 7: If the user described a simple conditional branch ("if... then ... else ..."),
+    // wrap it in a condition node so the executor can evaluate it later.
+    if (entities.conditions.length > 0) {
+      const cond = entities.conditions[0]!
+      // try to infer missing operator from text
+      let operator = cond.operator as any
+      if (!operator) {
+        if (/more\s+than/i.test(rawText)) operator = '>'
+        if (/less\s+than/i.test(rawText)) operator = '<'
+      }
+      const leftValue = this.makeLiteralValue(cond.left)
+      const rightValue = this.makeLiteralValue(cond.right)
+      // pick representative actions for true/false branches
+      const trueActionType = /spin/i.test(rawText) ? 'spin' : /play/i.test(rawText) ? 'open_game' : 'spin'
+      const falseActionType = /close/i.test(rawText) ? 'close_platform' : undefined
+
+      const conditionNode: any = {
+        type: 'condition',
+        id: this.generateId(),
+        left: leftValue,
+        operator: operator || '==',
+        right: rightValue,
+        onTrue: {
+          type: 'action',
+          id: this.generateId(),
+          action: trueActionType,
+          parameters: {},
+          timeout: 10000,
+          onFailure: 'stop',
+        },
+      }
+      if (falseActionType) {
+        conditionNode.onFalse = {
+          type: 'action',
+          id: this.generateId(),
+          action: falseActionType,
+          parameters: {},
+          timeout: 5000,
+          onFailure: 'skip',
+        }
+      }
+      rootSteps.push(conditionNode)
+    }
+
     // Return sequence of all actions
     return {
       type: 'sequence',
@@ -273,6 +317,18 @@ export class FlowInterpreter {
   /**
    * Extract bet amount from entities
    */
+  private makeLiteralValue(val?: string): any {
+    // convert string to literal number if possible, otherwise just return as text
+    if (val === undefined || val === null) {
+      return { type: 'literal', value: '' }
+    }
+    const num = parseFloat(val as string)
+    if (!isNaN(num)) {
+      return { type: 'literal', value: num }
+    }
+    return { type: 'literal', value: val }
+  }
+
   private extractBetAmount(entities: EntityMap): string | number | null {
     if (entities.amounts.length > 0) {
       const amount = entities.amounts[0]!
@@ -289,7 +345,7 @@ export class FlowInterpreter {
   /**
    * Pass 4: Validate responsible play constraints
    */
-  private validateResponsiblePlay(flowNode: FlowNode, userId: string): ResponsiblePlayGuardrail[] {
+private validateResponsiblePlay(flowNode: FlowNode, userId: string, rawText?: string): ResponsiblePlayGuardrail[] {
     const guardrails: ResponsiblePlayGuardrail[] = []
 
     // Every flow gets a default max duration of 2 hours
@@ -307,6 +363,29 @@ export class FlowInterpreter {
       source: 'system_mandatory',
       overridable: false,
     })
+
+    if (rawText) {
+      // user-specified max loss
+      const lossMatch = rawText.match(/lose\s+more\s+than\s+\$?(\d+)/i)
+      if (lossMatch) {
+        guardrails.push({
+          type: 'max_loss',
+          value: parseFloat(lossMatch[1]!),
+          source: 'user_specified',
+          overridable: true,
+        })
+      }
+
+      // chase detection keyword
+      if (/double\s+my\s+bet|chase/i.test(rawText)) {
+        guardrails.push({
+          type: 'chase_detection',
+          value: true,
+          source: 'system_mandatory',
+          overridable: false,
+        })
+      }
+    }
 
     return guardrails
   }

@@ -33,7 +33,12 @@ export interface FlowSchedulerOptions {
 }
 
 export class FlowScheduler {
-  private jobs = new Map<string, any>()
+  /**
+   * Map of jobKey -> metadata object. We keep the raw cron job plus
+   * convenient metadata for testing and introspection (cron string,
+   * timezone, userId, etc.).
+   */
+  private jobs = new Map<string, { job: any; cron?: string; timezone?: string; userId?: string }>()
   private options: FlowSchedulerOptions
   private logger: { info: (msg: string) => void; error: (msg: string, err: any) => void }
 
@@ -64,7 +69,12 @@ export class FlowScheduler {
     await this.pauseFlow(flow.id)
 
     try {
-      // Create cron job
+      // Create cron job - include timezone if specified
+      const jobOptions: any = {}
+      if (timezone) {
+        jobOptions.timezone = timezone
+      }
+
       const job = CronJob(cron, async () => {
         try {
           this.logger.info(`Executing scheduled flow ${flow.id} for user ${userId}`)
@@ -77,11 +87,12 @@ export class FlowScheduler {
             await this.options.onFlowError(flow.id, userId, error as Error)
           }
         }
-      })
+      }, jobOptions)
 
       // Start the job
       job.start()
-      this.jobs.set(jobKey, job)
+      // store metadata so tests / introspection can inspect timezone/cron
+      this.jobs.set(jobKey, { job, cron, timezone, userId })
 
       this.logger.info(`Flow ${flow.id} scheduled: cron="${cron}" timezone="${timezone}" for user ${userId}`)
     } catch (error) {
@@ -96,10 +107,10 @@ export class FlowScheduler {
    */
   async pauseFlow(flowId: string): Promise<void> {
     // Find and stop all jobs for this flow (across all users)
-    for (const [jobKey, job] of this.jobs.entries()) {
+    for (const [jobKey, meta] of this.jobs.entries()) {
       if (jobKey.endsWith(`:${flowId}`)) {
         try {
-          job.stop()
+          meta.job.stop()
           this.jobs.delete(jobKey)
           this.logger.info(`Paused flow ${flowId}`)
         } catch (error) {
@@ -156,9 +167,9 @@ export class FlowScheduler {
   async shutdown(): Promise<void> {
     this.logger.info('Shutting down FlowScheduler...')
 
-    for (const [jobKey, job] of this.jobs.entries()) {
+    for (const [jobKey, meta] of this.jobs.entries()) {
       try {
-        job.stop()
+        meta.job.stop()
         this.jobs.delete(jobKey)
       } catch (error) {
         this.logger.error(`Failed to stop job ${jobKey}`, error)
@@ -173,5 +184,13 @@ export class FlowScheduler {
    */
   getActiveFlows(): string[] {
     return Array.from(this.jobs.keys())
+  }
+
+  /**
+   * Inspect metadata for a specific job (used in tests / debugging)
+   */
+  getJobInfo(flowId: string, userId: string): { job: any; cron?: string; timezone?: string; userId?: string } | undefined {
+    const key = `${userId}:${flowId}`
+    return this.jobs.get(key)
   }
 }

@@ -135,6 +135,43 @@ CREATE TABLE user_platforms (
   UNIQUE(user_id, platform_id)
 );
 
+-- =============================================================================
+-- FLOWS (automation definitions)
+-- =============================================================================
+
+CREATE TABLE flows (
+  id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id          UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  name             TEXT NOT NULL,
+  description      TEXT NOT NULL,           -- original natural language
+  definition       JSONB NOT NULL,           -- parsed FlowDefinition AST
+  trigger          JSONB NOT NULL,
+  status           TEXT NOT NULL DEFAULT 'draft',
+  version          INTEGER NOT NULL DEFAULT 1,
+  guardrails       JSONB NOT NULL,           -- Responsible play limits
+  is_shared        BOOLEAN NOT NULL DEFAULT FALSE,
+  shared_flow_id   UUID REFERENCES shared_flows(id),
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_executed_at TIMESTAMPTZ,
+  execution_count  INTEGER NOT NULL DEFAULT 0,
+  performance_stats JSONB
+);
+
+CREATE TABLE flow_conversations (
+  id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id       UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  flow_id       UUID REFERENCES flows(id) ON DELETE SET NULL,
+  turns         JSONB NOT NULL,                -- ConversationTurn[]
+  status        TEXT NOT NULL,                 -- building, confirming, complete
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE flow_conversations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can access own conversations" ON flow_conversations FOR ALL USING (auth.uid() = user_id);
+
+
 ALTER TABLE user_platforms ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users access own platform connections" ON user_platforms FOR ALL USING (auth.uid() = user_id);
 

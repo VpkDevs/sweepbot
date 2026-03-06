@@ -42,7 +42,7 @@ const envSchema = z.object({
 
   // Email
   RESEND_API_KEY: z.string().optional(),
-  EMAIL_FROM: z.string().email().default('noreply@sweepbot.app'),
+  EMAIL_FROM: z.string().email().default('noreply@sweepbot.com'),
   EMAIL_FROM_NAME: z.string().default('SweepBot'),
 
   // Sentry

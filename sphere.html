@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Glowing 3D Sphere</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #000; overflow: hidden; }
+canvas { display: block; }
+</style>
+</head>
+<body>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 100);
+camera.position.z = 3;
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(devicePixelRatio);
+document.body.appendChild(renderer.domElement);
+
+const geo = new THREE.SphereGeometry(1, 64, 64);
+const mat = new THREE.MeshStandardMaterial({
+  color: 0x00aaff,
+  emissive: 0x0044ff,
+  emissiveIntensity: 0.6,
+  roughness: 0.1,
+  metalness: 0.8,
+});
+const sphere = new THREE.Mesh(geo, mat);
+scene.add(sphere);
+
+const wireGeo = new THREE.SphereGeometry(1.01, 24, 24);
+const wireMat = new THREE.MeshBasicMaterial({ color: 0x44ddff, wireframe: true, transparent: true, opacity: 0.15 });
+const wire = new THREE.Mesh(wireGeo, wireMat);
+scene.add(wire);
+
+const ambientLight = new THREE.AmbientLight(0x001133, 2);
+scene.add(ambientLight);
+
+const pointLight1 = new THREE.PointLight(0x00ccff, 8, 10);
+pointLight1.position.set(3, 3, 3);
+scene.add(pointLight1);
+
+const pointLight2 = new THREE.PointLight(0xff00ff, 5, 10);
+pointLight2.position.set(-3, -2, 2);
+scene.add(pointLight2);
+
+const glowGeo = new THREE.SphereGeometry(1.3, 32, 32);
+const glowMat = new THREE.MeshBasicMaterial({
+  color: 0x0066ff,
+  transparent: true,
+  opacity: 0.12,
+  side: THREE.BackSide,
+});
+const glow = new THREE.Mesh(glowGeo, glowMat);
+scene.add(glow);
+
+const glowGeo2 = new THREE.SphereGeometry(1.6, 32, 32);
+const glowMat2 = new THREE.MeshBasicMaterial({
+  color: 0x0033aa,
+  transparent: true,
+  opacity: 0.06,
+  side: THREE.BackSide,
+});
+scene.add(new THREE.Mesh(glowGeo2, glowMat2));
+
+let mouseX = 0, mouseY = 0;
+let targetX = 0, targetY = 0;
+
+document.addEventListener('mousemove', e => {
+  mouseX = (e.clientX / innerWidth - 0.5) * 2;
+  mouseY = (e.clientY / innerHeight - 0.5) * 2;
+});
+
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+let t = 0;
+function animate() {
+  requestAnimationFrame(animate);
+  t += 0.01;
+
+  targetX += (mouseX - targetX) * 0.05;
+  targetY += (mouseY - targetY) * 0.05;
+
+  sphere.rotation.y += 0.005 + targetX * 0.02;
+  sphere.rotation.x += targetY * 0.02;
+  wire.rotation.y = sphere.rotation.y;
+  wire.rotation.x = sphere.rotation.x;
+
+  const pulse = 0.6 + Math.sin(t * 2) * 0.2;
+  mat.emissiveIntensity = pulse;
+  glowMat.opacity = 0.08 + Math.sin(t * 1.5) * 0.04;
+
+  pointLight1.position.x = Math.sin(t * 0.7) * 4;
+  pointLight1.position.y = Math.cos(t * 0.5) * 4;
+  pointLight2.position.x = Math.cos(t * 0.6) * 4;
+  pointLight2.position.y = Math.sin(t * 0.8) * 4;
+
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>

@@ -16,7 +16,7 @@ import {
   Eye,
   EyeOff,
 } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { supabaseClient } from '../lib/supabase'
 import { useAuthStore } from '../stores/auth'
 import { api } from '../lib/api'
 import { cn, formatSC } from '../lib/utils'
@@ -117,7 +117,7 @@ function ProfileTab() {
   async function handleSave() {
     setSaving(true)
     try {
-      await supabase.auth.updateUser({ data: { display_name: displayName } })
+      await supabaseClient.auth.updateUser({ data: { display_name: displayName } })
       void qc.invalidateQueries({ queryKey: ['user'] })
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
@@ -163,17 +163,17 @@ function SecurityTab() {
     setSaving(true)
     try {
       // Re-authenticate then update
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { user } } = await supabaseClient.auth.getUser()
       if (!user?.email) throw new Error('No user found.')
 
       // Sign in with old password to verify
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { error: signInError } = await supabaseClient.auth.signInWithPassword({
         email: user.email,
         password: oldPw,
       })
       if (signInError) throw new Error('Current password is incorrect.')
 
-      const { error: updateError } = await supabase.auth.updateUser({ password: newPw })
+      const { error: updateError } = await supabaseClient.auth.updateUser({ password: newPw })
       if (updateError) throw updateError
 
       setOldPw(''); setNewPw(''); setConfirmPw('')

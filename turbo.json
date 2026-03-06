@@ -1,34 +1,47 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["**/.env.*local", "tsconfig.json"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": ["dist/**", ".next/**", "!.next/cache/**", "build/**"]
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**", "build/**", ".wxt/**"],
+      "cache": true
     },
     "dev": {
       "cache": false,
       "persistent": true
     },
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".eslintrc.cjs", ".eslintignore"],
+      "outputs": [],
+      "cache": true
     },
     "lint:fix": {
-      "cache": false
+      "cache": false,
+      "outputs": []
     },
     "typecheck": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "tsconfig.json"],
+      "outputs": [],
+      "cache": true
     },
     "test": {
       "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
+      "inputs": ["$TURBO_DEFAULT$", "vitest.config.ts"],
+      "outputs": ["coverage/**"],
+      "cache": true
     },
     "test:watch": {
       "cache": false,
       "persistent": true
     },
     "test:coverage": {
-      "outputs": ["coverage/**"]
+      "inputs": ["$TURBO_DEFAULT$", "vitest.config.ts"],
+      "outputs": ["coverage/**"],
+      "cache": true
     },
     "clean": {
       "cache": false
@@ -38,6 +51,10 @@
     },
     "db:seed": {
       "cache": false
+    },
+    "db:studio": {
+      "cache": false,
+      "persistent": true
     }
   }
 }

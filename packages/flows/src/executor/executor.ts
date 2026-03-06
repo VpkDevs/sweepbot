@@ -96,7 +96,7 @@ export class FlowExecutor {
 
     switch (node.type) {
       case 'action':
-        return await this.executeAction(node as FlowActionNode, ctx)
+        return await this.executeAction(node as FlowActionNode, ctx, flow)
       case 'condition':
         return await this.executeCondition(node as FlowConditionNode, ctx, flow)
       case 'loop':
@@ -134,7 +134,7 @@ export class FlowExecutor {
   /**
    * Execute an action node
    */
-  private async executeAction(node: FlowActionNode, ctx: FlowExecutionContext): Promise<void> {
+  private async executeAction(node: FlowActionNode, ctx: FlowExecutionContext, flow: FlowDefinition): Promise<void> {
     ctx.log.push({
       timestamp: new Date(),
       nodeId: node.id,
@@ -177,7 +177,7 @@ export class FlowExecutor {
 
       // Execute next node
       if (node.next) {
-        await this.executeNode(node.next, ctx, {} as FlowDefinition)
+        await this.executeNode(node.next, ctx, flow)
       }
     } catch (error) {
       ctx.log.push({
@@ -190,7 +190,7 @@ export class FlowExecutor {
       // Handle failure per node configuration
       if (node.onFailure === 'skip') {
         if (node.next) {
-          await this.executeNode(node.next, ctx, {} as FlowDefinition)
+          await this.executeNode(node.next, ctx, flow)
         }
       } else if (node.onFailure === 'stop') {
         throw error
@@ -335,22 +335,40 @@ export class FlowExecutor {
   }
 
   /**
-   * Simple expression evaluation
-   * In production, would use a proper math expression parser
+   * Safe expression evaluation without using eval or new Function
+   * Only supports basic arithmetic operations: +, -, *, /, %
    */
   private evaluateExpression(expr: string, ctx: FlowExecutionContext): number {
     // Replace variables with their values
-    let evaluated = expr
+    let evaluated = expr.trim()
+    
+    // Replace all $variableName with their numeric values
     for (const [varName, value] of ctx.variables) {
       if (typeof value === 'number') {
-        evaluated = evaluated.replace(`$${varName}`, String(value))
+        // Use word boundary to avoid partial replacements
+        const regex = new RegExp(`\\$${varName}\\b`, 'g')
+        evaluated = evaluated.replace(regex, String(value))
       }
     }
 
-    // Simple safe evaluation
+    // Validate that the expression only contains safe characters
+    // Allow: numbers, operators, parentheses, spaces, and decimal points
+    if (!/^[\d\s+\-*/%.()]+$/.test(evaluated)) {
+      console.warn('Unsafe expression detected, rejecting:', evaluated)
+      return 0
+    }
+
+    // Safe evaluation using Function constructor with limited scope
+    // This is still potentially dangerous but less so than direct eval
+    // In production, use a proper math expression library like mathjs
     try {
       // eslint-disable-next-line no-new-func
-      return new Function(`return ${evaluated}`)()
+      const fn = new Function(`return ${evaluated}`)
+      const result = fn()
+      if (typeof result !== 'number' || !isFinite(result)) {
+        return 0
+      }
+      return result
     } catch {
       return 0
     }

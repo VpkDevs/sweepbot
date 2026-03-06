@@ -399,6 +399,49 @@ Update redemption status (mark as complete, rejected, etc.).
 
 ---
 
+### Flows (Automation)
+
+The Flows endpoints allow users to create, refine and manage automated sweepstakes actions.
+
+#### `POST /api/flows/interpret`
+Convert natural language text into a Flow definition. This is typically the first step when the user types what they want the automation to do.
+
+**Request:**
+```json
+{ "rawInput": "Every day at 3 PM, open Chumba and claim bonus" }
+```
+
+**Response:** common interpret result containing parsed AST and confidence score.
+
+#### `POST /api/flows/conversations`
+Start a new multi‑turn conversation for building a Flow. Returns the initial conversation state.
+
+**Request:**
+```json
+{ "initialMessage": "Every day open Chumba and play" }
+```
+
+**Response:**
+```json
+{ "success": true, "data": { "sessionId": "uuid", "turns": [...] } }
+```
+
+#### `POST /api/flows/converse`
+Continue an existing conversation using its `conversationId` and a new message from the user.
+
+**Request:**
+```json
+{ "conversationId": "uuid", "userMessage": "Actually at 3:30 PM" }
+```
+
+**Response:**
+Updated conversation state including assistant replies.
+
+#### CRUD & execution
+(Other `/api/flows` endpoints for create, list, get, update, execute are documented elsewhere or assumed - see Flow UI spec.)
+
+---
+
 ### Trust Index
 
 #### `GET /api/trust-index/platforms`

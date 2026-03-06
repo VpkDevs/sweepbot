@@ -5,36 +5,42 @@ Natural Language Automation Engine for SweepBot. Convert plain English descripti
 ## Features
 
 ✨ **Natural Language Processing**
+
 - Rule-based entity recognition (platforms, games, actions, conditions, schedules)
 - 4-pass interpretation pipeline (entity extraction → intent classification → AST building → validation)
 - Confidence scoring and fallback to LLM for ambiguous input
 - Human-readable summaries with emoji indicators
 
 🎯 **AST-Based Execution Model**
+
 - Flow Definition Abstract Syntax Tree with 9 node types
 - Recursive execution with context management
 - Full metric tracking per execution (actions, spins, bonuses, wagered, won, etc.)
 - Real-time logging of every action, condition, loop, and variable change
 
 🛡️ **Mandatory Responsible Play**
+
 - System-enforced guardrails (max_duration, cool_down_check, max_loss, chase_detection, etc.)
 - Loop safety caps (maxIterations, maxDuration)
 - Per-node failure strategies (skip, retry, stop, fallback)
 - Subscription tier-based limits
 
 ⏰ **Cron-Based Scheduling**
+
 - Timezone-aware scheduling via node-cron
 - Automatic startup recovery for all active flows
 - Dynamic job management (activate, pause, resume)
 - Error notifications to users
 
 💬 **Multi-Turn Conversation**
+
 - Guided Flow building through natural dialogue
 - Intent detection (confirm, refine, question)
 - Auto-generated follow-up questions
 - Confirmation cards before activation
 
 📊 **Comprehensive Testing**
+
 - 200+ unit and integration tests
 - 80%+ code coverage
 - Vitest configuration included
@@ -80,7 +86,8 @@ console.log(result.humanReadableSummary)
 import { ResponsiblePlayValidator } from '@sweepbot/flows'
 
 const validator = new ResponsiblePlayValidator()
-const guardrails = validator.validate(flow.rootNode, flow.userId)
+// pass optional flow description/raw text to help detect user-specified limits
+const guardrails = validator.validate(flow.rootNode, flow.userId, flow.description)
 
 console.log(guardrails)
 // [
@@ -125,6 +132,31 @@ await scheduler.activateFlow(flow, flow.userId)
 ```
 
 ### 5. Multi-Turn Conversation
+
+## Building & Packaging 📦
+
+The flows package is written in strict TypeScript and is compiled to plain JavaScript
+via `tsc`. From the package itself you can run:
+
+```bash
+pnpm run build          # compile to dist/ within packages/flows
+pnpm run typecheck      # only perform a type check
+pnpm run test           # run unit/integration tests
+```
+
+At the monorepo root there's a helper script that makes it easy to build just the
+flows bundle:
+
+```bash
+pnpm run build:flows     # equivalent to `pnpm --filter @sweepbot/flows run build`
+```
+
+When preparing for publishing, ensure that `dist/` contains the compiled output
+and update the version in `packages/flows/package.json`. The package is currently
+private; change `private` to `false` in the manifest before publishing to a
+registry.
+
+### Using ConversationManager
 
 ```typescript
 import { ConversationManager } from '@sweepbot/flows'
@@ -377,6 +409,7 @@ npm run test:cov
 ```
 
 Tests include:
+
 - EntityRecognizer: 60+ assertions across 9 test suites
 - FlowInterpreter: 90+ assertions across 14 test suites
 - FlowExecutor: 85+ assertions across 17 test suites
@@ -384,7 +417,7 @@ Tests include:
 
 ## Architecture
 
-```
+```text
 flows/
 ├── src/
 │   ├── types.ts                    # Core type definitions

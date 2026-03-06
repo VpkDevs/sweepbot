@@ -34,8 +34,12 @@ The beachhead product for SweepBot — a lightweight Chrome/Firefox extension th
 # Install dependencies
 pnpm install
 
-# Development mode
+# Development mode (hot reload)
 pnpm dev
+
+# Run unit & integration tests
+pnpm test          # runs all Vitest suites
+pnpm test:coverage # coverage report (v8)
 
 # Build for production
 pnpm build
@@ -43,6 +47,8 @@ pnpm build
 # Build as ZIP for submission
 pnpm build:zip
 ```
+
+Additional test utilities live under `src/__tests__`; see `playwright-harness.test.ts` for a lightweight Playwright example that exercises detection logic inside a headless browser.
 
 ## Manifest
 
@@ -55,30 +61,35 @@ pnpm build:zip
 ## Key Features
 
 ### Session Tracking
+
 - Automatic session detection on game pages
 - Spin-by-spin bet/win capture
 - Real-time balance monitoring
 - Automatic session cleanup
 
 ### RTP Analytics
+
 - Real-time RTP calculation (wagered vs. won)
 - Volatility classification (low/medium/high)
 - Confidence levels based on sample size
 - Largest win/loss tracking
 
 ### HUD Overlay
+
 - In-page stats display (customizable position)
 - Color-coded RTP (green >95%, yellow >85%, red <85%)
 - Current session snapshot
 - Collapsible/hideable
 
 ### Affiliate Integration
+
 - Tracks referral link clicks
 - Injects signup banners on registration pages
 - Revenue sharing per platform signup
 - Even free users generate affiliate revenue
 
 ### Responsible Play
+
 - Session time limit alerts
 - Loss limit notifications
 - Chase detection (compulsive play patterns)

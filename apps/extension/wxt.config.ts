@@ -20,6 +20,7 @@ export default defineConfig({
       'Real-time analytics, RTP tracking, and bonus intelligence for sweepstakes casino players.',
     version: '0.1.0',
     permissions: [
+      'activeTab',
       'storage',
       'alarms',
       'notifications',
@@ -61,28 +62,10 @@ export default defineConfig({
     content_security_policy: {
       extension_pages: "script-src 'self'; object-src 'self'",
     },
-    icons: {
-      16: 'icons/icon-16.png',
-      32: 'icons/icon-32.png',
-      48: 'icons/icon-48.png',
-      128: 'icons/icon-128.png',
-    },
     action: {
       default_popup: 'popup.html',
-      default_icon: {
-        16: 'icons/icon-16.png',
-        32: 'icons/icon-32.png',
-        48: 'icons/icon-48.png',
-        128: 'icons/icon-128.png',
-      },
       default_title: 'SweepBot',
     },
     options_page: 'options.html',
-    web_accessible_resources: [
-      {
-        resources: ['hud.css'],
-        matches: ['<all_urls>'],
-      },
-    ],
   },
 })

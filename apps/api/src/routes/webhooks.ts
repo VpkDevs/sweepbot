@@ -3,6 +3,11 @@ import Stripe from 'stripe'
 import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { sql } from 'drizzle-orm'
 import { env } from '../utils/env.js'
+import { sendEmail } from '../lib/email.js'
+import { createNotification } from './notifications.js'
+import { logger } from '../utils/logger.js'
+
+const stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2025-02-24.acacia' })
 
 /**
  * Stripe webhook handler.
@@ -24,7 +29,6 @@ export async function webhookRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── POST /webhooks/stripe ────────────────────────────────────────────────
   app.post('/webhooks/stripe', async (request: FastifyRequest, reply) => {
-    const stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2025-02-24.acacia' })
     const sig = request.headers['stripe-signature']
 
     if (!sig) {
@@ -54,6 +58,29 @@ export async function webhookRoutes(app: FastifyInstance): Promise<void> {
       return reply.code(500).send({ error: 'Webhook handler failed' })
     }
 
+    return reply.code(200).send({ received: true })
+  })
+
+  // ─── POST /webhooks/supabase ─────────────────────────────────────────────
+  // Supabase can be configured to POST user events (see its functions or
+  // Auth > Webhooks settings). We only care about new-user creation so we
+  // can trigger a welcome email.
+  app.post('/webhooks/supabase', async (request, reply) => {
+    const event = request.body as Record<string, any>
+    // example payload: { "type": "user.created", "record": { email, user_metadata } }
+    if (event?.type === 'user.created') {
+      const rec = event.record || {}
+      const email: string | undefined = rec.email
+      const username: string | undefined = rec.user_metadata?.display_name
+      if (email) {
+        try {
+          // deferred send; failures shouldn't block webhook response
+          void sendWelcomeEmail(email, username)
+        } catch (e) {
+          logger.error({ error: e, email }, 'Failed to send welcome email')
+        }
+      }
+    }
     return reply.code(200).send({ received: true })
   })
 }
@@ -92,6 +119,7 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
         SET
           status = ${subscription.status},
           tier = ${tier},
+          stripe_subscription_id = ${subscription.id},
           current_period_start = ${new Date(subscription.current_period_start * 1000)},
           current_period_end = ${new Date(subscription.current_period_end * 1000)},
           cancel_at_period_end = ${subscription.cancel_at_period_end},
@@ -155,13 +183,42 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
       const invoice = event.data.object as Stripe.Invoice
       const customerId = invoice.customer as string
 
+      // update subscription status first
       await dbQuery(sql`
         UPDATE subscriptions
         SET status = 'past_due', updated_at = NOW()
         WHERE stripe_customer_id = ${customerId}
       `)
 
-      // TODO: trigger Resend email — "Payment failed, please update billing"
+      // create an in-app notification for the user if we can resolve them
+      try {
+        const { rows } = await dbQuery<{ user_id: string }>(
+          sql`SELECT user_id FROM subscriptions WHERE stripe_customer_id = ${customerId}`
+        )
+        if (rows[0]?.user_id) {
+          void createNotification({
+            userId: rows[0].user_id,
+            type: 'system',
+            title: 'Payment failed',
+            body: 'Your subscription payment failed. Please update your billing information.',
+          })
+        }
+      } catch (e) {
+        logger.error({ error: e }, 'Unable to notify user for payment failure')
+      }
+
+      // attempt to send an email via Resend if address available
+      const customerEmail = invoice.customer_email
+      if (customerEmail) {
+        void sendEmail({
+          to: customerEmail,
+          subject: 'SweepBot: Payment failed – update billing',
+          html: `<p>Hi there,</p>
+<p>We tried to charge your credit card but the payment failed. Please <a href=\"https://app.sweepbot.com/settings/billing\">update your billing information</a> to avoid interruption.</p>
+<p>Thanks,<br/>The SweepBot Team</p>`,
+        })
+      }
+
       break
     }
 
@@ -214,15 +271,17 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
  * Price IDs from env vars, set up in .env.example.
  */
 function getTierFromPriceId(priceId: string): string {
-  const priceMap: Record<string, string> = {
-    [env.STRIPE_PRICE_STARTER_MONTHLY ?? '']: 'starter',
-    [env.STRIPE_PRICE_STARTER_ANNUAL ?? '']: 'starter',
-    [env.STRIPE_PRICE_PRO_MONTHLY ?? '']: 'pro',
-    [env.STRIPE_PRICE_PRO_ANNUAL ?? '']: 'pro',
-    [env.STRIPE_PRICE_ANALYST_MONTHLY ?? '']: 'analyst',
-    [env.STRIPE_PRICE_ANALYST_ANNUAL ?? '']: 'analyst',
-    [env.STRIPE_PRICE_ELITE_MONTHLY ?? '']: 'elite',
-    [env.STRIPE_PRICE_ELITE_ANNUAL ?? '']: 'elite',
-  }
+  if (!priceId) return 'free'
+  const entries: [string | undefined, string][] = [
+    [env.STRIPE_PRICE_STARTER_MONTHLY, 'starter'],
+    [env.STRIPE_PRICE_STARTER_ANNUAL, 'starter'],
+    [env.STRIPE_PRICE_PRO_MONTHLY, 'pro'],
+    [env.STRIPE_PRICE_PRO_ANNUAL, 'pro'],
+    [env.STRIPE_PRICE_ANALYST_MONTHLY, 'analyst'],
+    [env.STRIPE_PRICE_ANALYST_ANNUAL, 'analyst'],
+    [env.STRIPE_PRICE_ELITE_MONTHLY, 'elite'],
+    [env.STRIPE_PRICE_ELITE_ANNUAL, 'elite'],
+  ]
+  const priceMap = Object.fromEntries(entries.filter(([k]) => k) as [string, string][])
   return priceMap[priceId] ?? 'free'
 }

@@ -7,8 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "deploy": "pnpm run build && vercel --prod",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --ext .ts,.tsx"
+    "lint": "eslint src --ext .ts,.tsx",
+    "test:e2e": "vitest --run --config vitest.e2e.config.ts"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.0",
@@ -38,16 +40,24 @@
     "stripe": "^16.10.0",
     "tailwind-merge": "^2.5.2",
     "zustand": "^5.0.0",
-    "zod": "^3.23.0"
+    "zod": "^3.23.0",
+    "posthog-js": "^1.359.0",
+    "@sentry/react": "^7.67.0",
+    "@sentry/tracing": "^7.67.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@testing-library/jest-dom": "^6.6.3",
     "@types/react": "^18.3.8",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.20",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.5.4",
-    "vite": "^5.4.7"
+    "vite": "^5.4.7",
+    "vitest": "^0.33.0",
+    "puppeteer": "^20.4.1"
   }
 }

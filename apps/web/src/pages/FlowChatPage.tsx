@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { Send, Bot, User, Loader2, AlertTriangle, CheckCircle2, Sparkles, ArrowRight } from 'lucide-react'
 import { api } from '../lib/api'
+import { usePerformanceMonitor } from '../hooks/usePerformance'
 import { TextReveal } from '../components/fx/TextReveal'
 import { cn } from '../lib/utils'
 
@@ -18,11 +19,28 @@ interface FlowConfirmation {
     name: string
     description: string
     status: string
-    trigger: any
-    guardrails: any[]
+    trigger: Record<string, unknown>
+    guardrails: Record<string, unknown>[]
   }
   humanReadableSummary: string
-  warnings: any[]
+  warnings: Record<string, unknown>[]
+}
+
+interface ConversationState {
+  sessionId?: string
+  turns: Array<{
+    role: 'user' | 'assistant'
+    content: string
+    timestamp: string
+  }>
+  currentFlow?: {
+    id: string
+    name: string
+    description?: string
+    trigger?: Record<string, unknown>
+    guardrails?: Record<string, unknown>[]
+  }
+  warnings?: Record<string, unknown>[]
 }
 
 /**
@@ -33,9 +51,12 @@ interface FlowConfirmation {
  * @returns The React element for the Flow Builder page.
  */
 export function FlowChatPage() {
+  usePerformanceMonitor('FlowChatPage')
+
   const navigate = useNavigate()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
+  const [conversationId, setConversationId] = useState<string | null>(null)
   const [confirmation, setConfirmation] = useState<FlowConfirmation | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -47,27 +68,65 @@ export function FlowChatPage() {
     mutationFn: (text: string) => api.flows.interpret(text),
   })
 
+  const startConvMutation = useMutation({
+    mutationFn: (text: string) => api.flows.startConversation(text),
+  })
+
+  const converseMutation = useMutation({
+    mutationFn: ({ id, text }: { id: string; text: string }) => api.flows.converse(id, text),
+  })
+
+  // helper to sync messages from server conversation state
+  function syncMessagesFromState(stateRecord: Record<string, unknown>) {
+    const state = stateRecord as ConversationState
+    if (!state?.turns) return
+    const newMsgs: Message[] = state.turns.map((t) => ({
+      role: t.role,
+      content: t.content,
+      timestamp: new Date(t.timestamp),
+    }))
+    setMessages(newMsgs)
+    if (state.sessionId) setConversationId(state.sessionId)
+    // extract confirmation if present
+    if (state.currentFlow && state.currentFlow.id && state.currentFlow.name) {
+      setConfirmation({
+        flow: {
+          id: state.currentFlow.id,
+          name: state.currentFlow.name,
+          description: state.currentFlow.description || '',
+          status: 'active',
+          trigger: state.currentFlow.trigger || {},
+          guardrails: state.currentFlow.guardrails || [],
+        },
+        humanReadableSummary: state.currentFlow.description || '',
+        warnings: state.warnings || [],
+      })
+    } else {
+      setConfirmation(null)
+    }
+  }
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim()) return
 
-    const userMessage: Message = { role: 'user', content: input, timestamp: new Date() }
-    setMessages((prev) => [...prev, userMessage])
+    // user message is sent to server, server will echo when state syncs
+    setMessages((prev) => [...prev, { role: 'user', content: input, timestamp: new Date() }])
+    const text = input
     setInput('')
 
     try {
-      const result = await interpretMutation.mutateAsync(input)
-      const botMessage: Message = {
-        role: 'assistant',
-        content: (result as any).humanReadableSummary ?? 'Flow interpreted successfully.',
-        timestamp: new Date(),
+      if (!conversationId) {
+        const result = await startConvMutation.mutateAsync(text)
+        syncMessagesFromState(result)
+      } else {
+        const result = await converseMutation.mutateAsync({ id: conversationId, text })
+        syncMessagesFromState(result)
       }
-      setMessages((prev) => [...prev, botMessage])
-      setConfirmation(result as any)
-    } catch {
+    } catch (err) {
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: "Sorry, I couldn't interpret that. Could you try rephrasing?", timestamp: new Date() },
+        { role: 'assistant', content: 'Sorry, something went wrong. Please try again.', timestamp: new Date() },
       ])
     }
   }
@@ -82,7 +141,8 @@ export function FlowChatPage() {
         trigger: confirmation.flow.trigger,
         guardrails: confirmation.flow.guardrails,
       })
-      navigate({ to: `/flows/${(result as any).id}` })
+      const flowId = result['id'] as string
+      navigate({ to: `/flows/${flowId}` })
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -120,7 +180,12 @@ export function FlowChatPage() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
+      <div
+        className="flex-1 overflow-y-auto px-6 py-6 space-y-4"
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions text"
+      >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 animate-reveal-up">
             <div className="empty-icon-wrapper w-20 h-20 rounded-2xl bg-brand-500/10 flex items-center justify-center mb-5">
@@ -149,9 +214,9 @@ export function FlowChatPage() {
                     : 'bg-zinc-800 shadow-black/20'
                 )}>
                   {msg.role === 'user' ? (
-                    <User className="w-4 h-4 text-white" />
+                    <User className="w-4 h-4 text-white" aria-label="User message" />
                   ) : (
-                    <Bot className="w-4 h-4 text-zinc-400" />
+                    <Bot className="w-4 h-4 text-zinc-400" aria-label="Assistant message" />
                   )}
                 </div>
                 <div

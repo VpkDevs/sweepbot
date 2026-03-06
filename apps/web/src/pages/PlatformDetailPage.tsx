@@ -95,7 +95,7 @@ export function PlatformDetailPage() {
         {platform?.['logo_url'] ? (
           <img
             src={platform['logo_url'] as string}
-            alt=""
+            alt={`${platform?.['name']} logo`}
             className="w-14 h-14 rounded-xl border border-zinc-800"
           />
         ) : (
@@ -243,7 +243,7 @@ export function PlatformDetailPage() {
                 {game['thumbnail_url'] && (
                   <img
                     src={game['thumbnail_url'] as string}
-                    alt=""
+                    alt={`${game['name']} thumbnail`}
                     className="w-full h-20 object-cover rounded-md"
                   />
                 )}

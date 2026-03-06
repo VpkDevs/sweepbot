@@ -2,6 +2,9 @@
  * Chrome Storage wrapper — unified local storage for extension state.
  * Wraps chrome.storage.local with type-safe getters/setters.
  */
+import { createLogger } from './logger'
+
+const log = createLogger('StorageManager')
 
 export interface StorageSchema {
   userId: string | null
@@ -29,8 +32,10 @@ export interface SessionStorageData {
 
 export interface PlatformCredential {
   platformSlug: string
-  encryptedUsername: string
-  encryptedPassword: string
+  // TODO(security): encrypt these with Web Crypto API before storing —
+  // currently stored as plaintext in chrome.storage.local
+  username: string
+  password: string
   storedAt: number
 }
 
@@ -69,7 +74,7 @@ const DEFAULT_STORAGE: StorageSchema = {
   affiliateNoShowUntil: {},
 }
 
-class StorageManager {
+export class StorageManager {
   private cache: Partial<StorageSchema> = {}
   private cacheReady = false
 
@@ -83,7 +88,7 @@ class StorageManager {
       this.cache = items as Partial<StorageSchema>
       this.cacheReady = true
     } catch (error) {
-      console.error('[StorageManager] Failed to initialize:', error)
+      log.error('Failed to initialize', { error })
       this.cache = {}
       this.cacheReady = true
     }
@@ -109,7 +114,7 @@ class StorageManager {
     try {
       await chrome.storage.local.set({ [key]: value })
     } catch (error) {
-      console.error(`[StorageManager] Failed to set ${String(key)}:`, error)
+      log.error('Failed to set key', { key: String(key), error })
     }
   }
 
@@ -150,7 +155,7 @@ class StorageManager {
     try {
       await chrome.storage.local.clear()
     } catch (error) {
-      console.error('[StorageManager] Failed to clear:', error)
+      log.error('Failed to clear storage', { error })
     }
   }
 
@@ -175,3 +180,5 @@ class StorageManager {
 }
 
 export const storage = new StorageManager()
+
+export type { AnalyticsEvent }

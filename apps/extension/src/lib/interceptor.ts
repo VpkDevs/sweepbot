@@ -23,12 +23,14 @@ export interface InterceptedBalance {
   timestamp: number
 }
 
-class NetworkInterceptor {
+export class NetworkInterceptor {
   private platform: PlatformConfig | null = null
   private onTransaction: ((tx: InterceptedTransaction) => void) | null = null
   private onBalance: ((balance: InterceptedBalance) => void) | null = null
   private originalFetch: typeof window.fetch | null = null
   private originalXhr: typeof XMLHttpRequest | null = null
+  private originalXhrOpen: typeof XMLHttpRequest.prototype.open | null = null
+  private originalXhrSend: typeof XMLHttpRequest.prototype.send | null = null
 
   initialize(platform: PlatformConfig): void {
     this.platform = platform
@@ -87,18 +89,25 @@ class NetworkInterceptor {
     this.originalXhr = XMLHttpRequest
     const self = this
 
-    const originalOpen = XMLHttpRequest.prototype.open
-    const originalSend = XMLHttpRequest.prototype.send
+    this.originalXhrOpen = XMLHttpRequest.prototype.open
+    this.originalXhrSend = XMLHttpRequest.prototype.send
+    const originalOpen = this.originalXhrOpen
+    const originalSend = this.originalXhrSend
 
-    XMLHttpRequest.prototype.open = function (method: string, url: string) {
+    XMLHttpRequest.prototype.open = function (method: string, url: string, ...args: unknown[]) {
       ;(this as any)._sweepbot_url = url
       ;(this as any)._sweepbot_method = method
-      return originalOpen.apply(this, arguments as any)
+      return originalOpen.apply(this, [method, url, ...args] as Parameters<typeof originalOpen>)
     }
 
-    XMLHttpRequest.prototype.send = function () {
+    XMLHttpRequest.prototype.send = function (...args: unknown[]) {
       const originalOnReadyStateChange = this.onreadystatechange
       const url = (this as any)._sweepbot_url
+
+      // Guard against missing URL (e.g., if open() wasn't called)
+      if (!url) {
+        return originalSend.apply(this, args as Parameters<typeof originalSend>)
+      }
 
       this.onreadystatechange = function (ev: Event) {
         if (this.readyState === 4) {
@@ -114,7 +123,7 @@ class NetworkInterceptor {
         }
       }
 
-      return originalSend.apply(this, arguments as any)
+      return originalSend.apply(this, args as Parameters<typeof originalSend>)
     }
   }
 
@@ -205,8 +214,11 @@ class NetworkInterceptor {
       this.originalFetch = null
     }
     if (this.originalXhr) {
-      // XHR prototype is harder to restore; just clear our handlers
+      if (this.originalXhrOpen) XMLHttpRequest.prototype.open = this.originalXhrOpen
+      if (this.originalXhrSend) XMLHttpRequest.prototype.send = this.originalXhrSend
       this.originalXhr = null
+      this.originalXhrOpen = null
+      this.originalXhrSend = null
     }
     this.onTransaction = null
     this.onBalance = null

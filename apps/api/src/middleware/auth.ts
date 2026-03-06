@@ -24,7 +24,7 @@ declare module 'fastify' {
   interface FastifyRequest {
     user: {
       id: string
-      email: string
+      email: string | null
       tier: string
     } | null
   }
@@ -60,7 +60,7 @@ export async function requireAuth(
   // Attach user context (tier comes from profiles table in real app)
   request.user = {
     id: data.user.id,
-    email: data.user.email ?? '',
+    email: data.user.email ?? null,
     tier: (data.user.user_metadata['tier'] as string | undefined) ?? 'free',
   }
 }
@@ -85,7 +85,7 @@ export async function optionalAuth(
     request.user = data.user
       ? {
           id: data.user.id,
-          email: data.user.email ?? '',
+          email: data.user.email ?? null,
           tier: (data.user.user_metadata['tier'] as string | undefined) ?? 'free',
         }
       : null

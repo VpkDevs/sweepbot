@@ -1,7 +1,10 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User, Session } from '@supabase/supabase-js'
-import { supabase } from '../lib/supabase'
+import { supabaseClient, supabaseStub } from '../lib/supabase'
+
+// Use supabaseClient which handles the null case
+const getSupabase = () => supabaseClient ?? supabaseStub
 
 interface AuthState {
   user: User | null
@@ -31,6 +34,7 @@ export const useAuthStore = create<AuthState>()(
       setTier: (tier) => set({ tier }),
 
       signIn: async (email, password) => {
+        const supabase = getSupabase()
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -40,6 +44,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       signUp: async (email, password) => {
+        const supabase = getSupabase()
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -52,6 +57,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       signInWithGoogle: async () => {
+        const supabase = getSupabase()
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
@@ -62,11 +68,13 @@ export const useAuthStore = create<AuthState>()(
       },
 
       signOut: async () => {
+        const supabase = getSupabase()
         await supabase.auth.signOut()
         set({ user: null, session: null, tier: 'free' })
       },
 
       refreshSession: async () => {
+        const supabase = getSupabase()
         try {
           const { data, error } = await supabase.auth.getSession()
           if (error || !data.session) {
@@ -90,7 +98,8 @@ export const useAuthStore = create<AuthState>()(
   )
 )
 
-// Initialize auth listener on module load
+// Initialize auth listener on module load - only if Supabase is available
+const supabase = getSupabase()
 supabase.auth.onAuthStateChange((event, session) => {
   const store = useAuthStore.getState()
   store.setUser(session?.user ?? null)

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { LogOut, Settings, BarChart3, Zap, Cpu } from 'lucide-react'
+import { LogOut, Settings, BarChart3, Zap, Cpu, Search } from 'lucide-react'
 import { storage } from '@/lib/storage'
 import type { RtpStats } from '@/lib/rtp-calculator'
 import FlowsTab from './FlowsTab'
+import PlatformCaptureTab from './PlatformCaptureTab'
 
-type ActiveTab = 'hud' | 'flows'
+type ActiveTab = 'hud' | 'flows' | 'capture'
 
 /**
  * Render the extension popup UI and manage authentication state, HUD visibility, session data, and tab navigation.
@@ -110,6 +111,10 @@ export default function PopupApp() {
             Create Account
           </button>
         </div>
+
+        <div className="border-t border-gray-200 p-4">
+          <PlatformCaptureTab />
+        </div>
       </div>
     )
   }
@@ -157,6 +162,17 @@ export default function PopupApp() {
           >
             <Cpu className="w-3.5 h-3.5" />
             Flows
+          </button>
+          <button
+            onClick={() => setActiveTab('capture')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-semibold transition ${
+              activeTab === 'capture'
+                ? 'bg-white/20 text-white'
+                : 'text-white/60 hover:text-white/80'
+            }`}
+          >
+            <Search className="w-3.5 h-3.5" />
+            Capture
           </button>
         </div>
       </div>
@@ -240,6 +256,9 @@ export default function PopupApp() {
 
       {/* ── Flows Tab ────────────────────────────────────────────────────── */}
       {activeTab === 'flows' && <FlowsTab />}
+
+      {/* ── Capture Tab ─────────────────────────────────────────────────── */}
+      {activeTab === 'capture' && <PlatformCaptureTab />}
 
       {/* Footer */}
       <div className="px-4 py-3 border-t border-gray-200 text-xs text-gray-500 text-center">

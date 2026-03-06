@@ -6,6 +6,9 @@
 import type { PlatformConfig } from './platforms'
 import { extensionApi } from './api'
 import { storage } from './storage'
+import { createLogger } from './logger'
+
+const log = createLogger('AffiliateManager')
 
 class AffiliateManager {
   /**
@@ -119,7 +122,7 @@ class AffiliateManager {
         data: { affiliate_click: true },
       })
     } catch (error) {
-      console.error('[AffiliateManager] Failed to track click:', error)
+      log.error('Failed to track click', { error })
     }
   }
 
@@ -136,7 +139,7 @@ class AffiliateManager {
         data: { affiliate_signup: true, external_user_id: externalUserId },
       })
     } catch (error) {
-      console.error('[AffiliateManager] Failed to track signup:', error)
+      log.error('Failed to track signup', { error })
     }
   }
 

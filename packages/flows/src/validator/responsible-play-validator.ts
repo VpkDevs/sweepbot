@@ -7,7 +7,7 @@
 import type { FlowNode, ResponsiblePlayGuardrail } from '../types'
 
 export class ResponsiblePlayValidator {
-  validate(flowNode: FlowNode, userId: string): ResponsiblePlayGuardrail[] {
+  validate(flowNode: FlowNode, userId: string, rawText?: string): ResponsiblePlayGuardrail[] {
     const guardrails: ResponsiblePlayGuardrail[] = []
 
     // 1. MAX SESSION DURATION - Default: 2 hours if not specified
@@ -25,6 +25,26 @@ export class ResponsiblePlayValidator {
       source: 'system_mandatory',
       overridable: false,
     })
+
+    if (rawText) {
+      const lossMatch = rawText.match(/lose\s+more\s+than\s+\$?(\d+)/i)
+      if (lossMatch) {
+        guardrails.push({
+          type: 'max_loss',
+          value: parseFloat(lossMatch[1]!),
+          source: 'user_specified',
+          overridable: true,
+        })
+      }
+      if (/double\s+my\s+bet|chase/i.test(rawText)) {
+        guardrails.push({
+          type: 'chase_detection',
+          value: true,
+          source: 'system_mandatory',
+          overridable: false,
+        })
+      }
+    }
 
     return guardrails
   }

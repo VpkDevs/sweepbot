@@ -116,7 +116,7 @@ export class EntityRecognizer {
       { keywords: ['log in', 'login', 'sign in'], action: 'login', confidence: 0.95 },
       { keywords: ['log out', 'logout', 'sign out'], action: 'logout', confidence: 0.95 },
       { keywords: ['claim', 'grab', 'get', 'daily bonus'], action: 'claim_bonus', confidence: 0.9 },
-      { keywords: ['play', 'open game', 'spin'], action: 'open_game', confidence: 0.85 },
+      { keywords: ['play', 'open game'], action: 'open_game', confidence: 0.85 },
       { keywords: ['spin', 'pull'], action: 'spin', confidence: 0.9 },
       { keywords: ['bet', 'wager', 'throw'], action: 'bet', confidence: 0.85 },
       { keywords: ['balance', 'check balance', 'my balance'], action: 'check_balance', confidence: 0.9 },
@@ -147,25 +147,83 @@ export class EntityRecognizer {
     const conditions: ConditionEntity[] = []
     const lowerText = text.toLowerCase()
 
-    // Simple condition patterns: "if X > Y", "when balance drops", etc.
-    const conditionPatterns = [
-      /if\s+(?:i\s+)?(?:win|lose|hit)\s+([^\s]+)/gi,
-      /if\s+(?:balance|bonus)\s*([<>]=?)\s*(\d+)/gi,
-      /when\s+([^\s]+)\s*([<>]=?)\s*(\d+)/gi,
-      /unless\s+([^\s]+)/gi,
-      /until\s+([^\s]+)/gi,
-    ]
-
-    for (const pattern of conditionPatterns) {
-      let match
-      while ((match = pattern.exec(text)) !== null) {
-        conditions.push({
+    // Simple condition patterns: "if win > 5x bonus", "when balance drops", etc.
+    // We'll handle a few extra English forms like "if more than $50" or "if less than 100 spins".
+    const conditionPatterns: { regex: RegExp; handler: (match: RegExpExecArray) => ConditionEntity }[] = [
+      {
+        regex: /if\s+(?:i\s+)?(win|lose|hit)\s*([<>]=?)\s*([^\s]+)/gi,
+        handler: (match) => ({
           text: match[0],
           type: 'comparison',
-          left: match[1] ?? undefined,
-          operator: match[2] ?? undefined,
-          right: match[3] ?? undefined,
-        } as ConditionEntity)
+          left: match[1] || undefined,
+          operator: match[2] || undefined,
+          right: match[3] || undefined,
+        }),
+      },
+      {
+        regex: /if\s+(?:balance|bonus)\s*([<>]=?)\s*(\d+)/gi,
+        handler: (match) => ({
+          text: match[0],
+          type: 'comparison',
+          operator: match[1] || undefined,
+          right: match[2] || undefined,
+        }),
+      },
+      {
+        regex: /when\s+([^\s]+)\s*([<>]=?)\s*(\d+)/gi,
+        handler: (match) => ({
+          text: match[0],
+          type: 'comparison',
+          left: match[1] || undefined,
+          operator: match[2] || undefined,
+          right: match[3] || undefined,
+        }),
+      },
+      {
+        regex: /if\s+more\s+than\s+\$?(\d+)/gi,
+        handler: (match) => ({
+          text: match[0],
+          type: 'comparison',
+          operator: '>',
+          right: match[1] || undefined,
+        }),
+      },
+      {
+        regex: /if\s+less\s+than\s+\$?(\d+)/gi,
+        handler: (match) => ({
+          text: match[0],
+          type: 'comparison',
+          operator: '<',
+          right: match[1] || undefined,
+        }),
+      },
+      {
+        regex: /unless\s+([^\s]+)/gi,
+        handler: (match) => ({
+          text: match[0],
+          type: 'comparison',
+          left: match[1] || undefined,
+        }),
+      },
+      {
+        regex: /until\s+([^\s]+)/gi,
+        handler: (match) => ({
+          text: match[0],
+          type: 'comparison',
+          left: match[1] || undefined,
+        }),
+      },
+    ]
+
+    for (const { regex, handler } of conditionPatterns) {
+      let match
+      while ((match = regex.exec(text)) !== null) {
+        try {
+          conditions.push(handler(match))
+        } catch (e) {
+          // if handler throws, just ignore this match
+          conditions.push({ text: match[0], type: 'comparison' } as ConditionEntity)
+        }
       }
     }
 
