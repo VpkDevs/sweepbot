@@ -310,9 +310,9 @@ export interface ActionEntity {
 export interface ConditionEntity {
   text: string
   type: 'comparison' | 'boolean' | 'expression'
-  left?: string
-  operator?: string
-  right?: string
+  left?: string | undefined
+  operator?: string | undefined
+  right?: string | undefined
 }
 
 export interface ScheduleEntity {

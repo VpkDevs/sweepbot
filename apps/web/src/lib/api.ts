@@ -401,5 +401,3 @@ export const api = {
       request<{ deleted: boolean }>(`/notifications/${id}`, { method: 'DELETE' }),
   },
 }
-
-export { ApiError, NetworkError, TimeoutError, UnauthorizedError }

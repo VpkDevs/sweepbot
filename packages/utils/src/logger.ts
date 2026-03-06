@@ -28,11 +28,15 @@ class Logger {
   }
 
   constructor(config: Partial<LoggerConfig> = {}) {
+    // Use a safe cast so this compiles outside Vite's type extensions (e.g. in
+    // packages/utils which has no vite/client types) while still working at
+    // runtime inside the Vite-bundled web app.
+    const env = (import.meta as { env?: Record<string, string | undefined> }).env ?? {}
     this.config = {
-      level: (import.meta.env.VITE_LOG_LEVEL as LogLevel) || 'info',
-      enableConsole: import.meta.env.DEV || import.meta.env.VITE_ENABLE_CONSOLE_LOGS === 'true',
-      enableRemote: import.meta.env.PROD && import.meta.env.VITE_ENABLE_REMOTE_LOGS === 'true',
-      remoteEndpoint: import.meta.env.VITE_LOG_ENDPOINT,
+      level: (env['VITE_LOG_LEVEL'] as LogLevel | undefined) ?? 'info',
+      enableConsole: env['MODE'] !== 'production' || env['VITE_ENABLE_CONSOLE_LOGS'] === 'true',
+      enableRemote: env['MODE'] === 'production' && env['VITE_ENABLE_REMOTE_LOGS'] === 'true',
+      remoteEndpoint: env['VITE_LOG_ENDPOINT'],
       ...config,
     }
   }
@@ -79,8 +83,8 @@ class Logger {
           message,
           context,
           timestamp: new Date().toISOString(),
-          environment: import.meta.env.MODE,
-          userAgent: navigator.userAgent,
+          environment: (import.meta as { env?: Record<string, string | undefined> }).env?.['MODE'],
+          userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'server',
         }),
       })
     } catch (error) {
