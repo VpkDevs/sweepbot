@@ -27,6 +27,17 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   }
 }
 
+/**
+ * Perform an authenticated HTTP request against the API and return the response payload typed as `T`.
+ *
+ * @param path - Endpoint path appended to the configured API base URL (e.g., `/users`).
+ * @param options - Fetch options; headers provided here are merged with authentication headers and will override defaults.
+ * @returns The `data` field from the API response, typed as `T`.
+ * @throws {ApiError} When the API responds with an error (server-provided error `code` and HTTP status), or when a parse or network failure occurs:
+ * - Server errors: rethrows an ApiError created from the response `error.code` and message with the HTTP status.
+ * - Parse failures: throws an ApiError with code `PARSE_ERROR` and status `500`.
+ * - Network failures: throws an ApiError with code `NETWORK_ERROR` and status `0`.
+ */
 async function request<T>(
   path: string,
   options: RequestInit = {}

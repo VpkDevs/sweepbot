@@ -23,7 +23,14 @@ type PersonalRecords = {
   last_computed_at: string | null
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+/**
+ * Render the Personal Records dashboard with a refresh control, loading skeleton, and empty-state.
+ *
+ * Displays a header with optional last-updated timestamp, a "Recalculate" button that triggers a records refresh,
+ * a skeleton while data is loading, a friendly empty-state when no records exist, and a grid of record cards when data is available.
+ *
+ * @returns A React element showing the user's personal records UI including header, refresh control, loading state, empty state, and records grid.
+ */
 
 export function RecordsPage() {
   const queryClient = useQueryClient()
@@ -155,7 +162,18 @@ export function RecordsPage() {
   )
 }
 
-// ── Record Card ───────────────────────────────────────────────────────────────
+/**
+ * Renders a styled card showing a single personal-record metric with optional subtitle and date.
+ *
+ * @param label - Uppercase short label displayed above the value
+ * @param value - Primary value text to display; a placeholder like `—` is rendered with muted styling
+ * @param sub - Optional secondary line of descriptive text shown beneath the value
+ * @param date - Optional ISO date string (or null); when present it is shown as a short, localized date
+ * @param icon - React component used as the card icon
+ * @param color - CSS class(es) applied to the icon to control its color
+ * @param highlight - When true, renders a highlighted border to draw attention to the card
+ * @returns A React element representing the record card
+ */
 
 function RecordCard({
   label,
@@ -202,7 +220,11 @@ function RecordCard({
   )
 }
 
-// ── Skeleton ───────────────────────────────────────────────────────────────────
+/**
+ * Render a placeholder skeleton for the Personal Records page while data is loading.
+ *
+ * @returns A React element containing the animated skeleton layout used as a loading placeholder for the records grid and header.
+ */
 
 function RecordsSkeleton() {
   return (

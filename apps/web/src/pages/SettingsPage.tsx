@@ -386,7 +386,13 @@ function SubscriptionTab() {
   )
 }
 
-// ─── Tax Center Tab ───────────────────────────────────────────────────────────
+/**
+ * Renders the Tax Summary tab that lets the user select a tax year and view redemption totals and per-platform breakdowns.
+ *
+ * Fetches the tax summary for the selected year and displays aggregated values, a list of platforms with SC totals, and an export action.
+ *
+ * @returns The JSX element for the Tax Summary settings tab
+ */
 
 function TaxTab() {
   const currentYear = new Date().getFullYear()
@@ -464,7 +470,14 @@ function TaxTab() {
   )
 }
 
-// ─── Danger Zone Tab ──────────────────────────────────────────────────────────
+/**
+ * Renders the "Danger Zone" settings section containing controls for self-exclusion and permanent account deletion.
+ *
+ * The UI lets a user activate a 30-day self-exclusion (with a confirmation prompt) and permanently delete their account.
+ * Deletion requires typing the exact phrase "delete my account" before the delete action is enabled; successful deletion triggers sign-out.
+ *
+ * @returns The component's rendered JSX element
+ */
 
 function DangerZoneTab() {
   const { signOut } = useAuthStore()
@@ -472,6 +485,12 @@ function DangerZoneTab() {
   const [deleting, setDeleting] = useState(false)
   const [excluding, setExcluding] = useState(false)
 
+  /**
+   * Deletes the current user's account if the confirmation phrase is present, then signs the user out.
+   *
+   * Sets the local deleting state while the operation is in progress. If the deletion call fails,
+   * the deleting state is reset to false.
+   */
   async function handleDeleteAccount() {
     if (confirmText !== 'delete my account') return
     setDeleting(true)
@@ -483,6 +502,11 @@ function DangerZoneTab() {
     }
   }
 
+  /**
+   * Initiates a 30-day self-exclusion for the current user and manages the local loading state.
+   *
+   * Sets the `excluding` flag while the request is in progress and clears it once the API call completes.
+   */
   async function handleSelfExclude() {
     setExcluding(true)
     try {
@@ -560,7 +584,13 @@ function DangerZoneTab() {
   )
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+/**
+ * Render the user settings page with a sidebar of tabs and corresponding content sections.
+ *
+ * Supports direct linking to a specific tab using the URL hash.
+ *
+ * @returns The settings page React element containing sidebar navigation and the active tab content
+ */
 
 export function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('profile')

@@ -34,6 +34,14 @@ chrome.runtime.onMessage.addListener(
   },
 )
 
+/**
+ * Handle an incoming background message and perform the requested operation (authentication, analytics, flow management, or notifications).
+ *
+ * @param message - The background message to handle; its `type` determines the performed action and expected `payload`.
+ * @param sender - The runtime message sender (originating tab or extension component).
+ * @returns The response for the handled message; structure varies by message type — for example, auth state objects, `{ success: true | false }` results with optional `error` or `eventCount`, or an array of flows.
+ * @throws Error if `message.type` is not recognized.
+ */
 async function handleMessage(message: BackgroundMessage, sender: chrome.runtime.MessageSender): Promise<unknown> {
   switch (message.type) {
 
@@ -244,8 +252,12 @@ async function reactivateScheduledFlows(): Promise<void> {
 }
 
 /**
- * Find or open a tab at the flow's target platform, then dispatch the flow
- * to the content script for execution.
+ * Locate or open a browser tab on the flow's target platform and send the flow to its content script for execution.
+ *
+ * Searches for a Navigate step in the flow to determine a target URL; if found, reuses or opens a tab on that origin and navigates to the target URL as needed. If no Navigate step exists, attempts to find an existing casino tab by known URL patterns. Once a suitable tab is available and loaded, sends an `EXECUTE_FLOW` message with the flow.
+ *
+ * @param flow - The flow definition to dispatch to a content script.
+ * @throws Error - If no suitable tab can be found or opened to execute the flow.
  */
 async function dispatchFlowToTab(flow: import('@/lib/flows/types').FlowDefinition): Promise<void> {
   // Derive the target URL from the first NavigateStep in the flow
@@ -301,7 +313,11 @@ async function dispatchFlowToTab(flow: import('@/lib/flows/types').FlowDefinitio
 }
 
 /**
- * Wait until a tab's status becomes 'complete'.
+ * Resolve when the specified tab reaches loading status "complete".
+ *
+ * @param tabId - ID of the tab to observe
+ * @param timeoutMs - Maximum time in milliseconds to wait before rejecting (default: 30000)
+ * @returns Resolves when the tab's status becomes `complete`; rejects with an `Error` if the timeout is reached before completion
  */
 function waitForTabLoad(tabId: number, timeoutMs = 30_000): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -310,6 +326,12 @@ function waitForTabLoad(tabId: number, timeoutMs = 30_000): Promise<void> {
       reject(new Error(`Tab ${tabId} did not finish loading within ${timeoutMs}ms`))
     }, timeoutMs)
 
+    /**
+     * Handles tab update events for waitForTabLoad and resolves when the given tab reaches 'complete' status.
+     *
+     * @param id - The id of the tab that was updated
+     * @param info - Change information for the tab update (e.g., `status`)
+     */
     function listener(id: number, info: chrome.tabs.TabChangeInfo) {
       if (id === tabId && info.status === 'complete') {
         clearTimeout(timer)

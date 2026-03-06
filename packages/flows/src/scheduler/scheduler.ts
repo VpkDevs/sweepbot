@@ -10,6 +10,13 @@ import type { FlowDefinition } from '../types'
 let CronJob: any
 let cronSchedule: any
 
+/**
+ * Lazily loads the node-cron library and caches its scheduler helpers for the module.
+ *
+ * If the cron helpers are not already loaded, imports `node-cron` dynamically and stores
+ * the schedule function and the cron module in the module-level caches so subsequent
+ * scheduler operations can use them without re-importing.
+ */
 async function loadCron() {
   if (!CronJob) {
     // @ts-ignore - node-cron doesn't have published types

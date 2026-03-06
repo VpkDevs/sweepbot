@@ -3,6 +3,11 @@ import { Flame, TrendingDown, Minus } from 'lucide-react'
 import { api } from '../../lib/api'
 import { cn } from '../../lib/utils'
 
+/**
+ * Renders a streak status card showing the current win or loss streak, a loading placeholder, or a no-active-streak message.
+ *
+ * @returns A React element that displays the current streak (win or loss) with contextual iconography and colors, an animated loading placeholder while data is being fetched, or a "No active streak" message when there is no active streak.
+ */
 export function StreakWidget() {
   const { data, isLoading } = useQuery({
     queryKey: ['features', 'streaks'],

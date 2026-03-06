@@ -32,7 +32,16 @@ const VSTYLE = {
   rejected:     { icon: XCircle,      label: 'Rejected', cls: 'text-red-400' },
 } as const
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+/**
+ * Renders the Big Wins Board page with community and user-submitted wins.
+ *
+ * Shows a top-win banner (when available), a tabbed list of community or the
+ * user's wins, and a modal to submit a new win. When viewing "My Wins" the
+ * component exposes per-entry visibility toggles and keeps the displayed list
+ * updated via React Query mutations and invalidation.
+ *
+ * @returns The rendered Big Wins page React element.
+ */
 
 export function BigWinsPage() {
   const [tab, setTab] = useState<'community' | 'mine'>('community')
@@ -242,6 +251,13 @@ type SubmitForm = {
   isPublic: boolean
 }
 
+/**
+ * Render a modal for submitting a big win with fields for win amount, bet amount, game, platform, multiplier, date, display name, notes, and a public visibility toggle.
+ *
+ * @param onClose - Callback invoked when the modal is dismissed or the Cancel button is clicked.
+ * @param onSuccess - Callback invoked after a successful submission.
+ * @returns The modal UI as a JSX element.
+ */
 function SubmitWinModal({
   onClose,
   onSuccess,
@@ -396,7 +412,16 @@ function SubmitWinModal({
   )
 }
 
-// ── Field helper ───────────────────────────────────────────────────────────────
+/**
+ * Renders a labeled input control bound to a string value and change handler.
+ *
+ * @param label - Text displayed above the input
+ * @param value - Controlled input value
+ * @param onChange - Callback invoked with the new string value when the input changes
+ * @param placeholder - Optional placeholder text shown when the input is empty
+ * @param type - HTML input `type` attribute (defaults to `'text'`)
+ * @returns The JSX element containing the labeled input bound to the provided value and change handler
+ */
 
 function Field({
   label,
