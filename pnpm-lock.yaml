@@ -322,6 +322,9 @@ importers:
 
   packages/utils:
     devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.13
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
