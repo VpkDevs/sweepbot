@@ -363,6 +363,8 @@ const result = await interpreter.interpret({
 
 ### Complex Spinning Strategy
 
+This example also demonstrates the new conditional parsing: phrases like "if more than $50" or "if less than 10 spins" are now recognized and turned into `FlowConditionNode`s in the AST.
+
 ```typescript
 const result = await interpreter.interpret({
   userId: 'user-456',
@@ -376,6 +378,13 @@ const result = await interpreter.interpret({
 ```
 
 ### Multi-Turn Refinement
+
+The conversation manager now begins by generating any follow-up questions immediately after the first user message. For example, saying "Play the game" will trigger an assistant question about scheduling:
+
+```text
+User: Play the game
+Assistant: When should this Flow run? (e.g., "every day at 3 PM", "manually")
+```
 
 ```typescript
 const state1 = await conversationMgr.startConversation(

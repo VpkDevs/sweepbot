@@ -40,8 +40,9 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
-// Mock IntersectionObserver (used by lazy-loading, charts)
-global.IntersectionObserver = class IntersectionObserver {
+// Mock IntersectionObserver (used by lazy-loading, charts, TextReveal)
+// Assign to both window and globalThis to ensure jsdom picks it up
+class MockIntersectionObserver {
   readonly root: Element | Document | null = null
   readonly rootMargin: string = '0px'
   readonly thresholds: ReadonlyArray<number> = []
@@ -50,7 +51,14 @@ global.IntersectionObserver = class IntersectionObserver {
   observe() {}
   takeRecords(): IntersectionObserverEntry[] { return [] }
   unobserve() {}
-} as unknown as typeof IntersectionObserver
+}
+global.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver
+// Also assign to window for jsdom compatibility
+Object.defineProperty(window, 'IntersectionObserver', {
+  writable: true,
+  configurable: true,
+  value: MockIntersectionObserver,
+})
 
 // Mock ResizeObserver (used by Recharts, HUD overlay)
 global.ResizeObserver = class ResizeObserver {
@@ -60,8 +68,11 @@ global.ResizeObserver = class ResizeObserver {
   unobserve() {}
 } as unknown as typeof ResizeObserver
 
+// scrollIntoView is not implemented in jsdom
+window.HTMLElement.prototype.scrollIntoView = vi.fn()
+
 // Mock chrome extension APIs for any shared components that reference them
-if (typeof globalThis.chrome === 'undefined') {
+if (!('chrome' in globalThis)) {
   ;(globalThis as typeof globalThis & { chrome: unknown }).chrome = {
     storage: {
       local: {

@@ -2,6 +2,8 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { sql } from 'drizzle-orm'
+import { env } from '../utils/env.js'
+import { constantTimeCompare } from '@sweepbot/utils'
 
 const TrustQuerySchema = z.object({
   minScore: z.coerce.number().min(0).max(100).optional(),
@@ -284,7 +286,7 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
       }
 
       // Simple shared secret for internal calls — in production use JWT with admin role
-      if (adminSecret !== process.env['ADMIN_SECRET']) {
+      if (!env.ADMIN_SECRET || !constantTimeCompare(adminSecret, env.ADMIN_SECRET)) {
         return reply.code(403).send({
           success: false,
           error: { code: 'FORBIDDEN', message: 'Invalid admin secret' },

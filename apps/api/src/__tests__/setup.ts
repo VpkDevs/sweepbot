@@ -347,7 +347,7 @@ export function createMockFastifyRequest(
 export function createMockFastifyReply(
   overrides?: Partial<FastifyReply>
 ): FastifyReply {
-  const mockReply: any = {
+  const mockReply: Partial<FastifyReply> = {
     code: vi.fn().mockReturnThis(),
     send: vi.fn().mockReturnThis(),
     header: vi.fn().mockReturnThis(),
@@ -397,36 +397,38 @@ export const createMockDatabaseClient = () => ({
 /**
  * Assert that a response has the expected success structure
  */
-export function assertSuccessResponse(response: any) {
+export function assertSuccessResponse(response: unknown) {
   expect(response).toBeDefined()
-  expect(response.success).toBe(true)
-  expect(response.data).toBeDefined()
+  expect((response as Record<string, unknown>)['success']).toBe(true)
+  expect((response as Record<string, unknown>)['data']).toBeDefined()
 }
 
 /**
  * Assert that a response has the expected error structure
  */
-export function assertErrorResponse(response: any, expectedCode?: string) {
+export function assertErrorResponse(response: unknown, expectedCode?: string) {
   expect(response).toBeDefined()
-  expect(response.success).toBe(false)
-  expect(response.error).toBeDefined()
-  expect(response.error.code).toBeDefined()
-  expect(response.error.message).toBeDefined()
+  expect((response as Record<string, unknown>)['success']).toBe(false)
+  expect((response as Record<string, unknown>)['error']).toBeDefined()
+  const err = (response as Record<string, Record<string, unknown>>)['error']
+  expect(err?.['code']).toBeDefined()
+  expect(err?.['message']).toBeDefined()
   if (expectedCode) {
-    expect(response.error.code).toBe(expectedCode)
+    expect(err?.['code']).toBe(expectedCode)
   }
 }
 
 /**
  * Assert that user data is sanitized (no sensitive fields)
  */
-export function assertUserSanitized(user: any) {
-  expect(user).toBeDefined()
-  expect(user.id).toBeDefined()
+export function assertUserSanitized(user: unknown) {
+  const u = user as Record<string, unknown>
+  expect(u).toBeDefined()
+  expect(u['id']).toBeDefined()
   // Should NOT include:
-  expect(user.password).toBeUndefined()
-  expect(user.passwordHash).toBeUndefined()
-  expect(user.stripeSecretKey).toBeUndefined()
+  expect(u['password']).toBeUndefined()
+  expect(u['passwordHash']).toBeUndefined()
+  expect(u['stripeSecretKey']).toBeUndefined()
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -437,15 +439,15 @@ export function assertUserSanitized(user: any) {
  * Helper to test that an async operation tracks errors correctly
  */
 export async function testAsyncErrorTracking(
-  operation: () => Promise<any>,
+  operation: () => Promise<unknown>,
   expectedError?: string
 ) {
   try {
     await operation()
     throw new Error('Expected operation to throw')
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (expectedError) {
-      expect(error.message).toContain(expectedError)
+      expect((error as Error).message).toContain(expectedError)
     }
   }
 }
@@ -454,7 +456,7 @@ export async function testAsyncErrorTracking(
  * Helper to test that concurrent operations don't interfere
  */
 export async function testConcurrentOperations(
-  operation: (id: string) => Promise<any>,
+  operation: (id: string) => Promise<unknown>,
   count: number = 5
 ) {
   const promises = Array.from({ length: count }, (_, i) =>

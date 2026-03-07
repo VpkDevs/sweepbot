@@ -8,7 +8,9 @@ import { z } from 'zod'
 import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { sql } from 'drizzle-orm'
 import { requireAuth } from '../middleware/auth.js'
+import { randomUUID } from 'node:crypto'
 import { FlowInterpreter, FlowExecutor, ResponsiblePlayValidator, ConversationManager } from '@sweepbot/flows'
+import type { ConversationState } from '@sweepbot/flows'
 
 // Initialize services
 const flowInterpreter = new FlowInterpreter()
@@ -17,8 +19,8 @@ const rpValidator = new ResponsiblePlayValidator()
 
 // Conversation manager with persistence helpers
 const conversationManager = new ConversationManager({
-  onStateLoad: async (conversationId: string) => {
-    const { rows } = await dbQuery(
+  onStateLoad: async (conversationId: string): Promise<ConversationState | null> => {
+    const { rows } = await dbQuery<ConversationState>(
       sql`SELECT * FROM flow_conversations WHERE id = ${conversationId}`
     )
     return rows[0] ?? null
@@ -55,7 +57,7 @@ const FlowInterpretRequestSchema = z.object({
 
 const FlowCreateSchema = z.object({
   name: z.string().min(1).max(255).trim(),
-  description: z.string().max(1000),
+  description: z.string().min(1).max(1000).trim(),
   definition: z.record(z.unknown()).refine((obj) => Object.keys(obj).length > 0, 'definition cannot be empty'),
   trigger: z.record(z.unknown()).refine((obj) => Object.keys(obj).length > 0, 'trigger cannot be empty'),
   guardrails: z.array(z.record(z.unknown())).min(0).max(10),
@@ -253,7 +255,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       try {
         const validated = FlowCreateSchema.parse(request.body)
-        const flowId = `flow_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        const flowId = crypto.randomUUID()
 
         // Insert flow into database
         const { rows } = await unsafeQuery(
@@ -506,7 +508,8 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
           .catch((error) => {
             app.log.error({ error }, 'Flow execution failed')
             // Mark as failed (background)
-            void dbQuery(sql`UPDATE flow_executions SET status = 'failed', error_message = ${String(error)} WHERE id = ${executionId}`)
+            dbQuery(sql`UPDATE flow_executions SET status = 'failed', error_message = ${String(error)} WHERE id = ${executionId}`)
+              .catch((dbErr) => { app.log.error({ dbErr }, 'Failed to mark execution as failed') })
           })
 
         return reply.code(202).send({

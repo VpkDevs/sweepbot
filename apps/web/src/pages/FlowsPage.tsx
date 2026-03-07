@@ -106,7 +106,7 @@ export function FlowsPage() {
       )}
 
       {/* Flows List */}
-      {(flows as any[]).length === 0 && !isLoading ? (
+      {(flows as Record<string, unknown>[]).length === 0 && !isLoading ? (
         <div className="flex flex-col items-center justify-center py-24 text-center animate-reveal-up">
           <div className="empty-icon-wrapper w-20 h-20 rounded-2xl bg-brand-500/10 flex items-center justify-center mb-5">
             <Sparkles className="w-9 h-9 text-brand-400" />
@@ -126,44 +126,44 @@ export function FlowsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {(flows as any[]).map((flow: any, i: number) => {
-            const statusStyle = STATUS_STYLES[flow.status as keyof typeof STATUS_STYLES] ?? STATUS_STYLES.draft
+          {(flows as Record<string, unknown>[]).map((flow, i) => {
+            const statusStyle = STATUS_STYLES[flow['status'] as keyof typeof STATUS_STYLES] ?? STATUS_STYLES.draft
             return (
-              <ScrollReveal key={flow.id} delay={i * 50}>
+              <ScrollReveal key={flow['id'] as string} delay={i * 50}>
               <SpotlightCard
                 className="glass-card rounded-2xl p-5 transition-all cursor-pointer"
-                onClick={() => handleViewFlow(flow.id)}
+                onClick={() => handleViewFlow(flow['id'] as string)}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2.5 mb-1">
-                      <h3 className="text-base font-semibold text-white truncate">{flow.name}</h3>
+                      <h3 className="text-base font-semibold text-white truncate">{flow['name'] as string}</h3>
                       <span className={cn('inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-medium', statusStyle.cls)}>
                         <span className={cn('w-1.5 h-1.5 rounded-full', statusStyle.dot)} />
                         {statusStyle.label}
                       </span>
                     </div>
-                    <p className="text-sm text-zinc-500 line-clamp-1">{flow.description}</p>
+                    <p className="text-sm text-zinc-500 line-clamp-1">{flow['description'] as string}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-5 text-xs text-zinc-600 mb-4">
                   <div className="flex items-center gap-1.5">
                     <Zap className="w-3 h-3" />
-                    <span className="tabular-nums">{flow.executionCount ?? 0}</span> executions
+                    <span className="tabular-nums">{(flow['executionCount'] as number) ?? 0}</span> executions
                   </div>
-                  {flow.lastExecutedAt && (
+                  {!!(flow['lastExecutedAt']) && (
                     <div className="flex items-center gap-1.5">
                       <Clock className="w-3 h-3" />
-                      Last: {new Date(flow.lastExecutedAt).toLocaleDateString()}
+                      Last: {new Date(flow['lastExecutedAt'] as string).toLocaleDateString()}
                     </div>
                   )}
                 </div>
 
                 <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                  {flow.status === 'draft' || flow.status === 'paused' ? (
+                  {flow['status'] === 'draft' || flow['status'] === 'paused' ? (
                     <button
-                      onClick={() => handleActivateFlow(flow.id)}
+                      onClick={() => handleActivateFlow(flow['id'] as string)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-300 text-xs font-medium hover:bg-emerald-500/20 transition-colors press-scale"
                     >
                       <Play className="w-3 h-3" />
@@ -171,7 +171,7 @@ export function FlowsPage() {
                     </button>
                   ) : (
                     <button
-                      onClick={() => handlePauseFlow(flow.id)}
+                      onClick={() => handlePauseFlow(flow['id'] as string)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-yellow-500/10 text-yellow-300 text-xs font-medium hover:bg-yellow-500/20 transition-colors press-scale"
                     >
                       <Pause className="w-3 h-3" />

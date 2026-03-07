@@ -214,7 +214,7 @@ export async function jackpotRoutes(app: FastifyInstance): Promise<void> {
         ) latest
       `)
 
-      return reply.send({ success: true, data: stats.rows[0] })
+      return reply.send({ success: true, data: stats.rows[0] ?? null })
     }
   )
 }

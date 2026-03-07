@@ -1,4 +1,11 @@
 import { useEffect, useRef, useCallback } from 'react'
+import { cn } from '../../lib/utils'
+
+interface CursorGlowProps {
+  size?: number
+  color?: string
+  blendMode?: React.CSSProperties['mixBlendMode']
+}
 
 /**
  * CursorGlow — Mouse-following radial spotlight effect.
@@ -9,7 +16,7 @@ export function CursorGlow({
   size = 600,
   color = 'rgba(139, 92, 246, 0.07)',
   blendMode = 'normal' as React.CSSProperties['mixBlendMode'],
-}) {
+}: CursorGlowProps) {
   const glowRef = useRef<HTMLDivElement>(null)
   const posRef = useRef({ x: -1000, y: -1000 })
   const targetRef = useRef({ x: -1000, y: -1000 })
@@ -54,21 +61,20 @@ export function CursorGlow({
     }
   }, [animate])
 
+  const sizeClass = size >= 700 ? 'cursor-glow-lg' : 'cursor-glow-md'
+  const colorClass = color.includes('0.06') ? 'cursor-glow-soft' : 'cursor-glow-default'
+  const blendClass = blendMode === 'overlay' ? 'mix-blend-overlay' : 'mix-blend-normal'
+
   return (
     <div
       ref={glowRef}
       aria-hidden
-      className="pointer-events-none fixed inset-0 z-[1] will-change-transform"
-      style={{
-        width: size,
-        height: size,
-        borderRadius: '50%',
-        background: `radial-gradient(circle, ${color} 0%, transparent 70%)`,
-        mixBlendMode: blendMode,
-        filter: 'blur(2px)',
-        opacity: 1,
-        transition: 'opacity 0.4s ease',
-      }}
+      className={cn(
+        'pointer-events-none fixed inset-0 z-[1] will-change-transform cursor-glow-base',
+        sizeClass,
+        colorClass,
+        blendClass
+      )}
     />
   )
 }

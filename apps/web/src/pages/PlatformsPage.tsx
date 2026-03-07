@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import { api } from '../lib/api'
 import { cn, trustScoreColor, trustScoreLabel } from '../lib/utils'
-import type { Platform } from '@sweepbot/types'
+import type { Platform, PlatformStatus } from '@sweepbot/types'
 
 type SortKey = 'name' | 'trust_score' | 'created_at'
 type SortDir = 'asc' | 'desc'
@@ -22,7 +22,7 @@ type SortDir = 'asc' | 'desc'
 export function PlatformsPage() {
   const qc = useQueryClient()
   const [search, setSearch] = useState('')
-  const [status, setStatus] = useState<'active' | 'inactive' | 'watchlist' | undefined>(undefined)
+  const [status, setStatus] = useState<PlatformStatus | undefined>(undefined)
   const [sortBy, setSortBy] = useState<SortKey>('trust_score')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [showAddModal, setShowAddModal] = useState(false)
@@ -31,7 +31,14 @@ export function PlatformsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['platforms', { search, status, sortBy, sortDir, page }],
     queryFn: () =>
-      api.platforms.list({ search: search || undefined, status, sortBy, sortDir, page, pageSize: 20 }),
+      api.platforms.list({
+        sortBy,
+        sortDir,
+        page: String(page),
+        pageSize: '20',
+        ...(search ? { search } : {}),
+        ...(status ? { status } : {}),
+      }),
     placeholderData: (prev) => prev,
   })
 
@@ -99,6 +106,9 @@ export function PlatformsPage() {
           {search && (
             <button
               onClick={() => setSearch('')}
+              type="button"
+              title="Clear platform search"
+              aria-label="Clear platform search"
               className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
             >
               <X className="w-3.5 h-3.5" />
@@ -107,7 +117,7 @@ export function PlatformsPage() {
         </div>
 
         <div className="flex gap-2">
-          {(['all', 'active', 'watchlist', 'inactive'] as const).map((s) => (
+          {(['all', 'active', 'inactive', 'watchlist', 'suspended', 'closed'] as const).map((s) => (
             <button
               key={s}
               onClick={() => { setStatus(s === 'all' ? undefined : s); setPage(1) }}
@@ -173,8 +183,8 @@ export function PlatformsPage() {
                     >
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
-                          {platform.logo_url ? (
-                            <img src={platform.logo_url} alt={`${platform.name} logo`} className="w-7 h-7 rounded-md" />
+                          {platform.logoUrl ? (
+                            <img src={platform.logoUrl} alt={`${platform.name} logo`} className="w-7 h-7 rounded-md" />
                           ) : (
                             <div className="w-7 h-7 rounded-md bg-zinc-800 flex items-center justify-center">
                               <Gamepad2 className="w-3.5 h-3.5 text-zinc-600" />
@@ -182,14 +192,14 @@ export function PlatformsPage() {
                           )}
                           <div>
                             <Link
-                              to="/platforms/$id"
-                              params={{ id: platform.id }}
+                              to="/platforms/$platformId"
+                              params={{ platformId: platform.id }}
                               className="text-white font-medium hover:text-brand-300 transition-colors"
                             >
                               {platform.name}
                             </Link>
-                            {platform.founded_year && (
-                              <p className="text-xs text-zinc-600">Est. {platform.founded_year}</p>
+                            {platform.foundedYear && (
+                              <p className="text-xs text-zinc-600">Est. {platform.foundedYear}</p>
                             )}
                           </div>
                         </div>
@@ -200,9 +210,7 @@ export function PlatformsPage() {
                             'inline-flex px-2 py-0.5 rounded-full text-xs font-medium',
                             platform.status === 'active'
                               ? 'bg-green-900/40 text-green-400 border border-green-800'
-                              : platform.status === 'watchlist'
-                                ? 'bg-yellow-900/40 text-yellow-400 border border-yellow-800'
-                                : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
+                              : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
                           )}
                         >
                           {platform.status}
@@ -261,7 +269,7 @@ export function PlatformsPage() {
                             </button>
                           )}
                           <a
-                            href={platform.affiliate_url ?? platform.url}
+                            href={platform.affiliateUrl ?? platform.url}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-zinc-500 hover:text-zinc-300 transition-colors"
@@ -340,7 +348,7 @@ function AddPlatformModal({
 
   const addMutation = useMutation({
     mutationFn: ({ platformId, username }: { platformId: string; username: string }) =>
-      api.user.addPlatform(platformId, username),
+      api.user.addPlatform({ platformId, username }),
     onSuccess,
     onError: (err: Error) => setError(err.message),
   })
@@ -358,7 +366,13 @@ function AddPlatformModal({
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-white">Connect a Platform</h2>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors">
+          <button
+            type="button"
+            onClick={onClose}
+            title="Close modal"
+            aria-label="Close modal"
+            className="text-zinc-500 hover:text-white transition-colors"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -373,6 +387,7 @@ function AddPlatformModal({
           <div>
             <label className="block text-xs font-medium text-zinc-400 mb-1.5">Platform</label>
             <select
+              aria-label="Platform"
               value={selectedId}
               onChange={(e) => setSelectedId(e.target.value)}
               className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"

@@ -20,6 +20,9 @@ import type {
   SpinStep,
 } from './types'
 import { PLATFORM_SELECTORS } from './interpreter'
+import { createLogger } from '../logger'
+
+const log = createLogger('AutomationExecutor')
 
 /**
  * Execute a flow definition and produce its execution record.
@@ -30,7 +33,7 @@ import { PLATFORM_SELECTORS } from './interpreter'
 
 export async function executeFlow(flow: FlowDefinition): Promise<FlowExecution> {
   const execution: FlowExecution = {
-    id: `exec_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    id: `exec_${Date.now()}_${crypto.randomUUID().replace(/-/g, '').slice(0, 6)}`,
     flowId: flow.id,
     startedAt: Date.now(),
     status: 'running',
@@ -57,7 +60,7 @@ export async function executeFlow(flow: FlowDefinition): Promise<FlowExecution> 
   } catch (err) {
     ctx.execution.status = 'failed'
     ctx.execution.error = String(err)
-    console.error('[Executor] Flow failed:', err)
+    log.error('Flow failed:', err)
   }
 
   ctx.execution.endedAt = Date.now()
@@ -217,13 +220,13 @@ async function runStep(step: FlowStep, ctx: ExecutionContext): Promise<void> {
       }
 
       default:
-        console.warn('[Executor] Unknown step type:', (step as FlowStep).type)
+        log.warn('Unknown step type:', (step as FlowStep).type)
         result.success = false
     }
   } catch (err) {
     result.success = false
     result.error = String(err)
-    console.error(`[Executor] Step "${step.type}" failed:`, err)
+    log.error(`Step "${step.type}" failed:`, err)
   }
 
   result.durationMs = Date.now() - t0
@@ -378,7 +381,7 @@ async function clickElement(step: ClickStep): Promise<boolean> {
     await sleep(500)
   }
 
-  console.warn(`[Executor] clickElement timed out — selector: "${step.selector}", text: "${step.text}"`)
+  log.warn(`clickElement timed out — selector: "${step.selector}", text: "${step.text}"`)
   return false
 }
 
@@ -454,7 +457,7 @@ async function performLogin(platform: string, _ctx: ExecutionContext): Promise<b
     findByText('Sign Out')
 
   if (alreadyIn) {
-    console.log(`[Executor] Already logged in to ${platform}`)
+    log.info(`Already logged in to ${platform}`)
     return true
   }
 
@@ -516,7 +519,7 @@ async function claimBonus(platform: string): Promise<number | null> {
   })
 
   if (!clicked) {
-    console.warn('[Executor] Could not find bonus button on', platform)
+    log.warn('Could not find bonus button on', platform)
     return null
   }
 
@@ -584,7 +587,7 @@ async function performSpin(_step: SpinStep, _ctx: ExecutionContext): Promise<num
   )
 
   if (!spinClicked) {
-    console.warn('[Executor] Spin button not found')
+    log.warn('Spin button not found')
     return null
   }
 

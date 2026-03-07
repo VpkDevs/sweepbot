@@ -73,3 +73,10 @@ export function confidenceColor(level: string): string {
     default: return 'text-zinc-500 bg-zinc-500/10'
   }
 }
+
+/** Shared Recharts Tooltip contentStyle — dark zinc theme */
+export const CHART_TOOLTIP_STYLE = {
+  background: '#18181b',
+  border: '1px solid #3f3f46',
+  borderRadius: '8px',
+} as const

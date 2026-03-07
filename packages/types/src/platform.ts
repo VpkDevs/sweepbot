@@ -4,7 +4,7 @@ import { z } from 'zod'
 // ENUMS
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const PlatformStatus = z.enum(['active', 'inactive', 'suspended', 'closed'])
+export const PlatformStatus = z.enum(['active', 'inactive', 'watchlist', 'suspended', 'closed'])
 export type PlatformStatus = z.infer<typeof PlatformStatus>
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, vi, beforeEach, expect } from 'vitest'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import React from 'react'
 import { FlowChatPage } from '../FlowChatPage'
 import { api } from '../../lib/api'
 
@@ -8,6 +10,16 @@ import { api } from '../../lib/api'
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => () => {},
 }))
+
+// TextReveal uses IntersectionObserver which isn't available in jsdom — mock it out
+vi.mock('../../components/fx/TextReveal', () => ({
+  TextReveal: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}))
+
+const renderWithClient = (ui: React.ReactElement) => {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>)
+}
 
 describe('<FlowChatPage />', () => {
   beforeEach(() => {
@@ -25,7 +37,7 @@ describe('<FlowChatPage />', () => {
 
     const startSpy = vi.spyOn(api.flows, 'startConversation').mockResolvedValue(fakeState as any)
 
-    render(<FlowChatPage />)
+    renderWithClient(<FlowChatPage />)
 
     const input = screen.getByPlaceholderText(/describe your automation/i)
     await userEvent.type(input, 'Test flow')
@@ -53,7 +65,7 @@ describe('<FlowChatPage />', () => {
     const startSpy = vi.spyOn(api.flows, 'startConversation').mockResolvedValue(fakeStart as any)
     const convSpy = vi.spyOn(api.flows, 'converse').mockResolvedValue(fakeContinue as any)
 
-    render(<FlowChatPage />)
+    renderWithClient(<FlowChatPage />)
     const input = screen.getByPlaceholderText(/describe your automation/i)
     await userEvent.type(input, 'Start')
     await userEvent.click(screen.getByRole('button'))

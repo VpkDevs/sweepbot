@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import puppeteer from 'puppeteer'
+import type { Browser, Page } from 'puppeteer'
 
-let browser: puppeteer.Browser
-let page: puppeteer.Page
+let browser: Browser
+let page: Page
 
 beforeAll(async () => {
   browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] })

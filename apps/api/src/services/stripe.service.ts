@@ -23,12 +23,12 @@ export function getTierFromPriceId(priceId: string): string {
 }
 
 export async function getOrCreateCustomer(userId: string, email: string): Promise<string> {
-  const result = await dbQuery<{ stripe_customer_id: string | null }>(sql`
+  const { rows } = await dbQuery<{ stripe_customer_id: string | null }>(sql`
     SELECT stripe_customer_id FROM subscriptions WHERE user_id = ${userId} LIMIT 1
   `)
 
-  if (result[0]?.stripe_customer_id) {
-    return result[0].stripe_customer_id
+  if (rows[0]?.stripe_customer_id) {
+    return rows[0].stripe_customer_id
   }
 
   const customer = await stripe.customers.create({ email, metadata: { userId } })
@@ -64,11 +64,11 @@ export async function createPortalSession(
   userId: string,
   returnUrl: string
 ): Promise<Stripe.BillingPortal.Session> {
-  const result = await dbQuery<{ stripe_customer_id: string | null }>(sql`
+  const { rows } = await dbQuery<{ stripe_customer_id: string | null }>(sql`
     SELECT stripe_customer_id FROM subscriptions WHERE user_id = ${userId} LIMIT 1
   `)
 
-  const customerId = result[0]?.stripe_customer_id
+  const customerId = rows[0]?.stripe_customer_id
   if (!customerId) throw new Error('No Stripe customer found for user')
 
   return stripe.billingPortal.sessions.create({ customer: customerId, return_url: returnUrl })

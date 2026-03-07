@@ -84,7 +84,7 @@ export async function redemptionRoutes(app: FastifyInstance): Promise<void> {
         RETURNING *
       `)
 
-      return reply.code(201).send({ success: true, data: result.rows[0] })
+      return reply.code(201).send({ success: true, data: result.rows[0] ?? null })
     }
   )
 
@@ -150,7 +150,7 @@ export async function redemptionRoutes(app: FastifyInstance): Promise<void> {
         })
       }
 
-      return reply.send({ success: true, data: result.rows[0] })
+      return reply.send({ success: true, data: result.rows[0] ?? null })
     }
   )
 
@@ -245,7 +245,7 @@ export async function redemptionRoutes(app: FastifyInstance): Promise<void> {
         WHERE user_id = ${userId}
       `)
 
-      return reply.send({ success: true, data: stats.rows[0] })
+      return reply.send({ success: true, data: stats.rows[0] ?? null })
     }
   )
 

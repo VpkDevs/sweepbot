@@ -3,7 +3,8 @@
  * Tables: jackpot_snapshots, tos_snapshots, platform_health_checks, platform_alerts
  */
 
-import { pgTable, uuid, text, decimal, timestamp, jsonb, index, check, integer } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, boolean, decimal, timestamp, jsonb, index, check, integer } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { platforms } from './platforms';
 
 /**
@@ -32,7 +33,7 @@ export const jackpotSnapshots = pgTable('jackpot_snapshots', {
   typeTimeIdx: index('idx_jackpot_snapshots_type_time').on(table.jackpotType, table.capturedAt.desc()),
   hashIdx: index('idx_jackpot_snapshots_hash').on(table.snapshotHash),
   valueIdx: index('idx_jackpot_snapshots_value').on(table.currentValue.desc(), table.capturedAt.desc()),
-  valueCheck: check('jackpot_snapshots_value_check', 'current_value >= 0'),
+  valueCheck: check('jackpot_snapshots_value_check', sql`current_value >= 0`),
 }));
 
 /**

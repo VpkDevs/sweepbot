@@ -8,6 +8,7 @@
     "moduleDetection": "force",
     "verbatimModuleSyntax": true,
     "strict": true,
+    "forceConsistentCasingInFileNames": true,
     "exactOptionalPropertyTypes": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,

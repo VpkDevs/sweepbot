@@ -180,5 +180,3 @@ export class StorageManager {
 }
 
 export const storage = new StorageManager()
-
-export type { AnalyticsEvent }

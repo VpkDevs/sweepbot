@@ -6,9 +6,14 @@ vi.mock('stripe', () => {
   return {
     default: class {
       webhooks = {
-        constructEvent: (body: any, _sig: any, _secret: any) => {
-          // in tests, body may be string or object
-          return typeof body === 'string' ? JSON.parse(body) : body
+        constructEvent: (body: string | Buffer, _sig: string, _secret: string) => {
+          // body arrives as a Buffer due to the raw content-type parser
+          const str: string = Buffer.isBuffer(body)
+            ? body.toString()
+            : typeof body === 'string'
+              ? body
+              : JSON.stringify(body)
+          return JSON.parse(str)
         },
       }
     },
@@ -46,7 +51,7 @@ describe('Stripe Webhook Routes', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/webhooks/stripe',
-      headers: { 'stripe-signature': 'test' },
+      headers: { 'stripe-signature': 'test', 'content-type': 'application/json' },
       payload: JSON.stringify(event),
     })
 

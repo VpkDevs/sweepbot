@@ -14,6 +14,7 @@ import type {
   FlowSequenceNode,
   FlowValue,
 } from '../types'
+import { logger } from '@sweepbot/utils'
 
 export class FlowExecutor {
   /**
@@ -27,7 +28,7 @@ export class FlowExecutor {
   ): Promise<FlowExecutionContext> {
     const executionContext: FlowExecutionContext = {
       flowId: flowDefinition.id,
-      executionId: `exec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      executionId: `exec_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
       userId,
       variables: new Map(Object.entries(context || {})),
       startedAt: new Date(),
@@ -111,23 +112,26 @@ export class FlowExecutor {
           timestamp: new Date(),
           nodeId: node.id,
           type: 'user_alert',
-          details: { message: (node as any).message },
+          details: { message: node.message },
         })
+        if (node.next) await this.executeNode(node.next, ctx, flow)
         return
       case 'wait':
-        await new Promise((resolve) => setTimeout(resolve, (node as any).duration))
+        await new Promise((resolve) => setTimeout(resolve, node.duration))
+        if (node.next) await this.executeNode(node.next, ctx, flow)
         return
-      case 'store':
-        const storeNode = node as any
-        const value = await this.evaluateValue(storeNode.value, ctx)
-        ctx.variables.set(storeNode.variable, value)
+      case 'store': {
+        const value = await this.evaluateValue(node.value, ctx)
+        ctx.variables.set(node.variable, value)
         ctx.log.push({
           timestamp: new Date(),
           nodeId: node.id,
           type: 'variable_set',
-          details: { variable: storeNode.variable, value },
+          details: { variable: node.variable, value },
         })
+        if (node.next) await this.executeNode(node.next, ctx, flow)
         return
+      }
     }
   }
 
@@ -164,8 +168,9 @@ export class FlowExecutor {
       }
 
       // Store result if requested
-      if ((node.parameters as any).storeAs) {
-        ctx.variables.set((node.parameters as any).storeAs, result)
+      const storeAs = node.parameters['storeAs']
+      if (typeof storeAs === 'string') {
+        ctx.variables.set(storeAs, result)
       }
 
       ctx.log.push({
@@ -279,7 +284,7 @@ export class FlowExecutor {
     ctx: FlowExecutionContext,
     flow: FlowDefinition
   ): Promise<void> {
-    for (const step of (node as any).steps) {
+    for (const step of node.steps) {
       await this.executeNode(step, ctx, flow)
     }
   }
@@ -354,7 +359,7 @@ export class FlowExecutor {
     // Validate that the expression only contains safe characters
     // Allow: numbers, operators, parentheses, spaces, and decimal points
     if (!/^[\d\s+\-*/%.()]+$/.test(evaluated)) {
-      console.warn('Unsafe expression detected, rejecting:', evaluated)
+      logger.warn('Unsafe expression detected, rejecting', { evaluated })
       return 0
     }
 

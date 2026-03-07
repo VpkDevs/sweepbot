@@ -72,7 +72,9 @@ describe('Integration Tests - End-to-End Flows', () => {
       )
 
       expect(state.userId).toBe(userId)
-      expect(state.turns).toHaveLength(1)
+      // initial conversation may include an assistant follow‑up question
+      expect(state.turns.length).toBeGreaterThanOrEqual(1)
+      expect(state.turns[0]!.role).toBe('user')
       expect(state.status).toBe('building')
 
       // Step 2: User refines - adds specific time

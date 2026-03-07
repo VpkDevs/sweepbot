@@ -10,7 +10,6 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 // analytics & monitoring
 import posthog from 'posthog-js'
 import * as Sentry from '@sentry/react'
-import { BrowserTracing } from '@sentry/tracing'
 
 // Initialize PostHog if a key is configured
 if (import.meta.env.VITE_POSTHOG_KEY) {
@@ -24,7 +23,7 @@ if (import.meta.env.VITE_POSTHOG_KEY) {
 if (import.meta.env.VITE_SENTRY_DSN) {
   Sentry.init({
     dsn: import.meta.env.VITE_SENTRY_DSN,
-    integrations: [new BrowserTracing()],
+    integrations: [Sentry.browserTracingIntegration()],
     // only sample a small percentage in dev/demo
     tracesSampleRate: import.meta.env.DEV ? 0.01 : 0.1,
   })
@@ -60,8 +59,8 @@ function App() {
   // pageview tracking: tanstack-router emits location changes
   useEffect(() => {
     if (import.meta.env.VITE_POSTHOG_KEY && posthog) {
-      const unsub = router.subscribe(({ location }) => {
-        posthog.capture('$pageview', { path: location.pathname })
+      const unsub = router.subscribe('onResolved', () => {
+        posthog.capture('$pageview', { path: router.state.location.pathname })
       })
       return () => unsub()
     }

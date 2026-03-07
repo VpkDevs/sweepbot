@@ -60,8 +60,7 @@ export function SignInPage() {
       <button
         onClick={handleGoogle}
         disabled={googleLoading || loading}
-        className="w-full flex items-center justify-center gap-3 px-4 py-3 glass-card rounded-xl text-white text-sm font-semibold transition-all hover:bg-zinc-800/80 disabled:opacity-50 disabled:cursor-not-allowed press-scale shine-on-hover animate-fade-in-up"
-        style={{ animationDelay: '60ms' }}
+        className="w-full flex items-center justify-center gap-3 px-4 py-3 glass-card rounded-xl text-white text-sm font-semibold transition-all hover:bg-zinc-800/80 disabled:opacity-50 disabled:cursor-not-allowed press-scale shine-on-hover animate-fade-in-up [animation-delay:60ms]"
       >
         {googleLoading ? (
           <Loader2 className="w-4 h-4 animate-spin" />
@@ -76,7 +75,7 @@ export function SignInPage() {
         Continue with Google
       </button>
 
-      <div className="relative animate-fade-in" style={{ animationDelay: '120ms' }}>
+      <div className="relative animate-fade-in [animation-delay:120ms]">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
         </div>
@@ -94,7 +93,7 @@ export function SignInPage() {
       )}
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in-up" style={{ animationDelay: '150ms' }}>
+      <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in-up [animation-delay:150ms]">
         <div>
           <label htmlFor="email" className="block text-[10px] font-bold text-zinc-500 mb-2 uppercase tracking-[0.15em]">
             Email
@@ -160,7 +159,7 @@ export function SignInPage() {
         </button>
       </form>
 
-      <p className="text-center text-sm text-zinc-500 animate-fade-in" style={{ animationDelay: '300ms' }}>
+      <p className="text-center text-sm text-zinc-500 animate-fade-in [animation-delay:300ms]">
         Don&apos;t have an account?{' '}
         <Link to="/sign-up" className="text-brand-400 hover:text-brand-300 font-semibold transition-colors gradient-underline">
           Create one free

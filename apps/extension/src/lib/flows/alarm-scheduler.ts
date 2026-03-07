@@ -4,7 +4,9 @@
  */
 
 import type { FlowDefinition } from './types'
+import { createLogger } from '../logger'
 
+const log = createLogger('FlowScheduler')
 const ALARM_PREFIX = 'sweepbot_flow_'
 
 /**
@@ -32,9 +34,7 @@ export function scheduleFlow(flow: FlowDefinition): void {
       when: Date.now() + nextMs,
       periodInMinutes: Math.max(1, Math.round(periodMs / 60_000)),
     })
-    console.log(
-      `[FlowScheduler] Scheduled "${flow.name}" (${alarmName}) — next in ${Math.round(nextMs / 60_000)} min`,
-    )
+    log.info(`Scheduled "${flow.name}" (${alarmName}) — next in ${Math.round(nextMs / 60_000)} min`)
   })
 }
 
@@ -46,7 +46,7 @@ export function scheduleFlow(flow: FlowDefinition): void {
 export function unscheduleFlow(flowId: string): void {
   const alarmName = `${ALARM_PREFIX}${flowId}`
   chrome.alarms.clear(alarmName)
-  console.log(`[FlowScheduler] Unscheduled flow ${flowId}`)
+  log.info(`Unscheduled flow ${flowId}`)
 }
 
 /**
@@ -86,7 +86,7 @@ interface AlarmParams {
  * - `MIN HOUR * * *` — daily at the specified hour and minute
  * - `MIN HOUR * * DOW` — weekly on the specified day-of-week (0–6)
  * - `0 * * * *` — hourly at the top of the hour
- * - `*/N * * * *` — every N minutes (step syntax)
+ * - `* /N * * * *` — every N minutes (step syntax)
  *
  * @param cron - A five-field cron string in the form "MIN HOUR DOM MON DOW"
  * @returns An object with:

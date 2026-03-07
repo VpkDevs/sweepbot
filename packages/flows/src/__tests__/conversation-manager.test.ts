@@ -59,5 +59,9 @@ describe('ConversationManager', () => {
     // no trigger → pending question asking for when to run
     expect(state.pendingQuestions.length).toBeGreaterThan(0)
     expect(state.pendingQuestions[0]).toMatch(/When should this Flow run/)
+    // Assistant should have asked the question
+    const lastTurn = state.turns[state.turns.length - 1]
+    expect(lastTurn?.role).toBe('assistant')
+    expect(lastTurn?.content).toMatch(/When should this Flow run/)
   })
 })

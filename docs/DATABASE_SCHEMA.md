@@ -341,6 +341,159 @@ CREATE INDEX idx_redemptions_user ON redemptions(user_id, requested_at DESC);
 CREATE INDEX idx_redemptions_platform ON redemptions(platform_id);
 
 -- =============================================================================
+-- FLOWS (Phase 1)
+-- =============================================================================
+
+CREATE TABLE flows (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id        UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  name           VARCHAR(255) NOT NULL,
+  description    TEXT NOT NULL,
+  definition     JSONB NOT NULL,
+  trigger        JSONB NOT NULL,
+  status         VARCHAR(20) NOT NULL DEFAULT 'draft',
+  version        INTEGER NOT NULL DEFAULT 1,
+  guardrails     JSONB NOT NULL,
+  is_shared      BOOLEAN NOT NULL DEFAULT false,
+  shared_flow_id UUID,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_executed_at TIMESTAMPTZ,
+  execution_count  INTEGER NOT NULL DEFAULT 0,
+  performance_stats JSONB
+);
+
+CREATE TABLE flow_executions (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  flow_id        UUID NOT NULL REFERENCES flows(id) ON DELETE CASCADE,
+  user_id        UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  status         VARCHAR(30) NOT NULL,
+  started_at     TIMESTAMPTZ NOT NULL,
+  completed_at   TIMESTAMPTZ,
+  duration       INTEGER,
+  metrics        JSONB NOT NULL,
+  log            JSONB NOT NULL,
+  guardrails_triggered JSONB,
+  error_details  TEXT,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE flow_conversations (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id        UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  flow_id        UUID REFERENCES flows(id) ON DELETE SET NULL,
+  turns          JSONB NOT NULL,
+  status         VARCHAR(20) NOT NULL,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE shared_flows (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  creator_id     UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  title          VARCHAR(255) NOT NULL,
+  description    TEXT NOT NULL,
+  category       VARCHAR(50) NOT NULL,
+  tags           JSONB NOT NULL DEFAULT '[]'::jsonb,
+  flow_template  JSONB NOT NULL,
+  price_cents    INTEGER NOT NULL DEFAULT 0,
+  imports        INTEGER NOT NULL DEFAULT 0,
+  active_users   INTEGER NOT NULL DEFAULT 0,
+  avg_net_result DECIMAL(10,2),
+  avg_time_saved_minutes DECIMAL(8,2),
+  rating         DECIMAL(3,2),
+  review_count   INTEGER NOT NULL DEFAULT 0,
+  verified_performance BOOLEAN NOT NULL DEFAULT false,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- =============================================================================
+-- FEATURES / COMMUNITY (Phase 2)
+-- =============================================================================
+
+CREATE TABLE achievements (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  key            VARCHAR(100) NOT NULL UNIQUE,
+  name           VARCHAR(255) NOT NULL,
+  description    TEXT NOT NULL,
+  icon           VARCHAR(100) NOT NULL,
+  category       VARCHAR(50) NOT NULL,
+  tier           VARCHAR(20) NOT NULL,
+  points         INTEGER NOT NULL DEFAULT 0,
+  requirement    JSONB NOT NULL,
+  is_secret      BOOLEAN NOT NULL DEFAULT false,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE user_achievements (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id        UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  achievement_id UUID NOT NULL REFERENCES achievements(id) ON DELETE CASCADE,
+  earned_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  progress       JSONB,
+  notified       BOOLEAN NOT NULL DEFAULT false,
+  UNIQUE(user_id, achievement_id)
+);
+
+CREATE TABLE personal_records (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id        UUID NOT NULL UNIQUE REFERENCES profiles(id) ON DELETE CASCADE,
+  biggest_single_win DECIMAL(12,4),
+  biggest_win_date TIMESTAMPTZ,
+  biggest_win_game VARCHAR(255),
+  biggest_win_platform VARCHAR(255),
+  longest_win_streak INTEGER NOT NULL DEFAULT 0,
+  current_win_streak INTEGER NOT NULL DEFAULT 0,
+  longest_loss_streak INTEGER NOT NULL DEFAULT 0,
+  current_loss_streak INTEGER NOT NULL DEFAULT 0,
+  best_rtp_session DECIMAL(6,4),
+  best_rtp_min_bets INTEGER NOT NULL DEFAULT 100,
+  highest_balance DECIMAL(12,4),
+  most_bonuses_single_day INTEGER NOT NULL DEFAULT 0,
+  total_jackpots_hit INTEGER NOT NULL DEFAULT 0,
+  biggest_jackpot DECIMAL(12,4),
+  last_computed_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE big_wins (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id        UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  platform_id    UUID REFERENCES platforms(id) ON DELETE SET NULL,
+  platform_name  VARCHAR(255),
+  game_name      VARCHAR(255),
+  win_amount_sc  DECIMAL(12,4) NOT NULL,
+  multiplier     DECIMAL(10,2),
+  bet_amount     DECIMAL(12,4),
+  screenshot_url TEXT,
+  verification_status VARCHAR(30) NOT NULL DEFAULT 'pending',
+  verified_at    TIMESTAMPTZ,
+  is_public      BOOLEAN NOT NULL DEFAULT true,
+  display_name   VARCHAR(100),
+  occurred_at    TIMESTAMPTZ NOT NULL,
+  notes          TEXT,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE notifications (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id        UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  type           VARCHAR(50) NOT NULL,
+  title          VARCHAR(255) NOT NULL,
+  body           TEXT NOT NULL,
+  icon           VARCHAR(100),
+  href           VARCHAR(500),
+  is_read        BOOLEAN NOT NULL DEFAULT false,
+  read_at        TIMESTAMPTZ,
+  data           JSONB,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- =============================================================================
+-- RLS POLICIES (Summary)
+-- =============================================================================
+
+-- =============================================================================
 -- TRUST INDEX SCORES
 -- =============================================================================
 

@@ -6,7 +6,7 @@ import { supabaseClient, supabaseStub } from '../lib/supabase'
 // Use supabaseClient which handles the null case
 const getSupabase = () => supabaseClient ?? supabaseStub
 
-interface AuthState {
+export interface AuthState {
   user: User | null
   session: Session | null
   tier: string

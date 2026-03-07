@@ -31,10 +31,9 @@ export async function createNotification(input: CreateNotificationInput) {
         type: input.type,
         title: input.title,
         body: input.body,
-        icon: input.icon,
-        href: input.href,
+        ...(input.icon != null ? { icon: input.icon } : {}),
+        ...(input.href != null ? { href: input.href } : {}),
         data: input.data ?? null,
-        isRead: false,
       })
       .returning()
 
@@ -55,7 +54,7 @@ export async function getUserNotifications(
   const conditions = [eq(notifications.userId, userId)]
   if (unreadOnly) conditions.push(eq(notifications.isRead, false))
 
-  const [rows, [{ total }]] = await Promise.all([
+  const [rows, countRows] = await Promise.all([
     db
       .select()
       .from(notifications)
@@ -69,7 +68,7 @@ export async function getUserNotifications(
       .where(and(...conditions)),
   ])
 
-  return { data: rows, total: Number(total) }
+  return { data: rows, total: Number(countRows[0]?.total ?? 0) }
 }
 
 export async function markNotificationRead(notificationId: string, userId: string) {
@@ -99,10 +98,10 @@ export async function deleteNotification(notificationId: string, userId: string)
 }
 
 export async function getUnreadCount(userId: string): Promise<number> {
-  const [{ total }] = await db
+  const result = await db
     .select({ total: count() })
     .from(notifications)
     .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)))
 
-  return Number(total)
+  return Number(result[0]?.total ?? 0)
 }

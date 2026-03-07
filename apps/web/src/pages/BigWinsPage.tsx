@@ -159,7 +159,7 @@ export function BigWinsPage() {
           </p>
         </div>
       ) : (
-        <div className="glass-card rounded-2xl overflow-hidden animate-reveal-up" style={{ animationDelay: '180ms' }}>
+        <div className="glass-card rounded-2xl overflow-hidden animate-reveal-up [animation-delay:180ms]">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>

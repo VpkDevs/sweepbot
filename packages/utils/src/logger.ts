@@ -36,7 +36,7 @@ class Logger {
       level: (env['VITE_LOG_LEVEL'] as LogLevel | undefined) ?? 'info',
       enableConsole: env['MODE'] !== 'production' || env['VITE_ENABLE_CONSOLE_LOGS'] === 'true',
       enableRemote: env['MODE'] === 'production' && env['VITE_ENABLE_REMOTE_LOGS'] === 'true',
-      remoteEndpoint: env['VITE_LOG_ENDPOINT'],
+      ...(env['VITE_LOG_ENDPOINT'] ? { remoteEndpoint: env['VITE_LOG_ENDPOINT'] } : {}),
       ...config,
     }
   }

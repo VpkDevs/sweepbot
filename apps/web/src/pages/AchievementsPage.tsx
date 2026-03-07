@@ -63,6 +63,11 @@ const TIER_STYLES = {
   },
 } as const
 
+function widthClass(percent: number) {
+  const rounded = Math.max(0, Math.min(100, Math.round(percent / 5) * 5))
+  return `score-width-${rounded}`
+}
+
 /**
  * Renders the Achievements page with category filtering, tier summaries, and a refresh action.
  *
@@ -138,8 +143,7 @@ export function AchievementsPage() {
               </p>
               <div className="progress-bar-container mt-2">
                 <div
-                  className={cn('progress-bar-fill bg-gradient-to-r', styles.progressBg)}
-                  style={{ width: `${pct}%` }}
+                  className={cn('progress-bar-fill bg-gradient-to-r', styles.progressBg, widthClass(pct))}
                 />
               </div>
             </SpotlightCard>
@@ -149,7 +153,7 @@ export function AchievementsPage() {
       </div>
 
       {/* Category tabs */}
-      <div className="flex gap-1 overflow-x-auto pb-1 glass-card-static rounded-xl p-1 w-fit animate-reveal-up" style={{ animationDelay: '240ms' }}>
+      <div className="flex gap-1 overflow-x-auto pb-1 glass-card-static rounded-xl p-1 w-fit animate-reveal-up [animation-delay:240ms]">
         {CATEGORIES.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
@@ -240,8 +244,11 @@ function AchievementCard({ achievement: a }: { achievement: Achievement }) {
           </div>
           <div className="progress-bar-container">
             <div
-              className={cn('progress-bar-fill bg-gradient-to-r', styles.progressBg)}
-              style={{ width: `${Math.min((progress.current / progress.required) * 100, 100)}%` }}
+              className={cn(
+                'progress-bar-fill bg-gradient-to-r',
+                styles.progressBg,
+                widthClass(Math.min((progress.current / progress.required) * 100, 100))
+              )}
             />
           </div>
         </div>

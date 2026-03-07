@@ -138,12 +138,7 @@ export function AppShell() {
           {Array.from({ length: 12 }).map((_, i) => (
             <div
               key={i}
-              className="particle"
-              style={{
-                left: `${8 + (i * 7.5) % 85}%`,
-                animationDelay: `${-i * 1.5}s`,
-                animationDuration: `${15 + (i % 4) * 5}s`,
-              }}
+              className={cn('particle', `particle-${i}`)}
             />
           ))}
         </div>
@@ -178,6 +173,9 @@ export function AppShell() {
           <button
             className={cn('lg:hidden text-zinc-400 hover:text-white transition-colors', collapsed ? 'hidden' : 'ml-auto')}
             onClick={() => setMobileOpen(false)}
+            type="button"
+            title="Close navigation"
+            aria-label="Close navigation"
           >
             <X className="w-5 h-5" />
           </button>
@@ -301,6 +299,9 @@ export function AppShell() {
           <button
             className="lg:hidden text-zinc-400 hover:text-white transition-colors press-scale"
             onClick={() => setMobileOpen(true)}
+            type="button"
+            title="Open navigation"
+            aria-label="Open navigation"
           >
             <Menu className="w-5 h-5" />
           </button>

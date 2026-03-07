@@ -102,9 +102,9 @@ export class VoiceRecorder {
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i]
           if (result.isFinal) {
-            this.finalTranscript += result[0].transcript + ' '
+            this.finalTranscript += result[0]?.transcript + ' '
           } else {
-            interimTranscript += result[0].transcript
+            interimTranscript += result[0]?.transcript
           }
         }
 

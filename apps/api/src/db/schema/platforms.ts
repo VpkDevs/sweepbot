@@ -20,7 +20,7 @@ export const platforms = pgTable('platforms', {
   logoUrl: text('logo_url'),
   description: text('description'),
   foundedYear: integer('founded_year'),
-  status: text('status').notNull().default('active'),  // active | maintenance | deprecated
+  status: text('status').notNull().default('active'),  // active | inactive | watchlist | suspended | closed
   countryCodes: text('country_codes').array().notNull().default(sql`ARRAY['US']`),
   isFeatured: boolean('is_featured').notNull().default(false),
   sortOrder: integer('sort_order').notNull().default(0),

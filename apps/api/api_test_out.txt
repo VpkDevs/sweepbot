@@ -1,0 +1,127 @@
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.9 [39m[90mC:/Users/MQ420_OL/DEV/web/Sweepbot/apps/api[39m
+
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mAuthentication Middleware[2m > [22mrequireAuth middleware[2m > [22mshould accept valid Bearer token and attach user context
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mAuthentication Middleware[2m > [22mrequireAuth middleware[2m > [22mshould reject missing Authorization header with 401
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mAuthentication Middleware[2m > [22mrequireAuth middleware[2m > [22mshould reject malformed Authorization header (not Bearer)
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mAuthentication Middleware[2m > [22mrequireAuth middleware[2m > [22mshould reject expired JWT token with 401
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mAuthentication Middleware[2m > [22mrequireAuth middleware[2m > [22mshould reject invalid/corrupted JWT token with 401
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mAuthentication Middleware[2m > [22mrequireAuth middleware[2m > [22mshould handle Supabase auth errors gracefully
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mAuthentication Middleware[2m > [22mrequireAuth middleware[2m > [22mshould attach user context with correct tier from metadata
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mAuthentication Middleware[2m > [22mrequireAuth middleware[2m > [22mshould set default tier to "free" if user_metadata.tier is missing
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mAuthentication Middleware[2m > [22moptionalAuth middleware[2m > [22mshould attach user if valid token present
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mAuthentication Middleware[2m > [22moptionalAuth middleware[2m > [22mshould set user to null if no token provided
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mAuthentication Middleware[2m > [22moptionalAuth middleware[2m > [22mshould set user to null if token is invalid
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mAuthentication Middleware[2m > [22moptionalAuth middleware[2m > [22mshould continue execution after setting user (no reply.send)
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mAuthentication Middleware[2m > [22mAuth error responses (no PII leakage)[2m > [22mshould not expose user email in 401 error
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mAuthentication Middleware[2m > [22mAuth error responses (no PII leakage)[2m > [22mshould not expose token in error response
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mAuthentication Middleware[2m > [22mAuth error responses (no PII leakage)[2m > [22mshould not expose internal error stack traces in error message
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mAuthentication Middleware[2m > [22mProtected route access control[2m > [22mshould allow authenticated user to access protected route
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mAuthentication Middleware[2m > [22mProtected route access control[2m > [22mshould reject unauthenticated request to protected route
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mAuthentication Middleware[2m > [22mProtected route access control[2m > [22mshould isolate user data (user can only access own resources)
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mAuthentication Middleware[2m > [22mToken tampering detection[2m > [22mshould reject token with modified payload
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mAuthentication Middleware[2m > [22mToken tampering detection[2m > [22mshould reject token with modified signature
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mAuthentication Middleware[2m > [22mConcurrent authentication[2m > [22mshould handle concurrent requests from same user independently
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mAuthentication Middleware[2m > [22mConcurrent authentication[2m > [22mshould keep users isolated in concurrent requests
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mGET /user/profile (Protected Route)[2m > [22mshould return 401 if user not authenticated
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mGET /user/profile (Protected Route)[2m > [22mshould return user profile if authenticated
+ [32mΓ£ô[39m src/__tests__/routes/auth.test.ts[2m > [22mGET /user/profile (Protected Route)[2m > [22mshould only return authenticated user profile, not other users
+ [31m├ù[39m src/__tests__/routes/webhooks.test.ts[2m > [22mStripe Webhook Routes[2m > [22mhandles invoice.payment_failed by updating subs and sending email
+[31m   ΓåÆ expected 415 to be 200 // Object.is equality[39m
+ [31m├ù[39m src/__tests__/routes/webhooks.test.ts[2m > [22mStripe Webhook Routes[2m > [22mhandles supabase user.created event by sending welcome email
+[31m   ΓåÆ expected "spy" to be called with arguments: [ ObjectContaining{ΓÇª} ][90m
+
+Received: 
+
+[31m[90m
+
+Number of calls: [1m0[22m
+[31m[39m
+ [31m├ù[39m src/__tests__/routes/flows.test.ts[2m > [22mFlow routes (conversation endpoints)[2m > [22mstarts a new conversation and persists state
+[31m   ΓåÆ expected 401 to be 201 // Object.is equality[39m
+ [31m├ù[39m src/__tests__/routes/flows.test.ts[2m > [22mFlow routes (conversation endpoints)[2m > [22mreturns 404 when continuing unknown conversation
+[31m   ΓåÆ expected 401 to be 404 // Object.is equality[39m
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ» Failed Tests 4 ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+
+ FAIL  src/__tests__/routes/flows.test.ts > Flow routes (conversation endpoints) > starts a new conversation and persists state
+AssertionError: expected 401 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 401
+
+ Γ¥» src/__tests__/routes/flows.test.ts:38:28
+     36|     })
+     37| 
+     38|     expect(res.statusCode).toBe(201)
+       |                            ^
+     39|     const body = res.json()
+     40|     expect(body.success).toBe(true)
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/4]ΓÄ»
+
+ FAIL  src/__tests__/routes/flows.test.ts > Flow routes (conversation endpoints) > returns 404 when continuing unknown conversation
+AssertionError: expected 401 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 401
+
+ Γ¥» src/__tests__/routes/flows.test.ts:54:28
+     52|     })
+     53| 
+     54|     expect(res.statusCode).toBe(404)
+       |                            ^
+     55|     expect(res.json().success).toBe(false)
+     56|   })
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[2/4]ΓÄ»
+
+ FAIL  src/__tests__/routes/webhooks.test.ts > Stripe Webhook Routes > handles invoice.payment_failed by updating subs and sending email
+AssertionError: expected 415 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 415
+
+ Γ¥» src/__tests__/routes/webhooks.test.ts:53:28
+     51|     })
+     52| 
+     53|     expect(res.statusCode).toBe(200)
+       |                            ^
+     54|     expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({ tΓÇª
+     55|   })
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[3/4]ΓÄ»
+
+ FAIL  src/__tests__/routes/webhooks.test.ts > Stripe Webhook Routes > handles supabase user.created event by sending welcome email
+AssertionError: expected "spy" to be called with arguments: [ ObjectContaining{ΓÇª} ]
+
+Received: 
+
+
+
+Number of calls: 0
+
+[2m Test Files [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (3)[39m
+[2m      Tests [22m [1m[31m4 failed[39m[22m[2m | [22m[1m[32m25 passed[39m[22m[90m (29)[39m
+[2m   Start at [22m 13:31:55
+[2m   Duration [22m 1.52s[2m (transform 282ms, setup 42ms, collect 1.42s, tests 412ms, environment 1ms, prepare 611ms)[22m
+
+ Γ¥» src/__tests__/routes/webhooks.test.ts:67:23
+     65| 
+     66|     expect(res.statusCode).toBe(200)
+     67|     expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({
+       |                       ^
+     68|       to: 'new@user.com',
+     69|       subject: expect.stringContaining('Welcome'),
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[4/4]ΓÄ»
+

@@ -81,7 +81,10 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
  * Exponential backoff delay calculation
  */
 function calculateRetryDelay(attempt: number, baseDelay = 1000): number {
-  return Math.min(baseDelay * Math.pow(2, attempt), 10000) + Math.random() * 1000
+  const buf = new Uint32Array(1)
+  crypto.getRandomValues(buf)
+  const jitter = (buf[0]! / 2 ** 32) * 1000
+  return Math.min(baseDelay * Math.pow(2, attempt), 10000) + jitter
 }
 
 /**
@@ -136,7 +139,7 @@ async function request<T>(
   const cacheKey = `${options.method || 'GET'}:${path}:${JSON.stringify(options.body)}`
   
   // Check for in-flight duplicate request
-  if (!skipCache && !options.method || options.method === 'GET') {
+  if (!skipCache && (!options.method || options.method === 'GET')) {
     const pending = pendingRequests.get(cacheKey)
     if (pending) {
       logger.debug('Request deduplicated', { path, method: options.method })

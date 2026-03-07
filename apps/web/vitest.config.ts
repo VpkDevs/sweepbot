@@ -5,8 +5,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    // skip setup on Node 25+ which crashes during module loading (see https://github.com/vitest-dev/vitest/issues/)
-    setupFiles: process.version.startsWith('v25') ? [] : './src/tests/setup.ts',
+    setupFiles: './src/tests/setup.ts',
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     // e2e tests need a running dev server + browser — exclude from the unit test run
     exclude: ['node_modules', 'dist', '.cache', 'src/tests/e2e/**'],
@@ -27,6 +26,14 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@sweepbot/utils': path.resolve(__dirname, '../../packages/utils/src/index.ts'),
+      '@sweepbot/types': path.resolve(__dirname, '../../packages/types/src/index.ts'),
+    },
+  },
+  server: {
+    fs: {
+      // Allow Vite to serve files from the monorepo packages folder
+      allow: [path.resolve(__dirname, '../..'), __dirname],
     },
   },
 })

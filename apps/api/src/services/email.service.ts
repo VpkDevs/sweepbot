@@ -2,7 +2,7 @@ import { sendEmail } from '../lib/email.js'
 import { env } from '../utils/env.js'
 import { logger } from '../utils/logger.js'
 
-const APP_URL = process.env.APP_URL ?? 'https://app.sweepbot.app'
+const APP_URL = env.APP_URL
 
 export async function sendWelcomeEmail(to: string, username?: string) {
   await sendEmail({

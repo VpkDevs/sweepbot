@@ -23,7 +23,7 @@ const EXEC_STATUS = {
  * @returns The React element for the flow detail page.
  */
 export function FlowDetailPage() {
-  const { flowId } = useParams({ from: '/flows/$flowId' })
+  const { flowId } = useParams({ from: '/app/flows/$flowId' })
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [expandedExecution, setExpandedExecution] = useState<string | null>(null)
@@ -75,7 +75,7 @@ export function FlowDetailPage() {
     )
   }
 
-  const f = flow as any
+  const f = flow as Record<string, unknown>
 
   return (
     <div className="p-6 lg:p-8 space-y-8 max-w-6xl mx-auto">
@@ -83,24 +83,24 @@ export function FlowDetailPage() {
       <ScrollReveal>
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="heading-display text-white text-shimmer">{f.name}</h1>
-          <p className="text-zinc-500 text-sm mt-1.5 text-pretty">{f.description}</p>
+          <h1 className="heading-display text-white text-shimmer">{f['name'] as string}</h1>
+          <p className="text-zinc-500 text-sm mt-1.5 text-pretty">{f['description'] as string}</p>
           <div className="flex items-center gap-4 mt-3 text-xs text-zinc-500">
             <span className="flex items-center gap-1.5">
               <span className={cn(
                 'w-2 h-2 rounded-full',
                 f.status === 'active' ? 'status-dot-active' : f.status === 'paused' ? 'status-dot-warning' : 'bg-zinc-600'
               )} />
-              {f.status?.charAt(0).toUpperCase() + f.status?.slice(1)}
+              {(f['status'] as string)?.charAt(0).toUpperCase() + (f['status'] as string)?.slice(1)}
             </span>
             <span className="flex items-center gap-1 tabular-nums">
               <Zap className="w-3 h-3" />
-              {f.executionCount ?? 0} executions
+              {(f['executionCount'] as number) ?? 0} executions
             </span>
-            {f.lastExecutedAt && (
+            {!!(f['lastExecutedAt']) && (
               <span className="flex items-center gap-1 tabular-nums">
                 <Clock className="w-3 h-3" />
-                Last: {new Date(f.lastExecutedAt).toLocaleDateString()}
+                Last: {new Date(f['lastExecutedAt'] as string).toLocaleDateString()}
               </span>
             )}
           </div>
@@ -153,7 +153,7 @@ export function FlowDetailPage() {
       </ScrollReveal>
 
       {/* Guardrails */}
-      {f.guardrails && f.guardrails.length > 0 && (
+      {!!(f['guardrails'] as unknown[] | undefined)?.length && (
         <ScrollReveal delay={120}>
         <div className="glass-card rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-4">
@@ -163,11 +163,11 @@ export function FlowDetailPage() {
             <h2 className="text-sm font-bold text-zinc-300 tracking-tight">Safety Guards</h2>
           </div>
           <div className="space-y-2">
-            {f.guardrails.map((guard: any, idx: number) => (
+            {(f.guardrails as Record<string, unknown>[]).map((guard, idx) => (
               <div key={idx} className="flex items-center gap-2 text-sm text-zinc-400 bg-brand-500/5 rounded-xl px-4 py-2.5 border border-brand-500/10">
-                <span className="text-brand-300 font-semibold">{guard.type}:</span>
-                <span className="tabular-nums">{String(guard.value)}</span>
-                <span className="text-zinc-600 ml-auto text-xs">({guard.source})</span>
+                <span className="text-brand-300 font-semibold">{guard['type'] as string}:</span>
+                <span className="tabular-nums">{String(guard['value'])}</span>
+                <span className="text-zinc-600 ml-auto text-xs">({guard['source'] as string})</span>
               </div>
             ))}
           </div>
@@ -186,7 +186,7 @@ export function FlowDetailPage() {
               <div key={i} className="h-16 bg-zinc-800/30 rounded-xl shimmer" />
             ))}
           </div>
-        ) : !executions || (executions as any[]).length === 0 ? (
+        ) : !executions || (executions as Record<string, unknown>[]).length === 0 ? (
           <div className="flex flex-col items-center justify-center py-14 text-center animate-fade-in">
             <div className="empty-icon-wrapper w-14 h-14 rounded-2xl bg-zinc-800/50 flex items-center justify-center mb-3">
               <Clock className="w-6 h-6 text-zinc-600" />
@@ -195,65 +195,68 @@ export function FlowDetailPage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {(executions as any[]).map((exec: any) => {
-              const statusKey = exec.status as keyof typeof EXEC_STATUS
+            {(executions as Record<string, unknown>[]).map((exec) => {
+              const statusKey = exec['status'] as keyof typeof EXEC_STATUS
               const st = EXEC_STATUS[statusKey] ?? EXEC_STATUS.pending
               const StIcon = st.icon
               return (
                 <div
-                  key={exec.id}
+                  key={exec['id'] as string}
                   className="rounded-xl bg-white/[0.02] border border-white/[0.04] overflow-hidden hover:bg-white/[0.03] transition-all"
                 >
                   <div
                     className="flex items-center justify-between p-4 cursor-pointer"
-                    onClick={() => setExpandedExecution(expandedExecution === exec.id ? null : exec.id)}
+                    onClick={() => setExpandedExecution(expandedExecution === exec['id'] ? null : exec['id'] as string)}
                   >
                     <div className="flex items-center gap-3">
                       <StIcon className={cn('w-4 h-4', st.cls)} />
                       <div>
                         <span className="text-sm font-medium text-white">{st.label}</span>
                         <span className="text-xs text-zinc-600 ml-2 tabular-nums">
-                          {new Date(exec.startedAt).toLocaleString()}
-                          {exec.duration && ` · ${(exec.duration / 1000).toFixed(1)}s`}
+                          {new Date(exec['startedAt'] as string).toLocaleString()}
+                          {!!exec['duration'] && ` · ${((exec['duration'] as number) / 1000).toFixed(1)}s`}
                         </span>
                       </div>
                     </div>
                     <ChevronDown
-                      className={cn('w-4 h-4 text-zinc-600 transition-transform duration-200', expandedExecution === exec.id && 'rotate-180')}
+                      className={cn('w-4 h-4 text-zinc-600 transition-transform duration-200', expandedExecution === exec['id'] && 'rotate-180')}
                     />
                   </div>
 
-                  {expandedExecution === exec.id && (
+                  {expandedExecution === exec['id'] && (
                     <div className="px-4 pb-4 space-y-3 border-t border-white/[0.04] pt-3 animate-slide-up-fade">
-                      {exec.metrics && (
+                      {!!exec['metrics'] && (
                         <div className="grid grid-cols-3 gap-2">
-                          {[
-                            ['Actions', exec.metrics.actionsExecuted],
-                            ['Spins', exec.metrics.spinsExecuted],
-                            ['Bonuses', exec.metrics.bonusesClaimed],
-                            ['Bonus Value', `$${exec.metrics.bonusValueClaimed?.toFixed(2) || '0'}`],
-                            ['Wagered', `$${exec.metrics.totalWagered?.toFixed(2) || '0'}`],
-                            ['Won', `$${exec.metrics.totalWon?.toFixed(2) || '0'}`],
-                          ].map(([label, val]) => (
-                            <div key={label as string} className="bg-white/[0.02] rounded-xl p-2.5 border border-white/[0.03]">
-                              <p className="text-[10px] text-zinc-600 uppercase tracking-[0.15em] font-semibold">{label}</p>
-                              <p className="text-xs font-bold text-zinc-300 tabular-nums mt-0.5">{val}</p>
-                            </div>
-                          ))}
+                          {(() => {
+                            const m = exec['metrics'] as Record<string, unknown>
+                            return [
+                              ['Actions', m['actionsExecuted']],
+                              ['Spins', m['spinsExecuted']],
+                              ['Bonuses', m['bonusesClaimed']],
+                              ['Bonus Value', `$${(m['bonusValueClaimed'] as number | null)?.toFixed(2) ?? '0'}`],
+                              ['Wagered', `$${(m['totalWagered'] as number | null)?.toFixed(2) ?? '0'}`],
+                              ['Won', `$${(m['totalWon'] as number | null)?.toFixed(2) ?? '0'}`],
+                            ].map(([label, val]) => (
+                              <div key={label as string} className="bg-white/[0.02] rounded-xl p-2.5 border border-white/[0.03]">
+                                <p className="text-[10px] text-zinc-600 uppercase tracking-[0.15em] font-semibold">{label as string}</p>
+                                <p className="text-xs font-bold text-zinc-300 tabular-nums mt-0.5">{val as string}</p>
+                              </div>
+                            ))
+                          })()}
                         </div>
                       )}
 
-                      {exec.log?.length > 0 && (
+                      {(exec['log'] as unknown[] | undefined)?.length ? (
                         <div className="bg-zinc-950/60 rounded-xl p-3 max-h-48 overflow-y-auto border border-white/[0.03]">
                           <p className="text-[10px] text-zinc-600 uppercase tracking-[0.15em] font-semibold mb-2">Log</p>
-                          {exec.log.slice(-10).map((log: any, idx: number) => (
+                          {(exec['log'] as Record<string, unknown>[]).slice(-10).map((log, idx) => (
                             <div key={idx} className="text-[11px] text-zinc-500 mb-1 font-mono leading-relaxed">
-                              <span className="text-zinc-600">[{log.type}]</span>{' '}
-                              {log.details?.message || JSON.stringify(log.details).substring(0, 100)}
+                              <span className="text-zinc-600">[{log['type'] as string}]</span>{' '}
+                              {(log['details'] as Record<string, unknown> | null)?.['message'] as string | undefined ?? JSON.stringify(log['details']).substring(0, 100)}
                             </div>
                           ))}
                         </div>
-                      )}
+                      ) : null}
                     </div>
                   )}
                 </div>

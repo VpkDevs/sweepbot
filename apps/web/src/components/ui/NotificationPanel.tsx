@@ -218,10 +218,10 @@ export function NotificationPanel() {
                       key={n.id}
                       className={cn(
                         'group relative flex gap-3 px-4 py-3.5 transition-all animate-slide-up-fade',
+                        `message-delay-${i % 5}`,
                         n.href ? 'cursor-pointer hover:bg-white/[0.03]' : 'hover:bg-white/[0.02]',
                         !n.is_read && 'bg-brand-500/[0.03]',
                       )}
-                      style={{ animationDelay: `${i * 30}ms` }}
                       onClick={() => handleNotificationClick(n)}
                     >
                       {/* Unread indicator */}

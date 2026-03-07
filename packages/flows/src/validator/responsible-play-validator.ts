@@ -19,9 +19,10 @@ export class ResponsiblePlayValidator {
     })
 
     // 2. COOL-DOWN ENFORCEMENT - System mandatory
+    // value: false = not in cool-down (default; API layer sets true when user IS in cool-down)
     guardrails.push({
       type: 'cool_down_check',
-      value: true,
+      value: false,
       source: 'system_mandatory',
       overridable: false,
     })

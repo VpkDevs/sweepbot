@@ -227,7 +227,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
       data: {
         year: targetYear,
         days: rows.rows,
-        summary: summary.rows[0],
+        summary: summary.rows[0] ?? null,
       },
     })
   })
@@ -436,7 +436,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
       success: true,
       data: {
         wins: rows.rows,
-        stats: stats.rows[0],
+        stats: stats.rows[0] ?? null,
       },
       meta: { page, pageSize, total, hasMore: offset + pageSize < total },
     })
@@ -453,7 +453,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     const verificationStatus =
       body.multiplier === undefined || body.multiplier < 1000 ? 'auto_verified' : 'pending'
 
-    await dbQuery(sql`
+    const { rows: insertRows } = await dbQuery(sql`
       INSERT INTO big_wins (
         user_id, platform_name, game_name, win_amount_sc,
         bet_amount, multiplier, screenshot_url, display_name,
@@ -468,10 +468,12 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
       RETURNING id
     `)
 
+    const bigWinId = (insertRows[0] as { id: string }).id
+
     // Trigger achievement check
     await checkAndAwardAchievements(userId)
 
-    return reply.code(201).send({ success: true, data: { verificationStatus } })
+    return reply.code(201).send({ success: true, data: { id: bigWinId, verificationStatus } })
   })
 
   // GET /features/big-wins/mine
@@ -498,13 +500,21 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
       .object({ isPublic: z.boolean().optional(), displayName: z.string().min(1).max(100).optional() })
       .parse(request.body)
 
-    await dbQuery(sql`
+    const { rows: updatedRows } = await dbQuery<{ id: string }>(sql`
       UPDATE big_wins
       SET
         is_public    = COALESCE(${body.isPublic ?? null}, is_public),
         display_name = COALESCE(${body.displayName ?? null}, display_name)
       WHERE id = ${id} AND user_id = ${userId}
+      RETURNING id
     `)
+
+    if (!updatedRows.length) {
+      return reply.code(404).send({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Big win not found or unauthorized' },
+      })
+    }
 
     return reply.send({ success: true })
   })

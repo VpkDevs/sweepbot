@@ -222,7 +222,7 @@ export class FlowInterpreter {
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
   private generateId(): string {
-    return `flow_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+    return `flow_${Date.now()}_${crypto.randomUUID().replace(/-/g, '').slice(0, 8)}`
   }
 
   private generateName(

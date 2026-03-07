@@ -10,7 +10,9 @@ import { createLogger } from './logger'
 const log = createLogger('ExtensionApi')
 
 const API_BASE = (
-  typeof import.meta !== 'undefined' ? import.meta.env?.VITE_API_URL : undefined
+  typeof import.meta !== 'undefined'
+    ? (import.meta.env as unknown as Record<string, string | undefined>)['VITE_API_URL']
+    : undefined
 ) ?? 'https://api.sweepbot.app'
 
 /** Requests that should NOT be retried (state-mutating or auth). */
@@ -99,7 +101,6 @@ class ExtensionApi {
 
     return response.json() as Promise<T>
   }
-}
 
   // =========================================================================
   // Session endpoints

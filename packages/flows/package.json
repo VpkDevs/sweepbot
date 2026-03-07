@@ -23,11 +23,13 @@
   },
   "dependencies": {
     "@sweepbot/types": "workspace:*",
+    "@sweepbot/utils": "workspace:*",
     "cronstrue": "^2.28.0",
     "node-cron": "^3.0.2",
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@types/node-cron": "^3.0.11",
     "typescript": "^5.5.0",
     "vitest": "^1.0.0"
   }

@@ -61,7 +61,10 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 // ── Retry helpers ─────────────────────────────────────────────────────────────
 
 function calcRetryDelay(attempt: number, base = 1000): number {
-  return Math.min(base * 2 ** attempt, 10_000) + Math.random() * 500
+  const buf = new Uint32Array(1)
+  crypto.getRandomValues(buf)
+  const jitter = (buf[0]! / 2 ** 32) * 500
+  return Math.min(base * 2 ** attempt, 10_000) + jitter
 }
 
 function sleep(ms: number): Promise<void> {
@@ -167,6 +170,18 @@ async function request<T>(path: string, config: RequestConfig = {}): Promise<T> 
   }
 
   return promise
+}
+
+// ─── Query string helper ──────────────────────────────────────────────────────
+function toQS(params?: Record<string, string | number | boolean | undefined>): string {
+  if (!params) return ''
+  const filtered = Object.fromEntries(
+    Object.entries(params)
+      .filter(([, v]) => v !== undefined)
+      .map(([k, v]) => [k, String(v)])
+  )
+  const qs = new URLSearchParams(filtered).toString()
+  return qs ? `?${qs}` : ''
 }
 
 // ─── Typed API client ─────────────────────────────────────────────────────────
@@ -329,18 +344,8 @@ export const api = {
 
   // Flows
   flows: {
-    list: (params?: { page?: number; pageSize?: number }) => {
-      const qs = params
-        ? '?' + new URLSearchParams(
-            Object.fromEntries(
-              Object.entries(params)
-                .filter(([, v]) => v !== undefined)
-                .map(([k, v]) => [k, String(v)])
-            )
-          ).toString()
-        : ''
-      return request<Record<string, unknown>[]>(`/flows${qs}`)
-    },
+    list: (params?: { page?: number; pageSize?: number }) =>
+      request<Record<string, unknown>[]>(`/flows${toQS(params)}`),
     get: (id: string) => request<Record<string, unknown>>(`/flows/${id}`),
     create: (data: Record<string, unknown>) =>
       request<Record<string, unknown>>('/flows', { method: 'POST', body: JSON.stringify(data) }),
@@ -363,35 +368,15 @@ export const api = {
       }),
     execute: (id: string) =>
       request<Record<string, unknown>>(`/flows/${id}/execute`, { method: 'POST' }),
-    executions: (id: string, params?: { page?: number; pageSize?: number }) => {
-      const qs = params
-        ? '?' + new URLSearchParams(
-            Object.fromEntries(
-              Object.entries(params)
-                .filter(([, v]) => v !== undefined)
-                .map(([k, v]) => [k, String(v)])
-            )
-          ).toString()
-        : ''
-      return request<Record<string, unknown>[]>(`/flows/${id}/executions${qs}`)
-    },
+    executions: (id: string, params?: { page?: number; pageSize?: number }) =>
+      request<Record<string, unknown>[]>(`/flows/${id}/executions${toQS(params)}`),
     delete: (id: string) => request<{ deleted: boolean }>(`/flows/${id}`, { method: 'DELETE' }),
   },
 
   // Notifications
   notifications: {
-    list: (params?: { limit?: number; unread_only?: boolean }) => {
-      const qs = params
-        ? '?' + new URLSearchParams(
-            Object.fromEntries(
-              Object.entries(params)
-                .filter(([, v]) => v !== undefined)
-                .map(([k, v]) => [k, String(v)])
-            )
-          ).toString()
-        : ''
-      return request<Record<string, unknown>[]>(`/notifications${qs}`)
-    },
+    list: (params?: { limit?: number; unread_only?: boolean }) =>
+      request<Record<string, unknown>[]>(`/notifications${toQS(params)}`),
     count: () => request<{ unread: number }>('/notifications/count'),
     markRead: (id: string) =>
       request<{ id: string }>(`/notifications/${id}/read`, { method: 'PATCH' }),

@@ -7,21 +7,29 @@ vi.mock('../../db/client', () => ({
   unsafeQuery: vi.fn(),
 }))
 
+// mock requireAuth — implementation is (re-)set in beforeEach because
+// vitest.config.ts has mockReset: true which clears implementations between tests.
+// A reset vi.fn() returns undefined; Fastify hooks that return undefined (not a
+// Promise) cause the request to hang, so we always reassign the implementation.
+vi.mock('../../middleware/auth', () => ({
+  requireAuth: vi.fn(),
+}))
+
 import { flowRoutes } from '../../routes/flows'
 import { query as dbQuery, unsafeQuery } from '../../db/client'
+import { requireAuth } from '../../middleware/auth'
 
 describe('Flow routes (conversation endpoints)', () => {
   let app: ReturnType<typeof Fastify>
 
   beforeEach(async () => {
-    app = Fastify()
-    // simple auth stub that injects a user object
-    app.decorateRequest('user', null)
-    app.addHook('preValidation', (req, _reply, done) => {
-      req.user = { id: 'user-test-001' }
-      done()
+    // Re-apply auth mock implementation after mockReset clears it
+    vi.mocked(requireAuth).mockImplementation(async (req: any) => {
+      req.user = { id: 'user-test-001', email: null, tier: 'free' }
     })
 
+    app = Fastify()
+    app.decorateRequest('user', null)
     app.register(flowRoutes, { prefix: '/flows' })
     await app.ready()
   })
@@ -48,7 +56,7 @@ describe('Flow routes (conversation endpoints)', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/flows/converse',
-      payload: { conversationId: 'does-not-exist', userMessage: 'hello' },
+      payload: { conversationId: '00000000-0000-0000-0000-000000000000', userMessage: 'hello' },
     })
 
     expect(res.statusCode).toBe(404)

@@ -6,7 +6,7 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react'
 import * as Sentry from '@sentry/react'
-import { logger } from '@sweepbot/utils/logger'
+import { logger } from '@sweepbot/utils'
 
 interface Props {
   children: ReactNode
@@ -29,7 +29,7 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error }
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     // Log to console in development
     logger.error('ErrorBoundary caught error', {
       error: error.message,
@@ -56,7 +56,7 @@ export class ErrorBoundary extends Component<Props, State> {
     this.setState({ hasError: false, error: null })
   }
 
-  render(): ReactNode {
+  override render(): ReactNode {
     if (this.state.hasError && this.state.error) {
       // Custom fallback UI
       if (this.props.fallback) {

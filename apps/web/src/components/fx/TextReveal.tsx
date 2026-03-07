@@ -1,6 +1,11 @@
 import { useRef, useEffect, useState, type ReactNode } from 'react'
 import { cn } from '../../lib/utils'
 
+function getRevealDelayClass(delayMs: number) {
+  const step = Math.max(0, Math.min(12, Math.round(delayMs / 40)))
+  return `reveal-delay-${step}`
+}
+
 /**
  * TextReveal — Per-word or per-character staggered reveal animation.
  * Uses Intersection Observer to trigger on scroll into view.
@@ -68,9 +73,9 @@ export function TextReveal({
           isVisible
             ? 'opacity-100 translate-y-0 blur-0'
             : 'opacity-0 translate-y-6 blur-[4px]',
+          getRevealDelayClass(delay),
           className,
         )}
-        style={{ transitionDelay: `${delay}ms` }}
       >
         {children}
       </Component>
@@ -95,8 +100,8 @@ export function TextReveal({
               isVisible
                 ? 'opacity-100 translate-y-0 blur-0'
                 : 'opacity-0 translate-y-[0.5em] blur-[2px]',
+              getRevealDelayClass(tokenDelay),
             )}
-            style={{ transitionDelay: `${tokenDelay}ms` }}
             aria-hidden
           >
             {token}

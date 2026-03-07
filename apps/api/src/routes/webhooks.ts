@@ -4,6 +4,7 @@ import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { sql } from 'drizzle-orm'
 import { env } from '../utils/env.js'
 import { sendEmail } from '../lib/email.js'
+import { sendWelcomeEmail } from '../services/email.service.js'
 import { createNotification } from './notifications.js'
 import { logger } from '../utils/logger.js'
 
@@ -66,12 +67,24 @@ export async function webhookRoutes(app: FastifyInstance): Promise<void> {
   // Auth > Webhooks settings). We only care about new-user creation so we
   // can trigger a welcome email.
   app.post('/webhooks/supabase', async (request, reply) => {
-    const event = request.body as Record<string, any>
+    // The plugin-scope content-type parser returns raw Buffers for application/json,
+    // so we must parse it back to an object here.
+    const raw = request.body as Buffer | Record<string, unknown>
+    const event: Record<string, unknown> = Buffer.isBuffer(raw)
+      ? (JSON.parse(raw.toString()) as Record<string, unknown>)
+      : raw
     // example payload: { "type": "user.created", "record": { email, user_metadata } }
-    if (event?.type === 'user.created') {
-      const rec = event.record || {}
-      const email: string | undefined = rec.email
-      const username: string | undefined = rec.user_metadata?.display_name
+    if (event?.['type'] === 'user.created') {
+      const rec = (event['record'] as Record<string, unknown> | undefined) ?? {}
+      const email = typeof rec['email'] === 'string' ? rec['email'] : undefined
+      const userMetadata =
+        typeof rec['user_metadata'] === 'object' && rec['user_metadata'] !== null
+          ? (rec['user_metadata'] as Record<string, unknown>)
+          : undefined
+      const username =
+        userMetadata && typeof userMetadata['display_name'] === 'string'
+          ? userMetadata['display_name']
+          : undefined
       if (email) {
         try {
           // deferred send; failures shouldn't block webhook response
@@ -214,7 +227,7 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
           to: customerEmail,
           subject: 'SweepBot: Payment failed – update billing',
           html: `<p>Hi there,</p>
-<p>We tried to charge your credit card but the payment failed. Please <a href=\"https://app.sweepbot.com/settings/billing\">update your billing information</a> to avoid interruption.</p>
+<p>We tried to charge your credit card but the payment failed. Please <a href="https://app.sweepbot.app/settings/billing">update your billing information</a> to avoid interruption.</p>
 <p>Thanks,<br/>The SweepBot Team</p>`,
         })
       }

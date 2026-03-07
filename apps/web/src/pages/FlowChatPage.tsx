@@ -43,13 +43,6 @@ interface ConversationState {
   warnings?: Record<string, unknown>[]
 }
 
-/**
- * Render a conversational Flow Builder page that converts natural-language descriptions into flow drafts and lets the user confirm or modify them.
- *
- * Renders a chat-like UI where users submit plain-English automation descriptions, receives an interpreted summary and structured flow suggestion from the server, displays a confirmation card with any warnings, and provides actions to create the flow or request modifications.
- *
- * @returns The React element for the Flow Builder page.
- */
 export function FlowChatPage() {
   usePerformanceMonitor('FlowChatPage')
 
@@ -78,7 +71,7 @@ export function FlowChatPage() {
 
   // helper to sync messages from server conversation state
   function syncMessagesFromState(stateRecord: Record<string, unknown>) {
-    const state = stateRecord as ConversationState
+    const state = stateRecord as unknown as ConversationState
     if (!state?.turns) return
     const newMsgs: Message[] = state.turns.map((t) => ({
       role: t.role,
@@ -204,8 +197,11 @@ export function FlowChatPage() {
             {messages.map((msg, idx) => (
               <div
                 key={idx}
-                className={cn('flex gap-3 animate-slide-up-fade', msg.role === 'user' ? 'flex-row-reverse' : '')}
-                style={{ animationDelay: `${idx * 40}ms` }}
+                className={cn(
+                  'flex gap-3 animate-slide-up-fade',
+                  msg.role === 'user' ? 'flex-row-reverse' : '',
+                  `message-delay-${idx % 5}`
+                )}
               >
                 <div className={cn(
                   'flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center shadow-lg',
@@ -240,9 +236,9 @@ export function FlowChatPage() {
                 </div>
                 <div className="glass-card rounded-2xl rounded-bl-md px-4 py-3">
                   <div className="flex gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-zinc-500 animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-2 h-2 rounded-full bg-zinc-500 animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-2 h-2 rounded-full bg-zinc-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <span className="w-2 h-2 rounded-full bg-zinc-500 animate-bounce typing-dot typing-dot-0" />
+                    <span className="w-2 h-2 rounded-full bg-zinc-500 animate-bounce typing-dot typing-dot-1" />
+                    <span className="w-2 h-2 rounded-full bg-zinc-500 animate-bounce typing-dot typing-dot-2" />
                   </div>
                 </div>
               </div>
@@ -272,8 +268,8 @@ export function FlowChatPage() {
                 <AlertTriangle className="w-3.5 h-3.5 text-yellow-400" />
                 <h4 className="font-semibold text-yellow-300 text-xs">Warnings</h4>
               </div>
-              {confirmation.warnings.map((warning: any, idx: number) => (
-                <div key={idx} className="text-xs text-yellow-300/80 mb-1">{warning.message}</div>
+              {confirmation.warnings.map((warning, idx: number) => (
+                <div key={idx} className="text-xs text-yellow-300/80 mb-1">{warning.message as string}</div>
               ))}
             </div>
           )}
@@ -298,7 +294,7 @@ export function FlowChatPage() {
 
       {/* Input */}
       {!confirmation && (
-        <form onSubmit={handleSendMessage} className="px-4 pb-4 pt-2 animate-fade-in" style={{ animationDelay: '200ms' }}>
+        <form onSubmit={handleSendMessage} className="px-4 pb-4 pt-2 animate-fade-in fade-delay-200">
           <div className="flex gap-3 glass-card-elevated rounded-2xl p-2">
             <input
               type="text"
@@ -311,6 +307,8 @@ export function FlowChatPage() {
             <button
               type="submit"
               disabled={interpretMutation.isPending || !input.trim()}
+              title="Send message"
+              aria-label="Send message"
               className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 hover:from-brand-400 hover:to-brand-600 text-white transition-all disabled:opacity-30 press-scale shadow-lg shadow-brand-500/20"
             >
               {interpretMutation.isPending ? (

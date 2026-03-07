@@ -1,4 +1,4 @@
-import { storage, StorageManager, AnalyticsEvent } from '../lib/storage'
+import { storage, AnalyticsEvent } from '../lib/storage'
 
 describe('StorageManager', () => {
   let mockStorage: Record<string, any>

@@ -9,6 +9,17 @@ import { sql } from 'drizzle-orm'
 import { requireAuth } from '../middleware/auth.js'
 import { query } from '../db/client.js'
 
+// ── Reusable Zod schemas (also drive inferred types below) ───────────────────
+const listQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(30),
+  unread_only: z
+    .string()
+    .optional()
+    .transform((v) => v === 'true'),
+})
+
+const notifParamsSchema = z.object({ id: z.string().uuid() })
+
 /**
  * Register authenticated notification routes on the provided Fastify instance.
  *
@@ -27,17 +38,11 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
     '/',
     {
       schema: {
-        querystring: z.object({
-          limit: z.coerce.number().int().min(1).max(100).default(30),
-          unread_only: z
-            .string()
-            .optional()
-            .transform((v) => v === 'true'),
-        }),
+        querystring: listQuerySchema,
       },
     },
     async (request, reply) => {
-      const { limit, unread_only } = request.query as { limit: number; unread_only: boolean }
+      const { limit, unread_only } = request.query as z.infer<typeof listQuerySchema>
       const userId = request.user!.id
 
       const rows = await query<{
@@ -78,7 +83,7 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
   // Returns unread count for the bell badge.
   app.get('/count', async (request, reply) => {
     const userId = request.user!.id
-    const rows = await query<{ unread: number }>(sql`
+    const { rows } = await query<{ unread: number }>(sql`
       SELECT COUNT(*)::int AS unread
       FROM notifications
       WHERE user_id = ${userId} AND is_read = false
@@ -91,11 +96,11 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
     '/:id/read',
     {
       schema: {
-        params: z.object({ id: z.string().uuid() }),
+        params: notifParamsSchema,
       },
     },
     async (request, reply) => {
-      const { id } = request.params as { id: string }
+      const { id } = request.params as z.infer<typeof notifParamsSchema>
       const userId = request.user!.id
 
       await query(sql`
@@ -126,11 +131,11 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
     '/:id',
     {
       schema: {
-        params: z.object({ id: z.string().uuid() }),
+        params: notifParamsSchema,
       },
     },
     async (request, reply) => {
-      const { id } = request.params as { id: string }
+      const { id } = request.params as z.infer<typeof notifParamsSchema>
       const userId = request.user!.id
 
       await query(sql`

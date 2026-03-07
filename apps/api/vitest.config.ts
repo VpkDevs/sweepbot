@@ -11,6 +11,9 @@ export default defineConfig({
     // Test environment
     environment: 'node',
 
+    // Setup files — must run before any test module is evaluated
+    setupFiles: ['./src/__tests__/setup.env.ts'],
+
     // Global test timeout
     testTimeout: 10000,
 

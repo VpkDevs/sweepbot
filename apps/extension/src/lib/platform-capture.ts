@@ -79,7 +79,7 @@ export function installPlatformCapture(): { installed: boolean; startedAt: numbe
     if (!state.pageUrls.includes(pageUrl)) state.pageUrls.unshift(pageUrl)
     state.updatedAt = Date.now()
     state.requests.unshift({
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      id: `${Date.now()}-${crypto.randomUUID().replace(/-/g, '').slice(0, 8)}`,
       pageUrl,
       timestamp: state.updatedAt,
       responseJson: trimValue(record.responseJson),

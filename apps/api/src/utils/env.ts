@@ -47,6 +47,10 @@ const envSchema = z.object({
 
   // Sentry
   SENTRY_DSN: z.string().url().optional(),
+
+  // App
+  APP_URL: z.string().url().default('https://app.sweepbot.app'),
+  ADMIN_SECRET: z.string().min(1).optional(),
 })
 
 const _parsed = envSchema.safeParse(process.env)

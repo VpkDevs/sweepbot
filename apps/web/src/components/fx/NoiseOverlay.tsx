@@ -1,4 +1,11 @@
-import { useMemo } from 'react'
+import { useId } from 'react'
+import { cn } from '../../lib/utils'
+
+interface NoiseOverlayProps {
+  opacity?: number
+  blendMode?: React.CSSProperties['mixBlendMode']
+  animate?: boolean
+}
 
 /**
  * NoiseOverlay — Animated SVG film-grain texture.
@@ -10,15 +17,17 @@ export function NoiseOverlay({
   opacity = 0.018,
   blendMode = 'overlay' as React.CSSProperties['mixBlendMode'],
   animate = true,
-}) {
+}: NoiseOverlayProps) {
   // Unique SVG filter ID to prevent collisions
-  const filterId = useMemo(() => `noise-${Math.random().toString(36).slice(2, 8)}`, [])
+  const rawId = useId()
+  const filterId = `noise-${rawId.replace(/:/g, '_')}`
+  const opacityClass = opacity <= 0.014 ? 'noise-overlay-soft' : 'noise-overlay-default'
+  const blendClass = blendMode === 'normal' ? 'mix-blend-normal' : 'mix-blend-overlay'
 
   return (
     <div
       aria-hidden
-      className="pointer-events-none fixed inset-0 z-[9998]"
-      style={{ opacity, mixBlendMode: blendMode }}
+      className={cn('pointer-events-none fixed inset-0 z-[9998]', opacityClass, blendClass)}
     >
       <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
         <filter id={filterId}>

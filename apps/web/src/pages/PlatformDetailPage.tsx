@@ -27,10 +27,10 @@ import {
   PolarAngleAxis,
 } from 'recharts'
 import { api } from '../lib/api'
-import { cn, trustScoreColor, trustScoreLabel, timeAgo } from '../lib/utils'
+import { cn, trustScoreColor, trustScoreLabel, timeAgo, CHART_TOOLTIP_STYLE } from '../lib/utils'
 
 export function PlatformDetailPage() {
-  const { id } = useParams({ from: '/app/platforms/$id' })
+  const { platformId: id } = useParams({ from: '/app/platforms/$platformId' })
 
   const { data, isLoading } = useQuery({
     queryKey: ['platforms', id],
@@ -39,7 +39,7 @@ export function PlatformDetailPage() {
 
   const { data: gamesData } = useQuery({
     queryKey: ['platforms', id, 'games'],
-    queryFn: () => api.platforms.games(id, { pageSize: 10 }),
+    queryFn: () => api.platforms.games(id, { pageSize: '10' }),
   })
 
   const { data: tosData } = useQuery({
@@ -117,12 +117,12 @@ export function PlatformDetailPage() {
               {platform?.['status'] as string}
             </span>
           </div>
-          {platform?.['founded_year'] && (
+          {!!platform?.['founded_year'] && (
             <p className="text-sm text-zinc-500 mt-0.5">Est. {platform['founded_year'] as number}</p>
           )}
         </div>
         <div className="flex items-center gap-2">
-          {platform?.['affiliate_url'] && (
+          {!!platform?.['affiliate_url'] && (
             <a
               href={platform['affiliate_url'] as string}
               target="_blank"
@@ -190,7 +190,7 @@ export function PlatformDetailPage() {
               <XAxis dataKey="date" tick={{ fill: '#71717a', fontSize: 11 }} />
               <YAxis domain={[0, 100]} tick={{ fill: '#71717a', fontSize: 11 }} />
               <Tooltip
-                contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px' }}
+                contentStyle={CHART_TOOLTIP_STYLE}
               />
               <Line
                 type="monotone"
@@ -240,7 +240,7 @@ export function PlatformDetailPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 p-4">
             {games.map((game) => (
               <div key={game['id'] as string} className="bg-zinc-800/50 rounded-lg p-3 space-y-1.5">
-                {game['thumbnail_url'] && (
+                {!!game['thumbnail_url'] && (
                   <img
                     src={game['thumbnail_url'] as string}
                     alt={`${game['name']} thumbnail`}
@@ -249,7 +249,7 @@ export function PlatformDetailPage() {
                 )}
                 <p className="text-xs font-medium text-white leading-tight">{game['name'] as string}</p>
                 <p className="text-xs text-zinc-500">{game['provider_name'] as string}</p>
-                {game['community_rtp_aggregate'] && (
+                {!!game['community_rtp_aggregate'] && (
                   <div className="flex items-center gap-1">
                     {Number(game['community_rtp_aggregate']) >= 96 ? (
                       <TrendingUp className="w-3 h-3 text-win" />

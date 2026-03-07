@@ -13,7 +13,10 @@ import { affiliateManager } from '@/lib/affiliate'
 import { storage } from '@/lib/storage'
 import { extensionApi } from '@/lib/api'
 import { executeFlow } from '@/lib/flows/automation-executor'
+import { createLogger } from '@/lib/logger'
 import type { ContentScriptMessage } from '@/types/extension'
+
+const log = createLogger('Content')
 
 export default defineContentScript({
   matches: ['*://*.chumbacasino.com/*', '*://*.luckyland.com/*', '*://*.stake.us/*', '*://*.pulsz.com/*', '*://*.wowvegas.com/*', '*://*.fortunecoins.com/*', '*://*.funrize.com/*', '*://*.zulacasino.com/*', '*://*.crowncoinscasino.com/*', '*://*.mcluck.com/*', '*://*.nolimitcoins.com/*', '*://*.modocasino.com/*', '*://*.globalpoker.com/*', '*://*.high5casino.com/*'],
@@ -34,15 +37,15 @@ let activeFlowId: string | null = null
 
 async function init(): Promise<void> {
   if (!currentPlatform) {
-    console.log('[Content] Not a known sweepstakes platform')
+    log.info('Not a known sweepstakes platform')
     return
   }
 
-  console.log(`[Content] Initialized on ${currentPlatform.name}`)
+  log.info(`Initialized on ${currentPlatform.name}`)
 
   const authToken = await storage.get('authToken')
   if (!authToken) {
-    console.log('[Content] User not authenticated, skipping gameplay tracking')
+    log.info('User not authenticated, skipping gameplay tracking')
     return
   }
 
@@ -70,7 +73,7 @@ async function init(): Promise<void> {
           result: tx.result,
         })
       } catch (error) {
-        console.error('[Content] Failed to record transaction:', error)
+        log.error('Failed to record transaction:', error)
       }
     }
 
@@ -82,7 +85,7 @@ async function init(): Promise<void> {
       try {
         await extensionApi.updateSessionBalance(currentSessionId, balance.scBalance, balance.gcBalance)
       } catch (error) {
-        console.error('[Content] Failed to update session balance:', error)
+        log.error('Failed to update session balance:', error)
       }
     }
   })
@@ -114,7 +117,7 @@ async function startSession(): Promise<void> {
     const result = await extensionApi.createSession(currentPlatform.slug, gameId)
     currentSessionId = result.sessionId
     rtpCalculator.reset()
-    console.log(`[Content] Session started: ${currentSessionId}`)
+    log.info(`Session started: ${currentSessionId}`)
 
     await storage.set('sessionData', {
       sessionId: currentSessionId,
@@ -126,7 +129,7 @@ async function startSession(): Promise<void> {
       lastActivityAt: Date.now(),
     })
   } catch (error) {
-    console.error('[Content] Failed to start session:', error)
+    log.error('Failed to start session:', error)
   }
 }
 
@@ -134,16 +137,17 @@ async function startSession(): Promise<void> {
  * Ends the current active session by requesting the backend to close it and clears local session state.
  *
  * If no session is active, this function does nothing. On success it clears the in-memory session identifier and removes persisted session data. Errors are caught and logged.
+ */
 async function endSession(): Promise<void> {
   if (!currentSessionId) return
 
   try {
     const result = await extensionApi.endSession(currentSessionId)
-    console.log(`[Content] Session ended. Final RTP: ${result.rtp.toFixed(2)}%`)
+    log.info(`Session ended. Final RTP: ${result.rtp.toFixed(2)}%`)
     currentSessionId = null
     await storage.set('sessionData', null)
   } catch (error) {
-    console.error('[Content] Failed to end session:', error)
+    log.error('Failed to end session:', error)
   }
 }
 
@@ -257,7 +261,7 @@ async function injectAffiliateContent(): Promise<void> {
   try {
     await affiliateManager.injectAffiliateBanner(currentPlatform)
   } catch (error) {
-    console.error('[Content] Failed to inject affiliate banner:', error)
+    log.error('Failed to inject affiliate banner:', error)
   }
 }
 
@@ -282,7 +286,7 @@ async function handleContentMessage(message: ContentScriptMessage): Promise<unkn
     case 'PAGE_LOADED': {
       // Page load notification from background service worker
       // Used to trigger initialization if content script didn't auto-init
-      console.log('[Content] PAGE_LOADED notification received')
+      log.info('PAGE_LOADED notification received')
       return { success: true }
     }
 
@@ -306,19 +310,19 @@ async function handleContentMessage(message: ContentScriptMessage): Promise<unkn
     case 'EXECUTE_FLOW': {
       const { flow } = message.payload!
       if (activeFlowId) {
-        console.warn(`[Content] Flow ${activeFlowId} already running — ignoring new request`)
+        log.warn(`Flow ${activeFlowId} already running — ignoring new request`)
         return { success: false, error: 'A flow is already running' }
       }
 
       activeFlowId = flow.id
-      console.log(`[Content] Executing flow "${flow.name}" (${flow.id})`)
+      log.info(`Executing flow "${flow.name}" (${flow.id})`)
 
       // Execute in the background so we can return immediately
       executeFlow(flow)
         .then((execution) => {
           activeFlowId = null
           const success = execution.status === 'completed'
-          console.log(`[Content] Flow ${flow.id} finished: ${execution.status}`, execution.error ?? '')
+          log.info(`Flow ${flow.id} finished: ${execution.status}`, execution.error ?? '')
 
           // Report result back to background service worker
           chrome.runtime.sendMessage({
@@ -333,7 +337,7 @@ async function handleContentMessage(message: ContentScriptMessage): Promise<unkn
         .catch((err) => {
           activeFlowId = null
           const errMsg = err instanceof Error ? err.message : String(err)
-          console.error(`[Content] Flow ${flow.id} threw:`, err)
+          log.error(`Flow ${flow.id} threw:`, err)
 
           chrome.runtime.sendMessage({
             type: 'FLOW_COMPLETED',
@@ -350,7 +354,7 @@ async function handleContentMessage(message: ContentScriptMessage): Promise<unkn
         // The executor checks a cancel flag — we set it via a window event
         window.dispatchEvent(new CustomEvent('sweepbot:cancel-flow', { detail: { flowId } }))
         activeFlowId = null
-        console.log(`[Content] Flow ${flowId} cancelled`)
+        log.info(`Flow ${flowId} cancelled`)
       }
       return { success: true }
     }
@@ -364,23 +368,25 @@ async function handleContentMessage(message: ContentScriptMessage): Promise<unkn
 
 let lastUrl = window.location.href
 setInterval(() => {
-  if (window.location.href !== lastUrl) {
-    lastUrl = window.location.href
-    console.log('[Content] Navigation detected:', lastUrl)
+  void (async () => {
+    if (window.location.href !== lastUrl) {
+      lastUrl = window.location.href
+      log.info('Navigation detected:', lastUrl)
 
-    if (currentSessionId) endSession()
+      if (currentSessionId) await endSession()
 
-    currentPlatform = detectPlatform(lastUrl)
-    if (currentPlatform && isGamePage(lastUrl, currentPlatform)) {
-      startSession()
+      currentPlatform = detectPlatform(lastUrl)
+      if (currentPlatform && isGamePage(lastUrl, currentPlatform)) {
+        await startSession()
+      }
     }
-  }
+  })()
 }, 1000)
 
 // ── Kick off ───────────────────────────────────────────────────────────────
 
 init().catch((error) => {
-  console.error('[Content] Initialization failed:', error)
+  log.error('Initialization failed:', error)
 })
 
   } // end main

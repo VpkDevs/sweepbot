@@ -28,6 +28,7 @@
     "@radix-ui/react-tooltip": "^1.1.0",
     "@supabase/supabase-js": "^2.45.0",
     "@sweepbot/types": "workspace:*",
+    "@sweepbot/utils": "workspace:*",
     "@tanstack/react-query": "^5.56.0",
     "@tanstack/react-router": "^1.56.0",
     "class-variance-authority": "^0.7.0",

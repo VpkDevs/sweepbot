@@ -5,12 +5,17 @@
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "moduleResolution": "Bundler",
     "outDir": "./dist",
-    "rootDir": "./src",
+    "forceConsistentCasingInFileNames": true,
     "noPropertyAccessFromIndexSignature": false,
     "noUncheckedIndexedAccess": false,
     "exactOptionalPropertyTypes": false,
     "verbatimModuleSyntax": false,
-    "types": ["vitest/globals", "@testing-library/jest-dom"]
+    "noImplicitOverride": false,
+    "types": ["vitest/globals", "@testing-library/jest-dom"],
+    "paths": {
+      "@sweepbot/utils": ["../../packages/utils/src/index.ts"],
+      "@sweepbot/utils/*": ["../../packages/utils/src/*.ts"]
+    }
   },
   "include": ["src"]
 }

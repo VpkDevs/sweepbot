@@ -239,6 +239,9 @@ importers:
       '@sweepbot/types':
         specifier: workspace:*
         version: link:../../packages/types
+      '@sweepbot/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@tanstack/react-query':
         specifier: ^5.56.0
         version: 5.90.21(react@18.3.1)
@@ -329,6 +332,9 @@ importers:
       '@sweepbot/types':
         specifier: workspace:*
         version: link:../types
+      '@sweepbot/utils':
+        specifier: workspace:*
+        version: link:../utils
       cronstrue:
         specifier: ^2.28.0
         version: 2.61.0
@@ -339,6 +345,9 @@ importers:
         specifier: ^3.23.0
         version: 3.25.76
     devDependencies:
+      '@types/node-cron':
+        specifier: ^3.0.11
+        version: 3.0.11
       typescript:
         specifier: ^5.5.0
         version: 5.9.3
@@ -2145,6 +2154,9 @@ packages:
 
   '@types/minimatch@3.0.5':
     resolution: {integrity: sha512-Klz949h02Gz2uZCMGwDUSDS1YBlTdDDgbWHi+81l29tQALUtvz4rAYi5uoVhE5Lagoq6DeqAUlbrHvW/mXDgdQ==}
+
+  '@types/node-cron@3.0.11':
+    resolution: {integrity: sha512-0ikrnug3/IyneSHqCBeslAhlK2aBfYek1fGo4bP4QnZPmiqSGRK+Oy7ZMisLWkesffJvQ1cqAcBnJC+8+nxIAg==}
 
   '@types/node@12.20.55':
     resolution: {integrity: sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==}
@@ -7740,6 +7752,8 @@ snapshots:
   '@types/har-format@1.2.16': {}
 
   '@types/minimatch@3.0.5': {}
+
+  '@types/node-cron@3.0.11': {}
 
   '@types/node@12.20.55': {}
 

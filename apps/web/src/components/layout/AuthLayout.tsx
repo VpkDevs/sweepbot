@@ -34,13 +34,13 @@ export function AuthLayout() {
 
       {/* Content */}
       <div className="relative flex-1 flex items-center justify-center px-4 py-12 z-10">
-        <div className="w-full max-w-sm animate-reveal-up" style={{ animationDelay: '100ms' }}>
+        <div className="w-full max-w-sm animate-reveal-up [animation-delay:100ms]">
           <Outlet />
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="relative px-6 py-4 text-center z-10 animate-fade-in" style={{ animationDelay: '400ms' }}>
+      <footer className="relative px-6 py-4 text-center z-10 animate-fade-in [animation-delay:400ms]">
         <p className="text-xs text-zinc-600">
           SweepBot is a transparency and productivity tool. Not a gambling product.{' '}
           <a href="#" className="hover:text-zinc-400 underline underline-offset-2 transition-colors">

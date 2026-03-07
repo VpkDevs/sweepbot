@@ -4,6 +4,7 @@
  */
 
 import { pgTable, uuid, text, integer, date, timestamp, jsonb, boolean, decimal, index, check, unique } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { profiles } from './profiles';
 import { sessions } from './sessions';
 
@@ -23,9 +24,9 @@ export const userStreaks = pgTable('user_streaks', {
   userIdx: index('idx_user_streaks_user').on(table.userId),
   longestIdx: index('idx_user_streaks_longest').on(table.longestStreak.desc()),
   currentIdx: index('idx_user_streaks_current').on(table.currentStreak.desc()),
-  currentCheck: check('user_streaks_current_check', 'current_streak >= 0'),
-  longestCheck: check('user_streaks_longest_check', 'longest_streak >= 0'),
-  freezeCheck: check('user_streaks_freeze_check', 'freeze_credits >= 0'),
+  currentCheck: check('user_streaks_current_check', sql`current_streak >= 0`),
+  longestCheck: check('user_streaks_longest_check', sql`longest_streak >= 0`),
+  freezeCheck: check('user_streaks_freeze_check', sql`freeze_credits >= 0`),
 }));
 
 /**
@@ -40,7 +41,7 @@ export const streakMilestones = pgTable('streak_milestones', {
   userMilestoneUnique: unique('streak_milestones_user_milestone_unique').on(table.userId, table.milestone),
   userIdx: index('idx_streak_milestones_user').on(table.userId, table.milestone.desc()),
   achievedIdx: index('idx_streak_milestones_achieved').on(table.achievedAt.desc()),
-  milestoneCheck: check('streak_milestones_check', 'milestone IN (7, 30, 100, 365)'),
+  milestoneCheck: check('streak_milestones_check', sql`milestone IN (7, 30, 100, 365)`),
 }));
 
 /**

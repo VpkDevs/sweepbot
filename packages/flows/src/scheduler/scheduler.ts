@@ -5,10 +5,12 @@
  */
 
 import type { FlowDefinition } from '../types'
+import { logger as defaultLogger } from '@sweepbot/utils'
+import type { ScheduledTask, ScheduleOptions } from 'node-cron'
 
 // Using dynamic import for node-cron to avoid issues with ESM
-let CronJob: any
-let cronSchedule: any
+let CronJob: typeof import('node-cron').schedule | undefined
+let cronSchedule: typeof import('node-cron') | undefined
 
 /**
  * Lazily loads the node-cron library and caches its scheduler helpers for the module.
@@ -17,19 +19,20 @@ let cronSchedule: any
  * the schedule function and the cron module in the module-level caches so subsequent
  * scheduler operations can use them without re-importing.
  */
-async function loadCron() {
+async function loadCron(): Promise<typeof import('node-cron').schedule> {
   if (!CronJob) {
-    // @ts-ignore - node-cron doesn't have published types
     const cron = await import('node-cron')
     CronJob = cron.schedule
     cronSchedule = cron
   }
+
+  return CronJob
 }
 
 export interface FlowSchedulerOptions {
   onFlowExecute?: (flowId: string, userId: string) => Promise<void>
   onFlowError?: (flowId: string, userId: string, error: Error) => Promise<void>
-  logger?: { info: (msg: string) => void; error: (msg: string, err: any) => void }
+  logger?: { info: (msg: string) => void; error: (msg: string, err: unknown) => void }
 }
 
 export class FlowScheduler {
@@ -38,15 +41,15 @@ export class FlowScheduler {
    * convenient metadata for testing and introspection (cron string,
    * timezone, userId, etc.).
    */
-  private jobs = new Map<string, { job: any; cron?: string; timezone?: string; userId?: string }>()
+  private jobs = new Map<string, { job: ScheduledTask; cron?: string; timezone?: string; userId?: string }>()
   private options: FlowSchedulerOptions
-  private logger: { info: (msg: string) => void; error: (msg: string, err: any) => void }
+  private logger: { info: (msg: string) => void; error: (msg: string, err: unknown) => void }
 
   constructor(options: FlowSchedulerOptions = {}) {
     this.options = options
     this.logger = options.logger || {
-      info: (msg) => console.log(`[FlowScheduler] ${msg}`),
-      error: (msg, err) => console.error(`[FlowScheduler] ${msg}`, err),
+      info: (msg) => defaultLogger.info(msg, { module: 'FlowScheduler' }),
+      error: (msg, err) => defaultLogger.error(msg, { module: 'FlowScheduler', err }),
     }
   }
 
@@ -60,7 +63,7 @@ export class FlowScheduler {
       return
     }
 
-    await loadCron()
+    const scheduleCronJob = await loadCron()
 
     const { cron, timezone } = flow.trigger
     const jobKey = `${userId}:${flow.id}`
@@ -70,12 +73,12 @@ export class FlowScheduler {
 
     try {
       // Create cron job - include timezone if specified
-      const jobOptions: any = {}
+      const jobOptions: ScheduleOptions = {}
       if (timezone) {
         jobOptions.timezone = timezone
       }
-
-      const job = CronJob(cron, async () => {
+      if (!CronJob) throw new Error('node-cron failed to load')
+      const job = scheduleCronJob(cron, async () => {
         try {
           this.logger.info(`Executing scheduled flow ${flow.id} for user ${userId}`)
           if (this.options.onFlowExecute) {
@@ -107,16 +110,20 @@ export class FlowScheduler {
    */
   async pauseFlow(flowId: string): Promise<void> {
     // Find and stop all jobs for this flow (across all users)
+    const keysToRemove: string[] = []
     for (const [jobKey, meta] of this.jobs.entries()) {
       if (jobKey.endsWith(`:${flowId}`)) {
         try {
           meta.job.stop()
-          this.jobs.delete(jobKey)
+          keysToRemove.push(jobKey)
           this.logger.info(`Paused flow ${flowId}`)
         } catch (error) {
           this.logger.error(`Failed to pause flow ${flowId}`, error)
         }
       }
+    }
+    for (const key of keysToRemove) {
+      this.jobs.delete(key)
     }
   }
 
@@ -189,7 +196,7 @@ export class FlowScheduler {
   /**
    * Inspect metadata for a specific job (used in tests / debugging)
    */
-  getJobInfo(flowId: string, userId: string): { job: any; cron?: string; timezone?: string; userId?: string } | undefined {
+  getJobInfo(flowId: string, userId: string): { job: ScheduledTask; cron?: string; timezone?: string; userId?: string } | undefined {
     const key = `${userId}:${flowId}`
     return this.jobs.get(key)
   }

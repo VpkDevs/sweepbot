@@ -146,7 +146,7 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
       ])
 
           return {
-            totals: totals.rows[0],
+            totals: totals.rows[0] ?? null,
             platformBreakdown: platformBreakdown.rows,
             recentActivity: recentActivity.rows,
             streaks: streaks.rows[0] ?? { longest_win_streak: 0, longest_loss_streak: 0 },
@@ -158,6 +158,8 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
       return reply.send({
         success: true,
         data: portfolioData,
+      })
+    }
   )
 
   // ─── GET /analytics/rtp ───────────────────────────────────────────────────
@@ -288,7 +290,7 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
       return reply.send({
         success: true,
         data: {
-          overall: overall.rows[0],
+          overall: overall.rows[0] ?? null,
           timeSeries: timeSeries.rows,
           byGame: byGame.rows,
           byPlatform: byPlatform.rows,

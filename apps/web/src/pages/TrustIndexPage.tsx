@@ -27,8 +27,8 @@ import {
   Clock,
 } from 'lucide-react'
 import { api } from '../lib/api'
-import { cn } from '../lib/utils'
-import type { TrustScore, TrustFactor } from '@sweepbot/types'
+import { cn, CHART_TOOLTIP_STYLE } from '../lib/utils'
+import type { TrustFactor, TrustScore } from '@sweepbot/types'
 
 // ─── Score color helpers ──────────────────────────────────────────────────────
 
@@ -53,6 +53,11 @@ function scoreLabel(score: number) {
   if (score >= 60) return 'Watch'
   if (score >= 40) return 'Caution'
   return 'Risk'
+}
+
+function scoreWidthClass(score: number) {
+  const rounded = Math.max(0, Math.min(100, Math.round(score / 5) * 5))
+  return `score-width-${rounded}`
 }
 
 // ─── Score gauge ──────────────────────────────────────────────────────────────
@@ -181,8 +186,11 @@ function PlatformTrustCard({
             </span>
             <div className="flex-1 h-1 bg-zinc-800 rounded-full overflow-hidden">
               <div
-                className={cn('h-full rounded-full', f.score >= 80 ? 'bg-green-500' : f.score >= 60 ? 'bg-yellow-500' : 'bg-red-500')}
-                style={{ width: `${f.score}%` }}
+                className={cn(
+                  'h-full rounded-full',
+                  scoreWidthClass(f.score),
+                  f.score >= 80 ? 'bg-green-500' : f.score >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                )}
               />
             </div>
             <span className={cn('text-[10px] tabular-nums w-5 text-right', scoreColor(f.score))}>
@@ -258,9 +266,9 @@ function TrustDetailPanel({ entry }: { entry: TrustScore }) {
                 <div
                   className={cn(
                     'h-full rounded-full transition-all duration-500',
+                    scoreWidthClass(f.score),
                     f.score >= 80 ? 'bg-green-500' : f.score >= 60 ? 'bg-yellow-500' : f.score >= 40 ? 'bg-orange-500' : 'bg-red-500'
                   )}
-                  style={{ width: `${f.score}%` }}
                 />
               </div>
               {meta && (
@@ -293,9 +301,11 @@ function TrustDetailPanel({ entry }: { entry: TrustScore }) {
                 )}
                 <div className="flex-1">
                   <p className="text-zinc-300">{change.summary}</p>
-                  <p className="text-zinc-600 mt-0.5">
-                    {new Date(change.detected_at).toLocaleDateString()}
-                  </p>
+                  {'detected_at' in change && typeof change.detected_at === 'string' && (
+                    <p className="text-zinc-600 mt-0.5">
+                      {new Date(change.detected_at).toLocaleDateString()}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
@@ -327,12 +337,12 @@ function ScoreDistributionChart({ scores }: { scores: TrustScore[] }) {
         <XAxis dataKey="range" tick={{ fill: '#71717a', fontSize: 10 }} />
         <YAxis tick={{ fill: '#71717a', fontSize: 10 }} allowDecimals={false} />
         <Tooltip
-          contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px' }}
+          contentStyle={CHART_TOOLTIP_STYLE}
           formatter={(v: number) => [v, 'Platforms']}
         />
         <Bar dataKey="count" radius={[4, 4, 0, 0]}>
           {buckets.map((b, i) => {
-            const midpoint = parseInt(b.range.split('-')[0]) + 10
+            const midpoint = parseInt(b.range.split('-')[0] ?? '0', 10) + 10
             const fill =
               midpoint >= 80 ? '#22c55e' : midpoint >= 60 ? '#eab308' : midpoint >= 40 ? '#f97316' : '#ef4444'
             return <Cell key={i} fill={fill} />
@@ -352,7 +362,7 @@ export function TrustIndexPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['trust', 'all'],
-    queryFn: () => api.trust.all(),
+    queryFn: () => api.trust.list(),
     staleTime: 300_000,
   })
 
@@ -448,6 +458,8 @@ export function TrustIndexPage() {
               />
             </div>
             <select
+              aria-label="Sort trust index platforms"
+              title="Sort trust index platforms"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
               className="bg-zinc-900 border border-zinc-700 text-zinc-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"

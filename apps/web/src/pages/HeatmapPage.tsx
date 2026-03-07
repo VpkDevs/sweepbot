@@ -90,7 +90,7 @@ export function HeatmapPage() {
   const monthLabels = new Map<number, number>()
   weeks.forEach((week, wi) => {
     const firstDay = week[0]
-    if (firstDay.getFullYear() === year) {
+    if (firstDay?.getFullYear() === year) {
       const m = firstDay.getMonth()
       if (!monthLabels.has(m)) monthLabels.set(wi, m)
     }

@@ -75,8 +75,8 @@ async function handleMessage(message: BackgroundMessage, _sender: chrome.runtime
 
     case 'LOG_ANALYTICS': {
       await storage.logEvent({
-        type: message.payload!.type as any,
-        platformSlug: message.payload!.platformSlug as string,
+        type: message.payload!['type'] as import('@/lib/storage').AnalyticsEvent['type'],
+        platformSlug: message.payload!['platformSlug'] as string,
         timestamp: Date.now(),
         data: message.payload!,
       })
@@ -182,7 +182,7 @@ async function handleMessage(message: BackgroundMessage, _sender: chrome.runtime
     }
 
     default:
-      throw new Error(`Unknown message type: ${(message as any).type}`)
+      throw new Error(`Unknown message type: ${(message as { type: string }).type}`)
   }
 }
 

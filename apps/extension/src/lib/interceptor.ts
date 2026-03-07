@@ -6,6 +6,12 @@
 
 import type { PlatformConfig } from './platforms'
 
+/** XHR instances augmented by the interceptor carry these extra tracking fields. */
+interface AugmentedXMLHttpRequest extends XMLHttpRequest {
+  _sweepbot_url?: string
+  _sweepbot_method?: string
+}
+
 export interface InterceptedTransaction {
   platformSlug: string
   gameId: string
@@ -74,10 +80,8 @@ export class NetworkInterceptor {
           // Not JSON or failed to parse, ignore
         })
         return response
-      }).catch((error) => {
-        throw error
       })
-    } as any
+    } as typeof fetch
   }
 
   /**
@@ -95,14 +99,14 @@ export class NetworkInterceptor {
     const originalSend = this.originalXhrSend
 
     XMLHttpRequest.prototype.open = function (method: string, url: string, ...args: unknown[]) {
-      ;(this as any)._sweepbot_url = url
-      ;(this as any)._sweepbot_method = method
+      ;(this as AugmentedXMLHttpRequest)._sweepbot_url = url
+      ;(this as AugmentedXMLHttpRequest)._sweepbot_method = method
       return originalOpen.apply(this, [method, url, ...args] as Parameters<typeof originalOpen>)
     }
 
     XMLHttpRequest.prototype.send = function (...args: unknown[]) {
       const originalOnReadyStateChange = this.onreadystatechange
-      const url = (this as any)._sweepbot_url
+      const url = (this as AugmentedXMLHttpRequest)._sweepbot_url
 
       // Guard against missing URL (e.g., if open() wasn't called)
       if (!url) {
@@ -195,11 +199,11 @@ export class NetworkInterceptor {
     if (!obj || typeof obj !== 'object') return null
 
     const parts = path.split('.')
-    let current: any = obj
+    let current: unknown = obj
 
     for (const part of parts) {
-      if (current == null) return null
-      current = current[part]
+      if (current == null || typeof current !== 'object') return null
+      current = (current as Record<string, unknown>)[part]
     }
 
     return current

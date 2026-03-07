@@ -1,5 +1,29 @@
 import { z } from 'zod'
 
+// ─── Granular factor types (used by Trust Index page and API consumers) ───────
+
+export interface TrustFactor {
+  factor: string
+  score: number
+}
+
+export interface TrustScore {
+  platform_id: string
+  platform_name: string
+  score: number
+  trend: 'up' | 'down' | 'stable'
+  sample_count: number
+  last_calculated_at: string
+  factors: TrustFactor[]
+  recent_tos_changes?: {
+    severity: 'major' | 'minor'
+    summary: string
+    detected_at?: string
+  }[]
+}
+
+// ─── Zod schema (used for API validation) ────────────────────────────────────
+
 export const TrustIndexScoreSchema = z.object({
   id: z.string().uuid(),
   platformId: z.string().uuid(),

@@ -7,19 +7,17 @@
  * In production: only warn + error logged (debug/info are no-ops).
  */
 
-type LogContext = Record<string, unknown>
-
 interface Logger {
-  debug(msg: string, ctx?: LogContext): void
-  info(msg: string, ctx?: LogContext): void
-  warn(msg: string, ctx?: LogContext): void
-  error(msg: string, ctx?: LogContext): void
+  debug(msg: string, ctx?: unknown): void
+  info(msg: string, ctx?: unknown): void
+  warn(msg: string, ctx?: unknown): void
+  error(msg: string, ctx?: unknown): void
 }
 
 // WXT sets import.meta.env.MODE; fall back to checking a known dev hostname.
 const isDev =
   typeof import.meta !== 'undefined'
-    ? import.meta.env?.MODE !== 'production'
+    ? (import.meta.env as unknown as Record<string, string | undefined>)['MODE'] !== 'production'
     : true
 
 function formatMsg(scope: string, msg: string): string {

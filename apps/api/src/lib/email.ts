@@ -1,4 +1,4 @@
-import Resend from 'resend'
+import { Resend } from 'resend'
 import { env } from '../utils/env.js'
 import { logger } from '../utils/logger.js'
 
@@ -25,7 +25,7 @@ export async function sendEmail(opts: SendEmailOptions) {
       to: opts.to,
       subject: opts.subject,
       html: opts.html,
-      text: opts.text,
+      ...(opts.text != null ? { text: opts.text } : {}),
     })
   } catch (err) {
     logger.error({ err }, 'Failed to send email via Resend')

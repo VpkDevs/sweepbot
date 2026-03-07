@@ -85,24 +85,32 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     async (request, reply) => {
-      const body = CreateSessionBody.parse(request.body)
-      const userId = request.user!.id
+      try {
+        const body = CreateSessionBody.parse(request.body)
+        const userId = request.user!.id
 
-      const result = await dbQuery(sql`
-        INSERT INTO sessions
-          (user_id, platform_id, user_platform_id, started_at, device_info)
-        VALUES
-          (
-            ${userId},
-            ${body.platformId},
-            ${body.userPlatformId},
-            ${body.startedAt ? new Date(body.startedAt) : new Date()},
-            ${JSON.stringify(body.deviceInfo ?? {})}
-          )
-        RETURNING *
-      `)
+        const result = await dbQuery(sql`
+          INSERT INTO sessions
+            (user_id, platform_id, user_platform_id, started_at, device_info)
+          VALUES
+            (
+              ${userId},
+              ${body.platformId},
+              ${body.userPlatformId},
+              ${body.startedAt ? new Date(body.startedAt) : new Date()},
+              ${JSON.stringify(body.deviceInfo ?? {})}
+            )
+          RETURNING *
+        `)
 
-      return reply.code(201).send({ success: true, data: result.rows[0] })
+        return reply.code(201).send({ success: true, data: result.rows[0] ?? null })
+      } catch (error) {
+        app.log.error({ error }, 'Session creation error')
+        return reply.code(500).send({
+          success: false,
+          error: { code: 'INTERNAL_ERROR', message: 'Failed to create session' },
+        })
+      }
     }
   )
 
@@ -206,7 +214,7 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
         })
       }
 
-      return reply.send({ success: true, data: result.rows[0] })
+      return reply.send({ success: true, data: result.rows[0] ?? null })
     }
   )
 
@@ -261,7 +269,7 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
         `),
       ])
 
-      const total = Number((countResult.rows[0] as { total: string }).total)
+      const total = Number((countResult.rows[0] as { total: string } | undefined)?.total ?? '0')
 
       return reply.send({
         success: true,

@@ -6,17 +6,18 @@
 
 import type { ConversationState, ConversationTurn, FlowDefinition, EntityMap, FlowWarning } from '../types'
 import { FlowInterpreter } from '../interpreter/interpreter'
+import { logger as defaultLogger } from '@sweepbot/utils'
 
 export interface ConversationManagerOptions {
   onStateSave?: (state: ConversationState) => Promise<void>
   onStateLoad?: (conversationId: string) => Promise<ConversationState | null>
-  flowInterpreter?: any // FlowInterpreter instance
-  logger?: { info: (msg: string) => void; error: (msg: string, err: any) => void }
+  flowInterpreter?: FlowInterpreter
+  logger?: { info: (msg: string) => void; error: (msg: string, err: unknown) => void }
 }
 
 export class ConversationManager {
   private options: ConversationManagerOptions
-  private logger: { info: (msg: string) => void; error: (msg: string, err: any) => void }
+  private logger: { info: (msg: string) => void; error: (msg: string, err: unknown) => void }
   // interpreter instance (can be injected for testing)
   private interpreter: FlowInterpreter
   // simple in-memory backup store used when no external persistence provided
@@ -25,8 +26,8 @@ export class ConversationManager {
   constructor(options: ConversationManagerOptions = {}) {
     this.options = options
     this.logger = options.logger || {
-      info: (msg) => console.log(`[ConversationManager] ${msg}`),
-      error: (msg, err) => console.error(`[ConversationManager] ${msg}`, err),
+      info: (msg) => defaultLogger.info(msg, { module: 'ConversationManager' }),
+      error: (msg, err) => defaultLogger.error(msg, { module: 'ConversationManager', err }),
     }
     this.interpreter = options.flowInterpreter || new FlowInterpreter()
   }
@@ -365,8 +366,7 @@ export class ConversationManager {
 
     // Trigger
     if (flow.trigger?.type === 'scheduled') {
-      const scheduled = flow.trigger as any
-      card += `⏰ Trigger: ${scheduled.cron} (${scheduled.timezone})\n`
+      card += `⏰ Trigger: ${flow.trigger.cron} (${flow.trigger.timezone})\n`
     } else if (flow.trigger?.type === 'manual') {
       card += `⚙️ Trigger: Manual (on demand)\n`
     }
