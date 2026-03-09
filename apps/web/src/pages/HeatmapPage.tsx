@@ -5,6 +5,7 @@ import { api } from '../lib/api'
 import { formatSC, cn } from '../lib/utils'
 import { ScrollReveal } from '../components/fx/ScrollReveal'
 import { TextReveal } from '../components/fx/TextReveal'
+import { WinLossHeatmap } from '../components/WinLossHeatmap'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -176,6 +177,11 @@ export function HeatmapPage() {
           </div>
         </div>
       )}
+
+      {/* Win/Loss Heatmap by Time */}
+      <ScrollReveal delay={100}>
+        <WinLossHeatmap />
+      </ScrollReveal>
 
       {/* Calendar */}
       {isLoading ? (

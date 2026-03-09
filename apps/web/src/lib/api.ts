@@ -368,9 +368,25 @@ export const api = {
       }),
     execute: (id: string) =>
       request<Record<string, unknown>>(`/flows/${id}/execute`, { method: 'POST' }),
+    getCurrentExecution: (id: string) =>
+      request<Record<string, unknown> | null>(`/flows/${id}/execution/current`),
+    cancelExecution: (id: string) =>
+      request<Record<string, unknown>>(`/flows/${id}/execution/cancel`, { method: 'POST' }),
     executions: (id: string, params?: { page?: number; pageSize?: number }) =>
       request<Record<string, unknown>[]>(`/flows/${id}/executions${toQS(params)}`),
     delete: (id: string) => request<{ deleted: boolean }>(`/flows/${id}`, { method: 'DELETE' }),
+  },
+
+  // Achievements API
+  achievements: {
+    streaks: () => request<Record<string, unknown>>('/achievements/streaks'),
+    records: () => request<Record<string, unknown>>('/achievements/records'),
+    summary: () => request<Record<string, unknown>>('/achievements/summary'),
+    recordSession: (data: Record<string, unknown>) =>
+      request<Record<string, unknown>>('/achievements/streaks/record', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
   },
 
   // Notifications

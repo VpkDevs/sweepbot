@@ -6,6 +6,7 @@ import { api } from '../lib/api'
 import { cn } from '../lib/utils'
 import { ScrollReveal } from '../components/fx/ScrollReveal'
 import { TextReveal } from '../components/fx/TextReveal'
+import { FlowExecutionStatus } from '../components/FlowExecutionStatus'
 
 const EXEC_STATUS = {
   completed: { icon: CheckCircle2, cls: 'text-emerald-400', dot: 'status-dot-active', label: 'Completed' },
@@ -152,9 +153,14 @@ export function FlowDetailPage() {
       </div>
       </ScrollReveal>
 
+      {/* Flow Execution Status */}
+      <ScrollReveal delay={120}>
+        <FlowExecutionStatus flowId={flowId} />
+      </ScrollReveal>
+
       {/* Guardrails */}
       {!!(f['guardrails'] as unknown[] | undefined)?.length && (
-        <ScrollReveal delay={120}>
+        <ScrollReveal delay={140}>
         <div className="glass-card rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-7 h-7 rounded-lg bg-brand-500/10 flex items-center justify-center">
@@ -176,7 +182,7 @@ export function FlowDetailPage() {
       )}
 
       {/* Execution History */}
-      <ScrollReveal delay={180}>
+      <ScrollReveal delay={200}>
       <div className="glass-card rounded-2xl p-5">
         <h2 className="text-sm font-bold text-zinc-300 mb-4 tracking-tight">Execution History</h2>
 
