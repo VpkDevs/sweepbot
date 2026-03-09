@@ -1,0 +1,57 @@
+
+> sweepbot@0.1.0 typecheck C:\Users\MQ420_OL\DEV\web\Sweepbot
+> turbo run typecheck
+
+ΓÇó turbo 2.8.11
+ΓÇó Packages in scope: @sweepbot/api, @sweepbot/config, @sweepbot/extension, @sweepbot/flows, @sweepbot/types, @sweepbot/utils, @sweepbot/web
+ΓÇó Running typecheck in 7 packages
+ΓÇó Remote caching disabled
+@sweepbot/utils:typecheck: cache hit, replaying logs b2890e2a3a3431fd
+@sweepbot/types:typecheck: cache hit, replaying logs 2167dec459b2128b
+@sweepbot/utils:typecheck: 
+@sweepbot/utils:typecheck: > @sweepbot/utils@0.1.0 typecheck C:\Users\MQ420_OL\DEV\web\Sweepbot\packages\utils
+@sweepbot/utils:typecheck: > tsc --noEmit
+@sweepbot/utils:typecheck: 
+@sweepbot/types:typecheck: 
+@sweepbot/types:typecheck: > @sweepbot/types@0.1.0 typecheck C:\Users\MQ420_OL\DEV\web\Sweepbot\packages\types
+@sweepbot/types:typecheck: > tsc --noEmit
+@sweepbot/types:typecheck: 
+@sweepbot/types:build: cache hit, replaying logs db359f6121dc1bfb
+@sweepbot/types:build: 
+@sweepbot/types:build: > @sweepbot/types@0.1.0 build C:\Users\MQ420_OL\DEV\web\Sweepbot\packages\types
+@sweepbot/types:build: > tsc
+@sweepbot/types:build: 
+@sweepbot/web:typecheck: cache miss, executing 816e996cc19a2553
+@sweepbot/extension:typecheck: cache miss, executing 8c65ef869d6bc4d9
+@sweepbot/flows:typecheck: cache hit, replaying logs 265cfc39d993f7dc
+@sweepbot/flows:typecheck: 
+@sweepbot/flows:typecheck: > @sweepbot/flows@0.1.0 typecheck C:\Users\MQ420_OL\DEV\web\Sweepbot\packages\flows
+@sweepbot/flows:typecheck: > tsc --noEmit
+@sweepbot/flows:typecheck: 
+@sweepbot/flows:build: cache hit, replaying logs 7b03d159ac3400fb
+@sweepbot/flows:build: 
+@sweepbot/flows:build: > @sweepbot/flows@0.1.0 build C:\Users\MQ420_OL\DEV\web\Sweepbot\packages\flows
+@sweepbot/flows:build: > tsc
+@sweepbot/flows:build: 
+@sweepbot/api:typecheck: cache hit, replaying logs 88599a7064dceca2
+@sweepbot/api:typecheck: 
+@sweepbot/api:typecheck: > @sweepbot/api@0.1.0 typecheck C:\Users\MQ420_OL\DEV\web\Sweepbot\apps\api
+@sweepbot/api:typecheck: > tsc --noEmit
+@sweepbot/api:typecheck: 
+@sweepbot/extension:typecheck: 
+@sweepbot/extension:typecheck: > @sweepbot/extension@0.1.0 typecheck C:\Users\MQ420_OL\DEV\web\Sweepbot\apps\extension
+@sweepbot/extension:typecheck: > wxt prepare && tsc --noEmit
+@sweepbot/extension:typecheck: 
+@sweepbot/web:typecheck: 
+@sweepbot/web:typecheck: > @sweepbot/web@0.1.0 typecheck C:\Users\MQ420_OL\DEV\web\Sweepbot\apps\web
+@sweepbot/web:typecheck: > tsc --noEmit
+@sweepbot/web:typecheck: 
+@sweepbot/extension:typecheck: 
+@sweepbot/extension:typecheck: [90mWXT[39m [90m[1m0.19.29[22m[39m
+@sweepbot/extension:typecheck: [36mΓä╣[39m Generating types...
+@sweepbot/extension:typecheck: [32mΓ£ö[39m Finished in 1.311 s
+
+ Tasks:    8 successful, 8 total
+Cached:    6 cached, 8 total
+  Time:    8.344s 
+

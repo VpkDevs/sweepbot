@@ -14,6 +14,8 @@ import { storage } from '@/lib/storage'
 import { extensionApi } from '@/lib/api'
 import { executeFlow } from '@/lib/flows/automation-executor'
 import { createLogger } from '@/lib/logger'
+import { streakTracker } from '@/lib/streak-tracker'
+import { recordsTracker } from '@/lib/records-tracker'
 import type { ContentScriptMessage } from '@/types/extension'
 
 const log = createLogger('Content')
@@ -119,6 +121,18 @@ async function startSession(): Promise<void> {
     rtpCalculator.reset()
     log.info(`Session started: ${currentSessionId}`)
 
+    // Track streak
+    const streakUpdate = await streakTracker.recordSession(currentPlatform.slug)
+    if (streakUpdate.milestoneReached) {
+      chrome.runtime.sendMessage({
+        type: 'SHOW_NOTIFICATION',
+        payload: {
+          title: `🔥 ${streakUpdate.milestoneReached}-Day Streak!`,
+          message: `You've played ${streakUpdate.milestoneReached} days in a row. Keep it up!`,
+        },
+      })
+    }
+
     await storage.set('sessionData', {
       sessionId: currentSessionId,
       platformSlug: currentPlatform.slug,
@@ -144,6 +158,36 @@ async function endSession(): Promise<void> {
   try {
     const result = await extensionApi.endSession(currentSessionId)
     log.info(`Session ended. Final RTP: ${result.rtp.toFixed(2)}%`)
+    
+    // Check for personal records
+    const stats = rtpCalculator.calculate()
+    const sessionData = await storage.get('sessionData')
+    const durationMinutes = sessionData 
+      ? (Date.now() - sessionData.startedAt) / (1000 * 60)
+      : 0
+
+    const recordUpdates = await recordsTracker.checkAndUpdateRecords({
+      biggestWin: stats.largestWin,
+      rtp: stats.rtp,
+      durationMinutes,
+      spinCount: stats.spinCount,
+      netResult: result.netResult,
+      platformSlug: currentPlatform?.slug || 'unknown',
+      sessionId: currentSessionId,
+    })
+
+    // Notify user of new records
+    for (const update of recordUpdates) {
+      const recordName = update.recordType.replace(/([A-Z])/g, ' $1').trim()
+      chrome.runtime.sendMessage({
+        type: 'SHOW_NOTIFICATION',
+        payload: {
+          title: `🏆 New Personal Record!`,
+          message: `${recordName}: ${update.newRecord.value.toFixed(2)}`,
+        },
+      })
+    }
+
     currentSessionId = null
     await storage.set('sessionData', null)
   } catch (error) {

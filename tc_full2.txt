@@ -1,0 +1,154 @@
+
+> sweepbot@0.1.0 typecheck C:\Users\MQ420_OL\DEV\web\Sweepbot
+> turbo run typecheck
+
+ΓÇó turbo 2.8.11
+ΓÇó Packages in scope: @sweepbot/api, @sweepbot/config, @sweepbot/extension, @sweepbot/flows, @sweepbot/types, @sweepbot/utils, @sweepbot/web
+ΓÇó Running typecheck in 7 packages
+ΓÇó Remote caching disabled
+@sweepbot/utils:typecheck: cache hit, replaying logs b2890e2a3a3431fd
+@sweepbot/types:typecheck: cache hit, replaying logs 2167dec459b2128b
+@sweepbot/utils:typecheck: 
+@sweepbot/utils:typecheck: > @sweepbot/utils@0.1.0 typecheck C:\Users\MQ420_OL\DEV\web\Sweepbot\packages\utils
+@sweepbot/utils:typecheck: > tsc --noEmit
+@sweepbot/utils:typecheck: 
+@sweepbot/types:typecheck: 
+@sweepbot/types:typecheck: > @sweepbot/types@0.1.0 typecheck C:\Users\MQ420_OL\DEV\web\Sweepbot\packages\types
+@sweepbot/types:typecheck: > tsc --noEmit
+@sweepbot/types:typecheck: 
+@sweepbot/types:build: cache hit, replaying logs db359f6121dc1bfb
+@sweepbot/types:build: 
+@sweepbot/types:build: > @sweepbot/types@0.1.0 build C:\Users\MQ420_OL\DEV\web\Sweepbot\packages\types
+@sweepbot/types:build: > tsc
+@sweepbot/types:build: 
+@sweepbot/web:typecheck: cache miss, executing 542fb0f594763fd5
+@sweepbot/extension:typecheck: cache miss, executing 52c04cb8ab1beb0c
+@sweepbot/flows:typecheck: cache hit, replaying logs cc18a6b639dfcd50
+@sweepbot/flows:build: cache hit, replaying logs 183c1449201da859
+@sweepbot/flows:build: 
+@sweepbot/flows:build: > @sweepbot/flows@0.1.0 build C:\Users\MQ420_OL\DEV\web\Sweepbot\packages\flows
+@sweepbot/flows:build: > tsc
+@sweepbot/flows:build: 
+@sweepbot/api:typecheck: cache miss, executing 34876d1c92aa8c05
+@sweepbot/flows:typecheck: 
+@sweepbot/flows:typecheck: > @sweepbot/flows@0.1.0 typecheck C:\Users\MQ420_OL\DEV\web\Sweepbot\packages\flows
+@sweepbot/flows:typecheck: > tsc --noEmit
+@sweepbot/flows:typecheck: 
+@sweepbot/api:typecheck: 
+@sweepbot/api:typecheck: > @sweepbot/api@0.1.0 typecheck C:\Users\MQ420_OL\DEV\web\Sweepbot\apps\api
+@sweepbot/api:typecheck: > tsc --noEmit
+@sweepbot/api:typecheck: 
+@sweepbot/extension:typecheck: 
+@sweepbot/extension:typecheck: > @sweepbot/extension@0.1.0 typecheck C:\Users\MQ420_OL\DEV\web\Sweepbot\apps\extension
+@sweepbot/extension:typecheck: > wxt prepare && tsc --noEmit
+@sweepbot/extension:typecheck: 
+@sweepbot/web:typecheck: 
+@sweepbot/web:typecheck: > @sweepbot/web@0.1.0 typecheck C:\Users\MQ420_OL\DEV\web\Sweepbot\apps\web
+@sweepbot/web:typecheck: > tsc --noEmit
+@sweepbot/web:typecheck: 
+@sweepbot/extension:typecheck: 
+@sweepbot/extension:typecheck: [90mWXT[39m [90m[1m0.19.29[22m[39m
+@sweepbot/extension:typecheck: [36mΓä╣[39m Generating types...
+@sweepbot/extension:typecheck: [32mΓ£ö[39m Finished in 2.364 s
+@sweepbot/extension:typecheck: src/lib/api.ts(108,3): error TS1434: Unexpected keyword or identifier.
+@sweepbot/extension:typecheck: src/lib/api.ts(108,35): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(108,51): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(108,60): error TS1005: ';' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(109,12): error TS1005: ':' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(115,3): error TS1434: Unexpected keyword or identifier.
+@sweepbot/extension:typecheck: src/lib/api.ts(116,14): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(117,14): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(118,14): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(119,4): error TS1005: ';' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(119,18): error TS1109: Expression expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(120,11): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(120,15): error TS1005: ':' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(126,3): error TS1434: Unexpected keyword or identifier.
+@sweepbot/extension:typecheck: src/lib/api.ts(126,36): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(126,57): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(128,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(129,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(130,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(131,5): error TS1005: ';' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(131,19): error TS1109: Expression expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(132,11): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(132,15): error TS1005: ':' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(138,3): error TS1434: Unexpected keyword or identifier.
+@sweepbot/extension:typecheck: src/lib/api.ts(138,29): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(138,38): error TS1005: ';' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(139,12): error TS1005: ':' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(148,3): error TS1434: Unexpected keyword or identifier.
+@sweepbot/extension:typecheck: src/lib/api.ts(148,38): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(148,47): error TS1005: ';' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(150,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(151,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(152,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(154,12): error TS1005: ':' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(157,3): error TS1434: Unexpected keyword or identifier.
+@sweepbot/extension:typecheck: src/lib/api.ts(157,39): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(157,60): error TS1005: ';' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(159,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(160,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(161,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(162,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(163,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(164,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(166,12): error TS1005: ':' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(175,3): error TS1434: Unexpected keyword or identifier.
+@sweepbot/extension:typecheck: src/lib/api.ts(175,39): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(175,48): error TS1005: ';' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(177,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(178,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(179,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(180,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(181,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(183,12): error TS1005: ':' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(190,3): error TS1434: Unexpected keyword or identifier.
+@sweepbot/extension:typecheck: src/lib/api.ts(190,25): error TS1005: ';' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(192,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(193,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(194,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(196,12): error TS1005: ':' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(199,3): error TS1434: Unexpected keyword or identifier.
+@sweepbot/extension:typecheck: src/lib/api.ts(199,37): error TS1005: ';' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(201,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(202,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(203,5): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(205,12): error TS1005: ':' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(208,3): error TS1434: Unexpected keyword or identifier.
+@sweepbot/extension:typecheck: src/lib/api.ts(208,44): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(208,70): error TS1005: ';' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(208,84): error TS1109: Expression expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(209,11): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(209,15): error TS1005: ':' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(219,3): error TS1434: Unexpected keyword or identifier.
+@sweepbot/extension:typecheck: src/lib/api.ts(219,41): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(219,50): error TS1005: ';' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(219,64): error TS1109: Expression expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(220,11): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(220,15): error TS1005: ':' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(226,3): error TS1434: Unexpected keyword or identifier.
+@sweepbot/extension:typecheck: src/lib/api.ts(226,42): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(226,67): error TS1109: Expression expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(226,76): error TS1005: ';' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(226,90): error TS1109: Expression expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(227,11): error TS1005: ',' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(227,15): error TS1005: ':' expected.
+@sweepbot/extension:typecheck: src/lib/api.ts(235,1): error TS1128: Declaration or statement expected.
+@sweepbot/extension:typecheck: src/lib/flows/alarm-scheduler.ts(89,13): error TS1109: Expression expected.
+@sweepbot/extension:typecheck: src/lib/flows/alarm-scheduler.ts(89,15): error TS1109: Expression expected.
+@sweepbot/extension:typecheck: src/lib/flows/alarm-scheduler.ts(89,17): error TS1109: Expression expected.
+@sweepbot/extension:typecheck: src/lib/flows/alarm-scheduler.ts(93,9): error TS1005: ';' expected.
+@sweepbot/extension:typecheck: src/lib/flows/alarm-scheduler.ts(93,15): error TS1443: Module declaration names may only use ' or " quoted strings.
+@sweepbot/extension:typecheck: src/lib/flows/alarm-scheduler.ts(162,1): error TS1160: Unterminated template literal.
+@sweepbot/extension:typecheck: ΓÇëELIFECYCLEΓÇë Command failed with exit code 2.
+@sweepbot/extension:typecheck: ERROR: command finished with error: command (C:\Users\MQ420_OL\DEV\web\Sweepbot\apps\extension) C:\Users\MQ420_OL\DEV\web\Sweepbot\node_modules\.bin\pnpm.CMD run typecheck exited (2)
+@sweepbot/extension#typecheck: command (C:\Users\MQ420_OL\DEV\web\Sweepbot\apps\extension) C:\Users\MQ420_OL\DEV\web\Sweepbot\node_modules\.bin\pnpm.CMD run typecheck exited (2)
+
+ Tasks:    6 successful, 8 total
+Cached:    5 cached, 8 total
+  Time:    13.237s 
+Failed:    @sweepbot/extension#typecheck
+
+ ERROR  run failed: command  exited (2)
+ΓÇëELIFECYCLEΓÇë Command failed with exit code 2.
