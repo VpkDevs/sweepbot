@@ -176,6 +176,24 @@ describe('EntityRecognizer', () => {
       const entities = recognizer.recognize('play for 30 minutes')
       expect(entities.durations.some((d) => d.unit === 'minutes')).toBe(true)
     })
+
+    it('should correctly distinguish "spins" from "sessions"', () => {
+      // "5 spins" must be classified as spins, not sessions
+      const spinEntities = recognizer.recognize('run 5 spins')
+      expect(spinEntities.durations.some((d) => d.value === 5 && d.unit === 'spins')).toBe(true)
+
+      // "5 spin" (singular) must also be classified as spins
+      const spinSingular = recognizer.recognize('do 5 spin')
+      expect(spinSingular.durations.some((d) => d.value === 5 && d.unit === 'spins')).toBe(true)
+
+      // "3 sessions" must be classified as sessions, not spins
+      const sessionsEntities = recognizer.recognize('play 3 sessions')
+      expect(sessionsEntities.durations.some((d) => d.value === 3 && d.unit === 'sessions')).toBe(true)
+
+      // "1 session" (singular) must also be classified as sessions, not spins
+      const sessionSingular = recognizer.recognize('play 1 session')
+      expect(sessionSingular.durations.some((d) => d.value === 1 && d.unit === 'sessions')).toBe(true)
+    })
   })
 
   describe('Complex Inputs', () => {

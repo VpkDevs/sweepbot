@@ -367,7 +367,9 @@ export class EntityRecognizer {
     // Spin/session durations
     const spinMatches = text.matchAll(/(\d+)\s+(spins?|sessions?)/gi)
     for (const match of spinMatches) {
-      const unit = (match[2] ?? 'sessions').toLowerCase().startsWith('s') && (match[2] ?? 'sessions').length < 8 ? 'spins' : 'sessions'
+      // Distinguish "spin(s)" from "session(s)" by checking the prefix
+      const rawUnit = (match[2] ?? 'sessions').toLowerCase()
+      const unit: 'spins' | 'sessions' = rawUnit.startsWith('sp') ? 'spins' : 'sessions'
       durations.push({
         text: match[0],
         type: 'iteration',
