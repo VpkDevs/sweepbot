@@ -35,6 +35,15 @@ const UpdateProfileBody = z.object({
   bio: z.string().max(500).optional(),
 })
 
+/**
+ * Register authenticated user-related HTTP routes on the given Fastify instance.
+ *
+ * Registers endpoints for profile, settings, connected platforms, subscription/checkout,
+ * billing portal, notification preferences, tax summary, self-exclusion, and account deletion,
+ * and applies the `requireAuth` pre-validation hook so all routes require an authenticated user.
+ *
+ * @param app - The Fastify instance to attach the user routes to
+ */
 export async function userRoutes(app: FastifyInstance): Promise<void> {
   app.addHook('preValidation', requireAuth)
 
@@ -134,7 +143,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
         values
       )
 
-      return reply.send({ success: true, data: result.rows[0] })
+      return reply.send({ success: true, data: result.rows[0] ?? null })
     }
   )
 
@@ -175,7 +184,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
         })
       }
 
-      return reply.send({ success: true, data: result.rows[0] })
+      return reply.send({ success: true, data: result.rows[0] ?? null })
     }
   )
 
@@ -228,7 +237,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
         values
       )
 
-      return reply.send({ success: true, data: result.rows[0] })
+      return reply.send({ success: true, data: result.rows[0] ?? null })
     }
   )
 
@@ -325,7 +334,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
         WHERE user_id = ${userId} AND is_active = TRUE
       `)
 
-      const count = Number((currentCount.rows[0] as { count: string }).count)
+      const count = Number((currentCount.rows[0] as { count: string } | undefined)?.count ?? '0')
 
       if (count >= limit) {
         return reply.code(403).send({
@@ -347,7 +356,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
         RETURNING *
       `)
 
-      return reply.code(201).send({ success: true, data: result.rows[0] })
+      return reply.code(201).send({ success: true, data: result.rows[0] ?? null })
     }
   )
 
@@ -421,7 +430,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       })
     }
 
-    return reply.send({ success: true, data: result.rows[0] })
+    return reply.send({ success: true, data: result.rows[0] ?? null })
   })
 
   // ─── POST /user/checkout ──────────────────────────────────────────────────
@@ -436,7 +445,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       })
       .parse(request.body)
 
-    const stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
+    const stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2025-02-24.acacia' })
 
     // Look up or create Stripe customer
     const profileResult = await dbQuery(sql`
@@ -445,7 +454,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       WHERE p.id = ${userId}
       LIMIT 1
     `)
-    const profile = profileResult.rows[0] as Record<string, string | null>
+    const profile = profileResult.rows[0] as Record<string, string | null> | undefined
 
     let customerId = profile?.['stripe_customer_id'] as string | null
     if (!customerId) {
@@ -508,18 +517,18 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
   // Used as a direct href so we redirect instead of returning JSON.
   app.get('/billing-portal', async (request, reply) => {
     const userId = request.user!.id
+    const appUrl = env.CORS_ORIGINS.split(',')[0] ?? 'https://sweepbot.app'
 
     const result = await dbQuery(sql`
-      SELECT stripe_customer_id FROM subscriptions WHERE user_id = ${userId} LIMIT 1
+      SELECT stripe_customer_id FROM profiles WHERE id = ${userId} LIMIT 1
     `)
-    const customerId = (result.rows[0] as Record<string, string | null>)?.['stripe_customer_id']
+    const customerId = (result.rows[0] as Record<string, string | null> | undefined)?.['stripe_customer_id']
 
     if (!customerId) {
-      return reply.redirect('/pricing')
+      return reply.redirect(`${appUrl}/pricing`)
     }
 
-    const stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
-    const appUrl = env.CORS_ORIGINS.split(',')[0] ?? 'https://sweepbot.app'
+    const stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2025-02-24.acacia' })
 
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
@@ -581,7 +590,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       })
     }
 
-    return reply.send({ success: true, data: result.rows[0] })
+    return reply.send({ success: true, data: result.rows[0] ?? null })
   })
 
   // ─── PATCH /user/notification-prefs ──────────────────────────────────────
@@ -589,7 +598,17 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
   app.patch('/notification-prefs', async (request, reply) => {
     const userId = request.user!.id
     const updates = z
-      .record(z.string(), z.boolean())
+      .object({
+        jackpot_surge: z.boolean().optional(),
+        jackpot_near_ceiling: z.boolean().optional(),
+        tos_change_major: z.boolean().optional(),
+        tos_change_any: z.boolean().optional(),
+        redemption_status: z.boolean().optional(),
+        weekly_digest: z.boolean().optional(),
+        platform_trust_drop: z.boolean().optional(),
+        bonus_calendar: z.boolean().optional(),
+      })
+      .strict()
       .parse(request.body)
 
     // Ensure settings row exists
@@ -655,7 +674,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       success: true,
       data: {
         year: targetYear,
-        ...(totals.rows[0] as Record<string, unknown>),
+        ...(totals.rows[0] as Record<string, unknown> ?? {}),
         by_platform: byPlatform.rows,
       },
     })
@@ -665,11 +684,12 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
   // Activate self-exclusion (responsible play lock-out period)
   app.post('/self-exclude', async (request, reply) => {
     const userId = request.user!.id
-    const body = z.object({ days: z.number().int().min(1).max(365).default(30) }).parse(request.body ?? {})
+    // days is always 30 — callers cannot shorten or extend the lockout window
+    const EXCLUSION_DAYS = 30
 
-    // Calculate exclusion end time
+    // Calculate new exclusion end time from now
     const now = new Date()
-    const exclusionUntil = new Date(now.getTime() + body.days * 24 * 60 * 60 * 1000)
+    const newExclusionUntil = new Date(now.getTime() + EXCLUSION_DAYS * 24 * 60 * 60 * 1000)
 
     // Ensure settings row exists
     await dbQuery(sql`
@@ -677,11 +697,26 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       ON CONFLICT (user_id) DO NOTHING
     `)
 
-    // Set self_exclusion_until timestamp
+    // Only set if the new end date is strictly later than any existing exclusion
+    // This prevents overwrite-from-now semantics that would shorten a remaining lockout
+    const existing = await dbQuery(sql`
+      SELECT self_exclusion_until FROM user_settings WHERE user_id = ${userId}
+    `)
+    const existingUntil = (existing.rows[0] as Record<string, string | null> | undefined)?.['self_exclusion_until']
+    if (existingUntil && new Date(existingUntil) >= newExclusionUntil) {
+      return reply.send({
+        success: true,
+        data: {
+          self_exclusion_until: existingUntil,
+          message: `Self-exclusion already active until ${new Date(existingUntil).toLocaleDateString()}`,
+        },
+      })
+    }
+
     await dbQuery(sql`
       UPDATE user_settings
       SET
-        self_exclusion_until = ${exclusionUntil.toISOString()},
+        self_exclusion_until = ${newExclusionUntil.toISOString()},
         updated_at = NOW()
       WHERE user_id = ${userId}
     `)
@@ -689,8 +724,8 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     return reply.send({
       success: true,
       data: {
-        self_exclusion_until: exclusionUntil.toISOString(),
-        message: `Self-exclusion active until ${exclusionUntil.toLocaleDateString()}`,
+        self_exclusion_until: newExclusionUntil.toISOString(),
+        message: `Self-exclusion active until ${newExclusionUntil.toLocaleDateString()}`,
       },
     })
   })
@@ -703,20 +738,19 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
     // Cancel active Stripe subscription before deleting
     const subResult = await dbQuery(sql`
-      SELECT stripe_subscription_id, stripe_customer_id
+      SELECT stripe_subscription_id
       FROM subscriptions
-      WHERE user_id = ${userId} AND stripe_subscription_id IS NOT NULL
+      WHERE user_id = ${userId}
+        AND stripe_subscription_id IS NOT NULL
+        AND status IN ('active', 'trialing', 'past_due')
       LIMIT 1
     `)
     const sub = subResult.rows[0] as Record<string, string | null> | undefined
 
     if (sub?.['stripe_subscription_id']) {
-      try {
-        const stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
-        await stripe.subscriptions.cancel(sub['stripe_subscription_id'])
-      } catch {
-        // Non-fatal — proceed with deletion even if Stripe cancel fails
-      }
+      const stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2025-02-24.acacia' })
+      // Propagate Stripe errors — abort deletion if cancellation fails
+      await stripe.subscriptions.cancel(sub['stripe_subscription_id'])
     }
 
     // Delete via Supabase admin (auth.users deletion cascades to profiles)

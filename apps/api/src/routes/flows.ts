@@ -4,17 +4,48 @@
  */
 
 import type { FastifyInstance, FastifyRequest } from 'fastify'
-import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { sql } from 'drizzle-orm'
 import { requireAuth } from '../middleware/auth.js'
-import { FlowInterpreter, FlowExecutor, ResponsiblePlayValidator } from '@sweepbot/flows'
+import { randomUUID } from 'node:crypto'
+import { FlowInterpreter, FlowExecutor, ResponsiblePlayValidator, ConversationManager } from '@sweepbot/flows'
+import type { ConversationState } from '@sweepbot/flows'
 
 // Initialize services
 const flowInterpreter = new FlowInterpreter()
 const flowExecutor = new FlowExecutor()
 const rpValidator = new ResponsiblePlayValidator()
+
+// Conversation manager with persistence helpers
+const conversationManager = new ConversationManager({
+  onStateLoad: async (conversationId: string): Promise<ConversationState | null> => {
+    const { rows } = await dbQuery<ConversationState>(
+      sql`SELECT * FROM flow_conversations WHERE id = ${conversationId}`
+    )
+    return rows[0] ?? null
+  },
+  onStateSave: async (state) => {
+    await unsafeQuery(
+      `
+      INSERT INTO flow_conversations (id, user_id, flow_id, turns, status, created_at, updated_at)
+      VALUES ($1, $2, $3, $4::jsonb, $5, NOW(), NOW())
+      ON CONFLICT (id)
+      DO UPDATE SET turns = $4::jsonb, status = $5, updated_at = NOW()
+      `,
+      [
+        state.sessionId,
+        state.userId,
+        // flowId might be undefined while building
+        (state.currentFlow && typeof state.currentFlow === 'object' && 'id' in state.currentFlow) 
+          ? (state.currentFlow as { id: string }).id 
+          : null,
+        JSON.stringify(state.turns),
+        state.status,
+      ]
+    )
+  },
+})
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -26,7 +57,7 @@ const FlowInterpretRequestSchema = z.object({
 
 const FlowCreateSchema = z.object({
   name: z.string().min(1).max(255).trim(),
-  description: z.string().max(1000),
+  description: z.string().min(1).max(1000).trim(),
   definition: z.record(z.unknown()).refine((obj) => Object.keys(obj).length > 0, 'definition cannot be empty'),
   trigger: z.record(z.unknown()).refine((obj) => Object.keys(obj).length > 0, 'trigger cannot be empty'),
   guardrails: z.array(z.record(z.unknown())).min(0).max(10),
@@ -45,7 +76,15 @@ const PaginationSchema = z.object({
 
 // ============================================================================
 // ROUTE HANDLERS
-// ============================================================================
+/**
+ * Registers the Flows API routes onto a Fastify instance.
+ *
+ * Registers authenticated endpoints under /flows for interpreting natural language into flows,
+ * creating, listing, retrieving, updating, executing, viewing executions, conversing, and deleting flows.
+ *
+ * @param app - Fastify instance to which the routes will be attached; a preValidation authentication
+ *   hook is applied to all registered routes.
+ */
 
 export async function flowRoutes(app: FastifyInstance): Promise<void> {
   // ── Auth guard on all routes ─────────────────────────────────────────────────
@@ -100,6 +139,53 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
    * POST /flows/converse
    * Continue multi-turn conversation for Flow building
    */
+  // ─────────────────────────────────────────────────────────────────────────
+  // Conversation (multi-turn) helpers
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * POST /flows/conversations
+   * Start a new multi‑turn conversation for building a Flow.
+   */
+  app.post<{ Body: { initialMessage: string } }>(
+    '/conversations',
+    {
+      schema: {
+        tags: ['Flows'],
+        summary: 'Start a new flow‑building conversation',
+        body: {
+          type: 'object',
+          required: ['initialMessage'],
+          properties: {
+            initialMessage: { type: 'string', minLength: 1, maxLength: 2000 },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { initialMessage } = request.body
+      const conversationId = randomUUID()
+      try {
+        const state = await conversationManager.startConversation(
+          request.user!.id,
+          conversationId,
+          initialMessage
+        )
+        return reply.code(201).send({ success: true, data: state })
+      } catch (error) {
+        app.log.error({ error }, 'Failed to start conversation')
+        return reply.code(500).send({
+          success: false,
+          error: { code: 'INTERNAL_ERROR', message: 'Could not start conversation' },
+        })
+      }
+    }
+  )
+
+  /**
+   * POST /flows/converse
+   * Continue multi-turn conversation for Flow building
+   */
   app.post<{ Body: { conversationId: string; userMessage: string } }>(
     '/converse',
     {
@@ -119,7 +205,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
     },
     async (request, reply) => {
       try {
-        // Load conversation state from DB
+        // Ensure the conversation belongs to the user
         const { rows } = await dbQuery(
           sql`SELECT * FROM flow_conversations WHERE id = ${request.body.conversationId} AND user_id = ${request.user!.id}`
         )
@@ -131,11 +217,14 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
           })
         }
 
-        // TODO: Implement conversation manager logic
-        return reply.send({
-          success: true,
-          data: rows[0],
-        })
+        // Delegate business logic to ConversationManager which will
+        // load and save state via the hooks we configured above.
+        const updatedState = await conversationManager.continue(
+          request.body.conversationId,
+          request.body.userMessage
+        )
+
+        return reply.send({ success: true, data: updatedState })
       } catch (error) {
         app.log.error({ error }, 'Conversation error')
         return reply.code(500).send({
@@ -166,7 +255,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       try {
         const validated = FlowCreateSchema.parse(request.body)
-        const flowId = randomUUID()
+        const flowId = crypto.randomUUID()
 
         // Insert flow into database
         const { rows } = await unsafeQuery(
@@ -402,8 +491,8 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
 
         // Create execution record
         const { rows: execRows } = await dbQuery(
-          sql`INSERT INTO flow_executions (flow_id, user_id, status)
-              VALUES (${flowId}, ${userId}, 'running')
+          sql`INSERT INTO flow_executions (flow_id, user_id, status, started_at, metrics, log)
+              VALUES (${flowId}, ${userId}, 'running', NOW(), '{}', '[]')
               RETURNING id, created_at`
         )
 
@@ -411,12 +500,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
 
         // Execute flow asynchronously (non-blocking)
         flowExecutor
-          .execute({
-            flowId,
-            userId,
-            definition: flow.definition,
-            executionId,
-          })
+          .execute(flow.definition as Parameters<typeof flowExecutor.execute>[0], userId)
           .then(() => {
             // Mark as completed (background)
             return dbQuery(sql`UPDATE flow_executions SET status = 'completed' WHERE id = ${executionId}`)
@@ -424,7 +508,8 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
           .catch((error) => {
             app.log.error({ error }, 'Flow execution failed')
             // Mark as failed (background)
-            void dbQuery(sql`UPDATE flow_executions SET status = 'failed', error_message = ${String(error)} WHERE id = ${executionId}`)
+            dbQuery(sql`UPDATE flow_executions SET status = 'failed', error_message = ${String(error)} WHERE id = ${executionId}`)
+              .catch((dbErr) => { app.log.error({ dbErr }, 'Failed to mark execution as failed') })
           })
 
         return reply.code(202).send({

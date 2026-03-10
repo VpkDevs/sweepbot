@@ -270,6 +270,52 @@ describe('FlowInterpreter', () => {
       const mandatoryGuards = flow.responsiblePlayGuardrails.filter((g) => g.source === 'system_mandatory')
       expect(mandatoryGuards.length).toBeGreaterThan(0)
     })
+
+    it('should add user-specified max_loss guardrail', async () => {
+      const result = await interpreter.interpret({
+        userId: 'test-user',
+        rawInput: 'Stop if I lose more than $50',
+      })
+
+      const flow = result.flow
+      const lossGuard = flow.responsiblePlayGuardrails.find((g) => g.type === 'max_loss')
+      expect(lossGuard).toBeDefined()
+      expect(lossGuard?.value).toBe(50)
+      expect(lossGuard?.source).toBe('user_specified')
+    })
+
+    it('should build a condition node when simple if/then input provided', async () => {
+      const result = await interpreter.interpret({
+        userId: 'test-user',
+        rawInput: 'Claim bonus. If more than $50, spin. If not, close.',
+      })
+      const flow = result.flow
+      const findCondition = (node: any): any | null => {
+        if (node.type === 'condition') return node
+        if (node.type === 'sequence' && node.steps) {
+          for (const step of node.steps) {
+            const found = findCondition(step)
+            if (found) return found
+          }
+        }
+        return null
+      }
+      const condNode = findCondition(flow.rootNode)
+      expect(condNode).not.toBeNull()
+      expect(condNode.operator).toBe('>')
+    })
+
+    it('should flag chase detection for doubling bets', async () => {
+      const result = await interpreter.interpret({
+        userId: 'test-user',
+        rawInput: 'If I lose, double my bet and keep spinning',
+      })
+
+      const flow = result.flow
+      const chaseGuard = flow.responsiblePlayGuardrails.find((g) => g.type === 'chase_detection')
+      expect(chaseGuard).toBeDefined()
+      expect(chaseGuard?.source).toBe('system_mandatory')
+    })
   })
 
   describe('Confidence Scoring', () => {

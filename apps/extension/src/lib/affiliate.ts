@@ -6,6 +6,9 @@
 import type { PlatformConfig } from './platforms'
 import { extensionApi } from './api'
 import { storage } from './storage'
+import { createLogger } from './logger'
+
+const log = createLogger('AffiliateManager')
 
 class AffiliateManager {
   /**
@@ -46,22 +49,34 @@ class AffiliateManager {
     const userRefCode = await storage.get('userRefCode')
     if (!userRefCode || !platform.affiliateUrl) return
 
-    // Create banner element
+    // Create banner element using DOM APIs (no innerHTML — avoids XSS)
     const banner = document.createElement('div')
     banner.id = 'sweepbot-affiliate-banner'
     banner.className =
       'sweepbot-affiliate-banner fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-brand-600 to-brand-500 text-white px-4 py-3 flex items-center justify-between'
-    banner.innerHTML = `
-      <span class="text-sm">
-        💰 Use code <strong>SWEEPBOT</strong> for bonus coins on ${platform.name}!
-      </span>
-      <div class="flex gap-2">
-        <button class="sweepbot-signup-btn text-xs bg-white text-brand-600 px-3 py-1 rounded font-semibold hover:bg-gray-100">
-          Sign Up
-        </button>
-        <button class="sweepbot-close-btn text-sm hover:opacity-75">✕</button>
-      </div>
-    `
+
+    const leftSpan = document.createElement('span')
+    leftSpan.className = 'text-sm'
+    leftSpan.appendChild(document.createTextNode('💰 Use code '))
+    const strong = document.createElement('strong')
+    strong.textContent = 'SWEEPBOT'
+    leftSpan.appendChild(strong)
+    leftSpan.appendChild(document.createTextNode(` for bonus coins on ${platform.name}!`))
+
+    const rightDiv = document.createElement('div')
+    rightDiv.className = 'flex gap-2'
+    const signupBtn = document.createElement('button')
+    signupBtn.className =
+      'sweepbot-signup-btn text-xs bg-white text-brand-600 px-3 py-1 rounded font-semibold hover:bg-gray-100'
+    signupBtn.textContent = 'Sign Up'
+    const closeBtn = document.createElement('button')
+    closeBtn.className = 'sweepbot-close-btn text-sm hover:opacity-75'
+    closeBtn.textContent = '✕'
+    rightDiv.appendChild(signupBtn)
+    rightDiv.appendChild(closeBtn)
+
+    banner.appendChild(leftSpan)
+    banner.appendChild(rightDiv)
 
     // Add styles
     const style = document.createElement('style')
@@ -83,10 +98,7 @@ class AffiliateManager {
     // Add to page
     document.body.insertBefore(banner, document.body.firstChild)
 
-    // Set up event listeners
-    const signupBtn = banner.querySelector('.sweepbot-signup-btn') as HTMLButtonElement
-    const closeBtn = banner.querySelector('.sweepbot-close-btn') as HTMLButtonElement
-
+    // Set up event listeners (signupBtn and closeBtn already have references from above)
     if (signupBtn) {
       signupBtn.addEventListener('click', () => {
         const affiliateUrl = platform.affiliateUrl!.replace('SWEEPBOT', userRefCode)
@@ -119,7 +131,7 @@ class AffiliateManager {
         data: { affiliate_click: true },
       })
     } catch (error) {
-      console.error('[AffiliateManager] Failed to track click:', error)
+      log.error('Failed to track click', { error })
     }
   }
 
@@ -136,7 +148,7 @@ class AffiliateManager {
         data: { affiliate_signup: true, external_user_id: externalUserId },
       })
     } catch (error) {
-      console.error('[AffiliateManager] Failed to track signup:', error)
+      log.error('Failed to track signup', { error })
     }
   }
 

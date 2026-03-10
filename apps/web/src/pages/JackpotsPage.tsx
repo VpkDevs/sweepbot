@@ -22,7 +22,7 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import { api } from '../lib/api'
-import { cn, formatSC } from '../lib/utils'
+import { cn, formatSC, CHART_TOOLTIP_STYLE } from '../lib/utils'
 
 // ─── WebSocket live feed ───────────────────────────────────────────────────────
 
@@ -50,6 +50,11 @@ type LiveEvent = {
   game_name?: string
   hit_amount?: number
   ts: string
+}
+
+function widthClass(percent: number) {
+  const rounded = Math.max(0, Math.min(100, Math.round(percent / 5) * 5))
+  return `score-width-${rounded}`
 }
 
 function useLiveJackpots() {
@@ -196,9 +201,9 @@ function JackpotCard({
           <div
             className={cn(
               'h-full rounded-full transition-all duration-500',
+              widthClass(pctOfHigh),
               pctOfHigh >= 90 ? 'bg-amber-400' : pctOfHigh >= 70 ? 'bg-brand-500' : 'bg-zinc-600'
             )}
-            style={{ width: `${pctOfHigh}%` }}
           />
         </div>
       </div>
@@ -310,7 +315,7 @@ function JackpotHistoryChart({ jackpotId }: { jackpotId: string }) {
           tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`}
         />
         <Tooltip
-          contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px' }}
+          contentStyle={CHART_TOOLTIP_STYLE}
           formatter={(v: number) => [`${formatSC(v)} SC`, 'Amount']}
           labelFormatter={(l: string) => new Date(l).toLocaleString()}
         />
@@ -341,7 +346,7 @@ export function JackpotsPage() {
 
   const { data: jackpotsData } = useQuery({
     queryKey: ['jackpots'],
-    queryFn: () => api.jackpots.list(),
+    queryFn: () => api.jackpots.leaderboard(),
     staleTime: 30_000,
     refetchInterval: 60_000, // fallback polling even without WS
   })
@@ -485,13 +490,15 @@ export function JackpotsPage() {
         <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4">
           <label className="text-xs text-zinc-400 mb-1.5 block">Platform</label>
           <select
+            aria-label="Filter jackpots by platform"
+            title="Filter jackpots by platform"
             value={platformFilter}
             onChange={(e) => setPlatformFilter(e.target.value)}
             className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
           >
             <option value="all">All Platforms</option>
             {platforms.map(([id, name]) => (
-              <option key={id} value={id}>{name as string}</option>
+              <option key={id as string} value={id as string}>{name as string}</option>
             ))}
           </select>
         </div>
@@ -537,6 +544,8 @@ export function JackpotsPage() {
                   href={selectedJackpot['platform_url'] as string | undefined}
                   target="_blank"
                   rel="noopener noreferrer"
+                  title="Open platform"
+                  aria-label="Open platform"
                   className="text-zinc-500 hover:text-brand-400 transition-colors"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
@@ -547,7 +556,7 @@ export function JackpotsPage() {
                 {[
                   ['Historical Avg', formatSC(selectedJackpot['historical_avg'] as number) + ' SC'],
                   ['Historical High', formatSC(selectedJackpot['historical_high'] as number) + ' SC'],
-                  ['Avg Hit Interval', (selectedJackpot['avg_hit_interval_days'] as number)?.toFixed(1) + 'd' ?? '—'],
+                  ['Avg Hit Interval', selectedJackpot['avg_hit_interval_days'] != null ? (selectedJackpot['avg_hit_interval_days'] as number).toFixed(1) + 'd' : '—'],
                   ['Hit Count', String(selectedJackpot['hit_count'] ?? '—')],
                 ].map(([label, value]) => (
                   <div key={label} className="bg-zinc-800/60 rounded-lg p-2">

@@ -4,23 +4,48 @@
  */
 
 import type { FastifyInstance } from 'fastify'
+import { z } from 'zod'
 import { sql } from 'drizzle-orm'
 import { requireAuth } from '../middleware/auth.js'
 import { query } from '../db/client.js'
 
+// ── Reusable Zod schemas (also drive inferred types below) ───────────────────
+const listQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(30),
+  unread_only: z
+    .string()
+    .optional()
+    .transform((v) => v === 'true'),
+})
+
+const notifParamsSchema = z.object({ id: z.string().uuid() })
+
+/**
+ * Register authenticated notification routes on the provided Fastify instance.
+ *
+ * Adds endpoints under /notifications to list a user's notifications (with optional unread filter and limit),
+ * return the unread count, mark a specific notification as read, mark all notifications as read, and delete a notification.
+ *
+ * @param app - The Fastify instance to register the routes on
+ */
 export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
   // ── Auth guard on all routes ─────────────────────────────────────────────────
   app.addHook('preValidation', requireAuth)
 
   // ── GET /notifications ───────────────────────────────────────────────────────
   // Return user's notifications, newest first.
-  app.get('/', async (request, reply) => {
-    const query_params = request.query as { limit?: string; unread_only?: string }
-    const limit = Math.min(Math.max(parseInt(query_params.limit ?? '30', 10) || 30, 1), 100)
-    const unread_only = query_params.unread_only === 'true'
-    const userId = request.user!.id
+  app.get(
+    '/',
+    {
+      schema: {
+        querystring: listQuerySchema,
+      },
+    },
+    async (request, reply) => {
+      const { limit, unread_only } = request.query as z.infer<typeof listQuerySchema>
+      const userId = request.user!.id
 
-    const { rows } = await query<{
+      const rows = await query<{
         id: string
         type: string
         title: string
@@ -67,8 +92,15 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
   })
 
   // ── PATCH /notifications/:id/read ────────────────────────────────────────────
-  app.patch('/:id/read', async (request, reply) => {
-      const { id } = request.params as { id: string }
+  app.patch(
+    '/:id/read',
+    {
+      schema: {
+        params: notifParamsSchema,
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params as z.infer<typeof notifParamsSchema>
       const userId = request.user!.id
 
       await query(sql`
@@ -95,8 +127,15 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
   })
 
   // ── DELETE /notifications/:id ────────────────────────────────────────────────
-  app.delete('/:id', async (request, reply) => {
-      const { id } = request.params as { id: string }
+  app.delete(
+    '/:id',
+    {
+      schema: {
+        params: notifParamsSchema,
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params as z.infer<typeof notifParamsSchema>
       const userId = request.user!.id
 
       await query(sql`
@@ -110,7 +149,20 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
 }
 
 // ── Helper: create a notification ─────────────────────────────────────────────
-// Call this from other routes (features.ts, etc.) when events occur.
+/**
+ * Create a notification record for a user.
+ *
+ * Inserts a notification with the provided attributes; when `data` is supplied it will be stored as JSON.
+ *
+ * @param opts - Notification creation options
+ * @param opts.userId - ID of the user who will receive the notification
+ * @param opts.type - Notification category: `achievement`, `streak`, `milestone`, `big_win`, or `system`
+ * @param opts.title - Short title for the notification
+ * @param opts.body - Detailed message body for the notification
+ * @param opts.icon - Optional URL or identifier for an icon associated with the notification
+ * @param opts.href - Optional target URL for the notification action
+ * @param opts.data - Optional arbitrary payload; stored as JSON when present
+ */
 export async function createNotification(opts: {
   userId: string
   type: 'achievement' | 'streak' | 'milestone' | 'big_win' | 'system'

@@ -13,7 +13,12 @@ import { affiliateManager } from '@/lib/affiliate'
 import { storage } from '@/lib/storage'
 import { extensionApi } from '@/lib/api'
 import { executeFlow } from '@/lib/flows/automation-executor'
+import { createLogger } from '@/lib/logger'
+import { streakTracker } from '@/lib/streak-tracker'
+import { recordsTracker } from '@/lib/records-tracker'
 import type { ContentScriptMessage } from '@/types/extension'
+
+const log = createLogger('Content')
 
 export default defineContentScript({
   matches: ['*://*.chumbacasino.com/*', '*://*.luckyland.com/*', '*://*.stake.us/*', '*://*.pulsz.com/*', '*://*.wowvegas.com/*', '*://*.fortunecoins.com/*', '*://*.funrize.com/*', '*://*.zulacasino.com/*', '*://*.crowncoinscasino.com/*', '*://*.mcluck.com/*', '*://*.nolimitcoins.com/*', '*://*.modocasino.com/*', '*://*.globalpoker.com/*', '*://*.high5casino.com/*'],
@@ -26,19 +31,23 @@ let currentSessionId: string | null = null
 let hudContainerId = 'sweepbot-hud-container'
 let activeFlowId: string | null = null
 
-// ── Initialization ─────────────────────────────────────────────────────────
+/**
+ * Initialize the content script: validate platform and authentication, start or end sessions based on page type, set up network interception and handlers, inject the HUD or affiliate content as appropriate, and register the runtime message listener for HUD and flow messages.
+ *
+ * Sets up transaction and balance handlers that update the RTP calculator and forward session updates to the background extension API when a session is active. Also initializes the HUD state if enabled and wires incoming ContentScriptMessage handling to `handleContentMessage`.
+ */
 
 async function init(): Promise<void> {
   if (!currentPlatform) {
-    console.log('[Content] Not a known sweepstakes platform')
+    log.info('Not a known sweepstakes platform')
     return
   }
 
-  console.log(`[Content] Initialized on ${currentPlatform.name}`)
+  log.info(`Initialized on ${currentPlatform.name}`)
 
   const authToken = await storage.get('authToken')
   if (!authToken) {
-    console.log('[Content] User not authenticated, skipping gameplay tracking')
+    log.info('User not authenticated, skipping gameplay tracking')
     return
   }
 
@@ -66,7 +75,7 @@ async function init(): Promise<void> {
           result: tx.result,
         })
       } catch (error) {
-        console.error('[Content] Failed to record transaction:', error)
+        log.error('Failed to record transaction:', error)
       }
     }
 
@@ -78,7 +87,7 @@ async function init(): Promise<void> {
       try {
         await extensionApi.updateSessionBalance(currentSessionId, balance.scBalance, balance.gcBalance)
       } catch (error) {
-        console.error('[Content] Failed to update session balance:', error)
+        log.error('Failed to update session balance:', error)
       }
     }
   })
@@ -86,7 +95,7 @@ async function init(): Promise<void> {
   if (hudEnabled) injectHud()
 
   // Message listener — handles both HUD messages and flow execution
-  chrome.runtime.onMessage.addListener((message: ContentScriptMessage, sender, sendResponse) => {
+  chrome.runtime.onMessage.addListener((message: ContentScriptMessage, _sender, sendResponse) => {
     handleContentMessage(message)
       .then((result) => sendResponse({ success: true, data: result }))
       .catch((error) => sendResponse({ success: false, error: String(error) }))
@@ -94,7 +103,13 @@ async function init(): Promise<void> {
   })
 }
 
-// ── Session management ─────────────────────────────────────────────────────
+/**
+ * Starts a new gameplay session for the detected platform and persists its initial metadata.
+ *
+ * Initializes session state by creating a session with the background service, storing the returned session id, resetting RTP tracking, and persisting session metadata (start time, initial/current coin counters, transaction count, and last activity timestamp).
+ *
+ * No operation is performed if no platform is detected.
+ */
 
 async function startSession(): Promise<void> {
   if (!currentPlatform) return
@@ -104,7 +119,19 @@ async function startSession(): Promise<void> {
     const result = await extensionApi.createSession(currentPlatform.slug, gameId)
     currentSessionId = result.sessionId
     rtpCalculator.reset()
-    console.log(`[Content] Session started: ${currentSessionId}`)
+    log.info(`Session started: ${currentSessionId}`)
+
+    // Track streak
+    const streakUpdate = await streakTracker.recordSession(currentPlatform.slug)
+    if (streakUpdate.milestoneReached) {
+      chrome.runtime.sendMessage({
+        type: 'SHOW_NOTIFICATION',
+        payload: {
+          title: `🔥 ${streakUpdate.milestoneReached}-Day Streak!`,
+          message: `You've played ${streakUpdate.milestoneReached} days in a row. Keep it up!`,
+        },
+      })
+    }
 
     await storage.set('sessionData', {
       sessionId: currentSessionId,
@@ -116,29 +143,76 @@ async function startSession(): Promise<void> {
       lastActivityAt: Date.now(),
     })
   } catch (error) {
-    console.error('[Content] Failed to start session:', error)
+    log.error('Failed to start session:', error)
   }
 }
 
+/**
+ * Ends the current active session by requesting the backend to close it and clears local session state.
+ *
+ * If no session is active, this function does nothing. On success it clears the in-memory session identifier and removes persisted session data. Errors are caught and logged.
+ */
 async function endSession(): Promise<void> {
   if (!currentSessionId) return
 
   try {
     const result = await extensionApi.endSession(currentSessionId)
-    console.log(`[Content] Session ended. Final RTP: ${result.rtp.toFixed(2)}%`)
+    log.info(`Session ended. Final RTP: ${result.rtp.toFixed(2)}%`)
+    
+    // Check for personal records
+    const stats = rtpCalculator.calculate()
+    const sessionData = await storage.get('sessionData')
+    const durationMinutes = sessionData 
+      ? (Date.now() - sessionData.startedAt) / (1000 * 60)
+      : 0
+
+    const recordUpdates = await recordsTracker.checkAndUpdateRecords({
+      biggestWin: stats.largestWin,
+      rtp: stats.rtp,
+      durationMinutes,
+      spinCount: stats.spinCount,
+      netResult: result.netResult,
+      platformSlug: currentPlatform?.slug || 'unknown',
+      sessionId: currentSessionId,
+    })
+
+    // Notify user of new records
+    for (const update of recordUpdates) {
+      const recordName = update.recordType.replace(/([A-Z])/g, ' $1').trim()
+      chrome.runtime.sendMessage({
+        type: 'SHOW_NOTIFICATION',
+        payload: {
+          title: `🏆 New Personal Record!`,
+          message: `${recordName}: ${update.newRecord.value.toFixed(2)}`,
+        },
+      })
+    }
+
     currentSessionId = null
     await storage.set('sessionData', null)
   } catch (error) {
-    console.error('[Content] Failed to end session:', error)
+    log.error('Failed to end session:', error)
   }
 }
 
+/**
+ * Extracts a game identifier from the current page's URL path.
+ *
+ * @returns The game id found in the path (e.g., segment after `/game` or `/play`), or `null` if no game id is present.
+ */
 function extractGameId(): string | null {
   const match = window.location.pathname.match(/\/(games?|play)\/([a-z0-9_-]+)/i)
   return match ? match[2] : null
 }
 
-// ── HUD ────────────────────────────────────────────────────────────────────
+/**
+ * Injects the SweepBot HUD overlay into the current page.
+ *
+ * The HUD is appended to document.body using the global `hudContainerId` and includes
+ * elements for displaying spins, RTP, largest win, and volatility (classes:
+ * `sweepbot-spin-count`, `sweepbot-rtp`, `sweepbot-largest-win`, `sweepbot-volatility`).
+ * Adds a close button that removes the HUD and persists `hudEnabled = false` to storage.
+ */
 
 function injectHud(): void {
   const container = document.createElement('div')
@@ -196,6 +270,11 @@ function injectHud(): void {
   })
 }
 
+/**
+ * Update the in-page HUD with the latest session statistics.
+ *
+ * If the HUD container exists, updates its spin count, RTP (formatted to two decimal places with a trailing '%' and color-coded by value), largest win, and volatility (capitalized). If the HUD container is not present, the function is a no-op.
+ */
 function updateHudStats(): void {
   const stats = rtpCalculator.calculate()
   const container = document.getElementById(hudContainerId)
@@ -215,18 +294,35 @@ function updateHudStats(): void {
   if (volatility) volatility.textContent = stats.volatility.charAt(0).toUpperCase() + stats.volatility.slice(1)
 }
 
-// ── Affiliate ──────────────────────────────────────────────────────────────
+/**
+ * Injects the platform-specific affiliate banner into the page.
+ *
+ * If no platform is detected, this function is a no-op. Errors during injection are caught and logged to the console.
+ */
 
 async function injectAffiliateContent(): Promise<void> {
   if (!currentPlatform) return
   try {
     await affiliateManager.injectAffiliateBanner(currentPlatform)
   } catch (error) {
-    console.error('[Content] Failed to inject affiliate banner:', error)
+    log.error('Failed to inject affiliate banner:', error)
   }
 }
 
-// ── Message handler ────────────────────────────────────────────────────────
+/**
+ * Handle a content-script message and perform the requested action (HUD toggle, session stats, flow control).
+ *
+ * Supports:
+ * - `GET_SESSION_STATS`: returns current RTP/session statistics.
+ * - `HUD_TOGGLE`: injects or removes the HUD and persists the setting; returns an acknowledgement object.
+ * - `EXECUTE_FLOW`: starts the given flow in the background (prevents concurrent runs), reports completion to the background service worker, and returns an immediate acknowledgement.
+ * - `FLOW_CANCEL`: signals cancellation for the active flow via a window event and returns an acknowledgement.
+ *
+ * Side effects include injecting/removing HUD elements, starting background flow execution, dispatching a cancel event for flows, and sending `FLOW_COMPLETED` messages to the background.
+ *
+ * @param message - The content script message describing the action to perform and any associated payload.
+ * @returns The result of the handled message: session stats for `GET_SESSION_STATS`; acknowledgement objects such as `{ success: true }` or `{ success: false, error: string }` for HUD and flow actions; or `null` for unknown message types.
+ */
 
 async function handleContentMessage(message: ContentScriptMessage): Promise<unknown> {
   switch (message.type) {
@@ -234,7 +330,7 @@ async function handleContentMessage(message: ContentScriptMessage): Promise<unkn
     case 'PAGE_LOADED': {
       // Page load notification from background service worker
       // Used to trigger initialization if content script didn't auto-init
-      console.log('[Content] PAGE_LOADED notification received')
+      log.info('PAGE_LOADED notification received')
       return { success: true }
     }
 
@@ -258,19 +354,19 @@ async function handleContentMessage(message: ContentScriptMessage): Promise<unkn
     case 'EXECUTE_FLOW': {
       const { flow } = message.payload!
       if (activeFlowId) {
-        console.warn(`[Content] Flow ${activeFlowId} already running — ignoring new request`)
+        log.warn(`Flow ${activeFlowId} already running — ignoring new request`)
         return { success: false, error: 'A flow is already running' }
       }
 
       activeFlowId = flow.id
-      console.log(`[Content] Executing flow "${flow.name}" (${flow.id})`)
+      log.info(`Executing flow "${flow.name}" (${flow.id})`)
 
       // Execute in the background so we can return immediately
       executeFlow(flow)
         .then((execution) => {
           activeFlowId = null
           const success = execution.status === 'completed'
-          console.log(`[Content] Flow ${flow.id} finished: ${execution.status}`, execution.error ?? '')
+          log.info(`Flow ${flow.id} finished: ${execution.status}`, execution.error ?? '')
 
           // Report result back to background service worker
           chrome.runtime.sendMessage({
@@ -285,7 +381,7 @@ async function handleContentMessage(message: ContentScriptMessage): Promise<unkn
         .catch((err) => {
           activeFlowId = null
           const errMsg = err instanceof Error ? err.message : String(err)
-          console.error(`[Content] Flow ${flow.id} threw:`, err)
+          log.error(`Flow ${flow.id} threw:`, err)
 
           chrome.runtime.sendMessage({
             type: 'FLOW_COMPLETED',
@@ -302,7 +398,7 @@ async function handleContentMessage(message: ContentScriptMessage): Promise<unkn
         // The executor checks a cancel flag — we set it via a window event
         window.dispatchEvent(new CustomEvent('sweepbot:cancel-flow', { detail: { flowId } }))
         activeFlowId = null
-        console.log(`[Content] Flow ${flowId} cancelled`)
+        log.info(`Flow ${flowId} cancelled`)
       }
       return { success: true }
     }
@@ -316,23 +412,25 @@ async function handleContentMessage(message: ContentScriptMessage): Promise<unkn
 
 let lastUrl = window.location.href
 setInterval(() => {
-  if (window.location.href !== lastUrl) {
-    lastUrl = window.location.href
-    console.log('[Content] Navigation detected:', lastUrl)
+  void (async () => {
+    if (window.location.href !== lastUrl) {
+      lastUrl = window.location.href
+      log.info('Navigation detected:', lastUrl)
 
-    if (currentSessionId) endSession()
+      if (currentSessionId) await endSession()
 
-    currentPlatform = detectPlatform(lastUrl)
-    if (currentPlatform && isGamePage(lastUrl, currentPlatform)) {
-      startSession()
+      currentPlatform = detectPlatform(lastUrl)
+      if (currentPlatform && isGamePage(lastUrl, currentPlatform)) {
+        await startSession()
+      }
     }
-  }
+  })()
 }, 1000)
 
 // ── Kick off ───────────────────────────────────────────────────────────────
 
 init().catch((error) => {
-  console.error('[Content] Initialization failed:', error)
+  log.error('Initialization failed:', error)
 })
 
   } // end main

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
 import {
   History,
   Filter,
@@ -26,9 +25,9 @@ export function SessionsPage() {
     queryKey: ['sessions', { page, platformFilter }],
     queryFn: () =>
       api.sessions.list({
-        page,
-        pageSize: 25,
-        platformId: platformFilter || undefined,
+        page: String(page),
+        pageSize: '25',
+        ...(platformFilter ? { platformId: platformFilter } : {}),
       }),
     placeholderData: (prev) => prev,
   })
@@ -53,6 +52,7 @@ export function SessionsPage() {
           <span className="text-sm">Filter by:</span>
         </div>
         <select
+          aria-label="Filter sessions by platform"
           value={platformFilter}
           onChange={(e) => { setPlatformFilter(e.target.value); setPage(1) }}
           className="px-3 py-1.5 bg-zinc-900 border border-zinc-800 text-zinc-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
@@ -99,18 +99,16 @@ export function SessionsPage() {
                 : null
 
               return (
-                <Link
+                <div
                   key={session['id'] as string}
-                  to="/sessions/$id"
-                  params={{ id: session['id'] as string }}
-                  className="flex items-center gap-4 px-5 py-4 hover:bg-zinc-800/40 transition-colors group"
+                  className="flex items-center gap-4 px-5 py-4 hover:bg-zinc-800/40 transition-colors group cursor-default"
                 >
                   {/* Platform logo */}
                   <div className="w-8 h-8 rounded-md bg-zinc-800 flex items-center justify-center shrink-0">
                     {session['platform_logo_url'] ? (
                       <img
                         src={session['platform_logo_url'] as string}
-                        alt=""
+                        alt={`${session['platform_name']} logo`}
                         className="w-8 h-8 rounded-md"
                       />
                     ) : (
@@ -140,7 +138,7 @@ export function SessionsPage() {
                       {duration !== null && (
                         <span className="text-xs text-zinc-600">{duration}m</span>
                       )}
-                      {session['game_name'] && (
+                      {!!session['game_name'] && (
                         <span className="text-xs text-zinc-600 truncate">
                           {session['game_name'] as string}
                         </span>
@@ -192,7 +190,7 @@ export function SessionsPage() {
                   </div>
 
                   <ChevronRight className="w-4 h-4 text-zinc-700 group-hover:text-zinc-400 transition-colors shrink-0" />
-                </Link>
+                </div>
               )
             })}
           </div>

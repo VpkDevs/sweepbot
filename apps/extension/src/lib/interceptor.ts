@@ -5,7 +5,12 @@
  */
 
 import type { PlatformConfig } from './platforms'
-import { storage } from './storage'
+
+/** XHR instances augmented by the interceptor carry these extra tracking fields. */
+interface AugmentedXMLHttpRequest extends XMLHttpRequest {
+  _sweepbot_url?: string
+  _sweepbot_method?: string
+}
 
 export interface InterceptedTransaction {
   platformSlug: string
@@ -24,12 +29,14 @@ export interface InterceptedBalance {
   timestamp: number
 }
 
-class NetworkInterceptor {
+export class NetworkInterceptor {
   private platform: PlatformConfig | null = null
   private onTransaction: ((tx: InterceptedTransaction) => void) | null = null
   private onBalance: ((balance: InterceptedBalance) => void) | null = null
   private originalFetch: typeof window.fetch | null = null
   private originalXhr: typeof XMLHttpRequest | null = null
+  private originalXhrOpen: typeof XMLHttpRequest.prototype.open | null = null
+  private originalXhrSend: typeof XMLHttpRequest.prototype.send | null = null
 
   initialize(platform: PlatformConfig): void {
     this.platform = platform
@@ -58,12 +65,11 @@ class NetworkInterceptor {
     if (!this.platform || this.originalFetch) return
 
     this.originalFetch = window.fetch
-    const platform = this.platform
     const self = this
 
-    window.fetch = function (...args: Parameters<typeof fetch>) {
+    window.fetch = function (this: typeof globalThis, ...args: Parameters<typeof fetch>) {
       const [resource] = args
-      const url = typeof resource === 'string' ? resource : resource.url
+      const url = typeof resource === 'string' ? resource : (resource as Request).url
 
       return self.originalFetch!.apply(this, args).then((response) => {
         // Clone response for parsing without consuming the stream
@@ -74,10 +80,8 @@ class NetworkInterceptor {
           // Not JSON or failed to parse, ignore
         })
         return response
-      }).catch((error) => {
-        throw error
       })
-    } as any
+    } as typeof fetch
   }
 
   /**
@@ -87,23 +91,29 @@ class NetworkInterceptor {
     if (!this.platform || this.originalXhr) return
 
     this.originalXhr = XMLHttpRequest
-    const platform = this.platform
     const self = this
 
-    const originalOpen = XMLHttpRequest.prototype.open
-    const originalSend = XMLHttpRequest.prototype.send
+    this.originalXhrOpen = XMLHttpRequest.prototype.open
+    this.originalXhrSend = XMLHttpRequest.prototype.send
+    const originalOpen = this.originalXhrOpen
+    const originalSend = this.originalXhrSend
 
-    XMLHttpRequest.prototype.open = function (method: string, url: string) {
-      ;(this as any)._sweepbot_url = url
-      ;(this as any)._sweepbot_method = method
-      return originalOpen.apply(this, arguments as any)
+    XMLHttpRequest.prototype.open = function (method: string, url: string, ...args: unknown[]) {
+      ;(this as AugmentedXMLHttpRequest)._sweepbot_url = url
+      ;(this as AugmentedXMLHttpRequest)._sweepbot_method = method
+      return originalOpen.apply(this, [method, url, ...args] as Parameters<typeof originalOpen>)
     }
 
-    XMLHttpRequest.prototype.send = function () {
+    XMLHttpRequest.prototype.send = function (...args: unknown[]) {
       const originalOnReadyStateChange = this.onreadystatechange
-      const url = (this as any)._sweepbot_url
+      const url = (this as AugmentedXMLHttpRequest)._sweepbot_url
 
-      this.onreadystatechange = function () {
+      // Guard against missing URL (e.g., if open() wasn't called)
+      if (!url) {
+        return originalSend.apply(this, args as Parameters<typeof originalSend>)
+      }
+
+      this.onreadystatechange = function (ev: Event) {
         if (this.readyState === 4) {
           try {
             const data = JSON.parse(this.responseText)
@@ -113,11 +123,11 @@ class NetworkInterceptor {
           }
         }
         if (originalOnReadyStateChange) {
-          originalOnReadyStateChange.call(this)
+          originalOnReadyStateChange.call(this, ev)
         }
       }
 
-      return originalSend.apply(this, arguments as any)
+      return originalSend.apply(this, args as Parameters<typeof originalSend>)
     }
   }
 
@@ -189,11 +199,11 @@ class NetworkInterceptor {
     if (!obj || typeof obj !== 'object') return null
 
     const parts = path.split('.')
-    let current: any = obj
+    let current: unknown = obj
 
     for (const part of parts) {
-      if (current == null) return null
-      current = current[part]
+      if (current == null || typeof current !== 'object') return null
+      current = (current as Record<string, unknown>)[part]
     }
 
     return current
@@ -208,8 +218,11 @@ class NetworkInterceptor {
       this.originalFetch = null
     }
     if (this.originalXhr) {
-      // XHR prototype is harder to restore; just clear our handlers
+      if (this.originalXhrOpen) XMLHttpRequest.prototype.open = this.originalXhrOpen
+      if (this.originalXhrSend) XMLHttpRequest.prototype.send = this.originalXhrSend
       this.originalXhr = null
+      this.originalXhrOpen = null
+      this.originalXhrSend = null
     }
     this.onTransaction = null
     this.onBalance = null

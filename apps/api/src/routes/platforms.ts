@@ -10,7 +10,7 @@ const PlatformParamsSchema = z.object({
 
 const PlatformQuerySchema = z.object({
   search: z.string().optional(),
-  status: z.enum(['active', 'inactive', 'watchlist']).optional(),
+  status: z.enum(['active', 'inactive', 'watchlist', 'suspended', 'closed']).optional(),
   sortBy: z.enum(['name', 'trust_score', 'created_at']).default('name'),
   sortDir: z.enum(['asc', 'desc']).default('asc'),
   page: z.coerce.number().int().min(1).default(1),
@@ -36,7 +36,7 @@ export async function platformRoutes(app: FastifyInstance): Promise<void> {
           type: 'object',
           properties: {
             search: { type: 'string' },
-            status: { type: 'string', enum: ['active', 'inactive', 'watchlist'] },
+            status: { type: 'string', enum: ['active', 'inactive', 'watchlist', 'suspended', 'closed'] },
             sortBy: { type: 'string', enum: ['name', 'trust_score', 'created_at'] },
             sortDir: { type: 'string', enum: ['asc', 'desc'] },
             page: { type: 'number' },
@@ -101,7 +101,7 @@ export async function platformRoutes(app: FastifyInstance): Promise<void> {
         `),
       ])
 
-      const total = Number((countResult.rows[0] as { total: string }).total)
+      const total = Number((countResult.rows[0] as { total: string } | undefined)?.total ?? '0')
 
       return reply.send({
         success: true,

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { supabase } from '../../lib/supabase'
+import { supabaseClient } from '../../lib/supabase'
 import { useAuthStore } from '../../stores/auth'
 import { Zap, Loader2, AlertTriangle } from 'lucide-react'
 
@@ -17,7 +17,7 @@ export function AuthCallbackPage() {
   useEffect(() => {
     async function handleCallback() {
       // Supabase parses the hash fragment automatically on getSession()
-      const { data, error: sessionError } = await supabase.auth.getSession()
+      const { data, error: sessionError } = await supabaseClient.auth.getSession()
 
       if (sessionError) {
         setError(sessionError.message)

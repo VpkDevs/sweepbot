@@ -3,16 +3,22 @@
  * Replaces node-cron from the @sweepbot/flows package — browser-safe.
  */
 
-import type { FlowDefinition, FlowTrigger } from './types'
+import type { FlowDefinition } from './types'
+import { createLogger } from '../logger'
 
+const log = createLogger('FlowScheduler')
 const ALARM_PREFIX = 'sweepbot_flow_'
 
 /**
- * Convert a 5-field cron expression to milliseconds until next fire,
- * then schedule a Chrome Alarm using periodInMinutes.
+ * Schedule a flow's scheduled trigger as a Chrome alarm.
  *
- * Chrome Alarms only support a minimum period of 1 minute.
- * We use `when` for the first fire and `periodInMinutes` for recurrence.
+ * If the flow's trigger type is not "scheduled" this is a no-op. Converts the
+ * flow's cron expression into the next fire delay and recurrence period, clears
+ * any existing alarm for the flow, and creates a Chrome alarm named
+ * ALARM_PREFIX + flow.id using `when` for the first fire and `periodInMinutes`
+ * (minimum 1 minute) for recurrence.
+ *
+ * @param flow - FlowDefinition with a `scheduled` trigger containing a cron expression
  */
 export function scheduleFlow(flow: FlowDefinition): void {
   if (flow.trigger.type !== 'scheduled') return
@@ -28,23 +34,38 @@ export function scheduleFlow(flow: FlowDefinition): void {
       when: Date.now() + nextMs,
       periodInMinutes: Math.max(1, Math.round(periodMs / 60_000)),
     })
-    console.log(
-      `[FlowScheduler] Scheduled "${flow.name}" (${alarmName}) — next in ${Math.round(nextMs / 60_000)} min`,
-    )
+    log.info(`Scheduled "${flow.name}" (${alarmName}) — next in ${Math.round(nextMs / 60_000)} min`)
   })
 }
 
+/**
+ * Removes the Chrome alarm associated with the specified flow.
+ *
+ * @param flowId - The flow identifier used to construct the alarm name
+ */
 export function unscheduleFlow(flowId: string): void {
   const alarmName = `${ALARM_PREFIX}${flowId}`
   chrome.alarms.clear(alarmName)
-  console.log(`[FlowScheduler] Unscheduled flow ${flowId}`)
+  log.info(`Unscheduled flow ${flowId}`)
 }
 
+/**
+ * Extracts the flow id from a namespaced alarm name.
+ *
+ * @param alarmName - The full alarm name potentially prefixed with ALARM_PREFIX
+ * @returns The flow id substring after the prefix, or `null` if the name does not start with the prefix
+ */
 export function getFlowIdFromAlarm(alarmName: string): string | null {
   if (!alarmName.startsWith(ALARM_PREFIX)) return null
   return alarmName.slice(ALARM_PREFIX.length)
 }
 
+/**
+ * Determine whether a Chrome alarm name corresponds to a scheduled flow.
+ *
+ * @param alarmName - The alarm name to inspect
+ * @returns `true` if the name starts with the module's flow alarm prefix, `false` otherwise.
+ */
 export function isFlowAlarm(alarmName: string): boolean {
   return alarmName.startsWith(ALARM_PREFIX)
 }
@@ -59,15 +80,18 @@ interface AlarmParams {
 }
 
 /**
- * Parse a 5-field cron "MIN HOUR DOM MON DOW" and compute:
- * - nextMs: how long until the next matching time
- * - periodMs: the natural recurrence period
+ * Convert a 5-field cron expression into the milliseconds until its next match and its recurrence period.
  *
- * Supports only the subset our interpreter generates:
- *   - `MIN HOUR * * *` → daily at that time
- *   - `MIN HOUR * * DOW` → weekly on that day
- *   - `0 * * * *` → hourly
- *   - `* /N * * * *` → every N minutes (step syntax)
+ * Supports the restricted cron forms used by the scheduler:
+ * - `MIN HOUR * * *` — daily at the specified hour and minute
+ * - `MIN HOUR * * DOW` — weekly on the specified day-of-week (0–6)
+ * - `0 * * * *` — hourly at the top of the hour
+ * - `* /N * * * *` — every N minutes (step syntax)
+ *
+ * @param cron - A five-field cron string in the form "MIN HOUR DOM MON DOW"
+ * @returns An object with:
+ *   - `nextMs`: milliseconds until the next matching occurrence
+ *   - `periodMs`: natural recurrence period in milliseconds for subsequent occurrences
  */
 function cronToAlarmParams(cron: string): AlarmParams {
   const [min, hour, , , dow] = cron.trim().split(/\s+/)

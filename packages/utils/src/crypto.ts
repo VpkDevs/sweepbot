@@ -25,21 +25,20 @@ export function generateToken(length = 32): string {
 }
 
 /**
- * Generate secure random number
+ * Generate cryptographically secure random number in [min, max)
  */
 export function generateRandomNumber(min = 0, max = 1): number {
-  return Math.random() * (max - min) + min
+  const range = max - min
+  const buf = new Uint32Array(1)
+  crypto.getRandomValues(buf)
+  return min + (buf[0]! / (0xffffffff + 1)) * range
 }
 
 /**
- * Generate UUID v4
+ * Generate UUID v4 using the Web Crypto API
  */
 export function generateUUIDv4(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0
-    const v = c === 'x' ? r : (r & 0x3) | 0x8
-    return v.toString(16)
-  })
+  return crypto.randomUUID()
 }
 
 /**

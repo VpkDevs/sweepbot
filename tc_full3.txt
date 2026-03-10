@@ -1,0 +1,64 @@
+
+> sweepbot@0.1.0 typecheck C:\Users\MQ420_OL\DEV\web\Sweepbot
+> turbo run typecheck
+
+ΓÇó turbo 2.8.11
+ΓÇó Packages in scope: @sweepbot/api, @sweepbot/config, @sweepbot/extension, @sweepbot/flows, @sweepbot/types, @sweepbot/utils, @sweepbot/web
+ΓÇó Running typecheck in 7 packages
+ΓÇó Remote caching disabled
+@sweepbot/utils:typecheck: cache hit, replaying logs b2890e2a3a3431fd
+@sweepbot/types:typecheck: cache hit, replaying logs 2167dec459b2128b
+@sweepbot/utils:typecheck: 
+@sweepbot/utils:typecheck: > @sweepbot/utils@0.1.0 typecheck C:\Users\MQ420_OL\DEV\web\Sweepbot\packages\utils
+@sweepbot/utils:typecheck: > tsc --noEmit
+@sweepbot/utils:typecheck: 
+@sweepbot/types:typecheck: 
+@sweepbot/types:typecheck: > @sweepbot/types@0.1.0 typecheck C:\Users\MQ420_OL\DEV\web\Sweepbot\packages\types
+@sweepbot/types:typecheck: > tsc --noEmit
+@sweepbot/types:typecheck: 
+@sweepbot/types:build: cache hit, replaying logs db359f6121dc1bfb
+@sweepbot/types:build: 
+@sweepbot/types:build: > @sweepbot/types@0.1.0 build C:\Users\MQ420_OL\DEV\web\Sweepbot\packages\types
+@sweepbot/types:build: > tsc
+@sweepbot/types:build: 
+@sweepbot/flows:typecheck: cache miss, executing f48fc2863438f92b
+@sweepbot/web:typecheck: cache miss, executing 542fb0f594763fd5
+@sweepbot/flows:build: cache miss, executing cf545a66dae27ebc
+@sweepbot/extension:typecheck: cache miss, executing 6ffd1bc4d263939c
+@sweepbot/web:typecheck: 
+@sweepbot/web:typecheck: > @sweepbot/web@0.1.0 typecheck C:\Users\MQ420_OL\DEV\web\Sweepbot\apps\web
+@sweepbot/web:typecheck: > tsc --noEmit
+@sweepbot/web:typecheck: 
+@sweepbot/extension:typecheck: 
+@sweepbot/extension:typecheck: > @sweepbot/extension@0.1.0 typecheck C:\Users\MQ420_OL\DEV\web\Sweepbot\apps\extension
+@sweepbot/extension:typecheck: > wxt prepare && tsc --noEmit
+@sweepbot/extension:typecheck: 
+@sweepbot/flows:typecheck: 
+@sweepbot/flows:typecheck: > @sweepbot/flows@0.1.0 typecheck C:\Users\MQ420_OL\DEV\web\Sweepbot\packages\flows
+@sweepbot/flows:typecheck: > tsc --noEmit
+@sweepbot/flows:typecheck: 
+@sweepbot/flows:build: 
+@sweepbot/flows:build: > @sweepbot/flows@0.1.0 build C:\Users\MQ420_OL\DEV\web\Sweepbot\packages\flows
+@sweepbot/flows:build: > tsc
+@sweepbot/flows:build: 
+@sweepbot/extension:typecheck: 
+@sweepbot/extension:typecheck: [90mWXT[39m [90m[1m0.19.29[22m[39m
+@sweepbot/flows:typecheck: src/interpreter/interpreter.ts(266,9): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+@sweepbot/flows:typecheck:   Type 'undefined' is not assignable to type 'string'.
+@sweepbot/flows:typecheck: src/interpreter/interpreter.ts(295,9): error TS2322: Type 'string' is not assignable to type '">" | "<" | ">=" | "<=" | "==" | "!=" | "contains" | "exists"'.
+@sweepbot/flows:typecheck: ΓÇëELIFECYCLEΓÇë Command failed with exit code 2.
+@sweepbot/extension:typecheck: [36mΓä╣[39m Generating types...
+@sweepbot/flows:build: src/interpreter/interpreter.ts(266,9): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+@sweepbot/flows:build:   Type 'undefined' is not assignable to type 'string'.
+@sweepbot/flows:build: src/interpreter/interpreter.ts(295,9): error TS2322: Type 'string' is not assignable to type '">" | "<" | ">=" | "<=" | "==" | "!=" | "contains" | "exists"'.
+@sweepbot/flows:build: ΓÇëELIFECYCLEΓÇë Command failed with exit code 2.
+@sweepbot/flows:typecheck: ERROR: command finished with error: command (C:\Users\MQ420_OL\DEV\web\Sweepbot\packages\flows) C:\Users\MQ420_OL\DEV\web\Sweepbot\node_modules\.bin\pnpm.CMD run typecheck exited (2)
+@sweepbot/flows#typecheck: command (C:\Users\MQ420_OL\DEV\web\Sweepbot\packages\flows) C:\Users\MQ420_OL\DEV\web\Sweepbot\node_modules\.bin\pnpm.CMD run typecheck exited (2)
+
+ Tasks:    3 successful, 7 total
+Cached:    3 cached, 7 total
+  Time:    4.507s 
+Failed:    @sweepbot/flows#typecheck
+
+ ERROR  run failed: command  exited (2)
+ΓÇëELIFECYCLEΓÇë Command failed with exit code 2.

@@ -5,36 +5,51 @@
  */
 
 import type { FlowDefinition } from '../types'
+import { logger as defaultLogger } from '@sweepbot/utils'
+import type { ScheduledTask, ScheduleOptions } from 'node-cron'
 
 // Using dynamic import for node-cron to avoid issues with ESM
-let CronJob: any
-let cronSchedule: any
+let CronJob: typeof import('node-cron').schedule | undefined
+let cronSchedule: typeof import('node-cron') | undefined
 
-async function loadCron() {
+/**
+ * Lazily loads the node-cron library and caches its scheduler helpers for the module.
+ *
+ * If the cron helpers are not already loaded, imports `node-cron` dynamically and stores
+ * the schedule function and the cron module in the module-level caches so subsequent
+ * scheduler operations can use them without re-importing.
+ */
+async function loadCron(): Promise<typeof import('node-cron').schedule> {
   if (!CronJob) {
-    // @ts-ignore - node-cron doesn't have published types
     const cron = await import('node-cron')
     CronJob = cron.schedule
     cronSchedule = cron
   }
+
+  return CronJob
 }
 
 export interface FlowSchedulerOptions {
   onFlowExecute?: (flowId: string, userId: string) => Promise<void>
   onFlowError?: (flowId: string, userId: string, error: Error) => Promise<void>
-  logger?: { info: (msg: string) => void; error: (msg: string, err: any) => void }
+  logger?: { info: (msg: string) => void; error: (msg: string, err: unknown) => void }
 }
 
 export class FlowScheduler {
-  private jobs = new Map<string, any>()
+  /**
+   * Map of jobKey -> metadata object. We keep the raw cron job plus
+   * convenient metadata for testing and introspection (cron string,
+   * timezone, userId, etc.).
+   */
+  private jobs = new Map<string, { job: ScheduledTask; cron?: string; timezone?: string; userId?: string }>()
   private options: FlowSchedulerOptions
-  private logger: { info: (msg: string) => void; error: (msg: string, err: any) => void }
+  private logger: { info: (msg: string) => void; error: (msg: string, err: unknown) => void }
 
   constructor(options: FlowSchedulerOptions = {}) {
     this.options = options
     this.logger = options.logger || {
-      info: (msg) => console.log(`[FlowScheduler] ${msg}`),
-      error: (msg, err) => console.error(`[FlowScheduler] ${msg}`, err),
+      info: (msg) => defaultLogger.info(msg, { module: 'FlowScheduler' }),
+      error: (msg, err) => defaultLogger.error(msg, { module: 'FlowScheduler', err }),
     }
   }
 
@@ -48,7 +63,7 @@ export class FlowScheduler {
       return
     }
 
-    await loadCron()
+    const scheduleCronJob = await loadCron()
 
     const { cron, timezone } = flow.trigger
     const jobKey = `${userId}:${flow.id}`
@@ -57,8 +72,13 @@ export class FlowScheduler {
     await this.pauseFlow(flow.id)
 
     try {
-      // Create cron job
-      const job = CronJob(cron, async () => {
+      // Create cron job - include timezone if specified
+      const jobOptions: ScheduleOptions = {}
+      if (timezone) {
+        jobOptions.timezone = timezone
+      }
+      if (!CronJob) throw new Error('node-cron failed to load')
+      const job = scheduleCronJob(cron, async () => {
         try {
           this.logger.info(`Executing scheduled flow ${flow.id} for user ${userId}`)
           if (this.options.onFlowExecute) {
@@ -70,11 +90,12 @@ export class FlowScheduler {
             await this.options.onFlowError(flow.id, userId, error as Error)
           }
         }
-      })
+      }, jobOptions)
 
       // Start the job
       job.start()
-      this.jobs.set(jobKey, job)
+      // store metadata so tests / introspection can inspect timezone/cron
+      this.jobs.set(jobKey, { job, cron, timezone, userId })
 
       this.logger.info(`Flow ${flow.id} scheduled: cron="${cron}" timezone="${timezone}" for user ${userId}`)
     } catch (error) {
@@ -89,16 +110,20 @@ export class FlowScheduler {
    */
   async pauseFlow(flowId: string): Promise<void> {
     // Find and stop all jobs for this flow (across all users)
-    for (const [jobKey, job] of this.jobs.entries()) {
+    const keysToRemove: string[] = []
+    for (const [jobKey, meta] of this.jobs.entries()) {
       if (jobKey.endsWith(`:${flowId}`)) {
         try {
-          job.stop()
-          this.jobs.delete(jobKey)
+          meta.job.stop()
+          keysToRemove.push(jobKey)
           this.logger.info(`Paused flow ${flowId}`)
         } catch (error) {
           this.logger.error(`Failed to pause flow ${flowId}`, error)
         }
       }
+    }
+    for (const key of keysToRemove) {
+      this.jobs.delete(key)
     }
   }
 
@@ -149,9 +174,9 @@ export class FlowScheduler {
   async shutdown(): Promise<void> {
     this.logger.info('Shutting down FlowScheduler...')
 
-    for (const [jobKey, job] of this.jobs.entries()) {
+    for (const [jobKey, meta] of this.jobs.entries()) {
       try {
-        job.stop()
+        meta.job.stop()
         this.jobs.delete(jobKey)
       } catch (error) {
         this.logger.error(`Failed to stop job ${jobKey}`, error)
@@ -166,5 +191,13 @@ export class FlowScheduler {
    */
   getActiveFlows(): string[] {
     return Array.from(this.jobs.keys())
+  }
+
+  /**
+   * Inspect metadata for a specific job (used in tests / debugging)
+   */
+  getJobInfo(flowId: string, userId: string): { job: ScheduledTask; cron?: string; timezone?: string; userId?: string } | undefined {
+    const key = `${userId}:${flowId}`
+    return this.jobs.get(key)
   }
 }

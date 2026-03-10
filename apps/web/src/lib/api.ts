@@ -1,20 +1,51 @@
 import type { ApiResponse } from '@sweepbot/types'
-import { supabase } from './supabase'
+import { supabaseClient, supabaseStub } from './supabase'
+import { logger } from '@sweepbot/utils'
 
 const API_BASE = import.meta.env.VITE_API_URL ?? '/api/v1'
 
-class ApiError extends Error {
+// Use supabaseClient which handles the null case
+const getSupabase = () => supabaseClient ?? supabaseStub
+
+// ── Error types ───────────────────────────────────────────────────────────────
+
+export class ApiError extends Error {
   constructor(
     public code: string,
     message: string,
-    public status?: number
+    public status?: number,
+    public data?: unknown,
   ) {
     super(message)
     this.name = 'ApiError'
   }
 }
 
+export class NetworkError extends ApiError {
+  constructor(message = 'Network request failed. Check your connection.') {
+    super('NETWORK_ERROR', message, 0)
+    this.name = 'NetworkError'
+  }
+}
+
+export class TimeoutError extends ApiError {
+  constructor(timeoutMs: number) {
+    super('TIMEOUT_ERROR', `Request timed out after ${timeoutMs}ms`, 408)
+    this.name = 'TimeoutError'
+  }
+}
+
+export class UnauthorizedError extends ApiError {
+  constructor(message = 'Session expired. Please log in again.') {
+    super('UNAUTHORIZED', message, 401)
+    this.name = 'UnauthorizedError'
+  }
+}
+
+// ── Auth headers ──────────────────────────────────────────────────────────────
+
 async function getAuthHeaders(): Promise<Record<string, string>> {
+  const supabase = getSupabase()
   const {
     data: { session },
   } = await supabase.auth.getSession()
@@ -27,35 +58,130 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   }
 }
 
-async function request<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const headers = await getAuthHeaders()
+// ── Retry helpers ─────────────────────────────────────────────────────────────
 
-  try {
-    const response = await fetch(`${API_BASE}${path}`, {
-      ...options,
-      headers: { ...headers, ...options.headers },
-    })
+function calcRetryDelay(attempt: number, base = 1000): number {
+  const buf = new Uint32Array(1)
+  crypto.getRandomValues(buf)
+  const jitter = (buf[0]! / 2 ** 32) * 500
+  return Math.min(base * 2 ** attempt, 10_000) + jitter
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+// ── In-flight dedup map ───────────────────────────────────────────────────────
+
+const pendingRequests = new Map<string, Promise<unknown>>()
+
+// ── Core request (with timeout + retry + deduplication) ───────────────────────
+
+interface RequestConfig extends RequestInit {
+  /** AbortController timeout in ms (default 30 s) */
+  timeout?: number
+  /** Max additional retry attempts for network/5xx errors (default 2) */
+  retries?: number
+  /** Base delay for exponential backoff in ms (default 1000) */
+  retryDelay?: number
+}
+
+async function request<T>(path: string, config: RequestConfig = {}): Promise<T> {
+  const { timeout = 30_000, retries = 2, retryDelay = 1000, ...options } = config
+  const method = (options.method ?? 'GET').toUpperCase()
+  const isGet = method === 'GET'
+  const cacheKey = `${method}:${path}:${options.body ?? ''}`
+
+  // Deduplicate concurrent identical GET requests
+  if (isGet) {
+    const pending = pendingRequests.get(cacheKey)
+    if (pending) return pending as Promise<T>
+  }
+
+  const execute = async (attempt: number): Promise<T> => {
+    const headers = await getAuthHeaders()
+    const controller = new AbortController()
+    const timerId = setTimeout(() => controller.abort(), timeout)
+
+    let response: Response
+    try {
+      response = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers: { ...headers, ...(options.headers as Record<string, string>) },
+        signal: controller.signal,
+      })
+    } catch (err) {
+      clearTimeout(timerId)
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        throw new TimeoutError(timeout)
+      }
+      if (err instanceof TypeError) throw new NetworkError()
+      throw err
+    } finally {
+      clearTimeout(timerId)
+    }
+
+    if (response.status === 401) {
+      throw new UnauthorizedError()
+    }
 
     const json = (await response.json()) as ApiResponse<T>
 
     if (!json.success) {
-      throw new ApiError(json.error.code, json.error.message, response.status)
+      const e = new ApiError(json.error.code, json.error.message, response.status)
+      logger.error('API error', { path, code: json.error.code, status: response.status })
+      throw e
     }
 
     return json.data
-  } catch (error) {
-    if (error instanceof ApiError) throw error
-    if (error instanceof SyntaxError) {
-      throw new ApiError('PARSE_ERROR', 'Failed to parse server response', 500)
-    }
-    if (error instanceof TypeError) {
-      throw new ApiError('NETWORK_ERROR', 'Network request failed', 0)
-    }
-    throw error
   }
+
+  const withRetry = async (): Promise<T> => {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        return await execute(attempt)
+      } catch (err) {
+        const isRetryable =
+          attempt < retries &&
+          !(err instanceof UnauthorizedError) &&
+          !(err instanceof ApiError && err.status !== undefined && err.status >= 400 && err.status < 500)
+
+        if (!isRetryable) throw err
+
+        const delay = calcRetryDelay(attempt, retryDelay)
+        logger.warn('API request failed, retrying', {
+          path,
+          attempt: attempt + 1,
+          delayMs: delay,
+          error: err instanceof Error ? err.message : String(err),
+        })
+        await sleep(delay)
+      }
+    }
+    // unreachable but satisfies TS
+    throw new ApiError('UNKNOWN_ERROR', 'Request failed after retries')
+  }
+
+  const promise = withRetry() as Promise<T>
+
+  if (isGet) {
+    pendingRequests.set(cacheKey, promise)
+    promise.finally(() => pendingRequests.delete(cacheKey))
+  }
+
+  return promise
+}
+
+// ─── Query string helper ──────────────────────────────────────────────────────
+function toQS(params?: Record<string, string | number | boolean | undefined>): string {
+  if (!params) return ''
+  const filtered = Object.fromEntries(
+    Object.entries(params)
+      .filter(([, v]) => v !== undefined)
+      .map(([k, v]) => [k, String(v)])
+  )
+  const qs = new URLSearchParams(filtered).toString()
+  return qs ? `?${qs}` : ''
 }
 
 // ─── Typed API client ─────────────────────────────────────────────────────────
@@ -73,7 +199,7 @@ export const api = {
     settings: () => request<Record<string, unknown>>('/user/settings'),
     updateSettings: (data: Record<string, unknown>) =>
       request('/user/settings', { method: 'PUT', body: JSON.stringify(data) }),
-    platforms: () => request<unknown[]>('/user/platforms'),
+    platforms: () => request<Record<string, unknown>[]>('/user/platforms'),
     addPlatform: (data: Record<string, unknown>) =>
       request('/user/platforms', { method: 'POST', body: JSON.stringify(data) }),
     removePlatform: (id: string) =>
@@ -114,21 +240,21 @@ export const api = {
   platforms: {
     list: (params?: Record<string, string>) => {
       const qs = params ? '?' + new URLSearchParams(params).toString() : ''
-      return request<unknown[]>(`/platforms${qs}`)
+      return request<Record<string, unknown>[]>(`/platforms${qs}`)
     },
     get: (id: string) => request<Record<string, unknown>>(`/platforms/${id}`),
     games: (id: string, params?: Record<string, string>) => {
       const qs = params ? '?' + new URLSearchParams(params).toString() : ''
-      return request<unknown[]>(`/platforms/${id}/games${qs}`)
+      return request<Record<string, unknown>[]>(`/platforms/${id}/games${qs}`)
     },
-    tosHistory: (id: string) => request<unknown[]>(`/platforms/${id}/tos-history`),
+    tosHistory: (id: string) => request<Record<string, unknown>[]>(`/platforms/${id}/tos-history`),
   },
 
   // Sessions
   sessions: {
     list: (params?: Record<string, string>) => {
       const qs = params ? '?' + new URLSearchParams(params).toString() : ''
-      return request<unknown[]>(`/sessions${qs}`)
+      return request<Record<string, unknown>[]>(`/sessions${qs}`)
     },
     get: (id: string) => request<Record<string, unknown>>(`/sessions/${id}`),
     create: (data: Record<string, unknown>) =>
@@ -150,17 +276,17 @@ export const api = {
       return request<Record<string, unknown>>(`/analytics/rtp${qs}`)
     },
     temporal: () => request<Record<string, unknown>>('/analytics/temporal'),
-    bonus: () => request<unknown[]>('/analytics/bonus'),
+    bonus: () => request<Record<string, unknown>>('/analytics/bonus'),
   },
 
   // Jackpots
   jackpots: {
     leaderboard: (params?: Record<string, string>) => {
       const qs = params ? '?' + new URLSearchParams(params).toString() : ''
-      return request<unknown[]>(`/jackpots${qs}`)
+      return request<Record<string, unknown>[]>(`/jackpots${qs}`)
     },
     history: (gameId: string) =>
-      request<Record<string, unknown>>(`/jackpots/${gameId}/history`),
+      request<Record<string, unknown>[]>(`/jackpots/${gameId}/history`),
     stats: () => request<Record<string, unknown>>('/jackpots/stats'),
   },
 
@@ -168,21 +294,21 @@ export const api = {
   redemptions: {
     list: (params?: Record<string, string>) => {
       const qs = params ? '?' + new URLSearchParams(params).toString() : ''
-      return request<unknown[]>(`/redemptions${qs}`)
+      return request<Record<string, unknown>[]>(`/redemptions${qs}`)
     },
     create: (data: Record<string, unknown>) =>
       request('/redemptions', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: Record<string, unknown>) =>
       request(`/redemptions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     stats: () => request<Record<string, unknown>>('/redemptions/stats'),
-    communityBenchmarks: () => request<unknown[]>('/redemptions/community-benchmarks'),
+    communityBenchmarks: () => request<Record<string, unknown>[]>('/redemptions/community-benchmarks'),
   },
 
   // Trust Index
   trust: {
     list: (params?: Record<string, string>) => {
       const qs = params ? '?' + new URLSearchParams(params).toString() : ''
-      return request<unknown[]>(`/trust-index${qs}`)
+      return request<Record<string, unknown>[]>(`/trust-index${qs}`)
     },
     get: (platformId: string) =>
       request<Record<string, unknown>>(`/trust-index/${platformId}`),
@@ -192,25 +318,25 @@ export const api = {
   features: {
     achievements: (params?: Record<string, string>) => {
       const qs = params ? '?' + new URLSearchParams(params).toString() : ''
-      return request<unknown[]>(`/features/achievements${qs}`)
+      return request<Record<string, unknown>[]>(`/features/achievements${qs}`)
     },
-    myAchievements: () => request<unknown[]>('/features/achievements/mine'),
-    achievementLeaderboard: () => request<unknown[]>('/features/achievements/leaderboard'),
+    myAchievements: () => request<Record<string, unknown>[]>('/features/achievements/mine'),
+    achievementLeaderboard: () => request<Record<string, unknown>[]>('/features/achievements/leaderboard'),
     checkAchievements: () => request<Record<string, unknown>>('/features/achievements/check', { method: 'POST' }),
     heatmap: (params?: Record<string, string>) => {
       const qs = params ? '?' + new URLSearchParams(params).toString() : ''
-      return request<unknown[]>(`/features/heatmap${qs}`)
+      return request<Record<string, unknown>[]>(`/features/heatmap${qs}`)
     },
     streaks: () => request<Record<string, unknown>>('/features/streaks'),
     records: () => request<Record<string, unknown>>('/features/records'),
     refreshRecords: () => request<Record<string, unknown>>('/features/records/refresh', { method: 'POST' }),
     bigWins: (params?: Record<string, string>) => {
       const qs = params ? '?' + new URLSearchParams(params).toString() : ''
-      return request<unknown[]>(`/features/big-wins${qs}`)
+      return request<Record<string, unknown>[]>(`/features/big-wins${qs}`)
     },
     submitBigWin: (data: Record<string, unknown>) =>
       request<Record<string, unknown>>('/features/big-wins', { method: 'POST', body: JSON.stringify(data) }),
-    myBigWins: () => request<unknown[]>('/features/big-wins/mine'),
+    myBigWins: () => request<Record<string, unknown>[]>('/features/big-wins/mine'),
     updateBigWin: (id: string, data: Record<string, unknown>) =>
       request<Record<string, unknown>>(`/features/big-wins/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     stats: () => request<Record<string, unknown>>('/features/stats'),
@@ -218,18 +344,8 @@ export const api = {
 
   // Flows
   flows: {
-    list: (params?: { page?: number; pageSize?: number }) => {
-      const qs = params
-        ? '?' + new URLSearchParams(
-            Object.fromEntries(
-              Object.entries(params)
-                .filter(([, v]) => v !== undefined)
-                .map(([k, v]) => [k, String(v)])
-            )
-          ).toString()
-        : ''
-      return request<unknown[]>(`/flows${qs}`)
-    },
+    list: (params?: { page?: number; pageSize?: number }) =>
+      request<Record<string, unknown>[]>(`/flows${toQS(params)}`),
     get: (id: string) => request<Record<string, unknown>>(`/flows/${id}`),
     create: (data: Record<string, unknown>) =>
       request<Record<string, unknown>>('/flows', { method: 'POST', body: JSON.stringify(data) }),
@@ -240,6 +356,11 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ rawInput }),
       }),
+    startConversation: (initialMessage: string) =>
+      request<Record<string, unknown>>('/flows/conversations', {
+        method: 'POST',
+        body: JSON.stringify({ initialMessage }),
+      }),
     converse: (conversationId: string, userMessage: string) =>
       request<Record<string, unknown>>('/flows/converse', {
         method: 'POST',
@@ -247,35 +368,31 @@ export const api = {
       }),
     execute: (id: string) =>
       request<Record<string, unknown>>(`/flows/${id}/execute`, { method: 'POST' }),
-    executions: (id: string, params?: { page?: number; pageSize?: number }) => {
-      const qs = params
-        ? '?' + new URLSearchParams(
-            Object.fromEntries(
-              Object.entries(params)
-                .filter(([, v]) => v !== undefined)
-                .map(([k, v]) => [k, String(v)])
-            )
-          ).toString()
-        : ''
-      return request<unknown[]>(`/flows/${id}/executions${qs}`)
-    },
+    getCurrentExecution: (id: string) =>
+      request<Record<string, unknown> | null>(`/flows/${id}/execution/current`),
+    cancelExecution: (id: string) =>
+      request<Record<string, unknown>>(`/flows/${id}/execution/cancel`, { method: 'POST' }),
+    executions: (id: string, params?: { page?: number; pageSize?: number }) =>
+      request<Record<string, unknown>[]>(`/flows/${id}/executions${toQS(params)}`),
     delete: (id: string) => request<{ deleted: boolean }>(`/flows/${id}`, { method: 'DELETE' }),
+  },
+
+  // Achievements API
+  achievements: {
+    streaks: () => request<Record<string, unknown>>('/achievements/streaks'),
+    records: () => request<Record<string, unknown>>('/achievements/records'),
+    summary: () => request<Record<string, unknown>>('/achievements/summary'),
+    recordSession: (data: Record<string, unknown>) =>
+      request<Record<string, unknown>>('/achievements/streaks/record', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
   },
 
   // Notifications
   notifications: {
-    list: (params?: { limit?: number; unread_only?: boolean }) => {
-      const qs = params
-        ? '?' + new URLSearchParams(
-            Object.fromEntries(
-              Object.entries(params)
-                .filter(([, v]) => v !== undefined)
-                .map(([k, v]) => [k, String(v)])
-            )
-          ).toString()
-        : ''
-      return request<unknown[]>(`/notifications${qs}`)
-    },
+    list: (params?: { limit?: number; unread_only?: boolean }) =>
+      request<Record<string, unknown>[]>(`/notifications${toQS(params)}`),
     count: () => request<{ unread: number }>('/notifications/count'),
     markRead: (id: string) =>
       request<{ id: string }>(`/notifications/${id}/read`, { method: 'PATCH' }),
@@ -285,5 +402,3 @@ export const api = {
       request<{ deleted: boolean }>(`/notifications/${id}`, { method: 'DELETE' }),
   },
 }
-
-export { ApiError }

@@ -213,7 +213,7 @@ Assume 10,000 total users by end of Year 1:
 ## 7. Events & Community
 
 ### SweepCon (Annual)
-- Virtual convention for sweepstakes community
+- Virtual convention for sweepstakes community — targeting 2026 launch
 - Talks: RTP trends, platform reviews, responsible play
 - Sponsorship tiers: $5K-50K per sponsor (platforms, affiliates, services)
 

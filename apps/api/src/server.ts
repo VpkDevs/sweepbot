@@ -5,12 +5,12 @@
  * and routes. Returns the server for use in index.ts or tests.
  */
 
-import Fastify, { type FastifyInstance } from 'fastify'
+import Fastify, { type FastifyInstance, type FastifyError } from 'fastify'
 import cors from '@fastify/cors'
 import helmet from '@fastify/helmet'
 import rateLimit from '@fastify/rate-limit'
 import sensible from '@fastify/sensible'
-import websocket from '@fastify/websocket'
+// import websocket from '@fastify/websocket' // TODO: re-enable when Fastify 5 compatible version is released
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
 
@@ -63,7 +63,7 @@ export async function buildServer(): Promise<FastifyInstance> {
   // ─── Utilities ───────────────────────────────────────────────────────────
 
   await server.register(sensible)
-  await server.register(websocket)
+  // await server.register(websocket) // TODO: re-enable when Fastify 5 compatible version is released
 
   // ─── API Documentation (Scalar) ──────────────────────────────────────────
 
@@ -108,7 +108,7 @@ export async function buildServer(): Promise<FastifyInstance> {
 
   // ─── Global Error Handler ────────────────────────────────────────────────
 
-  server.setErrorHandler((error, _request, reply) => {
+  server.setErrorHandler((error: FastifyError, _request, reply) => {
     logger.error({ err: error }, 'Unhandled error')
 
     if (error.validation) {

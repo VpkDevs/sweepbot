@@ -14,7 +14,7 @@ import {
 } from 'recharts'
 import { Zap, TrendingUp, TrendingDown, BarChart2, Clock, Star } from 'lucide-react'
 import { api } from '../lib/api'
-import { cn, formatRTP, formatSC, confidenceColor } from '../lib/utils'
+import { cn, formatRTP, formatSC, confidenceColor, CHART_TOOLTIP_STYLE } from '../lib/utils'
 
 type Granularity = 'day' | 'week' | 'month'
 
@@ -90,7 +90,7 @@ export function AnalyticsPage() {
             <BarChart2 className="w-4 h-4" />
             <span className="text-xs font-medium uppercase tracking-wide">Confidence</span>
           </div>
-          <p className={cn('text-3xl font-black tabular-nums', confidenceColor(confidence))}>
+          <p className={cn('text-3xl font-black tabular-nums', confidenceColor(confidence < 33 ? 'low' : confidence < 66 ? 'medium' : 'high'))}>
             {confidence < 33 ? 'Low' : confidence < 66 ? 'Med' : 'High'}
           </p>
           <p className="text-xs text-zinc-500">{totalBets.toLocaleString()} bets needed for high</p>
@@ -150,7 +150,7 @@ export function AnalyticsPage() {
                 tickFormatter={(v: number) => `${v.toFixed(0)}%`}
               />
               <Tooltip
-                contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px' }}
+                contentStyle={CHART_TOOLTIP_STYLE}
                 formatter={(v: number) => [`${v.toFixed(2)}%`, 'RTP']}
               />
               <Line
@@ -194,7 +194,7 @@ export function AnalyticsPage() {
                   tickFormatter={(v: number) => `${v.toFixed(0)}%`}
                 />
                 <Tooltip
-                  contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px' }}
+                  contentStyle={CHART_TOOLTIP_STYLE}
                   formatter={(v: number) => [`${v.toFixed(2)}%`, 'RTP']}
                 />
                 <Bar dataKey="avg_rtp" name="Avg RTP">
@@ -229,7 +229,7 @@ export function AnalyticsPage() {
                   tickFormatter={(v: number) => `${v.toFixed(0)}%`}
                 />
                 <Tooltip
-                  contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px' }}
+                  contentStyle={CHART_TOOLTIP_STYLE}
                   formatter={(v: number) => [`${v.toFixed(2)}%`, 'RTP']}
                 />
                 <Bar dataKey="avg_rtp" name="Avg RTP" fill="#8b5cf6" />

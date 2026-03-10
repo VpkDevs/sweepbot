@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { supabase } from '../../lib/supabase'
+import { supabaseClient } from '../../lib/supabase'
 import { Zap, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react'
 
 export function ForgotPasswordPage() {
@@ -15,7 +15,7 @@ export function ForgotPasswordPage() {
     setLoading(true)
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
       })
       if (error) throw error

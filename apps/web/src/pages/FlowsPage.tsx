@@ -1,187 +1,196 @@
-/**
- * Flows Page - Main dashboard for user's automation flows
- * Shows list of flows, creation options, and management controls
- */
-
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { Plus, Play, Pause, Trash2, Share2 } from 'lucide-react'
+import { Plus, Play, Pause, Trash2, Share2, Bot, Zap, Clock, ArrowRight, Sparkles } from 'lucide-react'
 import { api } from '../lib/api'
-import { useAuthStore } from '../stores/auth'
+import { ScrollReveal } from '../components/fx/ScrollReveal'
+import { SpotlightCard } from '../components/fx/SpotlightCard'
+import { TextReveal } from '../components/fx/TextReveal'
+import { cn } from '../lib/utils'
 
+const STATUS_STYLES = {
+  active: { dot: 'status-dot-active', cls: 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/20', label: 'Active' },
+  draft:  { dot: 'status-dot',        cls: 'bg-zinc-700/50 text-zinc-300 ring-1 ring-zinc-600/30', label: 'Draft' },
+  paused: { dot: 'status-dot-warning', cls: 'bg-yellow-500/15 text-yellow-300 ring-1 ring-yellow-500/20', label: 'Paused' },
+} as const
+
+/**
+ * Page component that displays and manages the current user's automation flows.
+ *
+ * Renders a header with creation control, filter tabs, a list of flows with status and metadata,
+ * and per-flow actions (view, activate, pause, share, delete). Handles navigation and status updates.
+ *
+ * @returns The React element for the Flows page UI
+ */
 export function FlowsPage() {
   const navigate = useNavigate()
-  const user = useAuthStore((state) => state.user)
+  const queryClient = useQueryClient()
   const [filter, setFilter] = useState<'all' | 'active' | 'draft' | 'paused'>('all')
 
-  // Fetch user's flows
-  const { data, isLoading, error } = useQuery({
+  const { data: flows = [], isLoading, error } = useQuery({
     queryKey: ['flows', { filter, page: 1 }],
-    queryFn: async () => {
-      const response = await api.get('/flows', {
-        params: {
-          page: 1,
-          pageSize: 50,
-        },
-      })
-      return response.data.data
-    },
+    queryFn: () => api.flows.list({ page: 1, pageSize: 50 }),
   })
 
-  const flows = data || []
-
-  const handleCreateFlow = () => {
-    navigate({ to: '/flows/create' })
-  }
-
-  const handleViewFlow = (flowId: string) => {
-    navigate({ to: `/flows/${flowId}` })
-  }
+  const handleCreateFlow = () => navigate({ to: '/flows/new' })
+  const handleViewFlow = (flowId: string) => navigate({ to: `/flows/${flowId}` })
 
   const handleActivateFlow = async (flowId: string) => {
-    await api.patch(`/flows/${flowId}`, {
-      status: 'active',
-    })
-    // Invalidate query to refetch
+    await api.flows.update(flowId, { status: 'active' })
+    queryClient.invalidateQueries({ queryKey: ['flows'] })
   }
 
   const handlePauseFlow = async (flowId: string) => {
-    await api.patch(`/flows/${flowId}`, {
-      status: 'paused',
-    })
+    await api.flows.update(flowId, { status: 'paused' })
+    queryClient.invalidateQueries({ queryKey: ['flows'] })
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 lg:p-8 space-y-8 max-w-6xl mx-auto">
       {/* Header */}
+      <ScrollReveal>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Flows</h1>
-          <p className="text-gray-600">Automate your sweepstakes casino routine with natural language</p>
+          <TextReveal as="h1" className="heading-display text-white text-shimmer" stagger={50}>Flows</TextReveal>
+          <p className="text-zinc-500 text-sm mt-1.5 text-pretty">
+            Automate your sweepstakes casino routine with natural language
+          </p>
         </div>
         <button
           onClick={handleCreateFlow}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          className="group flex items-center gap-2 px-5 py-2.5 btn-primary text-white text-sm font-bold rounded-xl shadow-xl shadow-brand-500/20 press-scale"
         >
-          <Plus size={20} />
+          <Plus className="w-4 h-4" />
           New Flow
+          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
         </button>
       </div>
+      </ScrollReveal>
 
       {/* Filter Tabs */}
-      <div className="flex gap-2 border-b">
+      <ScrollReveal delay={60}>
+      <div className="flex gap-1 glass-card-static rounded-xl p-1 w-fit">
+
         {(['all', 'active', 'draft', 'paused'] as const).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-4 py-2 font-medium border-b-2 transition-colors ${
+            className={cn(
+              'px-4 py-1.5 rounded-lg text-sm font-medium transition-all',
               filter === f
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900'
-            }`}
+                ? 'bg-white/[0.08] text-white shadow-sm'
+                : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.03]',
+            )}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}
           </button>
         ))}
       </div>
+      </ScrollReveal>
 
       {/* Loading State */}
       {isLoading && (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="glass-card rounded-2xl p-6 h-36 shimmer" />
+          ))}
         </div>
       )}
 
       {/* Error State */}
       {error && (
-        <div className="bg-red-50 text-red-700 p-4 rounded-lg">
-          Failed to load flows. Please try again.
+        <div className="glass-card rounded-2xl p-4 border-red-500/20 bg-red-500/5 text-red-300 text-sm animate-spring-in flex items-start gap-2">
+          <span className="text-red-400 mt-0.5">✕</span>
+          <span>Failed to load flows. Please try again.</span>
         </div>
       )}
 
       {/* Flows List */}
-      {flows.length === 0 && !isLoading ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <p className="text-gray-600 mb-4">No flows yet. Create your first automation to get started!</p>
+      {(flows as Record<string, unknown>[]).length === 0 && !isLoading ? (
+        <div className="flex flex-col items-center justify-center py-24 text-center animate-reveal-up">
+          <div className="empty-icon-wrapper w-20 h-20 rounded-2xl bg-brand-500/10 flex items-center justify-center mb-5">
+            <Sparkles className="w-9 h-9 text-brand-400" />
+          </div>
+          <h3 className="text-lg font-bold text-white mb-2">No flows yet</h3>
+          <p className="text-zinc-500 text-sm mb-7 max-w-sm text-pretty">
+            Create your first automation to get started! Describe what you want in plain English.
+          </p>
           <button
             onClick={handleCreateFlow}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+            className="group flex items-center gap-2 px-5 py-2.5 btn-primary text-white text-sm font-bold rounded-xl shadow-xl shadow-brand-500/20 press-scale"
           >
+            <Zap className="w-4 h-4" />
             Create First Flow
+            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
           </button>
         </div>
       ) : (
-        <div className="grid gap-4">
-          {flows.map((flow: any) => (
-            <div
-              key={flow.id}
-              className="bg-white border rounded-lg p-6 hover:shadow-lg transition-shadow"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-lg font-semibold">{flow.name}</h3>
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        flow.status === 'active'
-                          ? 'bg-green-100 text-green-800'
-                          : flow.status === 'draft'
-                            ? 'bg-gray-100 text-gray-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                      }`}
-                    >
-                      {flow.status.charAt(0).toUpperCase() + flow.status.slice(1)}
-                    </span>
+        <div className="space-y-3">
+          {(flows as Record<string, unknown>[]).map((flow, i) => {
+            const statusStyle = STATUS_STYLES[flow['status'] as keyof typeof STATUS_STYLES] ?? STATUS_STYLES.draft
+            return (
+              <ScrollReveal key={flow['id'] as string} delay={i * 50}>
+              <SpotlightCard
+                className="glass-card rounded-2xl p-5 transition-all cursor-pointer"
+                onClick={() => handleViewFlow(flow['id'] as string)}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2.5 mb-1">
+                      <h3 className="text-base font-semibold text-white truncate">{flow['name'] as string}</h3>
+                      <span className={cn('inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-medium', statusStyle.cls)}>
+                        <span className={cn('w-1.5 h-1.5 rounded-full', statusStyle.dot)} />
+                        {statusStyle.label}
+                      </span>
+                    </div>
+                    <p className="text-sm text-zinc-500 line-clamp-1">{flow['description'] as string}</p>
                   </div>
-                  <p className="text-gray-600 text-sm mt-1">{flow.description}</p>
                 </div>
-              </div>
 
-              {/* Flow Meta */}
-              <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
-                <div>Executions: {flow.executionCount}</div>
-                {flow.lastExecutedAt && (
-                  <div>Last run: {new Date(flow.lastExecutedAt).toLocaleDateString()}</div>
-                )}
-              </div>
+                <div className="flex items-center gap-5 text-xs text-zinc-600 mb-4">
+                  <div className="flex items-center gap-1.5">
+                    <Zap className="w-3 h-3" />
+                    <span className="tabular-nums">{(flow['executionCount'] as number) ?? 0}</span> executions
+                  </div>
+                  {!!(flow['lastExecutedAt']) && (
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="w-3 h-3" />
+                      Last: {new Date(flow['lastExecutedAt'] as string).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
 
-              {/* Actions */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleViewFlow(flow.id)}
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm font-medium"
-                >
-                  View
-                </button>
-                {flow.status === 'draft' || flow.status === 'paused' ? (
-                  <button
-                    onClick={() => handleActivateFlow(flow.id)}
-                    className="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-sm font-medium flex items-center gap-2"
-                  >
-                    <Play size={16} />
-                    Activate
+                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                  {flow['status'] === 'draft' || flow['status'] === 'paused' ? (
+                    <button
+                      onClick={() => handleActivateFlow(flow['id'] as string)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-300 text-xs font-medium hover:bg-emerald-500/20 transition-colors press-scale"
+                    >
+                      <Play className="w-3 h-3" />
+                      Activate
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handlePauseFlow(flow['id'] as string)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-yellow-500/10 text-yellow-300 text-xs font-medium hover:bg-yellow-500/20 transition-colors press-scale"
+                    >
+                      <Pause className="w-3 h-3" />
+                      Pause
+                    </button>
+                  )}
+                  <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] text-zinc-400 text-xs font-medium hover:bg-white/[0.06] hover:text-zinc-300 transition-colors press-scale">
+                    <Share2 className="w-3 h-3" />
+                    Share
                   </button>
-                ) : (
-                  <button
-                    onClick={() => handlePauseFlow(flow.id)}
-                    className="px-4 py-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 rounded text-sm font-medium flex items-center gap-2"
-                  >
-                    <Pause size={16} />
-                    Pause
+                  <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-red-400/60 text-xs font-medium hover:bg-red-500/10 hover:text-red-400 transition-colors press-scale">
+                    <Trash2 className="w-3 h-3" />
+                    Delete
                   </button>
-                )}
-                <button className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm font-medium flex items-center gap-2">
-                  <Share2 size={16} />
-                  Share
-                </button>
-                <button className="px-4 py-2 text-red-600 hover:bg-red-50 rounded text-sm font-medium flex items-center gap-2">
-                  <Trash2 size={16} />
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
+                </div>
+              </SpotlightCard>
+              </ScrollReveal>
+            )
+          })}
         </div>
       )}
     </div>

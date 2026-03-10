@@ -406,7 +406,7 @@ describe('FlowExecutor', () => {
         onFailure: 'skip',
       }
 
-      expect(action.parameters.storeAs).toBe('BONUS')
+      expect(action.parameters['storeAs']).toBe('BONUS')
     })
 
     it('should reference stored variables in conditions', async () => {
@@ -580,6 +580,124 @@ describe('FlowExecutor', () => {
       })
 
       expect(flow.rootNode.type).toBe('sequence')
+    })
+
+    // New behavior tests exercising actual executor behavior
+    it('should stop execution when cool_down_check guardrail is enabled', async () => {
+      const root: FlowNode = {
+        type: 'action',
+        id: 'action-root',
+        action: 'spin',
+        parameters: {},
+        timeout: 1000,
+        onFailure: 'stop',
+      }
+      const flow: FlowDefinition = {
+        id: 'flow-cooldown',
+        userId: 'u1',
+        name: 'Cooldown Test',
+        description: 'test',
+        version: 1,
+        status: 'draft',
+        trigger: { type: 'manual' },
+        rootNode: root,
+        variables: [],
+        responsiblePlayGuardrails: [
+          { type: 'cool_down_check', value: true, source: 'system_mandatory', overridable: false },
+        ],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        executionCount: 0,
+        performanceStats: {},
+      }
+
+      const exec = new FlowExecutor()
+      const ctx = await exec.execute(flow, 'u1')
+      expect(ctx.status).toBe('stopped_by_guardrail')
+      expect(ctx.log.some(l => l.type === 'guardrail_triggered' && (l.details as any).guardrail === 'cool_down_check')).toBe(true)
+    })
+
+    it('should store action result when parameters.storeAs is provided', async () => {
+      const action: FlowActionNode = {
+        type: 'action',
+        id: 'a1',
+        action: 'claim_bonus',
+        parameters: { storeAs: 'BONUS' },
+        timeout: 1000,
+        onFailure: 'stop',
+      }
+      const flow = createTestFlow(action)
+      const exec = new FlowExecutor()
+      const ctx = await exec.execute(flow, 'u1')
+      expect(ctx.variables.has('BONUS')).toBe(true)
+      expect(ctx.metrics.bonusesClaimed).toBeGreaterThanOrEqual(1)
+    })
+
+    it('should evaluate expression values using stored numeric variables', async () => {
+      const seq: FlowNode = {
+        type: 'sequence',
+        id: 'seq-expr',
+        steps: [
+          {
+            type: 'store',
+            id: 's1',
+            variable: 'X',
+            value: { type: 'literal', value: 4 },
+          },
+          {
+            type: 'condition',
+            id: 'c1',
+            left: { type: 'expression', expression: '($X * 5) + 0' },
+            operator: '>=',
+            right: { type: 'literal', value: 20 },
+            onTrue: { type: 'stop', id: 'st' },
+          },
+        ],
+      }
+      const flow = createTestFlow(seq)
+      const exec = new FlowExecutor()
+      const ctx = await exec.execute(flow, 'u1')
+      expect(ctx.status).toBe('completed')
+      expect(ctx.metrics.conditionsEvaluated).toBe(1)
+    })
+
+    it('should increment loopIterations and log loop guardrail when caps hit', async () => {
+      const loop: FlowLoopNode = {
+        type: 'loop',
+        id: 'loop-cap',
+        condition: {
+          type: 'condition',
+          id: 'cond',
+          left: { type: 'literal', value: 1 },
+          operator: '==',
+          right: { type: 'literal', value: 1 },
+          onTrue: { type: 'action', id: 'body-a', action: 'spin', parameters: {}, timeout: 1000, onFailure: 'stop' },
+        },
+        body: { type: 'action', id: 'body-a', action: 'spin', parameters: {}, timeout: 1000, onFailure: 'stop' },
+        maxIterations: 3,
+        maxDuration: 60_000,
+      }
+      const flow = createTestFlow(loop)
+      const exec = new FlowExecutor()
+      const ctx = await exec.execute(flow, 'u1')
+      expect(ctx.metrics.loopIterations).toBeGreaterThanOrEqual(3)
+      expect(ctx.metrics.guardrailsTriggered.includes('loop_cap')).toBe(true)
+    })
+
+    it('should record platformsAccessed when opening a platform', async () => {
+      const action: FlowActionNode = {
+        type: 'action',
+        id: 'open',
+        action: 'open_platform',
+        platform: 'chumba',
+        parameters: {},
+        timeout: 1000,
+        onFailure: 'stop',
+      }
+      const flow = createTestFlow(action)
+      const exec = new FlowExecutor()
+      const ctx = await exec.execute(flow, 'u1')
+      expect(ctx.metrics.platformsAccessed).toContain('chumba')
     })
   })
 })

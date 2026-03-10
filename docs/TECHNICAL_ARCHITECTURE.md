@@ -1,8 +1,8 @@
 # SweepBot — Technical Architecture Document
 
-**Version:** 1.0.0
-**Date:** 2026-02-26
-**Status:** Approved for Development
+**Version:** 1.1.1
+**Date:** 2026-03-05
+**Status:** Approved for Development — Phase 1 Complete
 
 ---
 
@@ -10,7 +10,7 @@
 
 SweepBot is a **monorepo** containing four primary applications sharing common packages:
 
-```
+```text
 sweepbot/                        ← pnpm workspace root
 ├── apps/
 │   ├── web/                     ← React dashboard (Vite + Tailwind + shadcn/ui)
@@ -18,6 +18,7 @@ sweepbot/                        ← pnpm workspace root
 │   ├── extension/               ← Browser extension (WXT + React + TypeScript)
 │   └── desktop/                 ← Automation engine (Tauri + React)
 ├── packages/
+│   ├── flows/                   ← NLP Engine, AST Builder, Executor, Scheduler
 │   ├── types/                   ← Shared TypeScript interfaces & Zod schemas
 │   ├── utils/                   ← Shared utility functions
 │   └── config/                  ← Shared ESLint, TypeScript, Tailwind configs
@@ -28,7 +29,7 @@ sweepbot/                        ← pnpm workspace root
 
 ## 2. System Architecture Diagram
 
-```
+```text
 ┌────────────────────────────────────────────────────────────────────┐
 │                         USER LAYER                                  │
 ├──────────────┬─────────────────┬──────────────┬────────────────────┤
@@ -75,8 +76,9 @@ sweepbot/                        ← pnpm workspace root
 ## 3. Tech Stack
 
 ### 3.1 Frontend — Web Dashboard
+
 | Layer | Technology | Rationale |
-|-------|-----------|-----------|
+| ---- | ---- | ---- |
 | Framework | React 18 + TypeScript | Industry standard, excellent AI training data coverage |
 | Build tool | Vite 5 | Fast HMR, excellent DX, Rollup-based bundling |
 | Styling | Tailwind CSS v4 | Utility-first, no runtime overhead |
@@ -93,8 +95,9 @@ sweepbot/                        ← pnpm workspace root
 | Testing | Vitest + Testing Library | Fast, Vite-native test runner |
 
 ### 3.2 Backend — API
+
 | Layer | Technology | Rationale |
-|-------|-----------|-----------|
+| ---- | ---- | ---- |
 | Runtime | Node.js 22 LTS | Current LTS, native TypeScript via --experimental-strip-types |
 | Framework | Fastify 5 | 2-3x faster than Express, TypeScript-native, schema validation |
 | Language | TypeScript 5.5+ | Type safety across the full stack |
@@ -111,8 +114,9 @@ sweepbot/                        ← pnpm workspace root
 | API docs | Scalar | Auto-generated from Fastify JSON Schema |
 
 ### 3.3 Browser Extension
+
 | Layer | Technology | Rationale |
-|-------|-----------|-----------|
+| ---- | ---- | ---- |
 | Framework | WXT (Web Extension Tools) | Best DX for modern MV3 extensions, React support |
 | Language | TypeScript | Type safety for extension APIs |
 | UI | React + Tailwind | Shared patterns with web dashboard |
@@ -122,8 +126,9 @@ sweepbot/                        ← pnpm workspace root
 | Bundler | Vite (via WXT) | Fast rebuilds during development |
 
 ### 3.4 Desktop App — Automation Engine
+
 | Layer | Technology | Rationale |
-|-------|-----------|-----------|
+| ---- | ---- | ---- |
 | Framework | Tauri v2 | Rust backend (smaller, faster, more secure than Electron) |
 | UI | React + Tailwind | Reuse web dashboard components |
 | Automation | Playwright | Most reliable headless browser automation |
@@ -131,8 +136,9 @@ sweepbot/                        ← pnpm workspace root
 | Local DB | SQLite (via Tauri) | Local audit trail and credential metadata |
 
 ### 3.5 Monorepo Tooling
+
 | Tool | Purpose |
-|------|---------|
+| ---- | ---- |
 | pnpm 9 | Fast, disk-efficient package manager with workspace support |
 | Turborepo | Build cache, task orchestration across packages |
 | TypeScript 5.5+ | Strict type checking across all packages |
@@ -142,8 +148,9 @@ sweepbot/                        ← pnpm workspace root
 | Changesets | Version management and changelog generation |
 
 ### 3.6 Infrastructure & Deployment
+
 | Service | Purpose | Cost Model |
-|---------|---------|-----------|
+| ---- | ---- | ---- |
 | Vercel | Web dashboard hosting | Free tier → Pro (~$20/mo) |
 | Railway | API hosting | Usage-based (~$5–50/mo) |
 | Supabase | PostgreSQL + Auth + Storage | Free → Pro ($25/mo) |
@@ -238,7 +245,7 @@ CREATE POLICY "Users access own sessions" ON sessions
 
 ### 5.1 REST Endpoints (Base: /api/v1)
 
-```
+```text
 GET  /health                    → Health check
 GET  /docs                      → Scalar API documentation
 
@@ -276,11 +283,12 @@ GET  /trust-index               → All platform trust scores
 GET  /trust-index/:platform_id  → Single platform trust score
 
 POST /webhooks/stripe           → Stripe webhook handler
+POST /webhooks/supabase         → Supabase auth events (welcome email on user.created)
 ```
 
 ### 5.2 WebSocket Events
 
-```
+```text
 CLIENT → SERVER:
   session:start     { platform_id, game_id }
   session:update    { session_id, spins: [...] }
@@ -300,14 +308,14 @@ SERVER → CLIENT:
 
 ### 6.1 Extension Contexts
 
-```
+```text
 ┌─────────────────────────────────────────────────────┐
 │                BROWSER EXTENSION                     │
 ├────────────────┬────────────────┬───────────────────┤
 │  Background    │  Content       │  Popup / Options  │
 │  Service Worker│  Scripts       │  (React UI)       │
 │                │                │                   │
-│ - Session mgmt │ - Page DOM     │ - Dashboard mini  │
+│ - Session mgmt │ - Page DOM     │ - Dashboard mini  |
 │ - API sync     │   observation  │ - Quick stats     │
 │ - Alarm clocks │ - XHR intercept│ - Platform list   │
 │ - Notifications│ - Platform     │ - Settings        │
@@ -317,7 +325,7 @@ SERVER → CLIENT:
 
 ### 6.2 Data Flow (Extension)
 
-```
+```text
 User plays slot → XHR intercept (content script) → parse response
 → extract { bet, win, balance } → post to background
 → background: update local session state
@@ -333,7 +341,7 @@ User plays slot → XHR intercept (content script) → parse response
 
 ### 7.1 Authentication Flow
 
-```
+```text
 User signs in → Supabase Auth → JWT (15min access + 7day refresh)
 → Access token stored in memory (not localStorage)
 → Refresh token stored in httpOnly cookie
@@ -343,7 +351,7 @@ User signs in → Supabase Auth → JWT (15min access + 7day refresh)
 
 ### 7.2 Credential Vault (Desktop App)
 
-```
+```text
 User enters master password → Argon2id KDF → 256-bit key
 → Key + Argon2id params stored locally
 → Platform credentials encrypted with AES-256-GCM
@@ -353,7 +361,7 @@ User enters master password → Argon2id KDF → 256-bit key
 
 ### 7.3 Extension Security
 
-```
+```text
 Content script → background (via chrome.runtime.sendMessage)
 → Message schema validation (Zod)
 → No eval(), no inline scripts
@@ -382,7 +390,7 @@ On Push to main:
 ### 8.2 Environment Strategy
 
 | Environment | Purpose | Infrastructure |
-|-------------|---------|---------------|
+| ---- | ---- | ---- |
 | Local dev | Development | Local services via Docker Compose |
 | Preview | PR testing | Vercel preview + Railway staging |
 | Production | Live app | Vercel + Railway + Supabase prod |
@@ -394,7 +402,7 @@ On Push to main:
 The following data categories are irreplaceable once collection begins — starting collection is the single highest-priority action:
 
 | Dataset | Collection Method | Moat Strength |
-|---------|-----------------|--------------|
+| ---- | ---- | ---- |
 | Jackpot time series | API poller (every 60s) | **Critical** — ephemeral, gone if not captured |
 | User RTP data | Extension + sessions | **High** — requires millions of spins |
 | Redemption timing | User self-report | **High** — requires thousands of data points |
@@ -409,18 +417,21 @@ The following data categories are irreplaceable once collection begins — start
 ## 10. Scalability Considerations
 
 ### Phase 1 (0–10K users)
+
 - Single API instance (Railway)
 - Single PostgreSQL (Supabase free → Pro)
 - Redis for caching (Upstash)
 - Everything monolith — no microservices
 
 ### Phase 2 (10K–100K users)
+
 - API horizontal scaling (Railway autoscale)
 - Read replicas for analytics queries
 - Separate analytics service (heavy queries don't block API)
 - CDN for static assets
 
 ### Phase 3 (100K+ users)
+
 - Event streaming (Kafka) for transaction ingestion
 - Time-series database for jackpot data (TimescaleDB)
 - Separate microservices for trust index calculation
@@ -429,3 +440,4 @@ The following data categories are irreplaceable once collection begins — start
 ---
 
 *Architecture maintained by APPYness. Last updated 2026-02-26.*
+

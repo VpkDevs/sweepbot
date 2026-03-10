@@ -1,43 +1,102 @@
 /**
  * Extension API client.
  * Communicates with the SweepBot backend from the extension context.
- * Handles auth token refresh and error handling.
+ * Handles auth token refresh, timeouts, and exponential-backoff retries.
  */
 
 import { storage } from './storage'
+import { createLogger } from './logger'
 
-const API_BASE = process.env.VITE_API_URL || 'https://api.sweepbot.app'
+const log = createLogger('ExtensionApi')
+
+const API_BASE = (
+  typeof import.meta !== 'undefined'
+    ? (import.meta.env as unknown as Record<string, string | undefined>)['VITE_API_URL']
+    : undefined
+) ?? 'https://api.sweepbot.app'
+
+/** Requests that should NOT be retried (state-mutating or auth). */
+const NON_RETRY_METHODS = new Set(['POST', 'DELETE', 'PATCH'])
+const REQUEST_TIMEOUT_MS = 10_000 // 10 s
+const MAX_RETRIES = 2
+const RETRY_BASE_DELAY_MS = 300
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
 
 class ExtensionApi {
   async request<T = unknown>(
     path: string,
     options: RequestInit = {},
   ): Promise<T> {
+    const method = (options.method ?? 'GET').toUpperCase()
+    const canRetry = !NON_RETRY_METHODS.has(method)
+    let lastError: unknown
+
+    for (let attempt = 0; attempt <= (canRetry ? MAX_RETRIES : 0); attempt++) {
+      if (attempt > 0) {
+        await sleep(RETRY_BASE_DELAY_MS * 2 ** (attempt - 1))
+        log.debug('Retrying request', { path, attempt })
+      }
+
+      try {
+        return await this._doRequest<T>(path, options)
+      } catch (err) {
+        lastError = err
+        // Don't retry auth errors or client errors (4xx)
+        if (err instanceof ApiError && err.status < 500) throw err
+        if (err instanceof AuthExpiredError) throw err
+        log.warn('Request failed, will retry if possible', {
+          path,
+          attempt,
+          error: err instanceof Error ? err.message : String(err),
+        })
+      }
+    }
+
+    throw lastError
+  }
+
+  private async _doRequest<T>(path: string, options: RequestInit): Promise<T> {
     const authToken = await storage.get('authToken')
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     }
 
     if (authToken) {
       headers['Authorization'] = `Bearer ${authToken}`
     }
 
-    const response = await fetch(`${API_BASE}${path}`, {
-      ...options,
-      headers,
-    })
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+
+    let response: Response
+    try {
+      response = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers,
+        signal: controller.signal,
+      })
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        throw new ApiError(`Request timed out: ${path}`, 408)
+      }
+      throw err
+    } finally {
+      clearTimeout(timeoutId)
+    }
 
     if (response.status === 401) {
-      // Token expired
       await storage.set('authToken', null)
       await storage.set('userId', null)
-      throw new Error('Authentication expired')
+      throw new AuthExpiredError()
     }
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Unknown error' }))
-      throw new Error(error.message || `API error: ${response.status}`)
+      const body = await response.json().catch(() => ({ message: 'Unknown error' }))
+      throw new ApiError(body.message || `API error: ${response.status}`, response.status)
     }
 
     return response.json() as Promise<T>
@@ -177,3 +236,25 @@ class ExtensionApi {
 }
 
 export const extensionApi = new ExtensionApi()
+
+/**
+ * Thrown when the server returns a non-2xx status.
+ * Callers can branch on `error.status` to distinguish 4xx from 5xx.
+ */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
+/** Thrown when the server returns 401 — auth token has expired or been revoked. */
+export class AuthExpiredError extends Error {
+  constructor() {
+    super('Authentication expired')
+    this.name = 'AuthExpiredError'
+  }
+}

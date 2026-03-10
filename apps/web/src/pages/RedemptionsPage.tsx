@@ -116,7 +116,13 @@ function LogRedemptionModal({
       <div className="relative z-10 w-full max-w-md bg-zinc-950 rounded-2xl border border-zinc-800 shadow-2xl">
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
           <h2 className="text-base font-semibold text-white">Log Redemption</h2>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors">
+          <button
+            type="button"
+            onClick={onClose}
+            title="Close modal"
+            aria-label="Close modal"
+            className="text-zinc-500 hover:text-white transition-colors"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -131,6 +137,8 @@ function LogRedemptionModal({
           <div>
             <label className="block text-xs font-medium text-zinc-400 mb-1.5">Platform *</label>
             <select
+              aria-label="Redemption platform"
+              title="Redemption platform"
               value={form.platform_id}
               onChange={(e) => setForm({ ...form, platform_id: e.target.value })}
               required
@@ -152,6 +160,8 @@ function LogRedemptionModal({
                 type="number"
                 min="0.01"
                 step="0.01"
+                aria-label="Redemption amount in SC"
+                title="Redemption amount in SC"
                 value={form.amount_sc}
                 onChange={(e) => setForm({ ...form, amount_sc: e.target.value })}
                 placeholder="50.00"
@@ -162,6 +172,8 @@ function LogRedemptionModal({
               <label className="block text-xs font-medium text-zinc-400 mb-1.5">Requested Date *</label>
               <input
                 type="date"
+                aria-label="Requested date"
+                title="Requested date"
                 value={form.requested_at}
                 onChange={(e) => setForm({ ...form, requested_at: e.target.value })}
                 className="w-full bg-zinc-900 border border-zinc-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
@@ -172,6 +184,8 @@ function LogRedemptionModal({
           <div>
             <label className="block text-xs font-medium text-zinc-400 mb-1.5">Payment Method *</label>
             <select
+              aria-label="Redemption payment method"
+              title="Redemption payment method"
               value={form.payment_method}
               onChange={(e) => setForm({ ...form, payment_method: e.target.value })}
               required
@@ -198,12 +212,14 @@ function LogRedemptionModal({
 
         <div className="flex gap-3 px-6 pb-6">
           <button
+            type="button"
             onClick={onClose}
             className="flex-1 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium rounded-lg transition-colors"
           >
             Cancel
           </button>
           <button
+            type="button"
             onClick={() => mutation.mutate()}
             disabled={mutation.isPending || !form.platform_id || !form.amount_sc || !form.payment_method}
             className="flex-1 px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -267,6 +283,8 @@ function MarkCompleteModal({
           <label className="block text-xs font-medium text-zinc-400 mb-1.5">Completed Date</label>
           <input
             type="date"
+            aria-label="Completed date"
+            title="Completed date"
             value={completedAt}
             onChange={(e) => setCompletedAt(e.target.value)}
             className="w-full bg-zinc-900 border border-zinc-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
@@ -286,10 +304,11 @@ function MarkCompleteModal({
         )}
 
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium rounded-lg transition-colors">
+          <button type="button" onClick={onClose} className="flex-1 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium rounded-lg transition-colors">
             Cancel
           </button>
           <button
+            type="button"
             onClick={() => mutation.mutate()}
             disabled={mutation.isPending}
             className="flex-1 px-4 py-2.5 bg-green-700 hover:bg-green-600 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
@@ -373,10 +392,10 @@ export function RedemptionsPage() {
     queryKey: ['redemptions', { status: statusFilter, platform: platformFilter, page }],
     queryFn: () =>
       api.redemptions.list({
-        status: statusFilter === 'all' ? undefined : statusFilter,
-        platform_id: platformFilter === 'all' ? undefined : platformFilter,
-        page,
-        page_size: 20,
+        page: String(page),
+        page_size: '20',
+        ...(statusFilter !== 'all' ? { status: statusFilter } : {}),
+        ...(platformFilter !== 'all' ? { platform_id: platformFilter } : {}),
       }),
     staleTime: 30_000,
     placeholderData: (prev) => prev,
@@ -390,7 +409,7 @@ export function RedemptionsPage() {
 
   const { data: communityData } = useQuery({
     queryKey: ['redemptions', 'community'],
-    queryFn: () => api.redemptions.community(),
+    queryFn: () => api.redemptions.communityBenchmarks(),
     staleTime: 300_000,
   })
 
@@ -432,6 +451,7 @@ export function RedemptionsPage() {
             </p>
           </div>
           <button
+            type="button"
             onClick={() => setShowLogModal(true)}
             className="flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-lg transition-colors"
           >
@@ -490,6 +510,7 @@ export function RedemptionsPage() {
         {/* Filters */}
         <div className="flex items-center gap-2 flex-wrap">
           <button
+            type="button"
             onClick={() => setShowFilters(!showFilters)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-400 hover:text-white text-xs transition-colors"
           >
@@ -500,6 +521,7 @@ export function RedemptionsPage() {
 
           {(['all', 'pending', 'processing', 'completed', 'rejected'] as RedemptionStatus[]).map((s) => (
             <button
+              type="button"
               key={s}
               onClick={() => { setStatusFilter(s); setPage(1) }}
               className={cn(
@@ -516,13 +538,15 @@ export function RedemptionsPage() {
           <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4">
             <label className="text-xs text-zinc-400 mb-1.5 block">Platform</label>
             <select
+              aria-label="Filter redemptions by platform"
+              title="Filter redemptions by platform"
               value={platformFilter}
               onChange={(e) => { setPlatformFilter(e.target.value); setPage(1) }}
               className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
             >
               <option value="all">All Platforms</option>
               {platforms.map(([id, name]) => (
-                <option key={id} value={id}>{name as string}</option>
+                <option key={id as string} value={id as string}>{name as string}</option>
               ))}
             </select>
           </div>
@@ -539,6 +563,7 @@ export function RedemptionsPage() {
               <AlertCircle className="w-8 h-8 text-zinc-600" />
               <p className="text-sm text-zinc-500">No redemptions found.</p>
               <button
+                type="button"
                 onClick={() => setShowLogModal(true)}
                 className="text-xs text-brand-400 hover:text-brand-300 transition-colors"
               >
@@ -590,6 +615,7 @@ export function RedemptionsPage() {
                           <td className="px-5 py-3 text-right">
                             {(status === 'pending' || status === 'processing') && (
                               <button
+                                type="button"
                                 onClick={() => setMarkCompleteTarget(r)}
                                 className="text-xs text-brand-400 hover:text-brand-300 transition-colors whitespace-nowrap"
                               >
@@ -611,6 +637,7 @@ export function RedemptionsPage() {
                 </p>
                 <div className="flex gap-2">
                   <button
+                    type="button"
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page === 1}
                     className="px-3 py-1 text-xs bg-zinc-800 text-zinc-400 rounded-md disabled:opacity-40 hover:text-white transition-colors"
@@ -618,6 +645,7 @@ export function RedemptionsPage() {
                     Prev
                   </button>
                   <button
+                    type="button"
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page >= totalPages}
                     className="px-3 py-1 text-xs bg-zinc-800 text-zinc-400 rounded-md disabled:opacity-40 hover:text-white transition-colors"

@@ -281,9 +281,9 @@ const ACHIEVEMENTS: AchievementSeed[] = [
 // ── Seed function ─────────────────────────────────────────────────────────────
 
 /**
- * Idempotent: inserts every achievement using ON CONFLICT (key) DO NOTHING.
- * Safe to call on every startup or on first load — duplicate keys are silently
- * skipped.
+ * Seed the achievements table with the predefined catalogue.
+ *
+ * Inserts each entry from ACHIEVEMENTS and uses ON CONFLICT (key) DO NOTHING so existing rows are not modified; safe to call repeatedly (idempotent).
  */
 export async function seedAchievements(): Promise<void> {
   for (const a of ACHIEVEMENTS) {
@@ -306,12 +306,13 @@ export async function seedAchievements(): Promise<void> {
 }
 
 /**
- * Lightweight check: returns true if the achievements table is empty.
- * Used by the lazy-seed path in features.ts.
+ * Determine whether the achievements table contains no rows.
+ *
+ * @returns `true` if the achievements table contains no rows, `false` otherwise.
  */
 export async function achievementsEmpty(): Promise<boolean> {
-  const result = await query<{ count: number }>(sql`
+  const { rows } = await query<{ count: number }>(sql`
     SELECT COUNT(*)::int AS count FROM achievements
   `)
-  return (result[0]?.count ?? 0) === 0
+  return (rows[0]?.count ?? 0) === 0
 }

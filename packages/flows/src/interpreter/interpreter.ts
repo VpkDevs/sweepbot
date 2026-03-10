@@ -13,6 +13,10 @@ import type {
   FlowTrigger,
   ResponsiblePlayGuardrail,
   FlowWarning,
+  FlowActionNode,
+  FlowConditionNode,
+  FlowActionType,
+  FlowValue,
 } from '../types'
 import { EntityRecognizer } from './entity-recognizer'
 
@@ -30,7 +34,7 @@ export class FlowInterpreter {
     const flowNode = this.buildFlowAST(entities, intent, request.rawInput)
 
     // Pass 4: Responsible Play Validation
-    const guardrails = this.validateResponsiblePlay(flowNode, request.userId)
+    const guardrails = this.validateResponsiblePlay(flowNode, request.userId, request.rawInput)
 
     // Calculate confidence
     let confidence = this.calculateConfidence(entities, intent)
@@ -105,7 +109,7 @@ export class FlowInterpreter {
 
     // Step 3: Add bonus claiming if mentioned
     if (/claim|grab|daily bonus/i.test(rawText)) {
-      const bonusNode: any = {
+      const bonusNode: FlowActionNode = {
         type: 'action',
         id: this.generateId(),
         action: 'claim_bonus',
@@ -163,6 +167,52 @@ export class FlowInterpreter {
       }
     }
 
+    // Step 7: If the user described a simple conditional branch ("if... then ... else ..."),
+    // wrap it in a condition node so the executor can evaluate it later.
+    if (entities.conditions.length > 0) {
+      const cond = entities.conditions[0]!
+      // try to infer missing operator from text
+      type FlowOperator = FlowConditionNode['operator']
+      const VALID_OPS = new Set<string>(['>', '<', '>=', '<=', '==', '!=', 'contains', 'exists'])
+      let operator: FlowOperator = '=='
+      if (cond.operator && VALID_OPS.has(cond.operator)) {
+        operator = cond.operator as FlowOperator
+      } else {
+        if (/more\s+than/i.test(rawText)) operator = '>'
+        if (/less\s+than/i.test(rawText)) operator = '<'
+      }
+      const leftValue = this.makeLiteralValue(cond.left)
+      const rightValue = this.makeLiteralValue(cond.right)
+      // pick representative actions for true/false branches
+      const trueActionType: FlowActionType = /spin/i.test(rawText) ? 'spin' : /play/i.test(rawText) ? 'open_game' : 'spin'
+      const falseActionType: FlowActionType | undefined = /close/i.test(rawText) ? 'close_platform' : undefined
+
+      const conditionNode: FlowConditionNode = {
+        type: 'condition',
+        id: this.generateId(),
+        left: leftValue,
+        operator,
+        right: rightValue,
+        onTrue: {
+          type: 'action',
+          id: this.generateId(),
+          action: trueActionType,
+          parameters: {},
+          timeout: 10000,
+          onFailure: 'stop',
+        },
+        ...(falseActionType ? { onFalse: {
+          type: 'action' as const,
+          id: this.generateId(),
+          action: falseActionType,
+          parameters: {},
+          timeout: 5000,
+          onFailure: 'skip' as const,
+        } } : {}),
+      }
+      rootSteps.push(conditionNode)
+    }
+
     // Return sequence of all actions
     return {
       type: 'sequence',
@@ -208,12 +258,12 @@ export class FlowInterpreter {
   /**
    * Extract loop condition from text like "if win > 5x bonus, keep going"
    */
-  private extractLoopCondition(text: string, entities: EntityMap): any {
+  private extractLoopCondition(text: string, entities: EntityMap): { operator: FlowConditionNode['operator']; right: string } | null {
     const conditionMatches = text.matchAll(/if\s+(?:win|balance|profit)\s+([<>]=?)\s+(.+?)(?:,|then|\.|$)/gi)
 
     for (const match of conditionMatches) {
       return {
-        operator: match[1],
+        operator: (match[1] ?? '>') as FlowConditionNode['operator'],
         right: (match[2] ?? '').trim(),
       }
     }
@@ -232,7 +282,7 @@ export class FlowInterpreter {
   /**
    * Build a spin loop node with condition
    */
-  private buildSpinLoopNode(condition: any, entities: EntityMap): FlowNode {
+  private buildSpinLoopNode(condition: { operator: FlowConditionNode['operator']; right: string }, entities: EntityMap): FlowNode {
     const betAmount = this.extractBetAmount(entities)
 
     return {
@@ -273,6 +323,18 @@ export class FlowInterpreter {
   /**
    * Extract bet amount from entities
    */
+  private makeLiteralValue(val?: string): Extract<FlowValue, { type: 'literal' }> {
+    // convert string to literal number if possible, otherwise just return as text
+    if (val === undefined || val === null) {
+      return { type: 'literal', value: '' }
+    }
+    const num = parseFloat(val as string)
+    if (!isNaN(num)) {
+      return { type: 'literal', value: num }
+    }
+    return { type: 'literal', value: val }
+  }
+
   private extractBetAmount(entities: EntityMap): string | number | null {
     if (entities.amounts.length > 0) {
       const amount = entities.amounts[0]!
@@ -289,7 +351,7 @@ export class FlowInterpreter {
   /**
    * Pass 4: Validate responsible play constraints
    */
-  private validateResponsiblePlay(flowNode: FlowNode, userId: string): ResponsiblePlayGuardrail[] {
+private validateResponsiblePlay(flowNode: FlowNode, userId: string, rawText?: string): ResponsiblePlayGuardrail[] {
     const guardrails: ResponsiblePlayGuardrail[] = []
 
     // Every flow gets a default max duration of 2 hours
@@ -307,6 +369,29 @@ export class FlowInterpreter {
       source: 'system_mandatory',
       overridable: false,
     })
+
+    if (rawText) {
+      // user-specified max loss
+      const lossMatch = rawText.match(/lose\s+more\s+than\s+\$?(\d+)/i)
+      if (lossMatch) {
+        guardrails.push({
+          type: 'max_loss',
+          value: parseFloat(lossMatch[1]!),
+          source: 'user_specified',
+          overridable: true,
+        })
+      }
+
+      // chase detection keyword
+      if (/double\s+my\s+bet|chase/i.test(rawText)) {
+        guardrails.push({
+          type: 'chase_detection',
+          value: true,
+          source: 'system_mandatory',
+          overridable: false,
+        })
+      }
+    }
 
     return guardrails
   }
@@ -347,7 +432,7 @@ export class FlowInterpreter {
 
     // Trigger
     if (flow.trigger.type === 'scheduled') {
-      summary += `⏰ Trigger: ${this.humanReadableCron((flow.trigger as any).cron)}\n`
+      summary += `⏰ Trigger: ${this.humanReadableCron(flow.trigger.cron)}\n`
     } else if (flow.trigger.type === 'manual') {
       summary += `⚙️ Trigger: Manual (on demand)\n`
     }
@@ -377,7 +462,6 @@ export class FlowInterpreter {
 
     switch (node.type) {
       case 'action': {
-        const action = node as any
         const actionEmojis: Record<string, string> = {
           open_platform: '🌐',
           login: '🔑',
@@ -389,29 +473,28 @@ export class FlowInterpreter {
           cash_out: '✅',
           close_platform: '🚪',
         }
-        const emoji = actionEmojis[action.action] || '→'
-        return `${prefix}${emoji} ${action.action}\n`
+        const emoji = actionEmojis[node.action] ?? '→'
+        return `${prefix}${emoji} ${node.action}\n`
       }
 
       case 'sequence': {
-        const seq = node as any
         let desc = ''
-        for (const step of seq.steps) {
+        for (const step of node.steps) {
           desc += this.describeNode(step, indent)
         }
         return desc
       }
 
       case 'loop': {
-        const loop = node as any
-        let desc = `${prefix}🔁 Loop (max 100 iterations):\n`
-        desc += this.describeNode(loop.body, indent + 1)
+        let desc = `${prefix}🔁 Loop (max ${node.maxIterations} iterations):\n`
+        desc += this.describeNode(node.body, indent + 1)
         return desc
       }
 
       case 'condition': {
-        const cond = node as any
-        return `${prefix}❓ If condition: ${cond.left} ${cond.operator} ${cond.right}\n`
+        const fmtVal = (v: FlowValue) =>
+          v.type === 'literal' ? String(v.value) : v.type === 'variable' ? `$${v.name}` : v.type === 'expression' ? v.expression : v.query
+        return `${prefix}❓ If condition: ${fmtVal(node.left)} ${node.operator} ${fmtVal(node.right)}\n`
       }
 
       default:

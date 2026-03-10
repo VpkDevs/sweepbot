@@ -5,7 +5,7 @@ import {
   redirect,
 } from '@tanstack/react-router'
 import type { QueryClient } from '@tanstack/react-query'
-import type { useAuthStore } from './stores/auth'
+import type { AuthState } from './stores/auth'
 
 // ── Root layout ──────────────────────────────────────────────────────────────
 import { AppShell } from './components/layout/AppShell'
@@ -34,9 +34,9 @@ import { SignUpPage } from './pages/auth/SignUpPage'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
 import { AuthCallbackPage } from './pages/auth/AuthCallbackPage'
 
-interface RouterContext {
+export interface RouterContext {
   queryClient: QueryClient
-  auth: ReturnType<typeof useAuthStore>
+  auth: AuthState
 }
 
 // ── Root route ────────────────────────────────────────────────────────────────
@@ -89,7 +89,10 @@ const appRoute = createRoute({
   component: AppShell,
   beforeLoad: async ({ context }) => {
     await context.auth.refreshSession()
-    if (!context.auth.user) {
+    // In dev with stub Supabase creds, skip auth so the UI is previewable
+    const isDevStub = import.meta.env.DEV &&
+      import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')
+    if (!context.auth.user && !isDevStub) {
       throw redirect({ to: '/sign-in' })
     }
   },

@@ -11,65 +11,19 @@ import type {
   FlowTrigger,
   InterpretationResult,
   Condition,
-  ValueRef,
   LoopStep,
   ClaimBonusStep,
   SpinStep,
 } from './types'
 
-// ─── Platform selectors (best-effort; user can override) ──────────────────────
-
-export const PLATFORM_SELECTORS: Record<
-  string,
-  {
-    loginButton?: string
-    loginButtonText?: string
-    bonusButton?: string
-    bonusButtonText?: string
-    bonusAmount?: string
-    gameFrame?: string
-    spinButton?: string
-    spinButtonText?: string
-    winAmount?: string
-    balanceAmount?: string
-  }
-> = {
-  chumba: {
-    loginButton: '[data-testid="login-btn"], .login-button, a[href*="login"]',
-    loginButtonText: 'Log In',
-    bonusButton: '[data-testid="daily-bonus"], .bonus-claim-btn, .daily-reward-btn',
-    bonusButtonText: 'Collect',
-    bonusAmount: '.bonus-amount, [data-bonus-amount], .reward-coins',
-    gameFrame: 'iframe[src*="game"], iframe.game-iframe',
-    spinButton: '.spin-btn, [data-action="spin"], .spin-button',
-    spinButtonText: 'Spin',
-    winAmount: '.win-display, [data-win], .win-amount',
-    balanceAmount: '.sc-balance, [data-sc-balance], .sweeps-coins-balance',
-  },
-  luckyland: {
-    loginButtonText: 'Log In',
-    bonusButtonText: 'Collect',
-    spinButtonText: 'Spin',
-  },
-  stake: {
-    loginButtonText: 'Sign In',
-    bonusButtonText: 'Claim',
-    spinButtonText: 'Spin',
-  },
-  // Generic fallback
-  _default: {
-    loginButtonText: 'Log In',
-    bonusButtonText: 'Collect',
-    spinButtonText: 'Spin',
-  },
-}
+import { PLATFORM_SELECTORS } from './platform-selectors'
 
 // ─── Interpreter ──────────────────────────────────────────────────────────────
 
 export class FlowInterpreter {
   private recognizer = new EntityRecognizer()
 
-  interpret(rawInput: string, userId = 'anonymous'): InterpretationResult {
+  interpret(rawInput: string, _userId = 'anonymous'): InterpretationResult {
     const entities = this.recognizer.recognize(rawInput)
     const warnings: string[] = []
     const ambiguities: string[] = []
@@ -100,10 +54,6 @@ export class FlowInterpreter {
       entities.platforms[0]?.canonical ?? null
     const platformUrl = entities.platforms[0]?.url ?? null
     const game = entities.games[0]?.canonical ?? null
-    const selectors = platform
-      ? { ...(PLATFORM_SELECTORS._default), ...(PLATFORM_SELECTORS[platform] ?? {}) }
-      : PLATFORM_SELECTORS._default
-
     // 1. Navigate to platform
     if (platformUrl) {
       steps.push({ type: 'navigate', url: platformUrl, waitForLoad: true })
@@ -227,7 +177,7 @@ export class FlowInterpreter {
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
   private generateId(): string {
-    return `flow_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+    return `flow_${Date.now()}_${crypto.randomUUID().replace(/-/g, '').slice(0, 8)}`
   }
 
   private generateName(

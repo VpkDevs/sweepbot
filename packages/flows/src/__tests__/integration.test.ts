@@ -41,7 +41,7 @@ describe('Integration Tests - End-to-End Flows', () => {
       expect(interpretResult.confidence).toBeGreaterThan(0.5)
 
       // Step 2: Validate responsible play
-      const guardrails = validator.validate(flow.rootNode, flow.userId)
+      const guardrails = validator.validate(flow.rootNode, flow.userId, flow.description)
       expect(guardrails.length).toBeGreaterThan(0)
 
       // Step 3: Simulate persisting to database
@@ -72,7 +72,9 @@ describe('Integration Tests - End-to-End Flows', () => {
       )
 
       expect(state.userId).toBe(userId)
-      expect(state.turns).toHaveLength(1)
+      // initial conversation may include an assistant follow‑up question
+      expect(state.turns.length).toBeGreaterThanOrEqual(1)
+      expect(state.turns[0]!.role).toBe('user')
       expect(state.status).toBe('building')
 
       // Step 2: User refines - adds specific time
@@ -99,7 +101,7 @@ describe('Integration Tests - End-to-End Flows', () => {
       const flow = interpretResult.flow
 
       // Validate should enforce guardrails
-      const guardrails = validator.validate(flow.rootNode, flow.userId)
+      const guardrails = validator.validate(flow.rootNode, flow.userId, flow.description)
 
       // Should have mandatory guardrails
       const mandatoryGuards = guardrails.filter((g) => g.source === 'system_mandatory')
@@ -158,15 +160,26 @@ describe('Integration Tests - End-to-End Flows', () => {
       const flow = interpretResult.flow
 
       // Should have conditional logic
-      const hasCondition = (node: any): boolean => {
-        if (node.type === 'condition') return true
+      let condNode: any | null = null
+      const findCondition = (node: any): any | null => {
+        if (node.type === 'condition') return node
         if (node.type === 'sequence' && node.steps) {
-          return node.steps.some((step: any) => hasCondition(step))
+          for (const step of node.steps) {
+            const found = findCondition(step)
+            if (found) return found
+          }
         }
-        return false
+        return null
       }
 
-      expect(hasCondition(flow.rootNode)).toBe(true)
+      condNode = findCondition(flow.rootNode)
+      expect(condNode).not.toBeNull()
+      // operator should be defined (e.g. ">")
+      expect(condNode.operator).toBeDefined()
+      // if there is an onFalse branch it should be a valid action node
+      if (condNode.onFalse) {
+        expect(condNode.onFalse.type).toBe('action')
+      }
     })
   })
 
@@ -307,7 +320,7 @@ describe('Integration Tests - End-to-End Flows', () => {
       const flow = interpretResult.flow
 
       // Validator should enforce guardrails
-      const guardrails = validator.validate(flow.rootNode, flow.userId)
+      const guardrails = validator.validate(flow.rootNode, flow.userId, flow.description)
       expect(guardrails.length).toBeGreaterThan(0)
     })
 

@@ -4,6 +4,35 @@
  * Available natively in Chrome; no API keys required.
  */
 
+// Web Speech API type declarations (available in Chrome but not in standard TS lib)
+interface SpeechRecognitionEvent extends Event {
+  readonly resultIndex: number
+  readonly results: SpeechRecognitionResultList
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  readonly error: string
+  readonly message: string
+}
+
+interface SpeechRecognition extends EventTarget {
+  lang: string
+  continuous: boolean
+  interimResults: boolean
+  maxAlternatives: number
+  onstart: ((this: SpeechRecognition, ev: Event) => void) | null
+  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => void) | null
+  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => void) | null
+  onend: ((this: SpeechRecognition, ev: Event) => void) | null
+  start(): void
+  stop(): void
+  abort(): void
+}
+
+interface SpeechRecognitionConstructor {
+  new (): SpeechRecognition
+}
+
 export type RecordingState = 'idle' | 'listening' | 'processing' | 'error'
 
 export interface VoiceRecorderOptions {
@@ -17,8 +46,6 @@ export interface VoiceRecorderOptions {
 
 export class VoiceRecorder {
   private recognition: SpeechRecognition | null = null
-  private resolveRef: ((text: string) => void) | null = null
-  private rejectRef: ((err: Error) => void) | null = null
   private finalTranscript = ''
   private silenceTimer: ReturnType<typeof setTimeout> | null = null
   private options: Required<VoiceRecorderOptions>
@@ -52,8 +79,8 @@ export class VoiceRecorder {
     }
 
     const SR =
-      (window as unknown as { SpeechRecognition: typeof SpeechRecognition }).SpeechRecognition ??
-      (window as unknown as { webkitSpeechRecognition: typeof SpeechRecognition })
+      (window as unknown as { SpeechRecognition: SpeechRecognitionConstructor }).SpeechRecognition ??
+      (window as unknown as { webkitSpeechRecognition: SpeechRecognitionConstructor })
         .webkitSpeechRecognition
 
     this.recognition = new SR()
@@ -65,9 +92,6 @@ export class VoiceRecorder {
     this.finalTranscript = ''
 
     return new Promise<string>((resolve, reject) => {
-      this.resolveRef = resolve
-      this.rejectRef = reject
-
       this.recognition!.onstart = () => {
         this.options.onStateChange('listening')
       }
@@ -78,9 +102,9 @@ export class VoiceRecorder {
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i]
           if (result.isFinal) {
-            this.finalTranscript += result[0].transcript + ' '
+            this.finalTranscript += result[0]?.transcript + ' '
           } else {
-            interimTranscript += result[0].transcript
+            interimTranscript += result[0]?.transcript
           }
         }
 
@@ -141,7 +165,5 @@ export class VoiceRecorder {
       this.silenceTimer = null
     }
     this.recognition = null
-    this.resolveRef = null
-    this.rejectRef = null
   }
 }

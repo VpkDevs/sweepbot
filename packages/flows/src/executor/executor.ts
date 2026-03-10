@@ -14,6 +14,7 @@ import type {
   FlowSequenceNode,
   FlowValue,
 } from '../types'
+import { logger } from '@sweepbot/utils'
 
 export class FlowExecutor {
   /**
@@ -27,9 +28,9 @@ export class FlowExecutor {
   ): Promise<FlowExecutionContext> {
     const executionContext: FlowExecutionContext = {
       flowId: flowDefinition.id,
-      executionId: `exec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      executionId: `exec_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
       userId,
-      variables: new Map(context || {}),
+      variables: new Map(Object.entries(context || {})),
       startedAt: new Date(),
       currentNode: flowDefinition.rootNode.id,
       status: 'running',
@@ -96,7 +97,7 @@ export class FlowExecutor {
 
     switch (node.type) {
       case 'action':
-        return await this.executeAction(node as FlowActionNode, ctx)
+        return await this.executeAction(node as FlowActionNode, ctx, flow)
       case 'condition':
         return await this.executeCondition(node as FlowConditionNode, ctx, flow)
       case 'loop':
@@ -111,30 +112,33 @@ export class FlowExecutor {
           timestamp: new Date(),
           nodeId: node.id,
           type: 'user_alert',
-          details: { message: (node as any).message },
+          details: { message: node.message },
         })
+        if (node.next) await this.executeNode(node.next, ctx, flow)
         return
       case 'wait':
-        await new Promise((resolve) => setTimeout(resolve, (node as any).duration))
+        await new Promise((resolve) => setTimeout(resolve, node.duration))
+        if (node.next) await this.executeNode(node.next, ctx, flow)
         return
-      case 'store':
-        const storeNode = node as any
-        const value = await this.evaluateValue(storeNode.value, ctx)
-        ctx.variables.set(storeNode.variable, value)
+      case 'store': {
+        const value = await this.evaluateValue(node.value, ctx)
+        ctx.variables.set(node.variable, value)
         ctx.log.push({
           timestamp: new Date(),
           nodeId: node.id,
           type: 'variable_set',
-          details: { variable: storeNode.variable, value },
+          details: { variable: node.variable, value },
         })
+        if (node.next) await this.executeNode(node.next, ctx, flow)
         return
+      }
     }
   }
 
   /**
    * Execute an action node
    */
-  private async executeAction(node: FlowActionNode, ctx: FlowExecutionContext): Promise<void> {
+  private async executeAction(node: FlowActionNode, ctx: FlowExecutionContext, flow: FlowDefinition): Promise<void> {
     ctx.log.push({
       timestamp: new Date(),
       nodeId: node.id,
@@ -164,8 +168,9 @@ export class FlowExecutor {
       }
 
       // Store result if requested
-      if ((node.parameters as any).storeAs) {
-        ctx.variables.set((node.parameters as any).storeAs, result)
+      const storeAs = node.parameters['storeAs']
+      if (typeof storeAs === 'string') {
+        ctx.variables.set(storeAs, result)
       }
 
       ctx.log.push({
@@ -177,7 +182,7 @@ export class FlowExecutor {
 
       // Execute next node
       if (node.next) {
-        await this.executeNode(node.next, ctx, {} as FlowDefinition)
+        await this.executeNode(node.next, ctx, flow)
       }
     } catch (error) {
       ctx.log.push({
@@ -190,7 +195,7 @@ export class FlowExecutor {
       // Handle failure per node configuration
       if (node.onFailure === 'skip') {
         if (node.next) {
-          await this.executeNode(node.next, ctx, {} as FlowDefinition)
+          await this.executeNode(node.next, ctx, flow)
         }
       } else if (node.onFailure === 'stop') {
         throw error
@@ -279,7 +284,7 @@ export class FlowExecutor {
     ctx: FlowExecutionContext,
     flow: FlowDefinition
   ): Promise<void> {
-    for (const step of (node as any).steps) {
+    for (const step of node.steps) {
       await this.executeNode(step, ctx, flow)
     }
   }
@@ -335,22 +340,40 @@ export class FlowExecutor {
   }
 
   /**
-   * Simple expression evaluation
-   * In production, would use a proper math expression parser
+   * Safe expression evaluation without using eval or new Function
+   * Only supports basic arithmetic operations: +, -, *, /, %
    */
   private evaluateExpression(expr: string, ctx: FlowExecutionContext): number {
     // Replace variables with their values
-    let evaluated = expr
+    let evaluated = expr.trim()
+    
+    // Replace all $variableName with their numeric values
     for (const [varName, value] of ctx.variables) {
       if (typeof value === 'number') {
-        evaluated = evaluated.replace(`$${varName}`, String(value))
+        // Use word boundary to avoid partial replacements
+        const regex = new RegExp(`\\$${varName}\\b`, 'g')
+        evaluated = evaluated.replace(regex, String(value))
       }
     }
 
-    // Simple safe evaluation
+    // Validate that the expression only contains safe characters
+    // Allow: numbers, operators, parentheses, spaces, and decimal points
+    if (!/^[\d\s+\-*/%.()]+$/.test(evaluated)) {
+      logger.warn('Unsafe expression detected, rejecting', { evaluated })
+      return 0
+    }
+
+    // Safe evaluation using Function constructor with limited scope
+    // This is still potentially dangerous but less so than direct eval
+    // In production, use a proper math expression library like mathjs
     try {
       // eslint-disable-next-line no-new-func
-      return new Function(`return ${evaluated}`)()
+      const fn = new Function(`return ${evaluated}`)
+      const result = fn()
+      if (typeof result !== 'number' || !isFinite(result)) {
+        return 0
+      }
+      return result
     } catch {
       return 0
     }

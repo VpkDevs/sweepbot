@@ -1,0 +1,282 @@
+
+> sweepbot@0.1.0 test C:\Users\MQ420_OL\DEV\web\Sweepbot
+> turbo run test
+
+ΓÇó turbo 2.8.11
+ΓÇó Packages in scope: @sweepbot/api, @sweepbot/config, @sweepbot/extension, @sweepbot/flows, @sweepbot/types, @sweepbot/utils, @sweepbot/web
+ΓÇó Running test in 7 packages
+ΓÇó Remote caching disabled
+@sweepbot/types:build: cache hit, replaying logs db359f6121dc1bfb
+@sweepbot/types:build: 
+@sweepbot/types:build: > @sweepbot/types@0.1.0 build C:\Users\MQ420_OL\DEV\web\Sweepbot\packages\types
+@sweepbot/types:build: > tsc
+@sweepbot/types:build: 
+@sweepbot/extension:test: cache miss, executing 7832a06dbd09a193
+@sweepbot/flows:test: cache miss, executing 3d9738a3512a35c2
+@sweepbot/flows:build: cache hit, replaying logs 7b03d159ac3400fb
+@sweepbot/flows:build: 
+@sweepbot/flows:build: > @sweepbot/flows@0.1.0 build C:\Users\MQ420_OL\DEV\web\Sweepbot\packages\flows
+@sweepbot/flows:build: > tsc
+@sweepbot/flows:build: 
+@sweepbot/api:test: cache miss, executing 24a39ad88b637d34
+@sweepbot/flows:test: 
+@sweepbot/flows:test: > @sweepbot/flows@0.1.0 test C:\Users\MQ420_OL\DEV\web\Sweepbot\packages\flows
+@sweepbot/flows:test: > vitest
+@sweepbot/flows:test: 
+@sweepbot/extension:test: 
+@sweepbot/extension:test: > @sweepbot/extension@0.1.0 test C:\Users\MQ420_OL\DEV\web\Sweepbot\apps\extension
+@sweepbot/extension:test: > vitest
+@sweepbot/extension:test: 
+@sweepbot/api:test: 
+@sweepbot/api:test: > @sweepbot/api@0.1.0 test C:\Users\MQ420_OL\DEV\web\Sweepbot\apps\api
+@sweepbot/api:test: > vitest run
+@sweepbot/api:test: 
+@sweepbot/api:test: 
+@sweepbot/api:test: [1m[7m[36m RUN [39m[27m[22m [36mv2.1.9 [39m[90mC:/Users/MQ420_OL/DEV/web/Sweepbot/apps/api[39m
+@sweepbot/api:test: 
+@sweepbot/extension:test: 
+@sweepbot/extension:test: [1m[7m[34m DEV [39m[27m[22m [34mv2.1.9 [39m[90mC:/Users/MQ420_OL/DEV/web/Sweepbot/apps/extension[39m
+@sweepbot/extension:test: 
+@sweepbot/flows:test: 
+@sweepbot/flows:test: [7m[1m[34m DEV [39m[22m[27m [34mv1.6.1[39m [90mC:/Users/MQ420_OL/DEV/web/Sweepbot/packages/flows[39m
+@sweepbot/flows:test: 
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mPlatform Recognition[2m > [22mshould recognize Chumba Casino
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mPlatform Recognition[2m > [22mshould recognize platform aliases (CC, Chumba, Chumba Casino)
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mPlatform Recognition[2m > [22mshould recognize LuckyLand Slots
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mPlatform Recognition[2m > [22mshould handle multiple platforms in one string
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mGame Recognition[2m > [22mshould recognize Sweet Bonanza
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mGame Recognition[2m > [22mshould recognize Gates of Olympus
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mGame Recognition[2m > [22mshould handle game names with different cases
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mAction Recognition[2m > [22mshould recognize claim_bonus action
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mAction Recognition[2m > [22mshould recognize spin action
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mAction Recognition[2m > [22mshould recognize login action
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mAction Recognition[2m > [22mshould recognize cash_out action
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mCondition Recognition[2m > [22mshould recognize greater than comparison
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mCondition Recognition[2m > [22mshould recognize monetary comparisons like more than $50
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mCondition Recognition[2m > [22mshould recognize keep spinning condition
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mCondition Recognition[2m > [22mshould recognize stop condition
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mSchedule Recognition[2m > [22mshould recognize daily at specific time
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mSchedule Recognition[2m > [22mshould recognize weekly schedule
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mSchedule Recognition[2m > [22mshould recognize hourly schedule
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mSchedule Recognition[2m > [22mshould extract timezone
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mAmount Recognition[2m > [22mshould recognize absolute amounts
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mAmount Recognition[2m > [22mshould recognize multipliers
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mAmount Recognition[2m > [22mshould handle amount ranges
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mAmount Recognition[2m > [22mshould recognize minimum/maximum references
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mDuration Recognition[2m > [22mshould recognize time durations
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mDuration Recognition[2m > [22mshould recognize iteration counts
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mDuration Recognition[2m > [22mshould recognize session durations
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mComplex Inputs[2m > [22mshould handle the example from the spec
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mComplex Inputs[2m > [22mshould extract multiple actions from a sequence
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mConfidence Scoring[2m > [22mshould score high confidence for clear entities
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/entity-recognizer.test.ts[2m > [22mEntityRecognizer[2m > [22mConfidence Scoring[2m > [22mshould score lower confidence for ambiguous input
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mIntent Classification[2m > [22mshould classify bonus_collection intent
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mIntent Classification[2m > [22mshould classify play_strategy intent
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mIntent Classification[2m > [22mshould classify recurring_routine intent
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mIntent Classification[2m > [22mshould classify jackpot_hunting intent
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mAST Building - Single Actions[2m > [22mshould build AST for platform opening
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mAST Building - Single Actions[2m > [22mshould build AST for bonus claiming
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mAST Building - Single Actions[2m > [22mshould build AST for game opening
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mAST Building - Sequences[2m > [22mshould build sequence for multiple platforms and actions
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mAST Building - Sequences[2m > [22mshould handle "and then" connectors
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mAST Building - Loops[2m > [22mshould build loop for "keep spinning" patterns
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mAST Building - Loops[2m > [22mshould build loop with condition from "if" clause
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mAST Building - Loops[2m > [22mshould enforce loop safety caps
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mAST Building - Complex Flows[2m > [22mshould build AST for the spec example
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mAST Building - Complex Flows[2m > [22mshould handle login when mentioned
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mAST Building - Complex Flows[2m > [22mshould extract and store bet amounts
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mAST Building - Complex Flows[2m > [22mshould extract and store minimum bet reference
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mResponsible Play Guardrails[2m > [22mshould add default max_duration guardrail
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mResponsible Play Guardrails[2m > [22mshould add cool_down_check guardrail
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mResponsible Play Guardrails[2m > [22mshould enforce mandatory guardrails
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mResponsible Play Guardrails[2m > [22mshould add user-specified max_loss guardrail
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mResponsible Play Guardrails[2m > [22mshould build a condition node when simple if/then input provided
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mResponsible Play Guardrails[2m > [22mshould flag chase detection for doubling bets
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mConfidence Scoring[2m > [22mshould score high confidence for clear input
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mConfidence Scoring[2m > [22mshould score lower confidence for vague input
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mConfidence Scoring[2m > [22mshould increase confidence with more entities
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mHuman Readable Summaries[2m > [22mshould generate summary for simple flow
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mHuman Readable Summaries[2m > [22mshould include guardrail info in summary
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mHuman Readable Summaries[2m > [22mshould show trigger information
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mWarnings and Ambiguities[2m > [22mshould generate warnings for potentially risky flows
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mWarnings and Ambiguities[2m > [22mshould flag chase detection patterns
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mFlow Naming[2m > [22mshould generate descriptive names
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/interpreter.test.ts[2m > [22mFlowInterpreter[2m > [22mFlow Naming[2m > [22mshould handle untitled flows
+@sweepbot/api:test: [90mstderr[2m | src/__tests__/routes/auth.test.ts
+@sweepbot/api:test: [22m[39mΓ¥î Invalid environment variables:
+@sweepbot/api:test: {
+@sweepbot/api:test:   DATABASE_URL: [ [32m'Required'[39m ],
+@sweepbot/api:test:   SUPABASE_URL: [ [32m'Required'[39m ],
+@sweepbot/api:test:   SUPABASE_SERVICE_ROLE_KEY: [ [32m'Required'[39m ],
+@sweepbot/api:test:   SUPABASE_ANON_KEY: [ [32m'Required'[39m ],
+@sweepbot/api:test:   JWT_SECRET: [ [32m'Required'[39m ],
+@sweepbot/api:test:   STRIPE_SECRET_KEY: [ [32m'Required'[39m ],
+@sweepbot/api:test:   STRIPE_WEBHOOK_SECRET: [ [32m'Required'[39m ]
+@sweepbot/api:test: }
+@sweepbot/api:test: 
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/scheduler.test.ts[2m > [22mFlowScheduler[2m > [22mshould schedule a flow with timezone option and expose metadata
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/scheduler.test.ts[2m > [22mFlowScheduler[2m > [22mpausing and resuming should clear and recreate jobs
+@sweepbot/flows:test: [90mstdout[2m | src/__tests__/scheduler.test.ts[2m > [22m[2mFlowScheduler[2m > [22m[2mshould schedule a flow with timezone option and expose metadata[22m[39m
+@sweepbot/flows:test: [2026-03-07T19:30:02.686Z] INFO: Flow flow-1 scheduled: cron="0 0 * * *" timezone="America/New_York" for user user-1 {"module":"FlowScheduler"}
+@sweepbot/flows:test: 
+@sweepbot/flows:test: [90mstdout[2m | src/__tests__/scheduler.test.ts[2m > [22m[2mFlowScheduler[2m > [22m[2mpausing and resuming should clear and recreate jobs[22m[39m
+@sweepbot/flows:test: [2026-03-07T19:30:02.690Z] INFO: Flow flow-2 scheduled: cron="* * * * *" timezone="UTC" for user user-2 {"module":"FlowScheduler"}
+@sweepbot/flows:test: [2026-03-07T19:30:02.690Z] INFO: Paused flow flow-2 {"module":"FlowScheduler"}
+@sweepbot/flows:test: [2026-03-07T19:30:02.690Z] INFO: Flow flow-2 scheduled: cron="* * * * *" timezone="UTC" for user user-2 {"module":"FlowScheduler"}
+@sweepbot/flows:test: [2026-03-07T19:30:02.691Z] INFO: Resumed flow flow-2 for user user-2 {"module":"FlowScheduler"}
+@sweepbot/flows:test: 
+@sweepbot/flows:test: [90mstdout[2m | src/__tests__/conversation-manager.test.ts[2m > [22m[2mConversationManager[2m > [22m[2mshould start a conversation and interpret initial description[22m[39m
+@sweepbot/flows:test: [2026-03-07T19:30:02.685Z] INFO: Started conversation sess1 for user userA {"module":"ConversationManager"}
+@sweepbot/flows:test: 
+@sweepbot/flows:test: [90mstdout[2m | src/__tests__/conversation-manager.test.ts[2m > [22m[2mConversationManager[2m > [22m[2mshould refine flow when user adds missing info[22m[39m
+@sweepbot/flows:test: [2026-03-07T19:30:02.688Z] INFO: Started conversation sess2 for user userB {"module":"ConversationManager"}
+@sweepbot/flows:test: [2026-03-07T19:30:02.690Z] INFO: Applying refinement: "At 3 PM every day" {"module":"ConversationManager"}
+@sweepbot/flows:test: [2026-03-07T19:30:02.690Z] INFO: Continued conversation sess2, status: building {"module":"ConversationManager"}
+@sweepbot/flows:test: [2026-03-07T19:30:02.690Z] INFO: Continued conversation sess2, status: building {"module":"ConversationManager"}
+@sweepbot/flows:test: 
+@sweepbot/flows:test: [90mstdout[2m | src/__tests__/conversation-manager.test.ts[2m > [22m[2mConversationManager[2m > [22m[2mshould confirm and return flow when complete[22m[39m
+@sweepbot/flows:test: [2026-03-07T19:30:02.691Z] INFO: Started conversation sess3 for user userC {"module":"ConversationManager"}
+@sweepbot/flows:test: [2026-03-07T19:30:02.692Z] INFO: Continued conversation sess3, status: confirming {"module":"ConversationManager"}
+@sweepbot/flows:test: [2026-03-07T19:30:02.693Z] INFO: Confirmed conversation sess3, created flow flow123 {"module":"ConversationManager"}
+@sweepbot/flows:test: 
+@sweepbot/flows:test: [90mstdout[2m | src/__tests__/conversation-manager.test.ts[2m > [22m[2mConversationManager[2m > [22m[2mshould generate pending questions when data missing[22m[39m
+@sweepbot/flows:test: [2026-03-07T19:30:02.693Z] INFO: Started conversation sess4 for user userD {"module":"ConversationManager"}
+@sweepbot/flows:test: 
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/conversation-manager.test.ts[2m > [22mConversationManager[2m > [22mshould start a conversation and interpret initial description
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/conversation-manager.test.ts[2m > [22mConversationManager[2m > [22mshould refine flow when user adds missing info
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/conversation-manager.test.ts[2m > [22mConversationManager[2m > [22mshould confirm and return flow when complete
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/conversation-manager.test.ts[2m > [22mConversationManager[2m > [22mshould generate pending questions when data missing
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/integration.test.ts[2m > [22mIntegration Tests - End-to-End Flows[2m > [22mComplete Flow Lifecycle[2m > [22mshould interpret natural language ΓåÆ validate ΓåÆ persist ΓåÆ schedule
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/integration.test.ts[2m > [22mIntegration Tests - End-to-End Flows[2m > [22mComplete Flow Lifecycle[2m > [22mshould handle multi-turn conversation refinement
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/integration.test.ts[2m > [22mIntegration Tests - End-to-End Flows[2m > [22mComplete Flow Lifecycle[2m > [22mshould enforce responsible play throughout lifecycle
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/integration.test.ts[2m > [22mIntegration Tests - End-to-End Flows[2m > [22mExecution Flow Scenarios[2m > [22mshould execute simple bonus collection flow
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/integration.test.ts[2m > [22mIntegration Tests - End-to-End Flows[2m > [22mExecution Flow Scenarios[2m > [22mshould execute spinning strategy with loop
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/integration.test.ts[2m > [22mIntegration Tests - End-to-End Flows[2m > [22mExecution Flow Scenarios[2m > [22mshould execute conditional flow with branching
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/integration.test.ts[2m > [22mIntegration Tests - End-to-End Flows[2m > [22mError Recovery and Resilience[2m > [22mshould handle vague input with low confidence
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/integration.test.ts[2m > [22mIntegration Tests - End-to-End Flows[2m > [22mError Recovery and Resilience[2m > [22mshould recover from ambiguous entity references
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/integration.test.ts[2m > [22mIntegration Tests - End-to-End Flows[2m > [22mError Recovery and Resilience[2m > [22mshould handle platform or game not found gracefully
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/integration.test.ts[2m > [22mIntegration Tests - End-to-End Flows[2m > [22mData Consistency and Persistence[2m > [22mshould maintain flow definition consistency through lifecycle
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/integration.test.ts[2m > [22mIntegration Tests - End-to-End Flows[2m > [22mData Consistency and Persistence[2m > [22mshould update flow definition correctly
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/integration.test.ts[2m > [22mIntegration Tests - End-to-End Flows[2m > [22mPerformance and Scale[2m > [22mshould interpret multiple flows efficiently
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/integration.test.ts[2m > [22mIntegration Tests - End-to-End Flows[2m > [22mPerformance and Scale[2m > [22mshould handle complex flows without excessive overhead
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/integration.test.ts[2m > [22mIntegration Tests - End-to-End Flows[2m > [22mValidator Integration[2m > [22mshould reject flows without guardrails
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/integration.test.ts[2m > [22mIntegration Tests - End-to-End Flows[2m > [22mValidator Integration[2m > [22mshould enforce chase detection patterns
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/integration.test.ts[2m > [22mIntegration Tests - End-to-End Flows[2m > [22mValidator Integration[2m > [22mshould validate loop safety constraints
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/integration.test.ts[2m > [22mIntegration Tests - End-to-End Flows[2m > [22mScheduler Integration[2m > [22mshould schedule flows with valid cron expressions
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/integration.test.ts[2m > [22mIntegration Tests - End-to-End Flows[2m > [22mScheduler Integration[2m > [22mshould handle manual trigger flows without scheduling
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/integration.test.ts[2m > [22mIntegration Tests - End-to-End Flows[2m > [22mSummary Generation[2m > [22mshould generate human-readable summaries
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/integration.test.ts[2m > [22mIntegration Tests - End-to-End Flows[2m > [22mSummary Generation[2m > [22mshould include guardrails in summary
+@sweepbot/flows:test: [90mstdout[2m | src/__tests__/integration.test.ts[2m > [22m[2mIntegration Tests - End-to-End Flows[2m > [22m[2mComplete Flow Lifecycle[2m > [22m[2mshould handle multi-turn conversation refinement[22m[39m
+@sweepbot/flows:test: [2026-03-07T19:30:02.707Z] INFO: Started conversation conv-123 for user user-456 {"module":"ConversationManager"}
+@sweepbot/flows:test: [2026-03-07T19:30:02.708Z] INFO: Applying refinement: "Actually at 3:30 PM" {"module":"ConversationManager"}
+@sweepbot/flows:test: [2026-03-07T19:30:02.709Z] INFO: Continued conversation conv-123, status: building {"module":"ConversationManager"}
+@sweepbot/flows:test: [2026-03-07T19:30:02.709Z] INFO: Applying refinement: "And play Sweet Bonanza" {"module":"ConversationManager"}
+@sweepbot/flows:test: [2026-03-07T19:30:02.710Z] INFO: Continued conversation conv-123, status: building {"module":"ConversationManager"}
+@sweepbot/flows:test: [2026-03-07T19:30:02.712Z] INFO: Continued conversation conv-123, status: confirming {"module":"ConversationManager"}
+@sweepbot/flows:test: 
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mAction Execution[2m > [22mshould execute action nodes sequentially
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mAction Execution[2m > [22mshould track action execution in logs
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mAction Execution[2m > [22mshould set timeout on actions
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mAction Execution[2m > [22mshould handle action failure modes
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mSequence Execution[2m > [22mshould execute sequence of actions in order
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mSequence Execution[2m > [22mshould not execute further steps if earlier step fails with stop
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mCondition Evaluation[2m > [22mshould evaluate greater than condition
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mCondition Evaluation[2m > [22mshould evaluate less than condition
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mCondition Evaluation[2m > [22mshould evaluate equality condition
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mCondition Evaluation[2m > [22mshould execute onTrue branch when condition is true
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mCondition Evaluation[2m > [22mshould execute onFalse branch when condition is false
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mLoop Execution[2m > [22mshould execute loop with safety caps
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mLoop Execution[2m > [22mshould stop loop when maxIterations reached
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mLoop Execution[2m > [22mshould stop loop when maxDuration reached
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mVariable Storage[2m > [22mshould store action results in variables
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mVariable Storage[2m > [22mshould reference stored variables in conditions
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mMetric Tracking[2m > [22mshould track number of actions executed
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mMetric Tracking[2m > [22mshould track execution status
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mError Handling[2m > [22mshould handle action timeout
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mError Handling[2m > [22mshould respect onFailure strategy
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mComplex Flow Execution[2m > [22mshould execute branching flow with conditions
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mComplex Flow Execution[2m > [22mshould execute flow with nested conditions and loops
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mComplex Flow Execution[2m > [22mshould stop execution when cool_down_check guardrail is enabled
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mComplex Flow Execution[2m > [22mshould store action result when parameters.storeAs is provided
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mComplex Flow Execution[2m > [22mshould evaluate expression values using stored numeric variables
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mComplex Flow Execution[2m > [22mshould increment loopIterations and log loop guardrail when caps hit
+@sweepbot/flows:test:  [32mΓ£ô[39m src/__tests__/executor.test.ts[2m > [22mFlowExecutor[2m > [22mComplex Flow Execution[2m > [22mshould record platformsAccessed when opening a platform
+@sweepbot/flows:test: 
+@sweepbot/flows:test: [2m Test Files [22m [1m[32m6 passed[39m[22m[90m (6)[39m
+@sweepbot/flows:test: [2m      Tests [22m [1m[32m115 passed[39m[22m[90m (115)[39m
+@sweepbot/flows:test: [2m   Start at [22m 13:30:01
+@sweepbot/flows:test: [2m   Duration [22m 1.42s[2m (transform 1.10s, setup 0ms, collect 1.53s, tests 141ms, environment 2ms, prepare 2.66s)[22m
+@sweepbot/flows:test: 
+@sweepbot/flows:test: 
+@sweepbot/flows:test: [1m[7m[32m PASS [39m[27m[22m[32m Waiting for file changes...[39m
+@sweepbot/flows:test:        [2mpress [22m[1mh[22m[2m to show help[22m[2m, [22m[2mpress [22m[1mq[22m[2m to quit[22m
+@sweepbot/api:test: [90mstderr[2m | src/__tests__/routes/webhooks.test.ts
+@sweepbot/api:test: [22m[39mΓ¥î Invalid environment variables:
+@sweepbot/api:test: {
+@sweepbot/api:test:   DATABASE_URL: [ [32m'Required'[39m ],
+@sweepbot/api:test:   SUPABASE_URL: [ [32m'Required'[39m ],
+@sweepbot/api:test:   SUPABASE_SERVICE_ROLE_KEY: [ [32m'Required'[39m ],
+@sweepbot/api:test:   SUPABASE_ANON_KEY: [ [32m'Required'[39m ],
+@sweepbot/api:test:   JWT_SECRET: [ [32m'Required'[39m ],
+@sweepbot/api:test:   STRIPE_SECRET_KEY: [ [32m'Required'[39m ],
+@sweepbot/api:test:   STRIPE_WEBHOOK_SECRET: [ [32m'Required'[39m ]
+@sweepbot/api:test: }
+@sweepbot/api:test: 
+@sweepbot/api:test: [90mstderr[2m | src/__tests__/routes/flows.test.ts
+@sweepbot/api:test: [22m[39mΓ¥î Invalid environment variables:
+@sweepbot/api:test: {
+@sweepbot/api:test:   DATABASE_URL: [ [32m'Required'[39m ],
+@sweepbot/api:test:   SUPABASE_URL: [ [32m'Required'[39m ],
+@sweepbot/api:test:   SUPABASE_SERVICE_ROLE_KEY: [ [32m'Required'[39m ],
+@sweepbot/api:test:   SUPABASE_ANON_KEY: [ [32m'Required'[39m ],
+@sweepbot/api:test:   JWT_SECRET: [ [32m'Required'[39m ],
+@sweepbot/api:test:   STRIPE_SECRET_KEY: [ [32m'Required'[39m ],
+@sweepbot/api:test:   STRIPE_WEBHOOK_SECRET: [ [32m'Required'[39m ]
+@sweepbot/api:test: }
+@sweepbot/api:test: 
+@sweepbot/api:test: 
+@sweepbot/api:test: [31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1m[7m Failed Suites 3 [27m[22mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m
+@sweepbot/api:test: 
+@sweepbot/api:test: [31m[1m[7m FAIL [27m[22m[39m src/__tests__/routes/auth.test.ts[2m [ src/__tests__/routes/auth.test.ts ][22m
+@sweepbot/api:test: [31m[1m[7m FAIL [27m[22m[39m src/__tests__/routes/flows.test.ts[2m [ src/__tests__/routes/flows.test.ts ][22m
+@sweepbot/api:test: [31m[1mError[22m: process.exit unexpectedly called with "1"[39m
+@sweepbot/api:test: [36m [2mΓ¥»[22m src/utils/env.ts:[2m61:11[22m[39m
+@sweepbot/api:test:     [90m 59| [39m  console[33m.[39m[34merror[39m([32m'Γ¥î Invalid environment variables:'[39m)
+@sweepbot/api:test:     [90m 60| [39m  console[33m.[39m[34merror[39m(_parsed[33m.[39merror[33m.[39m[34mflatten[39m()[33m.[39mfieldErrors)
+@sweepbot/api:test:     [90m 61| [39m  process[33m.[39m[34mexit[39m([34m1[39m)
+@sweepbot/api:test:     [90m   | [39m          [31m^[39m
+@sweepbot/api:test:     [90m 62| [39m}
+@sweepbot/api:test:     [90m 63| [39m
+@sweepbot/api:test: [90m [2mΓ¥»[22m src/middleware/auth.ts:[2m2:31[22m[39m
+@sweepbot/api:test: 
+@sweepbot/api:test: [31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/3]ΓÄ»[22m[39m
+@sweepbot/api:test: 
+@sweepbot/api:test: [31m[1m[7m FAIL [27m[22m[39m src/__tests__/routes/webhooks.test.ts[2m [ src/__tests__/routes/webhooks.test.ts ][22m
+@sweepbot/api:test: [31m[1mError[22m: process.exit unexpectedly called with "1"[39m
+@sweepbot/api:test: [36m [2mΓ¥»[22m src/utils/env.ts:[2m61:11[22m[39m
+@sweepbot/api:test:     [90m 59| [39m  console[33m.[39m[34merror[39m([32m'Γ¥î Invalid environment variables:'[39m)
+@sweepbot/api:test:     [90m 60| [39m  console[33m.[39m[34merror[39m(_parsed[33m.[39merror[33m.[39m[34mflatten[39m()[33m.[39mfieldErrors)
+@sweepbot/api:test:     [90m 61| [39m  process[33m.[39m[34mexit[39m([34m1[39m)
+@sweepbot/api:test:     [90m   | [39m          [31m^[39m
+@sweepbot/api:test:     [90m 62| [39m}
+@sweepbot/api:test:     [90m 63| [39m
+@sweepbot/api:test: [90m [2mΓ¥»[22m src/routes/webhooks.ts:[2m4:31[22m[39m
+@sweepbot/api:test: 
+@sweepbot/api:test: [31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[2/3]ΓÄ»[22m[39m
+@sweepbot/api:test: 
+@sweepbot/api:test: [2m Test Files [22m [1m[31m3 failed[39m[22m[90m (3)[39m
+@sweepbot/api:test: [2m      Tests [22m [2mno tests[22m
+@sweepbot/api:test: [2m   Start at [22m 13:30:01
+@sweepbot/api:test: [2m   Duration [22m 2.15s[2m (transform 333ms, setup 0ms, collect 0ms, tests 0ms, environment 1ms, prepare 1.20s)[22m
+@sweepbot/api:test: 
+@sweepbot/api:test: ΓÇëELIFECYCLEΓÇë Test failed. See above for more details.
+@sweepbot/api:test: ERROR: command finished with error: command (C:\Users\MQ420_OL\DEV\web\Sweepbot\apps\api) C:\Users\MQ420_OL\DEV\web\Sweepbot\node_modules\.bin\pnpm.CMD run test exited (1)
+@sweepbot/api#test: command (C:\Users\MQ420_OL\DEV\web\Sweepbot\apps\api) C:\Users\MQ420_OL\DEV\web\Sweepbot\node_modules\.bin\pnpm.CMD run test exited (1)
+
+ Tasks:    2 successful, 5 total
+Cached:    2 cached, 5 total
+  Time:    4.236s 
+Failed:    @sweepbot/api#test
+
+ ERROR  run failed: command  exited (1)
+ΓÇëELIFECYCLEΓÇë Test failed. See above for more details.

@@ -6,8 +6,30 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue)](https://typescriptlang.org)
 [![Node.js](https://img.shields.io/badge/Node.js-22-green)](https://nodejs.org)
 [![pnpm](https://img.shields.io/badge/pnpm-9-orange)](https://pnpm.io)
+[![Phase 1: Complete](https://img.shields.io/badge/Phase%201-Complete%20✅-brightgreen)]()
 
 SweepBot gives sweepstakes casino players what the house never wants them to have: **complete, cross-platform transparency, automation of tedious tasks, and data-driven intelligence.**
+
+---
+
+## 🚦 Current Status
+
+| Phase | Status | Description |
+|-------|--------|-------------|
+| **Phase 1: NLP Flow Engine** | ✅ **Complete** | Natural language → executable automation scripts. 1,600+ lines of tests. Production-ready. |
+| **Phase 2: Action Execution** | 🔄 In Progress | Connecting the Flow Engine to live browser actions via the Extension. |
+| **Phase 3: Community + Data Products** | 🗓 Planned | B2B data API, Trust Index certification, Marketplace. |
+| **Phase 4: Mobile + Scale** | 🗓 Planned | React Native, localization, enterprise. |
+
+**Phase 1 Demo:**
+```
+User: "Every day at 3:30, open Chumba, grab my daily bonus, throw it on Sweet
+Bonanza at minimum bet. If I hit over 5x the bonus, keep going. If not, stop."
+
+SweepBot: ✅ Flow created (confidence: 0.87)
+          ✅ Responsible Play guardrails enforced
+          ✅ Scheduled for 3:30 PM daily
+```
 
 ---
 
@@ -18,9 +40,9 @@ sweepbot/
 ├── apps/
 │   ├── web/          → React dashboard (Vite + Tailwind + shadcn/ui)
 │   ├── api/          → REST + WebSocket API (Fastify + TypeScript)
-│   ├── extension/    → Browser extension (WXT + React + TypeScript, MV3)
-│   └── desktop/      → Automation engine (Tauri + React)
+│   └── extension/    → Browser extension (WXT + React + TypeScript, MV3)
 ├── packages/
+│   ├── flows/        → NLP Engine, AST Builder, Executor, Scheduler ← Phase 1 Complete
 │   ├── types/        → Shared TypeScript interfaces & Zod schemas
 │   ├── utils/        → Shared utility functions
 │   └── config/       → Shared ESLint, TypeScript, Tailwind configs
@@ -64,10 +86,19 @@ pnpm --filter @sweepbot/web dev
 pnpm --filter @sweepbot/extension dev
 ```
 
-### 4. Build for Production
+### 4. Run the Flow Engine (Phase 1)
 
-```bash
-pnpm build
+```typescript
+import { FlowInterpreter, FlowExecutor, FlowScheduler } from '@sweepbot/flows'
+
+const interpreter = new FlowInterpreter()
+const result = await interpreter.interpret({
+  userId: 'user-123',
+  rawInput: 'Every day at 3 PM, open Chumba and claim bonus'
+})
+
+const scheduler = new FlowScheduler()
+await scheduler.activateFlow(result.flow, result.flow.userId)
 ```
 
 ---
@@ -82,6 +113,11 @@ pnpm build
 | [API Design](docs/API_DESIGN.md) | REST and WebSocket API reference |
 | [Roadmap](docs/DEVELOPMENT_ROADMAP.md) | Phase-by-phase development plan |
 | [Monetization](docs/MONETIZATION_STRATEGY.md) | Revenue model and pricing |
+| [Security](docs/SECURITY_ARCHITECTURE.md) | Auth, encryption, zero-knowledge design |
+| [Developer Guide](docs/DEVELOPER_ONBOARDING.md) | How to contribute & extend |
+| [Data Moat Roadmap](docs/DATA_MOAT_ROADMAP.md) | Proprietary data collection strategy |
+| [Phase 1 Report](docs/milestones/PHASE_1_COMPLETION.md) | Detailed Phase 1 completion report |
+| [Project History](docs/PROJECT_HISTORY.md) | Origin story and founder narrative |
 
 ---
 
@@ -96,7 +132,6 @@ pnpm build
 | Auth | Supabase Auth |
 | Payments | Stripe |
 | Extension | WXT (Web Extension Tools), MV3 |
-| Desktop | Tauri v2, Playwright |
 | Monorepo | pnpm workspaces + Turborepo |
 | CI/CD | GitHub Actions |
 | Hosting | Vercel (web), Railway (API) |
@@ -123,6 +158,8 @@ Key services to configure:
 pnpm test              # Run all tests
 pnpm test:watch        # Watch mode
 pnpm test:coverage     # Coverage report
+
+cd packages/flows && pnpm test  # Flow engine tests only (54 suites, 285+ assertions)
 ```
 
 ### Type Checking
@@ -143,6 +180,8 @@ pnpm lint:fix          # Auto-fix lint issues
 ## 📋 Contributing
 
 This is a private project owned by APPYness. All rights reserved.
+
+See [DEVELOPER_ONBOARDING.md](docs/DEVELOPER_ONBOARDING.md) before contributing.
 
 ---
 

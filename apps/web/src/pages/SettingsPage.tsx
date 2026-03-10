@@ -16,7 +16,7 @@ import {
   Eye,
   EyeOff,
 } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { supabaseClient } from '../lib/supabase'
 import { useAuthStore } from '../stores/auth'
 import { api } from '../lib/api'
 import { cn, formatSC } from '../lib/utils'
@@ -117,7 +117,7 @@ function ProfileTab() {
   async function handleSave() {
     setSaving(true)
     try {
-      await supabase.auth.updateUser({ data: { display_name: displayName } })
+      await supabaseClient.auth.updateUser({ data: { display_name: displayName } })
       void qc.invalidateQueries({ queryKey: ['user'] })
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
@@ -163,17 +163,17 @@ function SecurityTab() {
     setSaving(true)
     try {
       // Re-authenticate then update
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { user } } = await supabaseClient.auth.getUser()
       if (!user?.email) throw new Error('No user found.')
 
       // Sign in with old password to verify
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { error: signInError } = await supabaseClient.auth.signInWithPassword({
         email: user.email,
         password: oldPw,
       })
       if (signInError) throw new Error('Current password is incorrect.')
 
-      const { error: updateError } = await supabase.auth.updateUser({ password: newPw })
+      const { error: updateError } = await supabaseClient.auth.updateUser({ password: newPw })
       if (updateError) throw updateError
 
       setOldPw(''); setNewPw(''); setConfirmPw('')
@@ -212,6 +212,8 @@ function SecurityTab() {
           <button
             type="button"
             onClick={() => setShowPw((v) => !v)}
+            aria-label={showPw ? 'Hide current password' : 'Show current password'}
+            title={showPw ? 'Hide current password' : 'Show current password'}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
           >
             {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -296,7 +298,10 @@ function NotificationsTab() {
               <p className="text-xs text-zinc-500">{description}</p>
             </div>
             <button
+              type="button"
               onClick={() => mutation.mutate({ [key]: !enabled })}
+              aria-label={`${enabled ? 'Disable' : 'Enable'} ${label}`}
+              title={`${enabled ? 'Disable' : 'Enable'} ${label}`}
               className={cn(
                 'relative w-10 h-6 rounded-full transition-colors focus:outline-none',
                 enabled ? 'bg-brand-600' : 'bg-zinc-700'
@@ -342,7 +347,7 @@ function SubscriptionTab() {
             <p className="text-lg font-bold text-white">
               {TIER_NAMES[sub?.['tier'] as string] ?? 'Free'}
             </p>
-            {sub?.['current_period_end'] && (
+            {!!sub?.['current_period_end'] && (
               <p className="text-xs text-zinc-500 mt-0.5">
                 {sub['cancel_at_period_end']
                   ? `Cancels on ${new Date(sub['current_period_end'] as string).toLocaleDateString()}`
@@ -368,7 +373,7 @@ function SubscriptionTab() {
         </a>
       </Section>
 
-      {sub?.['tier'] !== 'free' && sub?.['stripe_subscription_id'] && (
+      {sub?.['tier'] !== 'free' && !!sub?.['stripe_subscription_id'] && (
         <Section title="Billing Portal" description="Manage payment methods, view invoices, and cancel.">
           <a
             href="/api/v1/user/billing-portal"
@@ -386,7 +391,13 @@ function SubscriptionTab() {
   )
 }
 
-// ─── Tax Center Tab ───────────────────────────────────────────────────────────
+/**
+ * Renders the Tax Summary tab that lets the user select a tax year and view redemption totals and per-platform breakdowns.
+ *
+ * Fetches the tax summary for the selected year and displays aggregated values, a list of platforms with SC totals, and an export action.
+ *
+ * @returns The JSX element for the Tax Summary settings tab
+ */
 
 function TaxTab() {
   const currentYear = new Date().getFullYear()
@@ -404,8 +415,10 @@ function TaxTab() {
     <div className="space-y-4">
       <Section title="Tax Summary" description="Total redemptions by platform for tax reporting.">
         <div className="flex items-center gap-3">
-          <label className="text-xs text-zinc-400">Tax Year</label>
+          <label htmlFor="tax-year" className="text-xs text-zinc-400">Tax Year</label>
           <select
+            id="tax-year"
+            aria-label="Tax year"
             value={taxYear}
             onChange={(e) => setTaxYear(Number(e.target.value))}
             className="bg-zinc-950 border border-zinc-700 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
@@ -450,7 +463,11 @@ function TaxTab() {
                 <AlertTriangle className="w-3 h-3 inline mr-1 text-yellow-400" />
                 SweepBot is not a tax advisor. Consult a qualified professional.
               </p>
-              <button className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium rounded-lg transition-colors">
+              <button
+                type="button"
+                title="Export tax summary as PDF"
+                className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium rounded-lg transition-colors"
+              >
                 <Download className="w-3 h-3" />
                 Export PDF
               </button>
@@ -464,14 +481,30 @@ function TaxTab() {
   )
 }
 
-// ─── Danger Zone Tab ──────────────────────────────────────────────────────────
+/**
+ * Renders the "Danger Zone" settings section containing controls for self-exclusion and permanent account deletion.
+ *
+ * The UI lets a user activate a 30-day self-exclusion (with a confirmation prompt) and permanently delete their account.
+ * Deletion requires typing the exact phrase "delete my account" before the delete action is enabled; successful deletion triggers sign-out.
+ *
+ * @returns The component's rendered JSX element
+ */
+
+const SELF_EXCLUDE_DAYS = 30
 
 function DangerZoneTab() {
   const { signOut } = useAuthStore()
   const [confirmText, setConfirmText] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [excluding, setExcluding] = useState(false)
+  const [excludeError, setExcludeError] = useState<string | null>(null)
 
+  /**
+   * Deletes the current user's account if the confirmation phrase is present, then signs the user out.
+   *
+   * Sets the local deleting state while the operation is in progress. If the deletion call fails,
+   * the deleting state is reset to false.
+   */
   async function handleDeleteAccount() {
     if (confirmText !== 'delete my account') return
     setDeleting(true)
@@ -485,8 +518,11 @@ function DangerZoneTab() {
 
   async function handleSelfExclude() {
     setExcluding(true)
+    setExcludeError(null)
     try {
-      await api.user.selfExclude(30)
+      await api.user.selfExclude(SELF_EXCLUDE_DAYS)
+    } catch (err) {
+      setExcludeError(err instanceof Error ? err.message : 'Self-exclusion failed. Please try again.')
     } finally {
       setExcluding(false)
     }
@@ -501,14 +537,19 @@ function DangerZoneTab() {
           <div>
             <p className="text-sm font-semibold text-zinc-200">Self-Exclusion</p>
             <p className="text-xs text-zinc-400 mt-1">
-              Lock yourself out of the SweepBot UI for 30 days. Automations keep running — your
+              Lock yourself out of the SweepBot UI for {SELF_EXCLUDE_DAYS} days. Automations keep running — your
               daily bonuses will still be collected. You can contact support to lift it early.
             </p>
           </div>
         </div>
+        {excludeError && (
+          <div className="px-3 py-2 rounded-lg bg-red-950/50 border border-red-800 text-red-300 text-sm">
+            {excludeError}
+          </div>
+        )}
         <button
           onClick={() => {
-            if (confirm('Lock yourself out of SweepBot for 30 days? Automations will keep running.')) {
+            if (confirm(`Lock yourself out of SweepBot for ${SELF_EXCLUDE_DAYS} days? Automations will keep running.`)) {
               void handleSelfExclude()
             }
           }}
@@ -516,7 +557,7 @@ function DangerZoneTab() {
           className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-semibold rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
         >
           {excluding && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-          Activate 30-day self-exclusion
+          Activate {SELF_EXCLUDE_DAYS}-day self-exclusion
         </button>
       </div>
 
@@ -560,7 +601,13 @@ function DangerZoneTab() {
   )
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+/**
+ * Render the user settings page with a sidebar of tabs and corresponding content sections.
+ *
+ * Supports direct linking to a specific tab using the URL hash.
+ *
+ * @returns The settings page React element containing sidebar navigation and the active tab content
+ */
 
 export function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('profile')

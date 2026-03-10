@@ -5,24 +5,31 @@
  */
 
 import type { ConversationState, ConversationTurn, FlowDefinition, EntityMap, FlowWarning } from '../types'
+import { FlowInterpreter } from '../interpreter/interpreter'
+import { logger as defaultLogger } from '@sweepbot/utils'
 
 export interface ConversationManagerOptions {
   onStateSave?: (state: ConversationState) => Promise<void>
   onStateLoad?: (conversationId: string) => Promise<ConversationState | null>
-  flowInterpreter?: any // FlowInterpreter instance
-  logger?: { info: (msg: string) => void; error: (msg: string, err: any) => void }
+  flowInterpreter?: FlowInterpreter
+  logger?: { info: (msg: string) => void; error: (msg: string, err: unknown) => void }
 }
 
 export class ConversationManager {
   private options: ConversationManagerOptions
-  private logger: { info: (msg: string) => void; error: (msg: string, err: any) => void }
+  private logger: { info: (msg: string) => void; error: (msg: string, err: unknown) => void }
+  // interpreter instance (can be injected for testing)
+  private interpreter: FlowInterpreter
+  // simple in-memory backup store used when no external persistence provided
+  private memory: Map<string, ConversationState> = new Map()
 
   constructor(options: ConversationManagerOptions = {}) {
     this.options = options
     this.logger = options.logger || {
-      info: (msg) => console.log(`[ConversationManager] ${msg}`),
-      error: (msg, err) => console.error(`[ConversationManager] ${msg}`, err),
+      info: (msg) => defaultLogger.info(msg, { module: 'ConversationManager' }),
+      error: (msg, err) => defaultLogger.error(msg, { module: 'ConversationManager', err }),
     }
+    this.interpreter = options.flowInterpreter || new FlowInterpreter()
   }
 
   /**
@@ -33,10 +40,22 @@ export class ConversationManager {
     sessionId: string,
     initialFlowDescription: string
   ): Promise<ConversationState> {
+    // start by interpreting whatever the user has provided so far
+    let currentFlow: Partial<FlowDefinition> = {}
+    try {
+      const result = await this.interpreter.interpret({
+        userId,
+        rawInput: initialFlowDescription,
+      })
+      currentFlow = result.flow
+    } catch (err) {
+      this.logger.error('Interpreter error on startConversation', err)
+    }
+
     const state: ConversationState = {
       userId,
       sessionId,
-      currentFlow: {},
+      currentFlow,
       turns: [
         {
           role: 'user',
@@ -48,8 +67,21 @@ export class ConversationManager {
       status: 'building',
     }
 
+    // Immediately generate any follow-up questions based on what was provided
+    state.pendingQuestions = this.generateFollowUpQuestions(state.currentFlow)
+    if (state.pendingQuestions.length > 0) {
+      state.turns.push({
+        role: 'assistant',
+        content: state.pendingQuestions[0]!,
+        timestamp: new Date(),
+      })
+    }
+
     if (this.options.onStateSave) {
       await this.options.onStateSave(state)
+    } else {
+      // store a copy locally when no persistence callback provided
+      this.memory.set(sessionId, state)
     }
 
     this.logger.info(`Started conversation ${sessionId} for user ${userId}`)
@@ -65,6 +97,8 @@ export class ConversationManager {
     let state: ConversationState | null = null
     if (this.options.onStateLoad) {
       state = await this.options.onStateLoad(conversationId)
+    } else {
+      state = this.memory.get(conversationId) ?? null
     }
 
     if (!state) {
@@ -101,6 +135,10 @@ export class ConversationManager {
         state.status = 'building'
       }
 
+      // Save updated state back if we're using in-memory store
+      if (!this.options.onStateSave) {
+        this.memory.set(conversationId, state)
+      }
       // Check if we have enough info to confirm
       if (state.status === 'confirming') {
         if (this.isFlowComplete(state.currentFlow)) {
@@ -125,7 +163,7 @@ export class ConversationManager {
         if (state.pendingQuestions.length > 0) {
           state.turns.push({
             role: 'assistant',
-            content: state.pendingQuestions[0],
+            content: state.pendingQuestions[0]!,
             timestamp: new Date(),
           })
         }
@@ -151,6 +189,8 @@ export class ConversationManager {
     let state: ConversationState | null = null
     if (this.options.onStateLoad) {
       state = await this.options.onStateLoad(conversationId)
+    } else {
+      state = this.memory.get(conversationId) ?? null
     }
 
     if (!state) {
@@ -167,6 +207,9 @@ export class ConversationManager {
     state.status = 'complete'
     if (this.options.onStateSave) {
       await this.options.onStateSave(state)
+    } else {
+      // fallback for in-memory persistence
+      this.memory.set(conversationId, state)
     }
 
     this.logger.info(`Confirmed conversation ${conversationId}, created flow ${flow.id}`)
@@ -218,17 +261,24 @@ export class ConversationManager {
     userMessage: string,
     _keywords: string[]
   ): Promise<void> {
-    // This is a simplified version. In production, you'd run this through the interpreter
-    // to extract entities and merge them with the existing flow definition.
-
-    // For now, we just log that we're handling the refinement
     this.logger.info(`Applying refinement: "${userMessage}"`)
-
-    // In a full implementation, you'd:
-    // 1. Run user message through entity recognizer
-    // 2. Determine what field is being updated
-    // 3. Merge new entities with existing flow definition
-    // 4. Re-validate with ResponsiblePlayValidator
+    const base = state.currentFlow?.description || ''
+    const combined = `${base} ${userMessage}`.trim()
+    try {
+      const result = await this.interpreter.interpret({
+        userId: state.userId,
+        rawInput: combined,
+      })
+      // preserve existing id/status
+      state.currentFlow = {
+        ...result.flow,
+        id: state.currentFlow.id || result.flow.id,
+        status: state.currentFlow.status || result.flow.status,
+      }
+    } catch (err) {
+      this.logger.error('applyFlowRefinement interpreter failed', err)
+      state.currentFlow.description = combined
+    }
   }
 
   /**
@@ -238,7 +288,7 @@ export class ConversationManager {
     const questions: string[] = []
 
     // Check what we're missing
-    if (!flow.trigger) {
+    if (!flow.trigger || flow.trigger.type === 'manual') {
       questions.push('When should this Flow run? (e.g., "every day at 3 PM", "once a day", "manually")')
     }
 
@@ -251,7 +301,7 @@ export class ConversationManager {
     }
 
     // If we have questions, return just the next one
-    return questions.length > 0 ? [questions[0]] : []
+    return questions.length > 0 ? [questions[0]!] : []
   }
 
   /**
@@ -316,8 +366,7 @@ export class ConversationManager {
 
     // Trigger
     if (flow.trigger?.type === 'scheduled') {
-      const scheduled = flow.trigger as any
-      card += `⏰ Trigger: ${scheduled.cron} (${scheduled.timezone})\n`
+      card += `⏰ Trigger: ${flow.trigger.cron} (${flow.trigger.timezone})\n`
     } else if (flow.trigger?.type === 'manual') {
       card += `⚙️ Trigger: Manual (on demand)\n`
     }
