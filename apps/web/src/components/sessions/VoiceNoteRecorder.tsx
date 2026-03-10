@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Mic, MicOff, Save, X, Loader2, PenLine } from 'lucide-react'
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
 import { api } from '../../lib/api'
@@ -22,6 +22,11 @@ export function VoiceNoteRecorder({ sessionId, onNoteAdded }: Props) {
   const [state, setState] = useState<RecorderState>('idle')
   const [textFallback, setTextFallback] = useState('')
   const [saveError, setSaveError] = useState<string | null>(null)
+
+  const prefersReducedMotion = useMemo(
+    () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    [],
+  )
 
   const activeTranscript = isSupported ? transcript : textFallback
 
@@ -95,8 +100,6 @@ export function VoiceNoteRecorder({ sessionId, onNoteAdded }: Props) {
   // ── Recording ─────────────────────────────────────────────────────────────
   // Fixed bar heights so the pattern is stable across renders
   const WAVEFORM_HEIGHTS = [40, 70, 55, 90, 35, 80, 50, 75, 30, 85, 45, 65]
-  const prefersReducedMotion =
-    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
   return (
     <div className="glass-card rounded-2xl p-4 space-y-3 animate-fade-in">

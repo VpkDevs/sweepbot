@@ -11,8 +11,12 @@ interface NotificationItem {
   type: string
   title: string
   body: string
-  isRead: boolean
-  createdAt: string
+  is_read: boolean
+  read_at: string | null
+  icon: string | null
+  href: string | null
+  data: unknown
+  created_at: string
 }
 
 type FilterKey = 'all' | 'unread' | 'achievements' | 'streaks' | 'milestones'
@@ -39,7 +43,7 @@ function getIcon(type: string): React.ReactNode {
 
 function matchesFilter(item: NotificationItem, filter: FilterKey): boolean {
   if (filter === 'all') return true
-  if (filter === 'unread') return !item.isRead
+  if (filter === 'unread') return !item.is_read
   if (filter === 'achievements') return item.type === 'achievement'
   if (filter === 'streaks') return item.type === 'streak'
   if (filter === 'milestones') return item.type === 'milestone'
@@ -71,7 +75,7 @@ export function NotificationsInbox() {
 
   const { data: rawNotifications, isLoading } = useQuery({
     queryKey: ['notifications', 'inbox'],
-    queryFn: () => api.notifications.list({ limit: 100 }) as unknown as Promise<NotificationItem[]>,
+    queryFn: () => api.notifications.list({ limit: 100 }),
   })
 
   const { mutate: markAllRead, isPending: isMarkingAll } = useMutation({
@@ -88,9 +92,9 @@ export function NotificationsInbox() {
     },
   })
 
-  const notifications = rawNotifications ?? []
+  const notifications: NotificationItem[] = rawNotifications ?? []
   const filtered = notifications.filter((n) => matchesFilter(n, activeFilter))
-  const unreadCount = notifications.filter((n) => !n.isRead).length
+  const unreadCount = notifications.filter((n) => !n.is_read).length
 
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-2xl mx-auto">
@@ -173,17 +177,17 @@ export function NotificationsInbox() {
               {filtered.map((item) => (
                 <li
                   key={item.id}
-                  onClick={() => { if (!item.isRead) markRead(item.id) }}
+                  onClick={() => { if (!item.is_read) markRead(item.id) }}
                   className={cn(
                     'flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-white/[0.02]',
-                    !item.isRead && 'bg-brand-500/[0.03]',
+                    !item.is_read && 'bg-brand-500/[0.03]',
                   )}
                 >
                   {/* Icon */}
                   <div
                     className={cn(
                       'mt-0.5 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-                      !item.isRead ? 'bg-brand-500/10 ring-1 ring-brand-500/20' : 'bg-white/[0.04]',
+                      !item.is_read ? 'bg-brand-500/10 ring-1 ring-brand-500/20' : 'bg-white/[0.04]',
                     )}
                   >
                     {getIcon(item.type)}
@@ -191,7 +195,7 @@ export function NotificationsInbox() {
 
                   {/* Text */}
                   <div className="flex-1 min-w-0 space-y-0.5">
-                    <p className={cn('text-sm font-medium leading-snug', item.isRead ? 'text-zinc-400' : 'text-white')}>
+                    <p className={cn('text-sm font-medium leading-snug', item.is_read ? 'text-zinc-400' : 'text-white')}>
                       {item.title}
                     </p>
                     <p className="text-xs text-zinc-500 leading-relaxed line-clamp-2">{item.body}</p>
@@ -199,8 +203,8 @@ export function NotificationsInbox() {
 
                   {/* Meta */}
                   <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-2">
-                    <span className="text-[10px] text-zinc-600">{timeAgo(item.createdAt)}</span>
-                    {!item.isRead && (
+                    <span className="text-[10px] text-zinc-600">{timeAgo(item.created_at)}</span>
+                    {!item.is_read && (
                       <span className="w-2 h-2 rounded-full bg-brand-400 shadow-sm shadow-brand-400/50" />
                     )}
                   </div>

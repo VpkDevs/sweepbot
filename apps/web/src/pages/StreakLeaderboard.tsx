@@ -7,10 +7,10 @@ import { TextReveal } from '../components/fx/TextReveal'
 
 interface LeaderboardEntry {
   rank: number
-  userId: string
-  displayName: string
-  currentStreak: number
-  longestStreak: number
+  user_id: string
+  display_name: string | null
+  current_streak: number
+  longest_streak: number
 }
 
 const RANK_STYLES: Record<number, string> = {
@@ -57,10 +57,17 @@ function SkeletonRow() {
 export function StreakLeaderboard() {
   const { data: rawEntries, isLoading } = useQuery({
     queryKey: ['streaks', 'leaderboard'],
-    queryFn: () => api.streaks.leaderboard(50) as unknown as Promise<LeaderboardEntry[]>,
+    queryFn: () => api.streaks.leaderboard(50),
   })
 
-  const entries = rawEntries ?? []
+  // Add rank index to each entry
+  const entries: LeaderboardEntry[] = (rawEntries ?? []).map((e, i) => ({
+    rank: i + 1,
+    user_id: e.user_id,
+    display_name: e.display_name,
+    current_streak: e.current_streak,
+    longest_streak: e.longest_streak,
+  }))
 
   return (
     <div className="p-6 lg:p-8 space-y-8 max-w-3xl mx-auto">
@@ -105,7 +112,7 @@ export function StreakLeaderboard() {
                 const isTop3 = entry.rank <= 3
                 return (
                   <li
-                    key={entry.userId}
+                    key={entry.user_id}
                     className={cn(
                       'flex items-center gap-4 px-4 py-3 transition-colors hover:bg-white/[0.02]',
                       isTop3 && 'bg-white/[0.01]',
@@ -119,23 +126,23 @@ export function StreakLeaderboard() {
                         isTop3 ? 'text-white' : 'text-zinc-300',
                       )}
                     >
-                      {entry.displayName}
+                      {entry.display_name ?? 'Anonymous'}
                     </span>
 
                     {/* Current streak */}
                     <span
                       className={cn(
                         'w-24 text-right flex items-center justify-end gap-1 tabular-nums text-sm font-bold',
-                        entry.currentStreak >= 7 ? 'text-orange-400' : 'text-zinc-300',
+                        entry.current_streak >= 7 ? 'text-orange-400' : 'text-zinc-300',
                       )}
                     >
                       <Flame className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />
-                      {entry.currentStreak}d
+                      {entry.current_streak}d
                     </span>
 
                     {/* Longest streak */}
                     <span className="w-24 text-right tabular-nums text-sm text-zinc-500 font-medium">
-                      {entry.longestStreak}d best
+                      {entry.longest_streak}d best
                     </span>
                   </li>
                 )

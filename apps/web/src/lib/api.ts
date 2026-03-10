@@ -376,7 +376,18 @@ export const api = {
   // Notifications
   notifications: {
     list: (params?: { limit?: number; unread_only?: boolean }) =>
-      request<Record<string, unknown>[]>(`/notifications${toQS(params)}`),
+      request<Array<{
+        id: string
+        type: string
+        title: string
+        body: string
+        icon: string | null
+        href: string | null
+        is_read: boolean
+        read_at: string | null
+        data: unknown
+        created_at: string
+      }>>(`/notifications${toQS(params)}`),
     count: () => request<{ unread: number }>('/notifications/count'),
     markRead: (id: string) =>
       request<{ id: string }>(`/notifications/${id}/read`, { method: 'PATCH' }),
@@ -411,13 +422,24 @@ export const api = {
 
   // Daily streaks
   streaks: {
-    get: () => request<Record<string, unknown>>('/streaks'),
+    get: () =>
+      request<{
+        currentStreak: number
+        longestStreak: number
+        lastActivityDate: string | null
+        freezeCredits: number
+      }>('/streaks'),
     recordActivity: () =>
       request<{ currentStreak: number; milestoneReached?: number }>('/streaks/activity', {
         method: 'POST',
       }),
     leaderboard: (limit?: number) =>
-      request<Record<string, unknown>[]>(`/streaks/leaderboard${limit ? `?limit=${limit}` : ''}`),
+      request<Array<{
+        user_id: string
+        current_streak: number
+        longest_streak: number
+        display_name: string | null
+      }>>(`/streaks/leaderboard${limit ? `?limit=${limit}` : ''}`),
   },
 
   // Session notes

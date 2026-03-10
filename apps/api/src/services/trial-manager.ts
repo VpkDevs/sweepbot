@@ -46,12 +46,13 @@ export class TrialManagerService {
     `)
 
     // Log trial_started event
+    const metadata = JSON.stringify({ plan: 'pro', trialEndsAt: trialEndsAt.toISOString() })
     await query(sql`
       INSERT INTO trial_events (user_id, event_type, metadata)
       VALUES (
         ${userId},
         'trial_started',
-        ${sql.raw(`'${JSON.stringify({ plan: 'pro', trialEndsAt: trialEndsAt.toISOString() })}'::jsonb`)}
+        ${metadata}::jsonb
       )
     `)
 
