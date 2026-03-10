@@ -31,8 +31,8 @@ export async function createNotification(input: CreateNotificationInput) {
         type: input.type,
         title: input.title,
         body: input.body,
-        ...(input.icon != null ? { icon: input.icon } : {}),
-        ...(input.href != null ? { href: input.href } : {}),
+        ...(input.icon !== null && input.icon !== undefined ? { icon: input.icon } : {}),
+        ...(input.href !== null && input.href !== undefined ? { href: input.href } : {}),
         data: input.data ?? null,
       })
       .returning()

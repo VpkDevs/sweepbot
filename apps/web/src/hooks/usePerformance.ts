@@ -13,6 +13,7 @@ import { logger } from '@sweepbot/utils'
  * Delays invoking callback until after wait milliseconds have elapsed
  * since the last time the debounced function was invoked
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useDebounce<T extends (...args: any[]) => any>(
   callback: T,
   delay: number
@@ -45,6 +46,7 @@ export function useDebounce<T extends (...args: any[]) => any>(
  * Throttled callback hook
  * Creates a throttled function that only invokes callback at most once per every wait milliseconds
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useThrottle<T extends (...args: any[]) => any>(
   callback: T,
   delay: number
@@ -179,6 +181,7 @@ export function usePrevious<T>(value: T): T | undefined {
  * Creates a stable callback reference that doesn't change between renders
  * but always calls the latest version of the callback
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useStableCallback<T extends (...args: any[]) => any>(callback: T): T {
   const callbackRef = useRef(callback)
 

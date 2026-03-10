@@ -5,7 +5,6 @@ import { Play, Pause, Archive, ChevronDown, Bot, Clock, Zap, CheckCircle2, XCirc
 import { api } from '../lib/api'
 import { cn } from '../lib/utils'
 import { ScrollReveal } from '../components/fx/ScrollReveal'
-import { TextReveal } from '../components/fx/TextReveal'
 
 const EXEC_STATUS = {
   completed: { icon: CheckCircle2, cls: 'text-emerald-400', dot: 'status-dot-active', label: 'Completed' },

@@ -15,7 +15,6 @@ describe('Playwright harness', () => {
     await page.exposeFunction('detectPlatform', detectPlatform)
 
     const slug = await page.evaluate(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = await (window as any).detectPlatform('https://chumbacasino.com/slots/123')
       return result?.slug
     })

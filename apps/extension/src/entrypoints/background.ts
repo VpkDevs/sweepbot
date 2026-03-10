@@ -272,7 +272,7 @@ async function dispatchFlowToTab(flow: import('@/lib/flows/types').FlowDefinitio
     const origin = new URL(targetUrl).origin
     // Prefer a tab that's already on this platform
     const existing = await chrome.tabs.query({ url: `${origin}/*` })
-    if (existing.length > 0 && existing[0].id != null) {
+    if (existing.length > 0 && existing[0].id !== null && existing[0].id !== undefined) {
       tabId = existing[0].id
       // Navigate if not already at the right URL (e.g. on a different game page)
       if (!existing[0].url?.startsWith(targetUrl)) {
@@ -294,14 +294,14 @@ async function dispatchFlowToTab(flow: import('@/lib/flows/types').FlowDefinitio
     ]
     for (const pattern of casinoUrls) {
       const tabs = await chrome.tabs.query({ url: pattern })
-      if (tabs.length > 0 && tabs[0].id != null) {
+      if (tabs.length > 0 && tabs[0].id !== null && tabs[0].id !== undefined) {
         tabId = tabs[0].id
         break
       }
     }
   }
 
-  if (tabId == null) {
+  if (tabId === null || tabId === undefined) {
     throw new Error('No suitable tab found to execute flow')
   }
 

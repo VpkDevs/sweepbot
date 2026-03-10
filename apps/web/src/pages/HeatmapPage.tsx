@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { api } from '../lib/api'
 import { formatSC, cn } from '../lib/utils'
 import { ScrollReveal } from '../components/fx/ScrollReveal'

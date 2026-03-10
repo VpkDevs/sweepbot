@@ -69,7 +69,7 @@ export function RecordsPage() {
   const recordCards = [
     {
       label: 'Biggest Single Win',
-      value: records.biggest_single_win != null ? `${formatSC(records.biggest_single_win)} SC` : '\u2014',
+      value: records.biggest_single_win !== null && records.biggest_single_win !== undefined ? `${formatSC(records.biggest_single_win)} SC` : '\u2014',
       sub: [records.biggest_win_game, records.biggest_win_platform].filter(Boolean).join(' \u00b7 ') || undefined,
       date: records.biggest_win_date,
       icon: Trophy,
@@ -90,7 +90,7 @@ export function RecordsPage() {
     },
     {
       label: 'Best RTP Session',
-      value: records.best_rtp_session != null
+      value: records.best_rtp_session !== null && records.best_rtp_session !== undefined
         ? `${(Number(records.best_rtp_session) * 100).toFixed(1)}%`
         : '\u2014',
       sub: `Min. ${records.best_rtp_min_bets} bets to qualify`,
@@ -100,7 +100,7 @@ export function RecordsPage() {
     },
     {
       label: 'Highest Balance Reached',
-      value: records.highest_balance != null ? `${formatSC(records.highest_balance)} SC` : '\u2014',
+      value: records.highest_balance !== null && records.highest_balance !== undefined ? `${formatSC(records.highest_balance)} SC` : '\u2014',
       icon: Star,
       color: 'text-yellow-400',
       glow: 'shadow-yellow-500/10',
@@ -117,7 +117,7 @@ export function RecordsPage() {
       label: 'Total Jackpots Hit',
       value: `${records.total_jackpots_hit}`,
       sub:
-        records.biggest_jackpot != null
+        records.biggest_jackpot !== null && records.biggest_jackpot !== undefined
           ? `Biggest: ${formatSC(records.biggest_jackpot)} SC`
           : undefined,
       icon: Award,

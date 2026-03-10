@@ -4,7 +4,6 @@
  */
 
 import { pgTable, uuid, varchar, text, integer, boolean, timestamp, decimal, jsonb, unique } from 'drizzle-orm/pg-core'
-import { sql } from 'drizzle-orm'
 
 // ─── Achievement Catalogue ────────────────────────────────────────────────────
 

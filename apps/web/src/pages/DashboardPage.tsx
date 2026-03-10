@@ -10,8 +10,6 @@ import {
   Sparkles,
   Target,
   Activity,
-  Star,
-  Flame,
 } from 'lucide-react'
 import {
   AreaChart,

@@ -3,7 +3,7 @@
  * Endpoints for Flow management: creation, execution, scheduling, marketplace
  */
 
-import type { FastifyInstance, FastifyRequest } from 'fastify'
+import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { sql } from 'drizzle-orm'
@@ -15,7 +15,8 @@ import type { ConversationState } from '@sweepbot/flows'
 // Initialize services
 const flowInterpreter = new FlowInterpreter()
 const flowExecutor = new FlowExecutor()
-const rpValidator = new ResponsiblePlayValidator()
+// Instantiated for future responsible-play checks in flow execution endpoints
+const _rpValidator = new ResponsiblePlayValidator()
 
 // Conversation manager with persistence helpers
 const conversationManager = new ConversationManager({

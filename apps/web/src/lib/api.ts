@@ -98,7 +98,7 @@ async function request<T>(path: string, config: RequestConfig = {}): Promise<T> 
     if (pending) return pending as Promise<T>
   }
 
-  const execute = async (attempt: number): Promise<T> => {
+  const execute = async (_attempt: number): Promise<T> => {
     const headers = await getAuthHeaders()
     const controller = new AbortController()
     const timerId = setTimeout(() => controller.abort(), timeout)

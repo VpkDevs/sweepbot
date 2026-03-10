@@ -4,7 +4,6 @@
  */
 
 import { pgTable, uuid, text, timestamp } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
 
 /**
  * User profiles - auto-created on Supabase auth signup

@@ -210,7 +210,7 @@ function JackpotCard({
 
       <div className="flex items-center justify-between">
         <GrowthRate rate={growthRate} />
-        {estHours != null && (
+        {estHours !== null && estHours !== undefined && (
           <div className="flex items-center gap-1 text-xs text-zinc-500">
             <Clock className="w-3 h-3" />
             <span>~{estHours < 1 ? `${Math.round(estHours * 60)}m` : `${estHours.toFixed(0)}h`}</span>
@@ -556,7 +556,7 @@ export function JackpotsPage() {
                 {[
                   ['Historical Avg', formatSC(selectedJackpot['historical_avg'] as number) + ' SC'],
                   ['Historical High', formatSC(selectedJackpot['historical_high'] as number) + ' SC'],
-                  ['Avg Hit Interval', selectedJackpot['avg_hit_interval_days'] != null ? (selectedJackpot['avg_hit_interval_days'] as number).toFixed(1) + 'd' : '—'],
+                  ['Avg Hit Interval', selectedJackpot['avg_hit_interval_days'] !== null && selectedJackpot['avg_hit_interval_days'] !== undefined ? (selectedJackpot['avg_hit_interval_days'] as number).toFixed(1) + 'd' : '—'],
                   ['Hit Count', String(selectedJackpot['hit_count'] ?? '—')],
                 ].map(([label, value]) => (
                   <div key={label} className="bg-zinc-800/60 rounded-lg p-2">

@@ -25,7 +25,7 @@ export async function sendEmail(opts: SendEmailOptions) {
       to: opts.to,
       subject: opts.subject,
       html: opts.html,
-      ...(opts.text != null ? { text: opts.text } : {}),
+      ...(opts.text !== null && opts.text !== undefined ? { text: opts.text } : {}),
     })
   } catch (err) {
     logger.error({ err }, 'Failed to send email via Resend')
