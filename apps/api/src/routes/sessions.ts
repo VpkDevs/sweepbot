@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { query as dbQuery, unsafeQuery } from '../db/client.js'
+import { query as dbQuery, unsafeQuery, withTransaction } from '../db/client.js'
 import { requireAuth } from '../middleware/auth.js'
 import { sql } from 'drizzle-orm'
 
@@ -330,7 +330,10 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
   )
 
   // ─── POST /sessions/transactions/batch ────────────────────────────────────
-  // Hot path — called by extension every few seconds during active play
+  // Hot path — called by extension every few seconds during active play.
+  // The INSERT uses ON CONFLICT DO NOTHING for idempotency (safe to retry).
+  // The INSERT and the running-totals UPDATE are wrapped in a single DB
+  // transaction so they always succeed or fail together (atomicity).
   app.post(
     '/sessions/transactions/batch',
     {
@@ -352,7 +355,7 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
       const body = BatchTransactionsBody.parse(request.body)
       const userId = request.user!.id
 
-      // Verify session belongs to this user
+      // Verify session belongs to this user before touching the database
       const sessionCheck = await dbQuery(sql`
         SELECT id FROM sessions WHERE id = ${body.sessionId} AND user_id = ${userId}
       `)
@@ -364,49 +367,80 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
         })
       }
 
-      // Build VALUES list for bulk insert
-      const valuesList = body.transactions.map(
-        (t) => sql`(
-          ${body.sessionId},
-          ${t.type},
-          ${t.amount},
-          ${t.gameId ?? null},
-          ${t.multiplier ?? null},
-          ${t.balanceBefore ?? null},
-          ${t.balanceAfter ?? null},
-          ${new Date(t.occurredAt)},
-          ${JSON.stringify(t.metadata ?? {})}
-        )`
-      )
+      // Pre-compute running-total deltas in application code — this keeps the
+      // UPDATE simple and avoids building dynamic SQL arrays from user data.
+      const betCount = body.transactions.filter((t) => t.type === 'bet').length
+      const wageredDelta = body.transactions
+        .filter((t) => t.type === 'bet')
+        .reduce((sum, t) => sum + t.amount, 0)
+      const wonDelta = body.transactions
+        .filter((t) => t.type === 'win')
+        .reduce((sum, t) => sum + t.amount, 0)
 
-      await dbQuery(sql`
-        INSERT INTO transactions
-          (session_id, type, amount, game_id, multiplier, balance_before, balance_after, occurred_at, metadata)
-        VALUES ${sql.join(valuesList, sql`, `)}
-        ON CONFLICT DO NOTHING
-      `)
+      // Build typed rows for the bulk insert
+      const txRows = body.transactions.map((t) => ({
+        session_id: body.sessionId,
+        type: t.type,
+        amount: t.amount,
+        game_id: t.gameId ?? null,
+        multiplier: t.multiplier ?? null,
+        balance_before: t.balanceBefore ?? null,
+        balance_after: t.balanceAfter ?? null,
+        occurred_at: new Date(t.occurredAt),
+        metadata: t.metadata ?? {},
+      }))
 
-      // Update session running totals in a single UPDATE
-      await dbQuery(sql`
-        UPDATE sessions
-        SET
-          total_bets = total_bets + (
-            SELECT COUNT(*) FROM unnest(${body.transactions.map((t) => t.type)}::text[]) AS tx_type
-            WHERE tx_type = 'bet'
-          ),
-          total_wagered = total_wagered + (
-            SELECT COALESCE(SUM(amount), 0) FROM unnest(
-              ARRAY[${body.transactions.filter((t) => t.type === 'bet').map((t) => t.amount).join(',')}]::numeric[]
-            ) AS amount
-          ),
-          total_won = total_won + (
-            SELECT COALESCE(SUM(amount), 0) FROM unnest(
-              ARRAY[${body.transactions.filter((t) => t.type === 'win').map((t) => t.amount).join(',')}]::numeric[]
-            ) AS amount
-          ),
-          updated_at = NOW()
-        WHERE id = ${body.sessionId}
-      `)
+      // Atomic: both the INSERT and the UPDATE must succeed together.
+      // If either fails the entire transaction rolls back automatically.
+      await withTransaction(async (txn) => {
+        // Build a parameterized bulk INSERT via txn.unsafe().
+        // Using unsafe() here lets us control the JSONB cast for the metadata
+        // column while keeping every value parameterized.
+        // COLS is derived from the row object so it stays in sync if the row
+        // shape ever changes — the last column always gets the ::jsonb cast.
+        const COLS = Object.keys(txRows[0] ?? {}).length || 9
+        const placeholders = txRows
+          .map((_, i) => {
+            const b = i * COLS
+            return (
+              '(' +
+              Array.from({ length: COLS }, (__, j) => {
+                const pos = b + j + 1
+                return j === COLS - 1 ? `$${pos}::jsonb` : `$${pos}`
+              }).join(',') +
+              ')'
+            )
+          })
+          .join(',')
+
+        await txn.unsafe(
+          `INSERT INTO transactions
+             (session_id, type, amount, game_id, multiplier, balance_before, balance_after, occurred_at, metadata)
+           VALUES ${placeholders}
+           ON CONFLICT DO NOTHING`,
+          txRows.flatMap((r) => [
+            r.session_id,
+            r.type,
+            r.amount,
+            r.game_id,
+            r.multiplier,
+            r.balance_before,
+            r.balance_after,
+            r.occurred_at,
+            JSON.stringify(r.metadata),
+          ])
+        )
+
+        await txn`
+          UPDATE sessions
+          SET
+            total_bets     = total_bets     + ${betCount},
+            total_wagered  = total_wagered  + ${wageredDelta},
+            total_won      = total_won      + ${wonDelta},
+            updated_at     = NOW()
+          WHERE id = ${body.sessionId}
+        `
+      })
 
       return reply.code(201).send({
         success: true,
