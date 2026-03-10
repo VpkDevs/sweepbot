@@ -376,7 +376,18 @@ export const api = {
   // Notifications
   notifications: {
     list: (params?: { limit?: number; unread_only?: boolean }) =>
-      request<Record<string, unknown>[]>(`/notifications${toQS(params)}`),
+      request<Array<{
+        id: string
+        type: string
+        title: string
+        body: string
+        icon: string | null
+        href: string | null
+        is_read: boolean
+        read_at: string | null
+        data: unknown
+        created_at: string
+      }>>(`/notifications${toQS(params)}`),
     count: () => request<{ unread: number }>('/notifications/count'),
     markRead: (id: string) =>
       request<{ id: string }>(`/notifications/${id}/read`, { method: 'PATCH' }),
@@ -384,5 +395,61 @@ export const api = {
       request<{ marked: boolean }>('/notifications/read-all', { method: 'POST' }),
     delete: (id: string) =>
       request<{ deleted: boolean }>(`/notifications/${id}`, { method: 'DELETE' }),
+    preferences: () => request<Record<string, boolean>>('/notifications/preferences'),
+    updatePreferences: (data: Record<string, boolean>) =>
+      request<Record<string, boolean>>('/notifications/preferences', {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+    subscribePush: (subscription: Record<string, unknown>) =>
+      request('/notifications/subscribe', { method: 'POST', body: JSON.stringify(subscription) }),
+    unsubscribePush: (endpoint: string) =>
+      request('/notifications/subscribe', { method: 'DELETE', body: JSON.stringify({ endpoint }) }),
+  },
+
+  // Subscriptions / Trial
+  subscriptions: {
+    startTrial: () => request('/subscriptions/start-trial', { method: 'POST' }),
+    trialStatus: () =>
+      request<{
+        isActive: boolean
+        daysRemaining: number
+        trialEndsAt: string | null
+        tier: string
+        converted: boolean
+      } | null>('/subscriptions/trial-status'),
+  },
+
+  // Daily streaks
+  streaks: {
+    get: () =>
+      request<{
+        currentStreak: number
+        longestStreak: number
+        lastActivityDate: string | null
+        freezeCredits: number
+      }>('/streaks'),
+    recordActivity: () =>
+      request<{ currentStreak: number; milestoneReached?: number }>('/streaks/activity', {
+        method: 'POST',
+      }),
+    leaderboard: (limit?: number) =>
+      request<Array<{
+        user_id: string
+        current_streak: number
+        longest_streak: number
+        display_name: string | null
+      }>>(`/streaks/leaderboard${limit ? `?limit=${limit}` : ''}`),
+  },
+
+  // Session notes
+  sessionNotes: {
+    create: (sessionId: string, data: Record<string, unknown>) =>
+      request<Record<string, unknown>>(`/sessions/${sessionId}/notes`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    list: (sessionId: string) =>
+      request<Record<string, unknown>[]>(`/sessions/${sessionId}/notes`),
   },
 }
