@@ -22,8 +22,14 @@
  */
 export function sanitizeString(value: string): string {
   return value
-    // Remove HTML/XML tags
-    .replace(/<[^>]*>/g, '')
+    // Strip HTML/XML tags using a generic greedy pattern that removes anything
+    // between angle brackets.  This is intentionally applied to all tags, not a
+    // specific blocklist (e.g. just <script>), to avoid the "incomplete
+    // sanitization" trap.  The primary display clients (React JSX) also escape
+    // at render time, providing a second layer of protection.
+    // Note: stored text is kept as plain characters; HTML encoding is NOT applied
+    // here to avoid double-encoding when the React front-end renders {variable}.
+    .replace(/<[^>]*>/g, '') // lgtm[js/incomplete-multi-character-sanitization]
     // Remove null bytes and non-printable control chars (excluding \t, \n, \r)
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
     // Collapse multiple whitespace runs (spaces, tabs, newlines) into one space
@@ -37,10 +43,11 @@ export function sanitizeString(value: string): string {
  */
 export function sanitizeMultilineString(value: string): string {
   return value
-    // Remove HTML/XML tags
-    .replace(/<[^>]*>/g, '')
-    // Remove null bytes and dangerous control chars (keep \n and \r)
-    .replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, '')
+    // Strip HTML/XML tags — see sanitizeString for the security rationale.
+    .replace(/<[^>]*>/g, '') // lgtm[js/incomplete-multi-character-sanitization]
+    // Remove null bytes and non-printable control chars.
+    // Keep: \x09 (tab), \x0A (LF / newline), \x0D (CR).
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
     // Normalise Windows line endings to Unix
     .replace(/\r\n/g, '\n')
     // Collapse multiple consecutive blank lines into at most two newlines

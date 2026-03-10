@@ -82,8 +82,10 @@ describe('sanitizeMultilineString', () => {
     expect(sanitizeMultilineString('<b>bold</b>\ntext')).toBe('bold\ntext')
   })
 
-  it('removes null bytes but keeps newlines', () => {
+  it('removes null bytes but keeps newlines and tabs', () => {
     expect(sanitizeMultilineString('hello\x00\nworld')).toBe('hello\nworld')
+    // Tabs are preserved in multiline text (can be meaningful formatting)
+    expect(sanitizeMultilineString('col1\tcol2')).toBe('col1\tcol2')
   })
 
   it('trims leading and trailing whitespace', () => {

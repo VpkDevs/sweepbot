@@ -115,8 +115,9 @@ export async function buildServer(): Promise<FastifyInstance> {
   registerAuditHook(server)
 
   // Echo back the request ID so clients can correlate responses with logs
-  server.addHook('onSend', async (_request, reply) => {
-    void reply.header('x-request-id', _request.id)
+  server.addHook('onSend', (_request, reply, _payload, done) => {
+    reply.header('x-request-id', _request.id)
+    done()
   })
 
   // ─── Routes ──────────────────────────────────────────────────────────────

@@ -396,11 +396,20 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
         // Build a parameterized bulk INSERT via txn.unsafe().
         // Using unsafe() here lets us control the JSONB cast for the metadata
         // column while keeping every value parameterized.
-        const COLS = 9
+        // COLS is derived from the row object so it stays in sync if the row
+        // shape ever changes — the last column always gets the ::jsonb cast.
+        const COLS = Object.keys(txRows[0] ?? {}).length || 9
         const placeholders = txRows
           .map((_, i) => {
             const b = i * COLS
-            return `($${b + 1},$${b + 2},$${b + 3},$${b + 4},$${b + 5},$${b + 6},$${b + 7},$${b + 8},$${b + 9}::jsonb)`
+            return (
+              '(' +
+              Array.from({ length: COLS }, (__, j) => {
+                const pos = b + j + 1
+                return j === COLS - 1 ? `$${pos}::jsonb` : `$${pos}`
+              }).join(',') +
+              ')'
+            )
           })
           .join(',')
 

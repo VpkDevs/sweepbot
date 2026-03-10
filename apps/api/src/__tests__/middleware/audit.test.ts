@@ -156,6 +156,8 @@ describe('registerAuditHook', () => {
       (call) => (call[0] as Record<string, unknown>)['audit'] === true
     )
     expect(auditCalls.length).toBeGreaterThanOrEqual(1)
+    const record = auditCalls[0]![0] as Record<string, unknown>
+    expect(record['userId']).toBe('user-123')
   })
 
   it('does not include request body in audit record', async () => {

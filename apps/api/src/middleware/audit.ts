@@ -54,8 +54,13 @@ export function registerAuditHook(app: FastifyInstance): void {
 
       if (!shouldAudit) return
 
-      const startTime = (request as FastifyRequest & { startTime?: number }).startTime ?? Date.now()
-      const latencyMs = Date.now() - startTime
+      const startTime = (request as FastifyRequest & { startTime?: number }).startTime
+      if (startTime === undefined) {
+        // registerRequestTimingHook was not called before registerAuditHook.
+        // Log a warning but continue — latency will be reported as -1.
+        logger.warn({ requestId: request.id }, 'audit: startTime missing — ensure registerRequestTimingHook is registered before registerAuditHook')
+      }
+      const latencyMs = startTime !== undefined ? Date.now() - startTime : -1
 
       const auditRecord = {
         audit: true,
