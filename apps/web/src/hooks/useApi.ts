@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api-enhanced'
+import type { Notification } from '@sweepbot/types'
 
 export const queryKeys = {
   health: ['health'] as const,
@@ -260,7 +261,18 @@ export function useMarkNotificationRead() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => api.notifications.markRead(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+    onSuccess: (_data, id) => {
+      // Optimistically update the cached list instead of refetching the whole page.
+      qc.setQueriesData<Notification[]>(
+        { queryKey: ['notifications'], exact: false },
+        (old) => {
+          if (!Array.isArray(old)) return old
+          return old.map((n) =>
+            n.id === id ? { ...n, isRead: true, readAt: new Date().toISOString() } : n
+          )
+        }
+      )
+    },
   })
 }
 
@@ -268,7 +280,17 @@ export function useMarkAllNotificationsRead() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: api.notifications.markAllRead,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+    onSuccess: () => {
+      // Mark every cached notification as read without a server round-trip.
+      qc.setQueriesData<Notification[]>(
+        { queryKey: ['notifications'], exact: false },
+        (old) => {
+          if (!Array.isArray(old)) return old
+          const now = new Date().toISOString()
+          return old.map((n) => ({ ...n, isRead: true, readAt: now }))
+        }
+      )
+    },
   })
 }
 

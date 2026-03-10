@@ -8,7 +8,7 @@
  * - Timeout handling
  */
 
-import type { ApiResponse } from '@sweepbot/types'
+import type { ApiResponse, Notification } from '@sweepbot/types'
 import { supabaseClient, supabaseStub } from './supabase'
 import { logger } from '@sweepbot/utils'
 
@@ -416,7 +416,7 @@ export const api = {
   notifications: {
     list: (params?: { page?: number; limit?: number; unreadOnly?: boolean }) => {
       const qs = new URLSearchParams(params as Record<string, string>).toString()
-      return request<unknown[]>(`/notifications${qs ? `?${qs}` : ''}`)
+      return request<Notification[]>(`/notifications${qs ? `?${qs}` : ''}`)
     },
     markRead: (id: string) =>
       request(`/notifications/${id}/read`, { method: 'POST' }),

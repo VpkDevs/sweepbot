@@ -152,7 +152,7 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
             streaks: streaks.rows[0] ?? { longest_win_streak: 0, longest_loss_streak: 0 },
           }
         },
-        { ttl: 60, prefix: 'sweepbot' }, // 60-second TTL — portfolio is expensive but needs to feel fresh
+        { ttl: 300, prefix: 'sweepbot' }, // 5-minute TTL — portfolio aggregates change infrequently
       )
 
       return reply.send({

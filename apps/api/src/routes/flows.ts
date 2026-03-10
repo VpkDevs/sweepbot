@@ -17,15 +17,48 @@ const flowInterpreter = new FlowInterpreter()
 const flowExecutor = new FlowExecutor()
 const rpValidator = new ResponsiblePlayValidator()
 
+// Short-lived in-memory cache for conversation state.
+// Avoids redundant DB reads across consecutive turns of the same conversation.
+// Entries are evicted after 10 minutes of inactivity (matching a typical multi-turn session).
+//
+// NOTE: This cache is process-local. In a multi-instance deployment, a request for the
+// same conversation may land on a different process and incur a DB read once per process.
+// The cache still eliminates the majority of redundant reads within a single connection
+// session (the common case), and the DB remains the source of truth.
+const CONVERSATION_CACHE_TTL_MS = 10 * 60 * 1000
+const conversationCache = new Map<string, { state: ConversationState; expiresAt: number }>()
+
+function getCachedConversation(id: string): ConversationState | null {
+  const entry = conversationCache.get(id)
+  if (!entry) return null
+  if (Date.now() > entry.expiresAt) {
+    conversationCache.delete(id)
+    return null
+  }
+  return entry.state
+}
+
+function setCachedConversation(state: ConversationState): void {
+  conversationCache.set(state.sessionId, { state, expiresAt: Date.now() + CONVERSATION_CACHE_TTL_MS })
+}
+
 // Conversation manager with persistence helpers
 const conversationManager = new ConversationManager({
   onStateLoad: async (conversationId: string): Promise<ConversationState | null> => {
+    const cached = getCachedConversation(conversationId)
+    if (cached) return cached
+
     const { rows } = await dbQuery<ConversationState>(
       sql`SELECT * FROM flow_conversations WHERE id = ${conversationId}`
     )
-    return rows[0] ?? null
+    const state = rows[0] ?? null
+    if (state) setCachedConversation(state)
+    return state
   },
   onStateSave: async (state) => {
+    // Update in-memory cache first so the next turn doesn't need a round-trip
+    setCachedConversation(state)
+
     await unsafeQuery(
       `
       INSERT INTO flow_conversations (id, user_id, flow_id, turns, status, created_at, updated_at)
@@ -37,8 +70,8 @@ const conversationManager = new ConversationManager({
         state.sessionId,
         state.userId,
         // flowId might be undefined while building
-        (state.currentFlow && typeof state.currentFlow === 'object' && 'id' in state.currentFlow) 
-          ? (state.currentFlow as { id: string }).id 
+        (state.currentFlow && typeof state.currentFlow === 'object' && 'id' in state.currentFlow)
+          ? (state.currentFlow as { id: string }).id
           : null,
         JSON.stringify(state.turns),
         state.status,
@@ -310,7 +343,8 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
 
       try {
         const { rows: flows } = await dbQuery(
-          sql`SELECT * FROM flows WHERE user_id = ${request.user!.id} ORDER BY created_at DESC LIMIT ${validated.pageSize} OFFSET ${offset}`
+          sql`SELECT id, user_id, name, description, status, version, is_shared, created_at, updated_at, last_executed_at, execution_count
+              FROM flows WHERE user_id = ${request.user!.id} ORDER BY created_at DESC LIMIT ${validated.pageSize} OFFSET ${offset}`
         )
 
         const { rows: totalRows } = await dbQuery(
