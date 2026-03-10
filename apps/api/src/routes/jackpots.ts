@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { sql } from 'drizzle-orm'
+import { PaginationSchema } from '../lib/common-schemas.js'
 // import type { WSMessage } from '@sweepbot/types' // TODO: re-enable with @fastify/websocket
 
 const JackpotQuerySchema = z.object({
@@ -9,8 +10,7 @@ const JackpotQuerySchema = z.object({
   gameId: z.string().uuid().optional(),
   minAmount: z.coerce.number().min(0).optional(),
   sortBy: z.enum(['current_amount', 'growth_rate', 'last_hit']).default('current_amount'),
-  page: z.coerce.number().int().min(1).default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  ...PaginationSchema.shape,
 })
 
 // const SubscribeBody = z.object({

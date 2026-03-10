@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { requireAuth } from '../middleware/auth.js'
 import { sql } from 'drizzle-orm'
+import { PaginationSchema } from '../lib/common-schemas.js'
 
 const CreateRedemptionBody = z.object({
   userPlatformId: z.string().uuid(),
@@ -36,8 +37,7 @@ const RedemptionListQuery = z.object({
     .enum(['pending', 'processing', 'completed', 'rejected', 'cancelled'])
     .optional(),
   paymentMethod: z.string().optional(),
-  page: z.coerce.number().int().min(1).default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  ...PaginationSchema.shape,
 })
 
 export async function redemptionRoutes(app: FastifyInstance): Promise<void> {

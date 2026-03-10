@@ -3,25 +3,22 @@ import { z } from 'zod'
 import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { requireAuth } from '../middleware/auth.js'
 import { sql } from 'drizzle-orm'
+import { PaginationSchema, UuidParamsSchema } from '../lib/common-schemas.js'
 
-const PlatformParamsSchema = z.object({
-  id: z.string().uuid(),
-})
+const PlatformParamsSchema = UuidParamsSchema
 
 const PlatformQuerySchema = z.object({
   search: z.string().optional(),
   status: z.enum(['active', 'inactive', 'watchlist', 'suspended', 'closed']).optional(),
   sortBy: z.enum(['name', 'trust_score', 'created_at']).default('name'),
   sortDir: z.enum(['asc', 'desc']).default('asc'),
-  page: z.coerce.number().int().min(1).default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  ...PaginationSchema.shape,
 })
 
 const GamesQuerySchema = z.object({
   providerId: z.string().uuid().optional(),
   volatility: z.enum(['low', 'medium', 'high', 'very_high']).optional(),
-  page: z.coerce.number().int().min(1).default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  ...PaginationSchema.shape,
 })
 
 export async function platformRoutes(app: FastifyInstance): Promise<void> {

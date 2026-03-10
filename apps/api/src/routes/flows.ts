@@ -11,6 +11,7 @@ import { requireAuth } from '../middleware/auth.js'
 import { randomUUID } from 'node:crypto'
 import { FlowInterpreter, FlowExecutor, ResponsiblePlayValidator, ConversationManager } from '@sweepbot/flows'
 import type { ConversationState } from '@sweepbot/flows'
+import { PaginationSchema } from '../lib/common-schemas.js'
 
 // Initialize services
 const flowInterpreter = new FlowInterpreter()
@@ -67,11 +68,6 @@ const FlowUpdateSchema = z.object({
   status: z.enum(['draft', 'active', 'paused', 'archived']).optional(),
   name: z.string().min(1).max(255).trim().optional(),
   definition: z.record(z.unknown()).refine((obj) => Object.keys(obj).length > 0, 'definition cannot be empty').optional(),
-})
-
-const PaginationSchema = z.object({
-  page: z.coerce.number().int().positive().default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).default(20),
 })
 
 // ============================================================================

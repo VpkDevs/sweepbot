@@ -6,6 +6,7 @@
 
 import { storage } from './storage'
 import { createLogger } from './logger'
+import { sleep } from './utils'
 
 const log = createLogger('ExtensionApi')
 
@@ -20,10 +21,6 @@ const NON_RETRY_METHODS = new Set(['POST', 'DELETE', 'PATCH'])
 const REQUEST_TIMEOUT_MS = 10_000 // 10 s
 const MAX_RETRIES = 2
 const RETRY_BASE_DELAY_MS = 300
-
-async function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
 
 class ExtensionApi {
   async request<T = unknown>(

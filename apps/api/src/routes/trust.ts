@@ -4,12 +4,12 @@ import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { sql } from 'drizzle-orm'
 import { env } from '../utils/env.js'
 import { constantTimeCompare } from '@sweepbot/utils'
+import { PaginationSchema } from '../lib/common-schemas.js'
 
 const TrustQuerySchema = z.object({
   minScore: z.coerce.number().min(0).max(100).optional(),
   sortBy: z.enum(['overall_score', 'redemption_speed', 'tos_stability', 'calculated_at']).default('overall_score'),
-  page: z.coerce.number().int().min(1).default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  ...PaginationSchema.shape,
 })
 
 /**

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { api } from '../lib/api-enhanced'
+import { api } from '../lib/api'
 
 interface Notification {
   id: string
@@ -41,7 +41,7 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
     set({ isLoading: true })
 
     try {
-      const data = (await api.notifications.list({ page: nextPage, limit: 20 })) as Notification[]
+      const data = (await api.notifications.list({ limit: 20 })) as unknown as Notification[]
       const unread = data.filter((n) => !n.isRead).length
 
       set((state) => ({

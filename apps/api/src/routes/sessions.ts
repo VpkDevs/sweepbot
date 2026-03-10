@@ -3,10 +3,9 @@ import { z } from 'zod'
 import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { requireAuth } from '../middleware/auth.js'
 import { sql } from 'drizzle-orm'
+import { PaginationSchema, UuidParamsSchema } from '../lib/common-schemas.js'
 
-const SessionParamsSchema = z.object({
-  id: z.string().uuid(),
-})
+const SessionParamsSchema = UuidParamsSchema
 
 const CreateSessionBody = z.object({
   platformId: z.string().uuid(),
@@ -57,8 +56,7 @@ const SessionListQuery = z.object({
   gameId: z.string().uuid().optional(),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
-  page: z.coerce.number().int().min(1).default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  ...PaginationSchema.shape,
 })
 
 export async function sessionRoutes(app: FastifyInstance): Promise<void> {
