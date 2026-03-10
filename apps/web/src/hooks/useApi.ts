@@ -248,7 +248,7 @@ export function useBigWins(params?: { page?: number; limit?: number }) {
   })
 }
 
-export function useNotifications(params?: { limit?: number; unread_only?: boolean }) {
+export function useNotifications(params?: { limit?: number; unreadOnly?: boolean }) {
   return useQuery({
     queryKey: queryKeys.notifications.list(params),
     queryFn: () => api.notifications.list(params),

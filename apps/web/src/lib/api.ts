@@ -395,8 +395,12 @@ export const api = {
 
   // Notifications
   notifications: {
-    list: (params?: { limit?: number; unread_only?: boolean }) =>
-      request<Record<string, unknown>[]>(`/notifications${toQS(params)}`),
+    list: (params?: { limit?: number; unreadOnly?: boolean }) => {
+      const { unreadOnly, ...rest } = params ?? {}
+      return request<Record<string, unknown>[]>(
+        `/notifications${toQS({ ...rest, ...(unreadOnly !== undefined ? { unread_only: unreadOnly } : {}) })}`,
+      )
+    },
     count: () => request<{ unread: number }>('/notifications/count'),
     markRead: (id: string) =>
       request<{ id: string }>(`/notifications/${id}/read`, { method: 'PATCH' }),
