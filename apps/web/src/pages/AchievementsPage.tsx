@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Award, Lock, Star, Trophy, Flame, Users, Zap, BarChart3, RefreshCw, Sparkles } from 'lucide-react'
+import { Award, Lock, Star, Trophy, Flame, Users, Zap, BarChart3, RefreshCw } from 'lucide-react'
 import { api } from '../lib/api'
 import { cn } from '../lib/utils'
 import { ScrollReveal } from '../components/fx/ScrollReveal'

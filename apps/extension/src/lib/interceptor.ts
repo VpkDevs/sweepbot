@@ -65,6 +65,7 @@ export class NetworkInterceptor {
     if (!this.platform || this.originalFetch) return
 
     this.originalFetch = window.fetch
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this
 
     window.fetch = function (this: typeof globalThis, ...args: Parameters<typeof fetch>) {
@@ -91,6 +92,7 @@ export class NetworkInterceptor {
     if (!this.platform || this.originalXhr) return
 
     this.originalXhr = XMLHttpRequest
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this
 
     this.originalXhrOpen = XMLHttpRequest.prototype.open
@@ -202,7 +204,7 @@ export class NetworkInterceptor {
     let current: unknown = obj
 
     for (const part of parts) {
-      if (current == null || typeof current !== 'object') return null
+      if (current === null || current === undefined || typeof current !== 'object') return null
       current = (current as Record<string, unknown>)[part]
     }
 

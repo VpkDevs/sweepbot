@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import Stripe from 'stripe'
-import { query as dbQuery, unsafeQuery } from '../db/client.js'
+import { query as dbQuery } from '../db/client.js'
 import { sql } from 'drizzle-orm'
 import { env } from '../utils/env.js'
 import { sendEmail } from '../lib/email.js'

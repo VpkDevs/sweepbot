@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Trophy, Plus, CheckCircle, Clock, XCircle, Eye, EyeOff, ArrowRight, Sparkles } from 'lucide-react'
+import { Plus, CheckCircle, Clock, XCircle, Eye, EyeOff, ArrowRight, Sparkles } from 'lucide-react'
 import { api } from '../lib/api'
 import { formatSC, timeAgo, cn } from '../lib/utils'
 import { ScrollReveal } from '../components/fx/ScrollReveal'
@@ -199,7 +199,7 @@ export function BigWinsPage() {
                         </span>
                       </td>
                       <td className="px-5 py-4 text-right text-zinc-400 tabular-nums font-medium">
-                        {win.multiplier != null ? `${Number(win.multiplier).toFixed(0)}x` : '\u2014'}
+                        {win.multiplier !== null && win.multiplier !== undefined ? `${Number(win.multiplier).toFixed(0)}x` : '\u2014'}
                       </td>
                       <td className="px-5 py-4 text-right">
                         <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold', vs.cls)}>

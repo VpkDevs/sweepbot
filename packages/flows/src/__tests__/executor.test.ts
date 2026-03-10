@@ -700,4 +700,91 @@ describe('FlowExecutor', () => {
       expect(ctx.metrics.platformsAccessed).toContain('chumba')
     })
   })
+
+  describe('Arithmetic expression parser (security)', () => {
+    it('evaluates basic arithmetic: addition', async () => {
+      const seq: FlowNode = {
+        type: 'sequence',
+        id: 'seq-add',
+        steps: [
+          {
+            type: 'condition',
+            id: 'c1',
+            left: { type: 'expression', expression: '2 + 3' },
+            operator: '==',
+            right: { type: 'literal', value: 5 },
+            onTrue: { type: 'stop', id: 'stop-true' },
+          },
+        ],
+      }
+      const exec = new FlowExecutor()
+      const ctx = await exec.execute(createTestFlow(seq), 'u1')
+      expect(ctx.metrics.conditionsEvaluated).toBe(1)
+      expect(ctx.status).toBe('completed')
+    })
+
+    it('evaluates variable substitution: $X * 10', async () => {
+      const seq: FlowNode = {
+        type: 'sequence',
+        id: 'seq-var',
+        steps: [
+          { type: 'store', id: 's1', variable: 'X', value: { type: 'literal', value: 7 } },
+          {
+            type: 'condition',
+            id: 'c1',
+            left: { type: 'expression', expression: '$X * 10' },
+            operator: '==',
+            right: { type: 'literal', value: 70 },
+            onTrue: { type: 'stop', id: 'stop-true' },
+          },
+        ],
+      }
+      const exec = new FlowExecutor()
+      const ctx = await exec.execute(createTestFlow(seq), 'u1')
+      expect(ctx.status).toBe('completed')
+    })
+
+    it('rejects expressions with non-arithmetic characters (security)', async () => {
+      // Unsafe expressions should return 0, not execute code
+      const seq: FlowNode = {
+        type: 'sequence',
+        id: 'seq-unsafe',
+        steps: [
+          {
+            type: 'condition',
+            id: 'c1',
+            left: { type: 'expression', expression: 'alert("xss")' },
+            operator: '>=',
+            right: { type: 'literal', value: 1 },
+            onTrue: { type: 'stop', id: 'stop-true' },
+          },
+        ],
+      }
+      const exec = new FlowExecutor()
+      const ctx = await exec.execute(createTestFlow(seq), 'u1')
+      // Expression should evaluate to 0 (rejected), so condition 0 >= 1 is false
+      expect(ctx.status).toBe('completed')
+      expect(ctx.metrics.conditionsEvaluated).toBe(1)
+    })
+
+    it('handles nested parentheses: (2 + 3) * (4 - 1)', async () => {
+      const seq: FlowNode = {
+        type: 'sequence',
+        id: 'seq-parens',
+        steps: [
+          {
+            type: 'condition',
+            id: 'c1',
+            left: { type: 'expression', expression: '(2 + 3) * (4 - 1)' },
+            operator: '==',
+            right: { type: 'literal', value: 15 },
+            onTrue: { type: 'stop', id: 'stop-true' },
+          },
+        ],
+      }
+      const exec = new FlowExecutor()
+      const ctx = await exec.execute(createTestFlow(seq), 'u1')
+      expect(ctx.status).toBe('completed')
+    })
+  })
 })

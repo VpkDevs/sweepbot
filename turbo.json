@@ -14,7 +14,7 @@
     },
     "lint": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", ".eslintrc.cjs", ".eslintignore"],
+      "inputs": ["$TURBO_DEFAULT$", "eslint.config.js", ".eslintrc.cjs", ".eslintignore"],
       "outputs": [],
       "cache": true
     },

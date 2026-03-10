@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { query as dbQuery, unsafeQuery } from '../db/client.js'
+import { query as dbQuery } from '../db/client.js'
 import { requireAuth } from '../middleware/auth.js'
 import { sql } from 'drizzle-orm'
 

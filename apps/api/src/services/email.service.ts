@@ -1,6 +1,5 @@
 import { sendEmail } from '../lib/email.js'
 import { env } from '../utils/env.js'
-import { logger } from '../utils/logger.js'
 
 const APP_URL = env.APP_URL
 

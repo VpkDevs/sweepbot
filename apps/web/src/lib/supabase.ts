@@ -5,7 +5,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 // In development, allow the app to run without Supabase configured
 // by creating a mock client that won't cause hangs
-const isDevStub = import.meta.env.DEV && supabaseUrl?.includes('placeholder')
+const _isDevStub = import.meta.env.DEV && supabaseUrl?.includes('placeholder')
 
 if (!supabaseUrl || !supabaseAnonKey) {
   if (import.meta.env.DEV) {

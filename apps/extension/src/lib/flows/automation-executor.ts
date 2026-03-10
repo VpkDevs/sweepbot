@@ -310,8 +310,8 @@ function evaluateCondition(
     case '<': return l < r
     case '>=': return l >= r
     case '<=': return l <= r
-    case '==': return left == right
-    case '!=': return left != right
+    case '==': return left === right
+    case '!=': return left !== right
     default: return false
   }
 }

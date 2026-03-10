@@ -116,7 +116,7 @@ export function FlowChatPage() {
         const result = await converseMutation.mutateAsync({ id: conversationId, text })
         syncMessagesFromState(result)
       }
-    } catch (err) {
+    } catch {
       setMessages((prev) => [
         ...prev,
         { role: 'assistant', content: 'Sorry, something went wrong. Please try again.', timestamp: new Date() },

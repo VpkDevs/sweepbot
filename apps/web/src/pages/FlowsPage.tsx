@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { Plus, Play, Pause, Trash2, Share2, Bot, Zap, Clock, ArrowRight, Sparkles } from 'lucide-react'
+import { Plus, Play, Pause, Trash2, Share2, Zap, Clock, ArrowRight, Sparkles } from 'lucide-react'
 import { api } from '../lib/api'
 import { ScrollReveal } from '../components/fx/ScrollReveal'
 import { SpotlightCard } from '../components/fx/SpotlightCard'

@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify'
-import { query as dbQuery, unsafeQuery } from '../db/client.js'
+import { query as dbQuery } from '../db/client.js'
 import { sql } from 'drizzle-orm'
 
 export async function healthRoutes(app: FastifyInstance): Promise<void> {

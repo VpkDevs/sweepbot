@@ -59,7 +59,7 @@ export function installPlatformCapture(): { installed: boolean; startedAt: numbe
 
   function trimValue(value: unknown, depth = 0): unknown {
     if (depth >= MAX_DEPTH) return '[truncated]'
-    if (value == null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    if (value === null || value === undefined || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
       return value
     }
     if (Array.isArray(value)) return value.slice(0, MAX_ARRAY_ITEMS).map((item) => trimValue(item, depth + 1))
@@ -170,7 +170,7 @@ export function readPlatformCapture(): PlatformCaptureSnapshot | null {
 }
 
 function collectLeafPaths(value: unknown, prefix = '', paths: Array<{ path: string; value: string | number }> = []): Array<{ path: string; value: string | number }> {
-  if (value == null) return paths
+  if (value === null || value === undefined) return paths
   if (typeof value === 'number' || typeof value === 'string') {
     if (prefix) paths.push({ path: prefix, value })
     return paths
