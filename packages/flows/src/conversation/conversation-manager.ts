@@ -234,22 +234,8 @@ export class ConversationManager {
       return { type: 'question', keywords: ['question'] }
     }
 
-    // Refinement keywords (adding/changing something)
-    // "Also open...", "Change the...", "Set the...", "Add...", "And then...", "But also..."
-    const refinementPatterns = [
-      /also\s+/i,
-      /change\s+(?:the\s+)?/i,
-      /set\s+(?:the\s+)?/i,
-      /add\s+/i,
-      /and\s+then\s+/i,
-      /but\s+also\s+/i,
-      /instead\s+(?:of\s+)?/i,
-      /wait\s+,\s+/i,
-      /one\s+more\s+thing/i,
-      /don't\s+forget\s+/i,
-    ]
-
-    const hasRefinement = refinementPatterns.some((pattern) => pattern.test(lowerMessage))
+    // Default: treat any non-confirmation, non-question message as a refinement
+    // (the user is providing more detail or making adjustments to their desired Flow)
     return { type: 'refine', keywords: ['refine'] }
   }
 

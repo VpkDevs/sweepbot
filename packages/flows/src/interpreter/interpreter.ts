@@ -363,9 +363,11 @@ private validateResponsiblePlay(flowNode: FlowNode, userId: string, rawText?: st
     })
 
     // System mandatory: cool-down check
+    // value: false = user is NOT in cool-down (default; the API layer overrides
+    // this to true when the user IS currently in a cool-down period before calling execute)
     guardrails.push({
       type: 'cool_down_check',
-      value: true,
+      value: false,
       source: 'system_mandatory',
       overridable: false,
     })
@@ -557,6 +559,6 @@ private validateResponsiblePlay(flowNode: FlowNode, userId: string, rawText?: st
    * Generate a unique ID
    */
   private generateId(): string {
-    return `flow_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    return crypto.randomUUID()
   }
 }

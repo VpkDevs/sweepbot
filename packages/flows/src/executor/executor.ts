@@ -28,7 +28,7 @@ export class FlowExecutor {
   ): Promise<FlowExecutionContext> {
     const executionContext: FlowExecutionContext = {
       flowId: flowDefinition.id,
-      executionId: `exec_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+      executionId: `exec_${crypto.randomUUID()}`,
       userId,
       variables: new Map(Object.entries(context || {})),
       startedAt: new Date(),
@@ -340,14 +340,14 @@ export class FlowExecutor {
   }
 
   /**
-   * Safe expression evaluation without using eval or new Function
-   * Only supports basic arithmetic operations: +, -, *, /, %
+   * Safe arithmetic expression evaluator using recursive-descent parsing.
+   * Supports: numbers (integer and decimal), +, -, *, /, %, and parentheses.
+   * Does NOT use eval or new Function() — no dynamic code execution.
    */
   private evaluateExpression(expr: string, ctx: FlowExecutionContext): number {
-    // Replace variables with their values
+    // Replace variables with their numeric values
     let evaluated = expr.trim()
-    
-    // Replace all $variableName with their numeric values
+
     for (const [varName, value] of ctx.variables) {
       if (typeof value === 'number') {
         // Use word boundary to avoid partial replacements
@@ -356,23 +356,73 @@ export class FlowExecutor {
       }
     }
 
-    // Validate that the expression only contains safe characters
-    // Allow: numbers, operators, parentheses, spaces, and decimal points
+    // Validate: only digits, whitespace, arithmetic operators, parens, and decimal points
     if (!/^[\d\s+\-*/%.()]+$/.test(evaluated)) {
       logger.warn('Unsafe expression detected, rejecting', { evaluated })
       return 0
     }
 
-    // Safe evaluation using Function constructor with limited scope
-    // This is still potentially dangerous but less so than direct eval
-    // In production, use a proper math expression library like mathjs
+    // Evaluate using a safe recursive-descent parser (no eval / new Function)
     try {
-      // eslint-disable-next-line no-new-func
-      const fn = new Function(`return ${evaluated}`)
-      const result = fn()
-      if (typeof result !== 'number' || !isFinite(result)) {
-        return 0
+      const tokens = evaluated.replace(/\s+/g, '')
+      let pos = 0
+
+      const peek = (): string => tokens[pos] ?? ''
+      const consume = (): string => tokens[pos++] ?? ''
+
+      const parseNumber = (): number => {
+        let s = ''
+        if (peek() === '-') s += consume()
+        while (/[\d.]/.test(peek())) s += consume()
+        const n = parseFloat(s)
+        if (!isFinite(n)) throw new Error('invalid number')
+        return n
       }
+
+      // Forward declaration needed for mutual recursion
+      // eslint-disable-next-line prefer-const
+      let parseAddSub: () => number
+
+      const parsePrimary = (): number => {
+        if (peek() === '(') {
+          consume() // skip '('
+          const v = parseAddSub()
+          if (peek() !== ')') throw new Error('missing closing parenthesis')
+          consume() // skip ')'
+          return v
+        }
+        return parseNumber()
+      }
+
+      const parseMulDiv = (): number => {
+        let left = parsePrimary()
+        while ('*/%'.includes(peek()) && peek() !== '') {
+          const op = consume()
+          const right = parsePrimary()
+          if (op === '*') left *= right
+          else if (op === '/') {
+            if (right === 0) throw new Error('division by zero')
+            left /= right
+          } else {
+            left %= right
+          }
+        }
+        return left
+      }
+
+      parseAddSub = (): number => {
+        let left = parseMulDiv()
+        while (peek() === '+' || peek() === '-') {
+          const op = consume()
+          const right = parseMulDiv()
+          left = op === '+' ? left + right : left - right
+        }
+        return left
+      }
+
+      const result = parseAddSub()
+      if (pos !== tokens.length) throw new Error('unexpected characters in expression')
+      if (!isFinite(result)) return 0
       return result
     } catch {
       return 0

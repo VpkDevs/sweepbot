@@ -699,5 +699,80 @@ describe('FlowExecutor', () => {
       const ctx = await exec.execute(flow, 'u1')
       expect(ctx.metrics.platformsAccessed).toContain('chumba')
     })
+
+    it('should allow execution when cool_down_check value is false (not in cooldown)', async () => {
+      const action: FlowActionNode = {
+        type: 'action',
+        id: 'action-root',
+        action: 'spin',
+        parameters: {},
+        timeout: 1000,
+        onFailure: 'stop',
+      }
+      const flow: FlowDefinition = {
+        id: 'flow-not-in-cooldown',
+        userId: 'u1',
+        name: 'Not In Cooldown',
+        description: 'test',
+        version: 1,
+        status: 'draft',
+        trigger: { type: 'manual' },
+        rootNode: action,
+        variables: [],
+        responsiblePlayGuardrails: [
+          { type: 'cool_down_check', value: false, source: 'system_mandatory', overridable: false },
+        ],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        executionCount: 0,
+        performanceStats: {},
+      }
+      const exec = new FlowExecutor()
+      const ctx = await exec.execute(flow, 'u1')
+      // value=false means user is NOT in cooldown — execution should proceed normally
+      expect(ctx.status).toBe('completed')
+      expect(ctx.log.some((l) => l.type === 'guardrail_triggered' && (l.details as Record<string, unknown>)['guardrail'] === 'cool_down_check')).toBe(false)
+    })
+
+    it('should evaluate arithmetic expressions without using dynamic code execution', async () => {
+      // Verifies the safe recursive-descent parser handles various operations correctly
+      const cases: Array<[string, Record<string, number>, number]> = [
+        ['5 + 3', {}, 8],
+        ['10 - 4', {}, 6],
+        ['3 * 7', {}, 21],
+        ['20 / 4', {}, 5],
+        ['17 % 5', {}, 2],
+        ['(2 + 3) * 4', {}, 20],
+        ['$A + $B', { A: 10, B: 5 }, 15],
+        ['($A * 2) - $B', { A: 6, B: 3 }, 9],
+      ]
+
+      for (const [expression, vars, expected] of cases) {
+        const seq: FlowNode = {
+          type: 'sequence',
+          id: 'seq-expr',
+          steps: [
+            ...Object.entries(vars).map(([name, val]) => ({
+              type: 'store' as const,
+              id: `store-${name}`,
+              variable: name,
+              value: { type: 'literal' as const, value: val },
+            })),
+            {
+              type: 'condition' as const,
+              id: 'check',
+              left: { type: 'expression' as const, expression: `(${expression})` },
+              operator: '==' as const,
+              right: { type: 'literal' as const, value: expected },
+              onTrue: { type: 'stop' as const, id: 'done' },
+            },
+          ],
+        }
+        const flow = createTestFlow(seq)
+        const exec = new FlowExecutor()
+        const ctx = await exec.execute(flow, 'u1')
+        expect(ctx.status, `expression "${expression}" should evaluate to ${expected}`).toBe('completed')
+      }
+    })
   })
 })
