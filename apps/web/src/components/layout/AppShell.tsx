@@ -19,6 +19,8 @@ import {
   Sparkles,
   PanelLeftClose,
   PanelLeft,
+  Flame,
+  Bell,
 } from 'lucide-react'
 import { useState, useEffect, useMemo } from 'react'
 import { useAuthStore } from '../../stores/auth'
@@ -28,6 +30,7 @@ import { OnboardingTour } from '../ui/OnboardingTour'
 import { CursorGlow } from '../fx/CursorGlow'
 import { NoiseOverlay } from '../fx/NoiseOverlay'
 import { ErrorBoundary } from '../ErrorBoundary'
+import { TrialBanner } from './TrialBanner'
 
 const navSections = [
   {
@@ -55,6 +58,8 @@ const navSections = [
       { to: '/heatmap', label: 'Heatmap', icon: CalendarDays },
       { to: '/records', label: 'Records', icon: Star },
       { to: '/big-wins', label: 'Big Wins', icon: Trophy },
+      { to: '/streaks/leaderboard', label: 'Streak Board', icon: Flame },
+      { to: '/notifications', label: 'Notifications', icon: Bell },
     ],
   },
 ] as const
@@ -81,6 +86,8 @@ const ROUTE_LABELS: Record<string, string> = {
   '/heatmap': 'Heatmap',
   '/records': 'Records',
   '/big-wins': 'Big Wins',
+  '/streaks/leaderboard': 'Streak Leaderboard',
+  '/notifications': 'Notifications',
   '/settings': 'Settings',
   '/pricing': 'Pricing',
 }
@@ -329,6 +336,7 @@ export function AppShell() {
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto scroll-smooth">
+          <TrialBanner />
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>

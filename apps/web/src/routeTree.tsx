@@ -29,6 +29,8 @@ import { BigWinsPage } from './pages/BigWinsPage'
 import { FlowsPage } from './pages/FlowsPage'
 import { FlowChatPage } from './pages/FlowChatPage'
 import { FlowDetailPage } from './pages/FlowDetailPage'
+import { StreakLeaderboard } from './pages/StreakLeaderboard'
+import { NotificationsInbox } from './pages/NotificationsInbox'
 import { SignInPage } from './pages/auth/SignInPage'
 import { SignUpPage } from './pages/auth/SignUpPage'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
@@ -194,6 +196,18 @@ const flowDetailRoute = createRoute({
   component: FlowDetailPage,
 })
 
+const streakLeaderboardRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/streaks/leaderboard',
+  component: StreakLeaderboard,
+})
+
+const notificationsInboxRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/notifications',
+  component: NotificationsInbox,
+})
+
 // ── Route tree assembly ───────────────────────────────────────────────────────
 export const routeTree = rootRoute.addChildren([
   authRoute.addChildren([signInRoute, signUpRoute, forgotPasswordRoute]),
@@ -216,5 +230,7 @@ export const routeTree = rootRoute.addChildren([
     flowsRoute,
     flowChatRoute,
     flowDetailRoute,
+    streakLeaderboardRoute,
+    notificationsInboxRoute,
   ]),
 ])

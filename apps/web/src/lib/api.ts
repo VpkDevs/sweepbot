@@ -384,5 +384,50 @@ export const api = {
       request<{ marked: boolean }>('/notifications/read-all', { method: 'POST' }),
     delete: (id: string) =>
       request<{ deleted: boolean }>(`/notifications/${id}`, { method: 'DELETE' }),
+    preferences: () => request<Record<string, boolean>>('/notifications/preferences'),
+    updatePreferences: (data: Record<string, boolean>) =>
+      request<Record<string, boolean>>('/notifications/preferences', {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+    subscribePush: (subscription: Record<string, unknown>) =>
+      request('/notifications/subscribe', { method: 'POST', body: JSON.stringify(subscription) }),
+    unsubscribePush: (endpoint: string) =>
+      request('/notifications/subscribe', { method: 'DELETE', body: JSON.stringify({ endpoint }) }),
+  },
+
+  // Subscriptions / Trial
+  subscriptions: {
+    startTrial: () => request('/subscriptions/start-trial', { method: 'POST' }),
+    trialStatus: () =>
+      request<{
+        isActive: boolean
+        daysRemaining: number
+        trialEndsAt: string | null
+        tier: string
+        converted: boolean
+      } | null>('/subscriptions/trial-status'),
+  },
+
+  // Daily streaks
+  streaks: {
+    get: () => request<Record<string, unknown>>('/streaks'),
+    recordActivity: () =>
+      request<{ currentStreak: number; milestoneReached?: number }>('/streaks/activity', {
+        method: 'POST',
+      }),
+    leaderboard: (limit?: number) =>
+      request<Record<string, unknown>[]>(`/streaks/leaderboard${limit ? `?limit=${limit}` : ''}`),
+  },
+
+  // Session notes
+  sessionNotes: {
+    create: (sessionId: string, data: Record<string, unknown>) =>
+      request<Record<string, unknown>>(`/sessions/${sessionId}/notes`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    list: (sessionId: string) =>
+      request<Record<string, unknown>[]>(`/sessions/${sessionId}/notes`),
   },
 }

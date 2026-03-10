@@ -26,6 +26,7 @@ import { api } from '../lib/api'
 import { formatSC, formatRTP, timeAgo, cn } from '../lib/utils'
 import { usePerformanceMonitor } from '../hooks/usePerformance'
 import { StreakWidget } from '../components/ui/StreakWidget'
+import { DailyStreakWidget } from '../components/dashboard/DailyStreakWidget'
 import { SpotlightCard } from '../components/fx/SpotlightCard'
 import { TextReveal } from '../components/fx/TextReveal'
 import { ScrollReveal } from '../components/fx/ScrollReveal'
@@ -152,7 +153,10 @@ export function DashboardPage() {
 
       {/* ─── Streak widget ───────────────────────────────────── */}
       <ScrollReveal delay={100}>
-        <StreakWidget />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <StreakWidget />
+          <DailyStreakWidget />
+        </div>
       </ScrollReveal>
 
       {/* ─── Bento stat cards ────────────────────────────────── */}
