@@ -84,16 +84,18 @@ interface RequestConfig extends RequestInit {
   retries?: number
   /** Base delay for exponential backoff in ms (default 1000) */
   retryDelay?: number
+  /** Skip in-flight deduplication for this GET request (default false) */
+  skipCache?: boolean
 }
 
 async function request<T>(path: string, config: RequestConfig = {}): Promise<T> {
-  const { timeout = 30_000, retries = 2, retryDelay = 1000, ...options } = config
+  const { timeout = 30_000, retries = 2, retryDelay = 1000, skipCache = false, ...options } = config
   const method = (options.method ?? 'GET').toUpperCase()
   const isGet = method === 'GET'
   const cacheKey = `${method}:${path}:${options.body ?? ''}`
 
   // Deduplicate concurrent identical GET requests
-  if (isGet) {
+  if (isGet && !skipCache) {
     const pending = pendingRequests.get(cacheKey)
     if (pending) return pending as Promise<T>
   }
@@ -164,7 +166,7 @@ async function request<T>(path: string, config: RequestConfig = {}): Promise<T> 
 
   const promise = withRetry() as Promise<T>
 
-  if (isGet) {
+  if (isGet && !skipCache) {
     pendingRequests.set(cacheKey, promise)
     promise.finally(() => pendingRequests.delete(cacheKey))
   }
@@ -189,6 +191,25 @@ export const api = {
   // Health
   health: {
     check: () => request<{ status: string; services: { database: string } }>('/health'),
+  },
+
+  // Auth
+  auth: {
+    signIn: (email: string, password: string) =>
+      request<{ user: Record<string, unknown>; session: Record<string, unknown> }>('/auth/sign-in', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      }),
+    signUp: (email: string, password: string) =>
+      request<{ user: Record<string, unknown> }>('/auth/sign-up', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      }),
+    refresh: (refreshToken: string) =>
+      request<{ session: Record<string, unknown> }>('/auth/refresh', {
+        method: 'POST',
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      }),
   },
 
   // User
@@ -223,7 +244,7 @@ export const api = {
 
     // Tax summary
     taxSummary: (year: number) =>
-      request<Record<string, unknown>>(`/user/tax-summary?year=${year}`),
+      request<Record<string, unknown>>(`/user/tax-summary${toQS({ year })}`),
 
     // Self-exclusion
     selfExclude: (days: number = 30) =>
@@ -238,29 +259,27 @@ export const api = {
 
   // Platforms
   platforms: {
-    list: (params?: Record<string, string>) => {
-      const qs = params ? '?' + new URLSearchParams(params).toString() : ''
-      return request<Record<string, unknown>[]>(`/platforms${qs}`)
-    },
+    list: (params?: Record<string, string | number | boolean | undefined>) =>
+      request<Record<string, unknown>[]>(`/platforms${toQS(params)}`),
     get: (id: string) => request<Record<string, unknown>>(`/platforms/${id}`),
-    games: (id: string, params?: Record<string, string>) => {
-      const qs = params ? '?' + new URLSearchParams(params).toString() : ''
-      return request<Record<string, unknown>[]>(`/platforms/${id}/games${qs}`)
-    },
+    stats: (id: string) => request<Record<string, unknown>>(`/platforms/${id}/stats`),
+    games: (id: string, params?: Record<string, string | number | boolean | undefined>) =>
+      request<Record<string, unknown>[]>(`/platforms/${id}/games${toQS(params)}`),
     tosHistory: (id: string) => request<Record<string, unknown>[]>(`/platforms/${id}/tos-history`),
   },
 
   // Sessions
   sessions: {
-    list: (params?: Record<string, string>) => {
-      const qs = params ? '?' + new URLSearchParams(params).toString() : ''
-      return request<Record<string, unknown>[]>(`/sessions${qs}`)
-    },
+    list: (params?: Record<string, string | number | boolean | undefined>) =>
+      request<Record<string, unknown>[]>(`/sessions${toQS(params)}`),
     get: (id: string) => request<Record<string, unknown>>(`/sessions/${id}`),
     create: (data: Record<string, unknown>) =>
       request('/sessions', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: Record<string, unknown>) =>
       request(`/sessions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    end: (id: string) =>
+      request<Record<string, unknown>>(`/sessions/${id}/end`, { method: 'POST' }),
+    delete: (id: string) => request<{ deleted: boolean }>(`/sessions/${id}`, { method: 'DELETE' }),
     batchTransactions: (data: Record<string, unknown>) =>
       request('/sessions/transactions/batch', {
         method: 'POST',
@@ -271,69 +290,70 @@ export const api = {
   // Analytics
   analytics: {
     portfolio: () => request<Record<string, unknown>>('/analytics/portfolio'),
-    rtp: (params?: Record<string, string>) => {
-      const qs = params ? '?' + new URLSearchParams(params).toString() : ''
-      return request<Record<string, unknown>>(`/analytics/rtp${qs}`)
-    },
+    platforms: () => request<Record<string, unknown>[]>('/analytics/platforms'),
+    dashboard: () => request<Record<string, unknown>>('/analytics/dashboard'),
+    rtp: (params?: Record<string, string | number | boolean | undefined>) =>
+      request<Record<string, unknown>>(`/analytics/rtp${toQS(params)}`),
+    heatmap: (params?: { year?: number }) =>
+      request<Record<string, unknown>[]>(`/analytics/heatmap${toQS(params)}`),
     temporal: () => request<Record<string, unknown>>('/analytics/temporal'),
     bonus: () => request<Record<string, unknown>>('/analytics/bonus'),
   },
 
   // Jackpots
   jackpots: {
-    leaderboard: (params?: Record<string, string>) => {
-      const qs = params ? '?' + new URLSearchParams(params).toString() : ''
-      return request<Record<string, unknown>[]>(`/jackpots${qs}`)
-    },
+    list: (params?: Record<string, string | number | boolean | undefined>) =>
+      request<Record<string, unknown>[]>(`/jackpots${toQS(params)}`),
+    leaderboard: (params?: Record<string, string | number | boolean | undefined>) =>
+      request<Record<string, unknown>[]>(`/jackpots${toQS(params)}`),
     history: (gameId: string) =>
       request<Record<string, unknown>[]>(`/jackpots/${gameId}/history`),
+    report: (data: Record<string, unknown>) =>
+      request('/jackpots', { method: 'POST', body: JSON.stringify(data) }),
     stats: () => request<Record<string, unknown>>('/jackpots/stats'),
   },
 
   // Redemptions
   redemptions: {
-    list: (params?: Record<string, string>) => {
-      const qs = params ? '?' + new URLSearchParams(params).toString() : ''
-      return request<Record<string, unknown>[]>(`/redemptions${qs}`)
-    },
+    list: (params?: Record<string, string | number | boolean | undefined>) =>
+      request<Record<string, unknown>[]>(`/redemptions${toQS(params)}`),
+    get: (id: string) => request<Record<string, unknown>>(`/redemptions/${id}`),
     create: (data: Record<string, unknown>) =>
       request('/redemptions', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: Record<string, unknown>) =>
       request(`/redemptions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    delete: (id: string) => request<{ deleted: boolean }>(`/redemptions/${id}`, { method: 'DELETE' }),
     stats: () => request<Record<string, unknown>>('/redemptions/stats'),
     communityBenchmarks: () => request<Record<string, unknown>[]>('/redemptions/community-benchmarks'),
   },
 
   // Trust Index
   trust: {
-    list: (params?: Record<string, string>) => {
-      const qs = params ? '?' + new URLSearchParams(params).toString() : ''
-      return request<Record<string, unknown>[]>(`/trust-index${qs}`)
-    },
+    list: (params?: Record<string, string | number | boolean | undefined>) =>
+      request<Record<string, unknown>[]>(`/trust-index${toQS(params)}`),
     get: (platformId: string) =>
       request<Record<string, unknown>>(`/trust-index/${platformId}`),
+    vote: (platform: string, rating: number, comment?: string) =>
+      request('/trust-index/vote', {
+        method: 'POST',
+        body: JSON.stringify({ platform, rating, comment }),
+      }),
   },
 
   // Phase 2 Features
   features: {
-    achievements: (params?: Record<string, string>) => {
-      const qs = params ? '?' + new URLSearchParams(params).toString() : ''
-      return request<Record<string, unknown>[]>(`/features/achievements${qs}`)
-    },
+    achievements: (params?: Record<string, string | number | boolean | undefined>) =>
+      request<Record<string, unknown>[]>(`/features/achievements${toQS(params)}`),
     myAchievements: () => request<Record<string, unknown>[]>('/features/achievements/mine'),
     achievementLeaderboard: () => request<Record<string, unknown>[]>('/features/achievements/leaderboard'),
     checkAchievements: () => request<Record<string, unknown>>('/features/achievements/check', { method: 'POST' }),
-    heatmap: (params?: Record<string, string>) => {
-      const qs = params ? '?' + new URLSearchParams(params).toString() : ''
-      return request<Record<string, unknown>[]>(`/features/heatmap${qs}`)
-    },
+    heatmap: (params?: Record<string, string | number | boolean | undefined>) =>
+      request<Record<string, unknown>[]>(`/features/heatmap${toQS(params)}`),
     streaks: () => request<Record<string, unknown>>('/features/streaks'),
     records: () => request<Record<string, unknown>>('/features/records'),
     refreshRecords: () => request<Record<string, unknown>>('/features/records/refresh', { method: 'POST' }),
-    bigWins: (params?: Record<string, string>) => {
-      const qs = params ? '?' + new URLSearchParams(params).toString() : ''
-      return request<Record<string, unknown>[]>(`/features/big-wins${qs}`)
-    },
+    bigWins: (params?: Record<string, string | number | boolean | undefined>) =>
+      request<Record<string, unknown>[]>(`/features/big-wins${toQS(params)}`),
     submitBigWin: (data: Record<string, unknown>) =>
       request<Record<string, unknown>>('/features/big-wins', { method: 'POST', body: JSON.stringify(data) }),
     myBigWins: () => request<Record<string, unknown>[]>('/features/big-wins/mine'),
@@ -351,10 +371,10 @@ export const api = {
       request<Record<string, unknown>>('/flows', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: Record<string, unknown>) =>
       request<Record<string, unknown>>(`/flows/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-    interpret: (rawInput: string) =>
+    interpret: (message: string, conversationId?: string) =>
       request<Record<string, unknown>>('/flows/interpret', {
         method: 'POST',
-        body: JSON.stringify({ rawInput }),
+        body: JSON.stringify({ message, conversation_id: conversationId }),
       }),
     startConversation: (initialMessage: string) =>
       request<Record<string, unknown>>('/flows/conversations', {
@@ -375,8 +395,12 @@ export const api = {
 
   // Notifications
   notifications: {
-    list: (params?: { limit?: number; unread_only?: boolean }) =>
-      request<Record<string, unknown>[]>(`/notifications${toQS(params)}`),
+    list: (params?: { limit?: number; unreadOnly?: boolean }) => {
+      const { unreadOnly, ...rest } = params ?? {}
+      return request<Record<string, unknown>[]>(
+        `/notifications${toQS({ ...rest, ...(unreadOnly !== undefined ? { unread_only: unreadOnly } : {}) })}`,
+      )
+    },
     count: () => request<{ unread: number }>('/notifications/count'),
     markRead: (id: string) =>
       request<{ id: string }>(`/notifications/${id}/read`, { method: 'PATCH' }),

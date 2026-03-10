@@ -21,6 +21,7 @@ import type {
 } from './types'
 import { PLATFORM_SELECTORS } from './interpreter'
 import { createLogger } from '../logger'
+import { sleep } from '../utils'
 
 const log = createLogger('AutomationExecutor')
 
@@ -727,10 +728,6 @@ async function clickInFrameOrDoc(
  * @param ms - Delay duration in milliseconds
  * @returns A promise that resolves after the delay
  */
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
 
 /**
  * Produce a concise, human-readable description for a flow step.

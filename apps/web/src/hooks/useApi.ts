@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api } from '../lib/api-enhanced'
+import { api } from '../lib/api'
 
 export const queryKeys = {
   health: ['health'] as const,
@@ -134,7 +134,7 @@ export function useHeatmap(year?: number) {
 }
 
 export function usePlatforms() {
-  return useQuery({ queryKey: queryKeys.platforms.list, queryFn: api.platforms.list })
+  return useQuery({ queryKey: queryKeys.platforms.list, queryFn: () => api.platforms.list() })
 }
 
 export function usePlatform(id: string) {
@@ -163,7 +163,7 @@ export function useJackpots(params?: { page?: number; limit?: number; platform?:
 export function useJackpotLeaderboard() {
   return useQuery({
     queryKey: queryKeys.jackpots.leaderboard,
-    queryFn: api.jackpots.leaderboard,
+    queryFn: () => api.jackpots.leaderboard(),
   })
 }
 
@@ -183,7 +183,7 @@ export function useCreateRedemption() {
 }
 
 export function useTrustIndex() {
-  return useQuery({ queryKey: queryKeys.trust.list, queryFn: api.trust.list })
+  return useQuery({ queryKey: queryKeys.trust.list, queryFn: () => api.trust.list() })
 }
 
 export function useTrustScore(platform: string) {
@@ -195,7 +195,7 @@ export function useTrustScore(platform: string) {
 }
 
 export function useFlows() {
-  return useQuery({ queryKey: queryKeys.flows.list, queryFn: api.flows.list })
+  return useQuery({ queryKey: queryKeys.flows.list, queryFn: () => api.flows.list() })
 }
 
 export function useFlow(id: string) {
@@ -230,7 +230,7 @@ export function useInterpretFlow() {
 }
 
 export function useAchievements() {
-  return useQuery({ queryKey: queryKeys.features.achievements, queryFn: api.features.achievements })
+  return useQuery({ queryKey: queryKeys.features.achievements, queryFn: () => api.features.achievements() })
 }
 
 export function useStreaks() {
@@ -248,7 +248,7 @@ export function useBigWins(params?: { page?: number; limit?: number }) {
   })
 }
 
-export function useNotifications(params?: { page?: number; limit?: number; unreadOnly?: boolean }) {
+export function useNotifications(params?: { limit?: number; unreadOnly?: boolean }) {
   return useQuery({
     queryKey: queryKeys.notifications.list(params),
     queryFn: () => api.notifications.list(params),

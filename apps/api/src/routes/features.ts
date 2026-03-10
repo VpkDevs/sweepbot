@@ -10,6 +10,7 @@ import { requireAuth } from '../middleware/auth.js'
 import { sql } from 'drizzle-orm'
 import { seedAchievements, achievementsEmpty } from '../db/seeds/achievements.js'
 import { createNotification } from './notifications.js'
+import { PaginationSchema, UuidParamsSchema } from '../lib/common-schemas.js'
 
 // ─── Zod Schemas ──────────────────────────────────────────────────────────────
 
@@ -19,8 +20,7 @@ const HeatmapQuerySchema = z.object({
 })
 
 const BigWinsQuerySchema = z.object({
-  page: z.coerce.number().int().positive().default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).default(25),
+  ...PaginationSchema.shape,
   platform: z.string().optional(),
   period: z.enum(['1d', '7d', '30d', 'all']).default('all'),
   minMultiplier: z.coerce.number().min(0).optional(),
@@ -495,7 +495,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
   // Update visibility or display name
   app.patch('/big-wins/:id', async (request, reply) => {
     const userId = request.user!.id
-    const { id } = z.object({ id: z.string().uuid() }).parse(request.params)
+    const { id } = UuidParamsSchema.parse(request.params)
     const body = z
       .object({ isPublic: z.boolean().optional(), displayName: z.string().min(1).max(100).optional() })
       .parse(request.body)
