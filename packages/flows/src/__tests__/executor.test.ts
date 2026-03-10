@@ -702,42 +702,6 @@ describe('FlowExecutor', () => {
   })
 
   describe('Arithmetic expression parser (security)', () => {
-    // Helper: execute a condition flow that evaluates an expression against a literal
-    async function evalExpr(expression: string, vars: Record<string, number> = {}): Promise<number | null> {
-      const storeSteps: FlowNode[] = Object.entries(vars).map(([k, v], i) => ({
-        type: 'store' as const,
-        id: `s${i}`,
-        variable: k,
-        value: { type: 'literal' as const, value: v },
-      }))
-
-      let capturedLeft: unknown = null
-      const conditionNode: FlowNode = {
-        type: 'condition',
-        id: 'cond',
-        left: { type: 'expression', expression },
-        operator: '>=',
-        right: { type: 'literal', value: -Infinity },
-        onTrue: { type: 'stop', id: 'stop-t' },
-        onFalse: { type: 'stop', id: 'stop-f' },
-      }
-
-      const seq: FlowNode = {
-        type: 'sequence',
-        id: 'seq',
-        steps: [...storeSteps, conditionNode],
-      }
-
-      const exec = new FlowExecutor()
-      const ctx = await exec.execute(createTestFlow(seq), 'u1')
-      // The condition was evaluated if conditionsEvaluated >= 1
-      if (ctx.metrics.conditionsEvaluated < 1) return null
-      // We can't directly read the computed value, but we can check via a second condition
-      // Instead rely on the fact the test flow shape: use tight equality bounds
-      void capturedLeft
-      return ctx.metrics.conditionsEvaluated > 0 ? 1 : null // signal that evaluation happened
-    }
-
     it('evaluates basic arithmetic: addition', async () => {
       const seq: FlowNode = {
         type: 'sequence',

@@ -15,7 +15,7 @@ import type { ConversationState } from '@sweepbot/flows'
 // Initialize services
 const flowInterpreter = new FlowInterpreter()
 const flowExecutor = new FlowExecutor()
-// Instantiated for future responsible-play checks in flow execution endpoints
+// TODO: integrate responsible-play validation into the POST /flows/:id/execute endpoint (Phase 2)
 const _rpValidator = new ResponsiblePlayValidator()
 
 // Conversation manager with persistence helpers
