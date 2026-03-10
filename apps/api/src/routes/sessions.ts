@@ -386,25 +386,30 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
         ON CONFLICT DO NOTHING
       `)
 
+      // Pre-aggregate transaction totals in a single pass to avoid repeated array scans.
+      // Only 'bet' and 'win' types affect session running totals; other types
+      // (bonus_trigger, bonus_payout, free_spin, purchase) are stored in the
+      // transactions table but are not included in the wagered/won counters.
+      let betCount = 0
+      let betAmount = 0
+      let winAmount = 0
+      for (const t of body.transactions) {
+        if (t.type === 'bet') {
+          betCount++
+          betAmount += t.amount
+        } else if (t.type === 'win') {
+          winAmount += t.amount
+        }
+      }
+
       // Update session running totals in a single UPDATE
       await dbQuery(sql`
         UPDATE sessions
         SET
-          total_bets = total_bets + (
-            SELECT COUNT(*) FROM unnest(${body.transactions.map((t) => t.type)}::text[]) AS tx_type
-            WHERE tx_type = 'bet'
-          ),
-          total_wagered = total_wagered + (
-            SELECT COALESCE(SUM(amount), 0) FROM unnest(
-              ARRAY[${body.transactions.filter((t) => t.type === 'bet').map((t) => t.amount).join(',')}]::numeric[]
-            ) AS amount
-          ),
-          total_won = total_won + (
-            SELECT COALESCE(SUM(amount), 0) FROM unnest(
-              ARRAY[${body.transactions.filter((t) => t.type === 'win').map((t) => t.amount).join(',')}]::numeric[]
-            ) AS amount
-          ),
-          updated_at = NOW()
+          total_bets    = total_bets    + ${betCount},
+          total_wagered = total_wagered + ${betAmount},
+          total_won     = total_won     + ${winAmount},
+          updated_at    = NOW()
         WHERE id = ${body.sessionId}
       `)
 

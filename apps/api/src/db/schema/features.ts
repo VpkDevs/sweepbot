@@ -3,7 +3,7 @@
  * Achievements, Personal Records, Big Wins Community Board
  */
 
-import { pgTable, uuid, varchar, text, integer, boolean, timestamp, decimal, jsonb, unique } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, varchar, text, integer, boolean, timestamp, decimal, jsonb, unique, index } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
 // ─── Achievement Catalogue ────────────────────────────────────────────────────
@@ -32,7 +32,13 @@ export const userAchievements = pgTable(
     progress: jsonb('progress'),   // { current: 47, required: 100 }
     notified: boolean('notified').notNull().default(false),
   },
-  (t) => ({ uniq: unique().on(t.userId, t.achievementId) })
+  (t) => ({
+    uniq: unique().on(t.userId, t.achievementId),
+    // Covers looking up all achievements for a given user
+    userIdx: index('idx_user_achievements_user_id').on(t.userId),
+    // Covers joining achievement catalogue details
+    achievementIdx: index('idx_user_achievements_achievement_id').on(t.achievementId),
+  })
 )
 
 // ─── Personal Records ─────────────────────────────────────────────────────────
@@ -59,22 +65,35 @@ export const personalRecords = pgTable('personal_records', {
 
 // ─── Community Big Wins Board ─────────────────────────────────────────────────
 
-export const bigWins = pgTable('big_wins', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull(),
-  platformId: uuid('platform_id'),
-  platformName: varchar('platform_name', { length: 255 }),
-  gameName: varchar('game_name', { length: 255 }),
-  winAmountSc: decimal('win_amount_sc', { precision: 12, scale: 4 }).notNull(),
-  multiplier: decimal('multiplier', { precision: 10, scale: 2 }),
-  betAmount: decimal('bet_amount', { precision: 12, scale: 4 }),
-  screenshotUrl: text('screenshot_url'),
-  verificationStatus: varchar('verification_status', { length: 30 }).notNull().default('pending'),
-  // pending | verified | rejected | auto_verified
-  verifiedAt: timestamp('verified_at'),
-  isPublic: boolean('is_public').notNull().default(true),
-  displayName: varchar('display_name', { length: 100 }),
-  occurredAt: timestamp('occurred_at').notNull(),
-  notes: text('notes'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-})
+export const bigWins = pgTable(
+  'big_wins',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id').notNull(),
+    platformId: uuid('platform_id'),
+    platformName: varchar('platform_name', { length: 255 }),
+    gameName: varchar('game_name', { length: 255 }),
+    winAmountSc: decimal('win_amount_sc', { precision: 12, scale: 4 }).notNull(),
+    multiplier: decimal('multiplier', { precision: 10, scale: 2 }),
+    betAmount: decimal('bet_amount', { precision: 12, scale: 4 }),
+    screenshotUrl: text('screenshot_url'),
+    verificationStatus: varchar('verification_status', { length: 30 }).notNull().default('pending'),
+    // pending | verified | rejected | auto_verified
+    verifiedAt: timestamp('verified_at'),
+    isPublic: boolean('is_public').notNull().default(true),
+    displayName: varchar('display_name', { length: 100 }),
+    occurredAt: timestamp('occurred_at').notNull(),
+    notes: text('notes'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    // Covers fetching a user's own big wins
+    userIdx: index('idx_big_wins_user_id').on(table.userId),
+    // Covers filtering by platform on the community board
+    platformIdx: index('idx_big_wins_platform_id').on(table.platformId),
+    // Covers community board sort (most recent / highest wins)
+    occurredAtIdx: index('idx_big_wins_occurred_at').on(table.occurredAt),
+    // Composite for user-scoped queries ordered by time
+    userOccurredAtIdx: index('idx_big_wins_user_occurred_at').on(table.userId, table.occurredAt),
+  })
+);
