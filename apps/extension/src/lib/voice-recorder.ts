@@ -152,6 +152,17 @@ export class VoiceRecorder {
     this.cleanup()
   }
 
+  /** Immediately kill the recording without processing or resolving results */
+  abort(): void {
+    if (this.recognition) {
+      this.recognition.onend = null // suppress onend callback
+      this.recognition.onerror = null
+      this.recognition.onresult = null
+      this.recognition.abort()
+    }
+    this.cleanup()
+  }
+
   private resetSilenceTimer(): void {
     if (this.silenceTimer) clearTimeout(this.silenceTimer)
     this.silenceTimer = setTimeout(() => {

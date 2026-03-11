@@ -50,6 +50,10 @@ describe('StorageManager', () => {
     expect(hud).toBe(true)
     const pos = await storage.get('hudPosition')
     expect(pos).toBe('bottom-right')
+    expect(await storage.get('personalRecords')).toBeNull()
+    expect(await storage.get('sessionStreak')).toBeNull()
+    expect(await storage.get('voiceConsentGranted')).toBe(false)
+    expect(await storage.get('voicePrivacyMode')).toBe(false)
   })
 
   it('sets and gets values', async () => {

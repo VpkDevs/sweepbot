@@ -49,7 +49,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── GET /user/profile ────────────────────────────────────────────────────
   app.get(
-    '/user/profile',
+    '/profile',
     {
       schema: {
         tags: ['User'],
@@ -100,7 +100,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── PATCH /user/profile ──────────────────────────────────────────────────
   app.patch(
-    '/user/profile',
+    '/profile',
     {
       schema: {
         tags: ['User'],
@@ -149,7 +149,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── GET /user/settings ───────────────────────────────────────────────────
   app.get(
-    '/user/settings',
+    '/settings',
     {
       schema: {
         tags: ['User'],
@@ -190,7 +190,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── PUT /user/settings ───────────────────────────────────────────────────
   app.put(
-    '/user/settings',
+    '/settings',
     {
       schema: {
         tags: ['User'],
@@ -243,7 +243,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── GET /user/platforms ──────────────────────────────────────────────────
   app.get(
-    '/user/platforms',
+    '/platforms',
     {
       schema: {
         tags: ['User'],
@@ -297,7 +297,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── POST /user/platforms ─────────────────────────────────────────────────
   app.post(
-    '/user/platforms',
+    '/platforms',
     {
       schema: {
         tags: ['User'],
@@ -362,7 +362,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── DELETE /user/platforms/:id ───────────────────────────────────────────
   app.delete(
-    '/user/platforms/:id',
+    '/platforms/:id',
     {
       schema: {
         tags: ['User'],

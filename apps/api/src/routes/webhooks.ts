@@ -29,7 +29,7 @@ export async function webhookRoutes(app: FastifyInstance): Promise<void> {
   )
 
   // ─── POST /webhooks/stripe ────────────────────────────────────────────────
-  app.post('/webhooks/stripe', async (request: FastifyRequest, reply) => {
+  app.post('/stripe', async (request: FastifyRequest, reply) => {
     const sig = request.headers['stripe-signature']
 
     if (!sig) {
@@ -66,7 +66,7 @@ export async function webhookRoutes(app: FastifyInstance): Promise<void> {
   // Supabase can be configured to POST user events (see its functions or
   // Auth > Webhooks settings). We only care about new-user creation so we
   // can trigger a welcome email.
-  app.post('/webhooks/supabase', async (request, reply) => {
+  app.post('/supabase', async (request, reply) => {
     // The plugin-scope content-type parser returns raw Buffers for application/json,
     // so we must parse it back to an object here.
     const raw = request.body as Buffer | Record<string, unknown>

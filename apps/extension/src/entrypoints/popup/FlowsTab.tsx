@@ -9,16 +9,21 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Mic, MicOff, Play, Pause, Trash2, Zap, ChevronDown, ChevronUp, Check, AlertTriangle, Loader2 } from 'lucide-react'
+import { Mic, MicOff, Play, Pause, Trash2, Zap, ChevronDown, ChevronUp, Check, AlertTriangle, Loader2, ShieldCheck, Eye, EyeOff } from 'lucide-react'
 import { VoiceRecorder, type RecordingState } from '@/lib/voice-recorder'
+import { storage } from '@/lib/storage'
 import { flowInterpreter } from '@/lib/flows/interpreter'
 import { flowStorage } from '@/lib/flows/storage'
 import { scheduleFlow, unscheduleFlow } from '@/lib/flows/alarm-scheduler'
-import type { FlowDefinition, InterpretationResult } from '@/lib/flows/types'
+import type { FlowDefinition, FlowStep, InterpretationResult } from '@/lib/flows/types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type TabView = 'record' | 'flows'
+
+function hasPlatform(step: FlowStep): step is Extract<FlowStep, { platform: string }> {
+  return 'platform' in step
+}
 
 /**
  * Render the FlowsTab UI for recording voice-driven automations and managing saved flows.
@@ -43,6 +48,8 @@ export default function FlowsTab() {
   const [saved, setSaved] = useState(false)
   const [expandedFlowId, setExpandedFlowId] = useState<string | null>(null)
   const [isSupported, setIsSupported] = useState(true)
+  const [voiceConsent, setVoiceConsent] = useState<boolean | null>(null)
+  const [privacyMode, setPrivacyMode] = useState(false)
 
   const recorderRef = useRef<VoiceRecorder | null>(null)
 
@@ -50,8 +57,25 @@ export default function FlowsTab() {
 
   useEffect(() => {
     setIsSupported(VoiceRecorder.isSupported())
+    loadSettings()
     loadFlows()
   }, [])
+
+  // Cleanup on unmount — ensure mic is dead
+  useEffect(() => {
+    return () => {
+      if (recorderRef.current) {
+        recorderRef.current.abort()
+      }
+    }
+  }, [])
+
+  async function loadSettings() {
+    const consent = await storage.get('voiceConsentGranted')
+    const pMode = await storage.get('voicePrivacyMode')
+    setVoiceConsent(consent ?? false)
+    setPrivacyMode(pMode ?? false)
+  }
 
   /**
    * Load saved flows from persistent storage into the component state.
@@ -86,8 +110,32 @@ export default function FlowsTab() {
 
       // Interpret the transcript
       const result = flowInterpreter.interpret(transcript)
+
+      // Fallback & Responsible Play Stub
+      if (result.confidence < 0.6) {
+        // AI Fallback stub: In the future, this calls an LLM instead
+        result.warnings.push("Confidence low. Attempted to enhance via AI (Stub).")
+      }
+      if (!result.flow.limits || result.flow.limits.maxDurationMs > 60 * 60 * 1000) {
+        result.flow.limits = { ...result.flow.limits, maxDurationMs: 60 * 60 * 1000 }
+        if (!result.warnings.includes("Added mandatory 1-hour session limit.")) {
+          result.warnings.push("Added mandatory 1-hour session limit.")
+        }
+      }
+
       setInterpretation(result)
       setRecordingState('idle')
+
+      // TTS Feedback
+      if (window.speechSynthesis) {
+        const platform = result.flow.steps.find(hasPlatform)?.platform ?? 'sweepstakes casino'
+        const msg = result.confidence >= 0.6
+          ? `Got it. Ready to save your automation for ${platform}.`
+          : `I'm not quite sure I got that right. Please review the details.`
+        const utterance = new SpeechSynthesisUtterance(msg)
+        utterance.rate = 1.1
+        window.speechSynthesis.speak(utterance)
+      }
     } catch (err) {
       setError(String(err))
       setRecordingState('idle')
@@ -101,14 +149,15 @@ export default function FlowsTab() {
 
   // ── Save flow ─────────────────────────────────────────────────────────────
 
-  const saveFlow = useCallback(async () => {
+  const saveFlow = useCallback(async (customFlow?: FlowDefinition) => {
     if (!interpretation) return
 
     setSaving(true)
     try {
+      const targetFlow = customFlow && (customFlow as any).id ? customFlow : interpretation.flow
       const flow: FlowDefinition = {
-        ...interpretation.flow,
-        status: interpretation.flow.trigger.type === 'scheduled' ? 'active' : 'draft',
+        ...targetFlow,
+        status: targetFlow.trigger.type === 'scheduled' ? 'active' : 'draft',
       }
 
       await flowStorage.saveFlow(flow)
@@ -211,6 +260,13 @@ export default function FlowsTab() {
       {/* ── Record view ──────────────────────────────────────────────────────── */}
       {view === 'record' && (
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {voiceConsent === false ? (
+            <VoiceConsentView onAccept={async () => {
+              await storage.set('voiceConsentGranted', true)
+              setVoiceConsent(true)
+            }} />
+          ) : (
+            <>
           {!isSupported ? (
             <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
               <AlertTriangle className="w-3 h-3 inline mr-1" />
@@ -258,10 +314,21 @@ export default function FlowsTab() {
           {/* Live transcript */}
           {(interimText || finalTranscript) && (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700 min-h-[48px]">
-              <span className="font-medium text-gray-500 text-xs uppercase tracking-wide">
+              <span className="font-medium text-gray-500 text-xs uppercase tracking-wide flex items-center justify-between">
                 Transcript
+                <button
+                  onClick={() => {
+                    const next = !privacyMode
+                    setPrivacyMode(next)
+                    storage.set('voicePrivacyMode', next)
+                  }}
+                  className="p-1 hover:bg-gray-200 rounded"
+                  title={privacyMode ? "Show transcript" : "Hide transcript"}
+                >
+                  {privacyMode ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                </button>
               </span>
-              <p className="mt-1 leading-relaxed">
+              <p className={`mt-1 leading-relaxed ${privacyMode ? 'blur-sm select-none' : ''}`}>
                 {finalTranscript || interimText}
                 {recordingState === 'listening' && (
                   <span className="inline-block ml-1 w-0.5 h-4 bg-blue-500 animate-blink align-middle" />
@@ -301,6 +368,14 @@ export default function FlowsTab() {
               </p>
             </div>
           )}
+
+          <div className="pt-2">
+            <p className="text-[10px] text-gray-400 leading-tight">
+              SweepBot uses the Web Speech API. Audio data is processed by your browser and is not stored or transmitted by SweepBot until you save a flow.
+            </p>
+          </div>
+          </>
+        )}
         </div>
       )}
 
@@ -361,13 +436,43 @@ function InterpretationPreview({
   saved,
 }: {
   result: InterpretationResult
-  onConfirm: () => void
+  onConfirm: (flow?: FlowDefinition) => void
   onDiscard: () => void
   saving: boolean
   saved: boolean
 }) {
-  const { flow, confidence, warnings, ambiguities } = result
+  const { confidence, warnings, ambiguities } = result
+  const [editedFlow, setEditedFlow] = useState<FlowDefinition>(result.flow)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editJson, setEditJson] = useState('')
+
+  useEffect(() => {
+    setEditedFlow(result.flow)
+    setIsEditing(false)
+  }, [result])
+
+  const flow = isEditing ? result.flow : editedFlow
   const confidencePct = Math.round(confidence * 100)
+
+  const handleToggleEdit = () => {
+    if (isEditing) {
+      try {
+        const parsed = JSON.parse(editJson)
+        setEditedFlow(parsed)
+      } catch (e) {
+        alert("Invalid JSON format. Please fix errors before saving edits.")
+        return
+      }
+    } else {
+      setEditJson(JSON.stringify(editedFlow, null, 2))
+    }
+    setIsEditing(!isEditing)
+  }
+
+  // Monetization Pro Gate Stub
+  // const isScheduled = flow.trigger.type === 'scheduled'
+  // const isProUser = false // TODO: Read from user profile context
+  // const isGated = isScheduled && !isProUser
 
   return (
     <div className="border border-blue-200 rounded-xl bg-white shadow-sm overflow-hidden">
@@ -399,22 +504,38 @@ function InterpretationPreview({
         </div>
       )}
 
+      {/* Raw Edit Mode */}
+      {isEditing && (
+        <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+          <p className="text-[10px] text-gray-500 mb-1.5 font-bold tracking-wide uppercase">Manual Correction (JSON)</p>
+          <textarea
+            value={editJson}
+            onChange={(e) => setEditJson(e.target.value)}
+            className="w-full h-32 text-xs font-mono p-2 border rounded border-gray-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          />
+        </div>
+      )}
+
       {/* Steps count */}
-      <div className="px-4 py-2 text-xs text-gray-500 border-b border-gray-100">
-        {flow.steps.length} step{flow.steps.length !== 1 ? 's' : ''} ·{' '}
-        {flow.trigger.type === 'scheduled'
-          ? `Scheduled: ${(flow.trigger as { humanReadable: string }).humanReadable}`
-          : 'Manual trigger'}
+      <div className="px-4 py-2 text-xs text-gray-500 border-b border-gray-100 flex items-center justify-between">
+        <div>
+          {flow.steps.length} step{flow.steps.length !== 1 ? 's' : ''} ·{' '}
+          {flow.trigger.type === 'scheduled'
+            ? `Scheduled: ${(flow.trigger as { humanReadable: string }).humanReadable}`
+            : 'Manual trigger'}
+        </div>
       </div>
 
       {/* Actions */}
       <div className="px-4 py-3 flex gap-2">
         <button
-          onClick={onConfirm}
-          disabled={saving || saved}
+          onClick={() => onConfirm(editedFlow)}
+          disabled={saving || saved || isEditing}
           className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition
             ${saved
               ? 'bg-green-500 text-white'
+              : isEditing
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
               : 'bg-blue-600 hover:bg-blue-700 text-white'
             }`}
         >
@@ -427,8 +548,17 @@ function InterpretationPreview({
           )}
         </button>
         <button
+          onClick={handleToggleEdit}
+          disabled={saving || saved}
+          className={`px-3 py-2 rounded-lg text-sm font-medium transition flex items-center justify-center
+            ${isEditing ? 'bg-blue-100 hover:bg-blue-200 text-blue-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}
+        >
+          {isEditing ? 'Done' : 'Edit'}
+        </button>
+        <button
           onClick={onDiscard}
-          className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-medium transition"
+          disabled={saving || saved}
+          className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-medium transition flex items-center justify-center"
         >
           Discard
         </button>
@@ -563,5 +693,38 @@ function ConfidenceBadge({ pct }: { pct: number }) {
     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${color}`}>
       {pct}% confidence
     </span>
+  )
+}
+
+/**
+ * Consent UI for voice features
+ */
+function VoiceConsentView({ onAccept }: { onAccept: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-6 text-center space-y-4">
+      <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
+        <ShieldCheck className="w-8 h-8 text-blue-600" />
+      </div>
+      <div className="space-y-3">
+        <h3 className="font-bold text-gray-900">Privacy & Voice Features</h3>
+        <p className="text-xs font-semibold text-gray-700 bg-gray-100 p-2.5 rounded mx-4 border border-gray-200">
+          SweepBot only listens when you click the Microphone button.
+        </p>
+        <p className="text-xs text-gray-500 px-4 leading-relaxed">
+          Your audio is processed locally by your browser's Web Speech API and is never stored or transmitted.
+        </p>
+      </div>
+      <div className="w-full pt-4 px-4 space-y-2">
+        <button
+          onClick={onAccept}
+          className="w-full py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold shadow-sm hover:bg-blue-700 transition"
+        >
+          Enable Voice Features
+        </button>
+        <p className="text-[10px] text-gray-400">
+          You can disable this anytime in Settings.
+        </p>
+      </div>
+    </div>
   )
 }

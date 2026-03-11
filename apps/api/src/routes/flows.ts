@@ -623,4 +623,85 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
       }
     }
   )
+
+  /**
+   * GET /flows/:id/execution/current
+   * Get the most recent flow execution
+   */
+  app.get<{ Params: { id: string } }>(
+    '/:id/execution/current',
+    {
+      schema: {
+        tags: ['Flows'],
+        summary: 'Get current/most recent flow execution',
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: { id: { type: 'string', format: 'uuid' } },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { rows } = await dbQuery(
+          sql`SELECT * FROM flow_executions WHERE flow_id = ${request.params.id} AND user_id = ${request.user!.id} ORDER BY started_at DESC LIMIT 1`
+        )
+
+        return reply.send({
+          success: true,
+          data: rows[0] ?? null,
+        })
+      } catch (error) {
+        app.log.error({ error }, 'Get current execution error')
+        return reply.code(500).send({
+          success: false,
+          error: { code: 'INTERNAL_ERROR', message: 'Failed to get current execution' },
+        })
+      }
+    }
+  )
+
+  /**
+   * POST /flows/:id/execution/cancel
+   * Cancel a running flow execution
+   */
+  app.post<{ Params: { id: string } }>(
+    '/:id/execution/cancel',
+    {
+      schema: {
+        tags: ['Flows'],
+        summary: 'Cancel a running flow execution',
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: { id: { type: 'string', format: 'uuid' } },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { rows } = await dbQuery(
+          sql`UPDATE flow_executions SET status = 'stopped_by_user', completed_at = NOW() WHERE flow_id = ${request.params.id} AND status = 'running' AND user_id = ${request.user!.id} RETURNING id`
+        )
+
+        if (rows.length === 0) {
+          return reply.code(404).send({
+            success: false,
+            error: { code: 'NOT_FOUND', message: 'No running execution found' },
+          })
+        }
+
+        return reply.send({
+          success: true,
+          data: { id: rows[0]!['id'] },
+        })
+      } catch (error) {
+        app.log.error({ error }, 'Cancel execution error')
+        return reply.code(500).send({
+          success: false,
+          error: { code: 'INTERNAL_ERROR', message: 'Failed to cancel execution' },
+        })
+      }
+    }
+  )
 }

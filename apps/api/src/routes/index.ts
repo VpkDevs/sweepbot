@@ -17,6 +17,7 @@ import { flowRoutes } from './flows.js'
 import { featuresRoutes } from './features.js'
 import { notificationsRoutes } from './notifications.js'
 import { achievementRoutes } from './achievements.js'
+import { gameIntelligenceRoutes } from './intelligence.js'
 
 /**
  * Registers all API route modules on the given Fastify instance so they become available under their configured prefixes.
@@ -37,4 +38,5 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
   await app.register(notificationsRoutes, { prefix: '/notifications' })
   await app.register(achievementRoutes, { prefix: '/achievements' })
   await app.register(webhookRoutes, { prefix: '/webhooks' })
+  await app.register(gameIntelligenceRoutes)
 }

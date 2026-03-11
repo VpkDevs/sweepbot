@@ -13,6 +13,8 @@
     "noImplicitOverride": false,
     "types": ["vitest/globals", "@testing-library/jest-dom"],
     "paths": {
+      "@": ["./src"],
+      "@/*": ["./src/*"],
       "@sweepbot/utils": ["../../packages/utils/src/index.ts"],
       "@sweepbot/utils/*": ["../../packages/utils/src/*.ts"]
     }

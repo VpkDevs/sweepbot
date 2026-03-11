@@ -16,8 +16,6 @@ import type {
   SpinStep,
 } from './types'
 
-import { PLATFORM_SELECTORS } from './platform-selectors'
-
 // ─── Interpreter ──────────────────────────────────────────────────────────────
 
 export class FlowInterpreter {
@@ -152,11 +150,12 @@ export class FlowInterpreter {
     }
 
     // ── Assemble flow ─────────────────────────────────────────────────────────
+    const sanitizedInput = this.sanitize(rawInput)
 
     const flow: FlowDefinition = {
       id: this.generateId(),
-      name: this.generateName(entities, rawInput),
-      description: rawInput,
+      name: this.generateName(entities, sanitizedInput),
+      description: sanitizedInput,
       status: 'draft',
       trigger,
       steps,
@@ -175,6 +174,17 @@ export class FlowInterpreter {
   }
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
+
+  /**
+   * Simple PII scrubber to ensure raw transcripts don't persist emails or phone numbers.
+   */
+  private sanitize(text: string): string {
+    return text
+      // Scrub emails
+      .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '[EMAIL]')
+      // Scrub phone numbers (basic US/Intl patterns)
+      .replace(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g, '[PHONE]')
+  }
 
   private generateId(): string {
     return `flow_${Date.now()}_${crypto.randomUUID().replace(/-/g, '').slice(0, 8)}`

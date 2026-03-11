@@ -1,402 +1,197 @@
-import type { FastifyInstance } from 'fastify'
+import type { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod'
-import { query as dbQuery, unsafeQuery } from '../db/client.js'
+import { db } from '../db/client.js'
+import { sessions, transactions, platforms } from '../db/schema/comprehensive.js'
+import { eq, and, gte, desc, sql, count } from 'drizzle-orm'
 import { requireAuth } from '../middleware/auth.js'
-import { sql } from 'drizzle-orm'
-import { cachedQuery } from '../db/query-helpers.js'
 
-const RTPQuerySchema = z.object({
-  platformId: z.string().uuid().optional(),
-  gameId: z.string().uuid().optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
-  granularity: z.enum(['day', 'week', 'month']).default('day'),
-})
+export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
+  // Require auth for all analytics routes
+  fastify.addHook('preValidation', requireAuth)
 
-const PortfolioQuerySchema = z.object({
-  currency: z.enum(['sc', 'gc']).default('sc'),
-})
+  // Portfolio overview - main dashboard data
+  fastify.get('/portfolio', async (request, reply) => {
+    const userId = request.user!.id
 
-export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
-  app.addHook('preValidation', requireAuth)
+    // Get totals
+    const totals = await db
+      .select({
+        total_sessions: count(sessions.id),
+        total_wagered: sql<number>`COALESCE(SUM(${sessions.totalWagered}), 0)`,
+        total_won: sql<number>`COALESCE(SUM(${sessions.totalWon}), 0)`,
+        net_profit: sql<number>`COALESCE(SUM(${sessions.netResult}), 0)`,
+        overall_rtp: sql<number>`CASE WHEN SUM(${sessions.totalWagered}) > 0 THEN (SUM(${sessions.totalWon}) / SUM(${sessions.totalWagered})) * 100 ELSE 0 END`,
+        total_bets: sql<number>`COALESCE(SUM(${sessions.spinCount}), 0)`,
+        active_platforms: sql<number>`COUNT(DISTINCT ${sessions.platformId})`,
+        total_hours_played: sql<number>`COALESCE(SUM(EXTRACT(EPOCH FROM (${sessions.endedAt} - ${sessions.startedAt}))) / 3600, 0)`
+      })
+      .from(sessions)
+      .where(eq(sessions.userId, userId))
 
-  // ─── GET /analytics/portfolio ─────────────────────────────────────────────
-  // The "Command Center" — top-level portfolio overview
-  app.get(
-    '/analytics/portfolio',
-    {
-      schema: {
-        tags: ['Analytics'],
-        summary: 'Portfolio overview — total P&L, balances, earnings velocity',
-        security: [{ bearerAuth: [] }],
-      },
-    },
-    async (request, reply) => {
-      const userId = request.user!.id
-      const { currency } = PortfolioQuerySchema.parse(request.query)
+    // Recent 7-day activity
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const recentActivity = await db
+      .select({
+        play_date: sql<string>`DATE(${sessions.startedAt})`,
+        sessions: count(sessions.id),
+        wagered: sql<number>`COALESCE(SUM(${sessions.totalWagered}), 0)`,
+        won: sql<number>`COALESCE(SUM(${sessions.totalWon}), 0)`,
+        net: sql<number>`COALESCE(SUM(${sessions.netResult}), 0)`
+      })
+      .from(sessions)
+      .where(and(
+        eq(sessions.userId, userId),
+        gte(sessions.startedAt, sevenDaysAgo)
+      ))
+      .groupBy(sql`DATE(${sessions.startedAt})`)
+      .orderBy(sql`DATE(${sessions.startedAt})`)
 
-      const portfolioData = await cachedQuery(
-        `analytics:portfolio:${userId}:${currency}`,
-        async () => {
-          const [totals, platformBreakdown, recentActivity, streaks] = await Promise.all([
-        // All-time totals
-        dbQuery(sql`
-          SELECT
-            COUNT(DISTINCT s.platform_id) AS active_platforms,
-            COUNT(*) AS total_sessions,
-            COALESCE(SUM(s.total_bets), 0) AS total_bets,
-            COALESCE(SUM(s.total_wagered), 0) AS total_wagered,
-            COALESCE(SUM(s.total_won), 0) AS total_won,
-            COALESCE(SUM(s.total_won) - SUM(s.total_wagered), 0) AS net_profit,
-            CASE
-              WHEN SUM(s.total_wagered) > 0
-              THEN ROUND((SUM(s.total_won) / SUM(s.total_wagered)) * 100, 2)
-              ELSE NULL
-            END AS overall_rtp,
-            COALESCE(SUM(EXTRACT(EPOCH FROM (s.ended_at - s.started_at)) / 3600), 0)::numeric(10,2) AS total_hours_played
-          FROM sessions s
-          WHERE s.user_id = ${userId}
-            AND s.ended_at IS NOT NULL
-        `),
+    // Platform breakdown
+    const platformBreakdown = await db
+      .select({
+        platform_id: platforms.id,
+        platform_name: platforms.displayName,
+        logo_url: platforms.logoUrl,
+        session_count: count(sessions.id),
+        total_wagered: sql<number>`COALESCE(SUM(${sessions.totalWagered}), 0)`,
+        total_won: sql<number>`COALESCE(SUM(${sessions.totalWon}), 0)`,
+        net_profit: sql<number>`COALESCE(SUM(${sessions.netResult}), 0)`,
+        rtp: sql<number>`CASE WHEN SUM(${sessions.totalWagered}) > 0 THEN (SUM(${sessions.totalWon}) / SUM(${sessions.totalWagered})) * 100 ELSE NULL END`,
+        last_played_at: sql<string>`MAX(${sessions.startedAt})`
+      })
+      .from(sessions)
+      .innerJoin(platforms, eq(sessions.platformId, platforms.id))
+      .where(eq(sessions.userId, userId))
+      .groupBy(platforms.id, platforms.displayName, platforms.logoUrl)
+      .orderBy(desc(sql`SUM(${sessions.totalWagered})`))
 
-        // Per-platform breakdown
-        dbQuery(sql`
-          SELECT
-            p.id AS platform_id,
-            p.name AS platform_name,
-            p.logo_url,
-            COUNT(s.id) AS session_count,
-            COALESCE(SUM(s.total_wagered), 0) AS total_wagered,
-            COALESCE(SUM(s.total_won), 0) AS total_won,
-            COALESCE(SUM(s.total_won) - SUM(s.total_wagered), 0) AS net_profit,
-            CASE
-              WHEN SUM(s.total_wagered) > 0
-              THEN ROUND((SUM(s.total_won) / SUM(s.total_wagered)) * 100, 2)
-              ELSE NULL
-            END AS rtp,
-            MAX(s.started_at) AS last_played_at
-          FROM sessions s
-          INNER JOIN platforms p ON p.id = s.platform_id
-          WHERE s.user_id = ${userId}
-            AND s.ended_at IS NOT NULL
-          GROUP BY p.id, p.name, p.logo_url
-          ORDER BY total_wagered DESC
-          LIMIT 20
-        `),
+    return {
+      success: true,
+      data: {
+        totals: totals[0] || {},
+        recentActivity,
+        platformBreakdown
+      }
+    }
+  })
 
-        // Last 7 days activity summary
-        dbQuery(sql`
-          SELECT
-            DATE(s.started_at) AS play_date,
-            COUNT(*) AS session_count,
-            COALESCE(SUM(s.total_wagered), 0) AS wagered,
-            COALESCE(SUM(s.total_won), 0) AS won,
-            COALESCE(SUM(s.total_won) - SUM(s.total_wagered), 0) AS net
-          FROM sessions s
-          WHERE s.user_id = ${userId}
-            AND s.started_at >= NOW() - INTERVAL '7 days'
-            AND s.ended_at IS NOT NULL
-          GROUP BY DATE(s.started_at)
-          ORDER BY play_date ASC
-        `),
-
-        // Win/loss streak data
-        dbQuery(sql`
-          WITH session_results AS (
-            SELECT
-              id,
-              started_at,
-              CASE WHEN total_won > total_wagered THEN 'win' ELSE 'loss' END AS result
-            FROM sessions
-            WHERE user_id = ${userId}
-              AND ended_at IS NOT NULL
-              AND total_wagered > 0
-            ORDER BY started_at DESC
-            LIMIT 100
-          )
-          SELECT
-            MAX(streak_length) AS longest_win_streak,
-            MAX(loss_streak_length) AS longest_loss_streak
-          FROM (
-            SELECT
-              result,
-              COUNT(*) AS streak_length,
-              0 AS loss_streak_length
-            FROM (
-              SELECT result, ROW_NUMBER() OVER (ORDER BY started_at DESC) -
-                ROW_NUMBER() OVER (PARTITION BY result ORDER BY started_at DESC) AS grp
-              FROM session_results
-            ) sub
-            WHERE result = 'win'
-            GROUP BY result, grp
-            UNION ALL
-            SELECT
-              result,
-              0 AS streak_length,
-              COUNT(*) AS loss_streak_length
-            FROM (
-              SELECT result, ROW_NUMBER() OVER (ORDER BY started_at DESC) -
-                ROW_NUMBER() OVER (PARTITION BY result ORDER BY started_at DESC) AS grp
-              FROM session_results
-            ) sub
-            WHERE result = 'loss'
-            GROUP BY result, grp
-          ) streaks
-        `),
-      ])
-
-          return {
-            totals: totals.rows[0] ?? null,
-            platformBreakdown: platformBreakdown.rows,
-            recentActivity: recentActivity.rows,
-            streaks: streaks.rows[0] ?? { longest_win_streak: 0, longest_loss_streak: 0 },
-          }
-        },
-        { ttl: 60, prefix: 'sweepbot' }, // 60-second TTL — portfolio is expensive but needs to feel fresh
-      )
-
-      return reply.send({
-        success: true,
-        data: portfolioData,
+  // RTP analysis with confidence intervals
+  fastify.get('/rtp', {
+    schema: {
+      querystring: z.object({
+        platform_id: z.string().uuid().optional(),
+        game_id: z.string().optional(),
+        days: z.coerce.number().min(1).max(365).default(30)
       })
     }
-  )
+  }, async (request, reply) => {
+    const userId = request.user!.id
+    const { platform_id, game_id, days } = request.query as { platform_id?: string; game_id?: string; days: number }
 
-  // ─── GET /analytics/rtp ───────────────────────────────────────────────────
-  // Personal RTP with confidence intervals — the crown jewel feature
-  app.get(
-    '/analytics/rtp',
-    {
-      schema: {
-        tags: ['Analytics'],
-        summary: 'Personal RTP breakdown with confidence intervals',
-        security: [{ bearerAuth: [] }],
-      },
-    },
-    async (request, reply) => {
-      const userId = request.user!.id
-      const query = RTPQuerySchema.parse(request.query)
+    const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
 
-      const platformFilter = query.platformId
-        ? sql`AND s.platform_id = ${query.platformId}`
-        : sql``
-      const gameFilter = query.gameId ? sql`AND s.game_id = ${query.gameId}` : sql``
-      const startFilter = query.startDate
-        ? sql`AND s.started_at >= ${new Date(query.startDate)}`
-        : sql``
-      const endFilter = query.endDate
-        ? sql`AND s.started_at <= ${new Date(query.endDate)}`
-        : sql``
+    let whereConditions = [
+      eq(sessions.userId, userId),
+      gte(sessions.startedAt, startDate)
+    ]
 
-      const truncExpr =
-        query.granularity === 'month'
-          ? `DATE_TRUNC('month', s.started_at)`
-          : query.granularity === 'week'
-            ? `DATE_TRUNC('week', s.started_at)`
-            : `DATE(s.started_at)`
+    if (platform_id) whereConditions.push(eq(sessions.platformId, platform_id))
+    if (game_id) whereConditions.push(eq(sessions.gameId, game_id))
 
-      const [overall, timeSeries, byGame, byPlatform] = await Promise.all([
-        // Overall RTP with confidence
-        dbQuery(sql`
-          SELECT
-            COUNT(*) AS session_count,
-            SUM(s.total_bets) AS total_bets,
-            SUM(s.total_wagered) AS total_wagered,
-            SUM(s.total_won) AS total_won,
-            CASE
-              WHEN SUM(s.total_wagered) > 0
-              THEN ROUND((SUM(s.total_won) / SUM(s.total_wagered)) * 100, 4)
-              ELSE NULL
-            END AS rtp,
-            -- Wilson confidence interval approximation (N for confidence level)
-            CASE
-              WHEN SUM(s.total_bets) >= 10000 THEN 'high'
-              WHEN SUM(s.total_bets) >= 1000 THEN 'medium'
-              WHEN SUM(s.total_bets) >= 100 THEN 'low'
-              ELSE 'insufficient'
-            END AS confidence_level,
-            STDDEV(s.rtp) AS rtp_std_dev
-          FROM sessions s
-          WHERE s.user_id = ${userId}
-            AND s.ended_at IS NOT NULL
-            AND s.total_wagered > 0
-            ${platformFilter} ${gameFilter} ${startFilter} ${endFilter}
-        `),
-
-        // RTP over time
-        unsafeQuery(`
-          SELECT
-            ${truncExpr} AS period,
-            COUNT(*) AS session_count,
-            SUM(total_bets) AS total_bets,
-            SUM(total_wagered) AS total_wagered,
-            SUM(total_won) AS total_won,
-            ROUND((SUM(total_won) / NULLIF(SUM(total_wagered), 0)) * 100, 4) AS rtp
-          FROM sessions s
-          WHERE s.user_id = $1
-            AND s.ended_at IS NOT NULL
-            AND s.total_wagered > 0
-          GROUP BY ${truncExpr}
-          ORDER BY period ASC
-        `, [userId]),
-
-        // RTP by game (top 10 by wagered)
-        dbQuery(sql`
-          SELECT
-            g.id AS game_id,
-            g.name AS game_name,
-            g.theoretical_rtp,
-            g.community_rtp_aggregate AS community_rtp,
-            COUNT(s.id) AS session_count,
-            SUM(s.total_bets) AS total_bets,
-            SUM(s.total_wagered) AS total_wagered,
-            ROUND((SUM(s.total_won) / NULLIF(SUM(s.total_wagered), 0)) * 100, 4) AS personal_rtp,
-            ROUND(
-              (ROUND((SUM(s.total_won) / NULLIF(SUM(s.total_wagered), 0)) * 100, 4) - COALESCE(g.theoretical_rtp, 96)),
-              4
-            ) AS rtp_vs_theoretical
-          FROM sessions s
-          INNER JOIN games g ON g.id = s.game_id
-          WHERE s.user_id = ${userId}
-            AND s.ended_at IS NOT NULL
-            AND s.total_wagered > 0
-            AND s.game_id IS NOT NULL
-            ${platformFilter} ${startFilter} ${endFilter}
-          GROUP BY g.id, g.name, g.theoretical_rtp, g.community_rtp_aggregate
-          ORDER BY total_wagered DESC
-          LIMIT 10
-        `),
-
-        // RTP by platform
-        dbQuery(sql`
-          SELECT
-            p.id AS platform_id,
-            p.name AS platform_name,
-            COUNT(s.id) AS session_count,
-            SUM(s.total_bets) AS total_bets,
-            SUM(s.total_wagered) AS total_wagered,
-            ROUND((SUM(s.total_won) / NULLIF(SUM(s.total_wagered), 0)) * 100, 4) AS personal_rtp
-          FROM sessions s
-          INNER JOIN platforms p ON p.id = s.platform_id
-          WHERE s.user_id = ${userId}
-            AND s.ended_at IS NOT NULL
-            AND s.total_wagered > 0
-            ${gameFilter} ${startFilter} ${endFilter}
-          GROUP BY p.id, p.name
-          ORDER BY total_wagered DESC
-        `),
-      ])
-
-      return reply.send({
-        success: true,
-        data: {
-          overall: overall.rows[0] ?? null,
-          timeSeries: timeSeries.rows,
-          byGame: byGame.rows,
-          byPlatform: byPlatform.rows,
-        },
+    const rtpData = await db
+      .select({
+        date: sql<string>`DATE(${sessions.startedAt})`,
+        sessions: count(sessions.id),
+        total_wagered: sql<number>`SUM(${sessions.totalWagered})`,
+        total_won: sql<number>`SUM(${sessions.totalWon})`,
+        rtp: sql<number>`CASE WHEN SUM(${sessions.totalWagered}) > 0 THEN (SUM(${sessions.totalWon}) / SUM(${sessions.totalWagered})) * 100 ELSE 0 END`,
+        win_rate: sql<number>`(COUNT(CASE WHEN ${sessions.netResult} > 0 THEN 1 END) * 100.0) / COUNT(*)`,
+        avg_session_duration: sql<number>`AVG(EXTRACT(EPOCH FROM (${sessions.endedAt} - ${sessions.startedAt}))) / 60`
       })
-    }
-  )
+      .from(sessions)
+      .where(and(...whereConditions))
+      .groupBy(sql`DATE(${sessions.startedAt})`)
+      .orderBy(sql`DATE(${sessions.startedAt})`)
 
-  // ─── GET /analytics/temporal ──────────────────────────────────────────────
-  // RTP by time of day / day of week — temporal pattern analysis
-  app.get(
-    '/analytics/temporal',
-    {
-      schema: {
-        tags: ['Analytics'],
-        summary: 'Temporal RTP patterns — time of day, day of week',
-        security: [{ bearerAuth: [] }],
-      },
-    },
-    async (request, reply) => {
-      const userId = request.user!.id
-
-      const [byHour, byDayOfWeek] = await Promise.all([
-        dbQuery(sql`
-          SELECT
-            EXTRACT(HOUR FROM s.started_at)::int AS hour_of_day,
-            COUNT(*) AS session_count,
-            ROUND(AVG(s.rtp), 4) AS avg_rtp,
-            SUM(s.total_wagered) AS total_wagered
-          FROM sessions s
-          WHERE s.user_id = ${userId}
-            AND s.rtp IS NOT NULL
-            AND s.ended_at IS NOT NULL
-          GROUP BY EXTRACT(HOUR FROM s.started_at)
-          ORDER BY hour_of_day ASC
-        `),
-        dbQuery(sql`
-          SELECT
-            EXTRACT(DOW FROM s.started_at)::int AS day_of_week,
-            TO_CHAR(s.started_at, 'Day') AS day_name,
-            COUNT(*) AS session_count,
-            ROUND(AVG(s.rtp), 4) AS avg_rtp,
-            SUM(s.total_wagered) AS total_wagered
-          FROM sessions s
-          WHERE s.user_id = ${userId}
-            AND s.rtp IS NOT NULL
-            AND s.ended_at IS NOT NULL
-          GROUP BY EXTRACT(DOW FROM s.started_at), TO_CHAR(s.started_at, 'Day')
-          ORDER BY day_of_week ASC
-        `),
-      ])
-
-      return reply.send({
-        success: true,
-        data: {
-          byHour: byHour.rows,
-          byDayOfWeek: byDayOfWeek.rows,
-        },
+    // Calculate confidence intervals (simplified)
+    const overallStats = await db
+      .select({
+        total_sessions: count(sessions.id),
+        overall_rtp: sql<number>`CASE WHEN SUM(${sessions.totalWagered}) > 0 THEN (SUM(${sessions.totalWon}) / SUM(${sessions.totalWagered})) * 100 ELSE 0 END`,
+        std_dev: sql<number>`STDDEV(${sessions.rtp})`
       })
+      .from(sessions)
+      .where(and(...whereConditions))
+
+    return {
+      success: true,
+      data: {
+        daily_rtp: rtpData,
+        overall_stats: overallStats[0],
+        confidence_interval: calculateConfidenceInterval(overallStats[0])
+      }
     }
-  )
+  })
 
-  // ─── GET /analytics/bonus ─────────────────────────────────────────────────
-  app.get(
-    '/analytics/bonus',
-    {
-      schema: {
-        tags: ['Analytics'],
-        summary: 'Bonus feature analytics — trigger rate, average payout, RTP contribution',
-        security: [{ bearerAuth: [] }],
-      },
-    },
-    async (request, reply) => {
-      const userId = request.user!.id
+  // Bonus analysis - NEW FEATURE OPPORTUNITY
+  fastify.get('/bonus', async (request, reply) => {
+    const userId = request.user!.id
 
-      const rows = await dbQuery(sql`
-        SELECT
-          p.id AS platform_id,
-          p.name AS platform_name,
-          g.id AS game_id,
-          g.name AS game_name,
-          g.bonus_trigger_frequency AS theoretical_trigger_freq,
-          COUNT(s.id) AS total_sessions,
-          COUNT(s.id) FILTER (WHERE s.bonus_triggered = TRUE) AS bonus_sessions,
-          ROUND(
-            COUNT(s.id) FILTER (WHERE s.bonus_triggered = TRUE)::numeric
-            / NULLIF(COUNT(s.id), 0) * 100, 2
-          ) AS actual_trigger_rate_pct,
-          ROUND(AVG(s.bonus_payout) FILTER (WHERE s.bonus_triggered = TRUE), 4) AS avg_bonus_payout,
-          SUM(s.bonus_payout) AS total_bonus_payout,
-          ROUND(
-            SUM(s.bonus_payout) / NULLIF(SUM(s.total_wagered), 0) * 100, 4
-          ) AS bonus_rtp_contribution_pct
-        FROM sessions s
-        INNER JOIN platforms p ON p.id = s.platform_id
-        LEFT JOIN games g ON g.id = s.game_id
-        WHERE s.user_id = ${userId}
-          AND s.ended_at IS NOT NULL
-          AND s.game_id IS NOT NULL
-        GROUP BY p.id, p.name, g.id, g.name, g.bonus_trigger_frequency
-        HAVING COUNT(s.id) >= 5
-        ORDER BY total_sessions DESC
-        LIMIT 25
-      `)
+    const bonusStats = await db
+      .select({
+        platform_name: platforms.displayName,
+        bonus_triggers: sql<number>`COUNT(CASE WHEN ${transactions.bonusTriggered} = true THEN 1 END)`,
+        total_spins: count(transactions.id),
+        bonus_frequency: sql<number>`(COUNT(CASE WHEN ${transactions.bonusTriggered} = true THEN 1 END) * 100.0) / COUNT(*)`,
+        avg_bonus_payout: sql<number>`AVG(CASE WHEN ${transactions.bonusTriggered} = true THEN ${transactions.winAmount} END)`,
+        best_bonus_payout: sql<number>`MAX(CASE WHEN ${transactions.bonusTriggered} = true THEN ${transactions.winAmount} END)`
+      })
+      .from(transactions)
+      .innerJoin(sessions, eq(transactions.sessionId, sessions.id))
+      .innerJoin(platforms, eq(sessions.platformId, platforms.id))
+      .where(eq(sessions.userId, userId))
+      .groupBy(platforms.id, platforms.displayName)
+      .orderBy(desc(sql`COUNT(CASE WHEN ${transactions.bonusTriggered} = true THEN 1 END)`))
 
-      return reply.send({ success: true, data: rows.rows })
-    }
-  )
+    return { success: true, data: bonusStats }
+  })
+
+  // Jackpot tracking - NEW FEATURE OPPORTUNITY
+  fastify.get('/jackpots', async (request, reply) => {
+    const userId = request.user!.id
+
+    const jackpotHits = await db
+      .select({
+        platform_name: platforms.displayName,
+        game_id: transactions.gameId,
+        hit_time: transactions.timestamp,
+        payout: transactions.winAmount,
+        bet_amount: transactions.betAmount,
+        multiplier: sql<number>`${transactions.winAmount} / ${transactions.betAmount}`
+      })
+      .from(transactions)
+      .innerJoin(sessions, eq(transactions.sessionId, sessions.id))
+      .innerJoin(platforms, eq(sessions.platformId, platforms.id))
+      .where(and(
+        eq(sessions.userId, userId),
+        eq(transactions.jackpotHit, true)
+      ))
+      .orderBy(desc(transactions.timestamp))
+      .limit(50)
+
+    return { success: true, data: jackpotHits }
+  })
+}
+
+function calculateConfidenceInterval(stats: any) {
+  if (!stats || stats.total_sessions < 30) {
+    return { lower: null, upper: null, note: 'Insufficient data for confidence interval' }
+  }
+
+  const margin = 1.96 * (stats.std_dev / Math.sqrt(stats.total_sessions))
+  return {
+    lower: Math.max(0, stats.overall_rtp - margin),
+    upper: Math.min(100, stats.overall_rtp + margin),
+    confidence: 95
+  }
 }

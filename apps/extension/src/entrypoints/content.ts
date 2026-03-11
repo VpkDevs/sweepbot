@@ -65,6 +65,7 @@ async function init(): Promise<void> {
 
   networkInterceptor.onTransactionDetected(async (tx) => {
     rtpCalculator.recordSpin(tx.betAmount, tx.winAmount)
+    const apiResult = tx.result === 'push' ? 'loss' : tx.result
 
     if (currentSessionId) {
       try {
@@ -72,7 +73,7 @@ async function init(): Promise<void> {
           game_id: tx.gameId,
           bet_amount: tx.betAmount,
           win_amount: tx.winAmount,
-          result: tx.result,
+          result: apiResult,
         })
       } catch (error) {
         log.error('Failed to record transaction:', error)

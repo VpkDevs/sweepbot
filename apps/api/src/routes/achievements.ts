@@ -121,13 +121,13 @@ export async function achievementRoutes(app: FastifyInstance): Promise<void> {
         success: true,
         data: {
           streak: {
-            current: streak.currentStreak,
-            longest: streak.longestStreak,
+            current: streak['currentStreak'],
+            longest: streak['longestStreak'],
           },
           records: {
             total: recordCount,
-            biggestWin: records.biggestWin,
-            highestRTP: records.highestRTP,
+            biggestWin: records['biggestWin'],
+            highestRTP: records['highestRTP'],
           },
           stats: {
             totalSessions,
@@ -161,7 +161,7 @@ export async function achievementRoutes(app: FastifyInstance): Promise<void> {
     },
   }, async (request, reply) => {
     try {
-      const today = new Date().toISOString().split('T')[0]
+      const today = new Date().toISOString().split('T')[0] ?? new Date().toISOString().substring(0, 10)
       const userId = request.user!.id
 
       // Get current streak

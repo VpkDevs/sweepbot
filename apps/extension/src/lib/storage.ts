@@ -11,6 +11,10 @@ export interface StorageSchema {
   authToken: string | null
   userRefCode: string | null
   sessionData: SessionStorageData | null
+  personalRecords: import('./records-tracker').PersonalRecords | null
+  sessionStreak: import('./streak-tracker').StreakData | null
+  voiceConsentGranted: boolean
+  voicePrivacyMode: boolean
   platformCredentials: Record<string, PlatformCredential>
   hudEnabled: boolean
   hudPosition: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'
@@ -59,6 +63,10 @@ const DEFAULT_STORAGE: StorageSchema = {
   authToken: null,
   userRefCode: null,
   sessionData: null,
+  personalRecords: null,
+  sessionStreak: null,
+  voiceConsentGranted: false,
+  voicePrivacyMode: false,
   platformCredentials: {},
   hudEnabled: true,
   hudPosition: 'bottom-right',

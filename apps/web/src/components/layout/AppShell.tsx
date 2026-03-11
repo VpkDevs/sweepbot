@@ -156,10 +156,12 @@ export function AppShell() {
       {/* ─── Sidebar ─────────────────────────────────────────────── */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-30 flex flex-col glass-sidebar transition-all duration-300 ease-out lg:static',
+          'fixed inset-y-0 left-0 z-30 flex flex-col glass-sidebar transition-all duration-300 ease-out lg:static overflow-y-auto',
           collapsed ? 'w-[72px]' : 'w-[260px]',
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
+        role="navigation"
+        aria-label="Main navigation"
       >
         {/* Logo */}
         <div className={cn('flex items-center gap-3 px-5 py-5 transition-all', collapsed && 'px-3 justify-center')}>
@@ -295,30 +297,34 @@ export function AppShell() {
       {/* ─── Main content ────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Topbar */}
-        <header className="flex items-center gap-4 px-6 h-14 glass-panel shrink-0 z-10">
+        <header
+          className="flex items-center gap-3 px-4 sm:px-6 h-14 glass-panel shrink-0 z-10"
+          role="banner"
+        >
           <button
-            className="lg:hidden text-zinc-400 hover:text-white transition-colors press-scale"
+            className="lg:hidden text-zinc-400 hover:text-white transition-colors press-scale focus:outline-2 focus:outline-offset-2 focus:outline-brand-500 rounded-lg p-1"
             onClick={() => setMobileOpen(true)}
             type="button"
             title="Open navigation"
-            aria-label="Open navigation"
+            aria-label="Open navigation menu"
+            aria-expanded={mobileOpen}
           >
             <Menu className="w-5 h-5" />
           </button>
 
           {/* Breadcrumb / Page title */}
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-zinc-600 hidden sm:inline">{getGreeting()}</span>
+          <div className="flex items-center gap-2 text-sm min-w-0">
+            <span className="text-zinc-600 hidden sm:inline whitespace-nowrap">{getGreeting()}</span>
             <span className="text-zinc-700 hidden sm:inline">·</span>
-            <span className="text-zinc-300 font-medium">{currentLabel}</span>
+            <span className="text-zinc-300 font-medium truncate">{currentLabel}</span>
           </div>
 
           <div className="flex-1" />
 
           {/* Search trigger (placeholder for future) */}
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.04] text-zinc-600 text-sm cursor-pointer hover:bg-white/[0.05] hover:border-white/[0.06] transition-all">
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.04] text-zinc-600 text-sm cursor-pointer hover:bg-white/[0.05] hover:border-white/[0.06] transition-all focus-within:ring-2 focus-within:ring-brand-500/20">
             <span className="text-xs">⌘K</span>
-            <span className="text-zinc-600">Search...</span>
+            <span className="text-zinc-600 hidden lg:inline">Search...</span>
           </div>
 
           <NotificationPanel />
@@ -328,7 +334,11 @@ export function AppShell() {
         <div className="glow-line shrink-0" />
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto scroll-smooth">
+        <main
+          className="flex-1 overflow-y-auto scroll-smooth focus:outline-2 focus:outline-offset-0 focus:outline-brand-500"
+          id="main-content"
+          role="main"
+        >
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>

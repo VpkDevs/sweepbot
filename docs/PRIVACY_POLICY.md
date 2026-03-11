@@ -1,7 +1,7 @@
 # SweepBot Privacy Policy
 
 **Effective Date:** March 5, 2026
-**Last Updated:** March 5, 2026
+**Last Updated:** March 9, 2026
 **Operator:** APPYness | Vincent Kinney | vincekinney1991@gmail.com
 
 ---
@@ -89,8 +89,13 @@ We collect standard web analytics via PostHog:
 We do **not** use Google Analytics or any advertising-linked analytics platform.
 
 ### 4.7 Technical Data
-- Access logs (IP address, timestamp, endpoint, response code) — retained 30 days for security purposes
 - Error reports via Sentry — these may include stack traces but are not linked to identifiable user data
+
+### 4.8 Voice-Scripted Commands (Extension)
+If you use the optional voice-scripting feature in the browser extension:
+- **Real-time audio:** Capturing your voice for transcription. **This audio data is processed locally by your browser's Web Speech API and is NEVER stored or transmitted to our servers.**
+- **Transcripts:** The resulting text transcript is processed by our NLP engine.
+- **PII Scrubbing:** All transcripts undergo an automated sanitization pass to remove emails and phone numbers before the resulting automation "Flow" is saved to your account.
 
 ---
 
@@ -100,7 +105,7 @@ We do **not** use Google Analytics or any advertising-linked analytics platform.
 - ❌ Payment card numbers, bank accounts, or financial account credentials
 - ❌ Real-money gambling activity (SweepBot only supports legal sweepstakes casinos)
 - ❌ Browsing history outside of sweepstakes casino pages while the extension is active
-- ❌ Microphone or camera data
+- ❌ Camera data
 - ❌ Contacts or social media data
 - ❌ Precise GPS location
 
@@ -124,6 +129,7 @@ The SweepBot desktop automation app includes a **zero-knowledge credential vault
 | Aggregated anonymous session data | Compute community RTP averages, Trust Index scores |
 | Redemption data | Generate redemption processing time statistics for community Intelligence |
 | Automation flows | Execute and schedule automations on your behalf |
+| Voice commands | Process voice-to-text scripting (local processing only) |
 | Affiliate data | Credit referral earnings, calculate commissions |
 | Usage data | Improve product functionality, identify bugs |
 
@@ -241,6 +247,7 @@ Extension permissions and why they are needed:
 | `scripting` | Inject the RTP HUD overlay into casino pages |
 | `tabs` | Detect when user navigates to/from a casino page |
 | `webRequest` | Intercept and read casino API responses to extract spin/bet data |
+| `microphone` | Allow use of the Web Speech API for voice-scripting (user-triggered only) |
 
 ---
 

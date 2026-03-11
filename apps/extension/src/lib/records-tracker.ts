@@ -32,7 +32,7 @@ export interface RecordUpdate {
 }
 
 class RecordsTracker {
-  private readonly STORAGE_KEY = 'personalRecords'
+  private readonly STORAGE_KEY: 'personalRecords' = 'personalRecords'
 
   async checkAndUpdateRecords(sessionData: {
     biggestWin?: number

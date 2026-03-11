@@ -15,6 +15,7 @@ import type {
   FlowValue,
 } from '../types'
 import { logger } from '@sweepbot/utils'
+import { safeEvaluate } from '../utils'
 
 export class FlowExecutor {
   /**
@@ -340,43 +341,11 @@ export class FlowExecutor {
   }
 
   /**
-   * Safe expression evaluation without using eval or new Function
+   * Safe expression evaluation using the secure expression evaluator
    * Only supports basic arithmetic operations: +, -, *, /, %
    */
   private evaluateExpression(expr: string, ctx: FlowExecutionContext): number {
-    // Replace variables with their values
-    let evaluated = expr.trim()
-    
-    // Replace all $variableName with their numeric values
-    for (const [varName, value] of ctx.variables) {
-      if (typeof value === 'number') {
-        // Use word boundary to avoid partial replacements
-        const regex = new RegExp(`\\$${varName}\\b`, 'g')
-        evaluated = evaluated.replace(regex, String(value))
-      }
-    }
-
-    // Validate that the expression only contains safe characters
-    // Allow: numbers, operators, parentheses, spaces, and decimal points
-    if (!/^[\d\s+\-*/%.()]+$/.test(evaluated)) {
-      logger.warn('Unsafe expression detected, rejecting', { evaluated })
-      return 0
-    }
-
-    // Safe evaluation using Function constructor with limited scope
-    // This is still potentially dangerous but less so than direct eval
-    // In production, use a proper math expression library like mathjs
-    try {
-      // eslint-disable-next-line no-new-func
-      const fn = new Function(`return ${evaluated}`)
-      const result = fn()
-      if (typeof result !== 'number' || !isFinite(result)) {
-        return 0
-      }
-      return result
-    } catch {
-      return 0
-    }
+    return safeEvaluate(expr, ctx.variables)
   }
 
   /**

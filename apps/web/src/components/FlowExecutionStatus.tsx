@@ -60,8 +60,9 @@ export function FlowExecutionStatus({ flowId, className }: FlowExecutionStatusPr
   const { data: execution, isLoading } = useQuery({
     queryKey: ['flows', flowId, 'execution'],
     queryFn: () => api.flows.getCurrentExecution(flowId),
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
       // Poll every 2s if running, stop if completed/failed
+      const data = query.state.data as FlowExecution | undefined
       return data?.status === 'running' ? 2000 : false
     },
   })

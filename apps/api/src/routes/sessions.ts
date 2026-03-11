@@ -1,417 +1,290 @@
-import type { FastifyInstance } from 'fastify'
+import type { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod'
-import { query as dbQuery, unsafeQuery } from '../db/client.js'
+import { db } from '../db/client.js'
+import { sessions, transactions, platforms } from '../db/schema/comprehensive.js'
+import { eq, and, desc } from 'drizzle-orm'
 import { requireAuth } from '../middleware/auth.js'
-import { sql } from 'drizzle-orm'
 
-const SessionParamsSchema = z.object({
-  id: z.string().uuid(),
+const CreateSessionSchema = z.object({
+  platform_slug: z.string(),
+  game_id: z.string().optional(),
+  started_at: z.string().datetime()
 })
 
-const CreateSessionBody = z.object({
-  platformId: z.string().uuid(),
-  userPlatformId: z.string().uuid(),
-  startedAt: z.string().datetime().optional(),
-  deviceInfo: z
-    .object({
-      browser: z.string().optional(),
-      os: z.string().optional(),
-      extensionVersion: z.string().optional(),
+const TransactionSchema = z.object({
+  game_id: z.string(),
+  bet_amount: z.number().positive(),
+  win_amount: z.number().min(0),
+  result: z.enum(['win', 'loss', 'bonus']),
+  timestamp: z.string().datetime(),
+  bonus_triggered: z.boolean().optional(),
+  jackpot_hit: z.boolean().optional()
+})
+
+const BatchTransactionsSchema = z.object({
+  session_id: z.string().uuid(),
+  transactions: z.array(TransactionSchema)
+})
+
+const UpdateBalanceSchema = z.object({
+  sc_balance: z.number().min(0),
+  gc_balance: z.number().min(0)
+})
+
+export const sessionRoutes: FastifyPluginAsync = async (fastify) => {
+  // Require auth for all session routes
+  fastify.addHook('preValidation', requireAuth)
+
+  // Create new session
+  fastify.post('/', {
+    schema: {
+      body: CreateSessionSchema,
+    }
+  }, async (request, reply) => {
+    const { platform_slug, game_id, started_at } = request.body as z.infer<typeof CreateSessionSchema>
+    const userId = request.user!.id
+
+    // Get platform ID
+    const [platform] = await db
+      .select()
+      .from(platforms)
+      .where(eq(platforms.slug, platform_slug))
+      .limit(1)
+
+    if (!platform) {
+      return reply.code(400).send({ success: false, error: { code: 'INVALID_PLATFORM', message: 'Platform not found' } })
+    }
+
+    // Create session
+    const inserted = await db.insert(sessions).values({
+      userId,
+      platformId: platform.id,
+      gameId: game_id ?? null,
+      startedAt: new Date(started_at),
+      status: 'active'
+    }).returning()
+
+    const session = inserted[0]
+    if (!session) {
+      return reply.code(500).send({ success: false, error: { code: 'INSERT_FAILED', message: 'Failed to create session' } })
+    }
+
+    return {
+      success: true,
+      data: {
+        sessionId: session.id,
+        message: 'Session created successfully'
+      }
+    }
+  })
+
+  // Record single transaction
+  fastify.post('/:sessionId/transactions', {
+    schema: {
+      params: z.object({ sessionId: z.string().uuid() }),
+      body: TransactionSchema
+    }
+  }, async (request, reply) => {
+    const { sessionId } = request.params as { sessionId: string }
+    const transaction = request.body as z.infer<typeof TransactionSchema>
+    const userId = request.user?.id
+    if (!userId) return reply.code(401).send({ success: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } })
+
+    // Verify session ownership
+    const [session] = await db
+      .select()
+      .from(sessions)
+      .where(and(eq(sessions.id, sessionId), eq(sessions.userId, userId)))
+      .limit(1)
+
+    if (!session) {
+      return reply.code(404).send({ success: false, error: { code: 'SESSION_NOT_FOUND', message: 'Session not found' } })
+    }
+
+    // Insert transaction
+    await db.insert(transactions).values({
+      sessionId,
+      userId,
+      platformId: session.platformId,
+      gameId: transaction.game_id,
+      betAmount: String(transaction.bet_amount),
+      winAmount: String(transaction.win_amount),
+      result: transaction.result,
+      timestamp: new Date(transaction.timestamp),
+      bonusTriggered: transaction.bonus_triggered ?? false,
+      jackpotHit: transaction.jackpot_hit ?? false
     })
-    .optional(),
-})
 
-const UpdateSessionBody = z.object({
-  endedAt: z.string().datetime().optional(),
-  totalBets: z.number().int().min(0).optional(),
-  totalWagered: z.number().min(0).optional(),
-  totalWon: z.number().min(0).optional(),
-  startingBalance: z.number().min(0).optional(),
-  endingBalance: z.number().min(0).optional(),
-  bonusTriggered: z.boolean().optional(),
-  bonusPayout: z.number().min(0).optional(),
-  gameId: z.string().uuid().optional(),
-})
+    // Update session stats
+    await updateSessionStats(sessionId)
 
-const BatchTransactionsBody = z.object({
-  sessionId: z.string().uuid(),
-  transactions: z
-    .array(
-      z.object({
-        type: z.enum(['bet', 'win', 'bonus_trigger', 'bonus_payout', 'free_spin', 'purchase']),
-        amount: z.number(),
-        gameId: z.string().uuid().optional(),
-        multiplier: z.number().optional(),
-        balanceBefore: z.number().optional(),
-        balanceAfter: z.number().optional(),
-        occurredAt: z.string().datetime(),
-        metadata: z.record(z.unknown()).optional(),
-      })
-    )
-    .min(1)
-    .max(500),
-})
+    return { success: true, data: { message: 'Transaction recorded' } }
+  })
 
-const SessionListQuery = z.object({
-  platformId: z.string().uuid().optional(),
-  gameId: z.string().uuid().optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
-  page: z.coerce.number().int().min(1).default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).default(20),
-})
+  // Batch insert transactions (more efficient)
+  fastify.post('/transactions/batch', {
+    schema: { body: BatchTransactionsSchema }
+  }, async (request, reply) => {
+    const { session_id, transactions: txs } = request.body as z.infer<typeof BatchTransactionsSchema>
+    const userId = request.user?.id
+    if (!userId) return reply.code(401).send({ success: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } })
 
-export async function sessionRoutes(app: FastifyInstance): Promise<void> {
-  // All session routes require authentication
-  app.addHook('preValidation', requireAuth)
+    const [session] = await db
+      .select()
+      .from(sessions)
+      .where(and(eq(sessions.id, session_id), eq(sessions.userId, userId)))
+      .limit(1)
 
-  // ─── POST /sessions ────────────────────────────────────────────────────────
-  app.post(
-    '/sessions',
-    {
-      schema: {
-        tags: ['Sessions'],
-        summary: 'Start a new play session',
-        security: [{ bearerAuth: [] }],
-        body: {
-          type: 'object',
-          required: ['platformId', 'userPlatformId'],
-          properties: {
-            platformId: { type: 'string', format: 'uuid' },
-            userPlatformId: { type: 'string', format: 'uuid' },
-            startedAt: { type: 'string', format: 'date-time' },
-          },
-        },
-      },
-    },
-    async (request, reply) => {
-      try {
-        const body = CreateSessionBody.parse(request.body)
-        const userId = request.user!.id
-
-        const result = await dbQuery(sql`
-          INSERT INTO sessions
-            (user_id, platform_id, user_platform_id, started_at, device_info)
-          VALUES
-            (
-              ${userId},
-              ${body.platformId},
-              ${body.userPlatformId},
-              ${body.startedAt ? new Date(body.startedAt) : new Date()},
-              ${JSON.stringify(body.deviceInfo ?? {})}
-            )
-          RETURNING *
-        `)
-
-        return reply.code(201).send({ success: true, data: result.rows[0] ?? null })
-      } catch (error) {
-        app.log.error({ error }, 'Session creation error')
-        return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to create session' },
-        })
-      }
+    if (!session) {
+      return reply.code(404).send({ success: false, error: { code: 'SESSION_NOT_FOUND', message: 'Session not found' } })
     }
-  )
 
-  // ─── PATCH /sessions/:id ───────────────────────────────────────────────────
-  app.patch(
-    '/sessions/:id',
-    {
-      schema: {
-        tags: ['Sessions'],
-        summary: 'Update a session (end it, update stats)',
-        security: [{ bearerAuth: [] }],
-        params: {
-          type: 'object',
-          properties: { id: { type: 'string', format: 'uuid' } },
-          required: ['id'],
-        },
-      },
-    },
-    async (request, reply) => {
-      const { id } = SessionParamsSchema.parse(request.params)
-      const body = UpdateSessionBody.parse(request.body)
-      const userId = request.user!.id
-
-      // Build dynamic SET clause from provided fields only
-      const updates: string[] = []
-      const values: unknown[] = []
-      let paramIdx = 1
-
-      if (body.endedAt !== undefined) {
-        updates.push(`ended_at = $${paramIdx++}`)
-        values.push(new Date(body.endedAt))
-      }
-      if (body.totalBets !== undefined) {
-        updates.push(`total_bets = $${paramIdx++}`)
-        values.push(body.totalBets)
-      }
-      if (body.totalWagered !== undefined) {
-        updates.push(`total_wagered = $${paramIdx++}`)
-        values.push(body.totalWagered)
-      }
-      if (body.totalWon !== undefined) {
-        updates.push(`total_won = $${paramIdx++}`)
-        values.push(body.totalWon)
-      }
-      if (body.startingBalance !== undefined) {
-        updates.push(`starting_balance = $${paramIdx++}`)
-        values.push(body.startingBalance)
-      }
-      if (body.endingBalance !== undefined) {
-        updates.push(`ending_balance = $${paramIdx++}`)
-        values.push(body.endingBalance)
-      }
-      if (body.bonusTriggered !== undefined) {
-        updates.push(`bonus_triggered = $${paramIdx++}`)
-        values.push(body.bonusTriggered)
-      }
-      if (body.bonusPayout !== undefined) {
-        updates.push(`bonus_payout = $${paramIdx++}`)
-        values.push(body.bonusPayout)
-      }
-      if (body.gameId !== undefined) {
-        updates.push(`game_id = $${paramIdx++}`)
-        values.push(body.gameId)
-      }
-
-      if (!updates.length) {
-        return reply.code(400).send({
-          success: false,
-          error: { code: 'VALIDATION_ERROR', message: 'No fields to update' },
-        })
-      }
-
-      updates.push(`updated_at = NOW()`)
-
-      // Compute RTP if we have enough data for a closed session
-      if (body.endedAt && body.totalWagered !== undefined && body.totalWon !== undefined) {
-        const rtp =
-          body.totalWagered > 0
-            ? Math.round((body.totalWon / body.totalWagered) * 10000) / 100
-            : null
-        if (rtp !== null) {
-          updates.push(`rtp = $${paramIdx++}`)
-          values.push(rtp)
-        }
-      }
-
-      // Add WHERE clause params
-      values.push(id, userId)
-      const whereId = paramIdx++
-      const whereUserId = paramIdx
-
-      const result = await unsafeQuery(
-        `UPDATE sessions SET ${updates.join(', ')} WHERE id = $${whereId} AND user_id = $${whereUserId} RETURNING *`,
-        values
+    // Batch insert
+    if (txs.length > 0) {
+      await db.insert(transactions).values(
+        txs.map(tx => ({
+          sessionId: session_id,
+          userId,
+          platformId: session.platformId,
+          gameId: tx.game_id,
+          betAmount: String(tx.bet_amount),
+          winAmount: String(tx.win_amount),
+          result: tx.result,
+          timestamp: new Date(tx.timestamp),
+          bonusTriggered: tx.bonus_triggered ?? false,
+          jackpotHit: tx.jackpot_hit ?? false
+        }))
       )
 
-      if (!result.rows.length) {
-        return reply.code(404).send({
-          success: false,
-          error: { code: 'NOT_FOUND', message: 'Session not found' },
-        })
-      }
-
-      return reply.send({ success: true, data: result.rows[0] ?? null })
+      await updateSessionStats(session_id)
     }
-  )
 
-  // ─── GET /sessions ─────────────────────────────────────────────────────────
-  app.get(
-    '/sessions',
-    {
-      schema: {
-        tags: ['Sessions'],
-        summary: 'List sessions for the authenticated user',
-        security: [{ bearerAuth: [] }],
-      },
-    },
-    async (request, reply) => {
-      const query = SessionListQuery.parse(request.query)
-      const userId = request.user!.id
-      const offset = (query.page - 1) * query.pageSize
+    return { success: true, data: { message: `${txs.length} transactions recorded` } }
+  })
 
-      const platformClause = query.platformId
-        ? sql`AND s.platform_id = ${query.platformId}`
-        : sql``
+  // Update session balance
+  fastify.patch('/:sessionId/balance', {
+    schema: {
+      params: z.object({ sessionId: z.string().uuid() }),
+      body: UpdateBalanceSchema
+    }
+  }, async (request, reply) => {
+    const { sessionId } = request.params as { sessionId: string }
+    const { sc_balance, gc_balance } = request.body as z.infer<typeof UpdateBalanceSchema>
+    const userId = request.user?.id
+    if (!userId) return reply.code(401).send({ success: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } })
 
-      const gameClause = query.gameId ? sql`AND s.game_id = ${query.gameId}` : sql``
-
-      const startClause = query.startDate
-        ? sql`AND s.started_at >= ${new Date(query.startDate)}`
-        : sql``
-      const endClause = query.endDate
-        ? sql`AND s.started_at <= ${new Date(query.endDate)}`
-        : sql``
-
-      const [rows, countResult] = await Promise.all([
-        dbQuery(sql`
-          SELECT
-            s.*,
-            p.name AS platform_name,
-            p.slug AS platform_slug,
-            p.logo_url AS platform_logo_url,
-            g.name AS game_name
-          FROM sessions s
-          INNER JOIN platforms p ON p.id = s.platform_id
-          LEFT JOIN games g ON g.id = s.game_id
-          WHERE s.user_id = ${userId}
-            ${platformClause} ${gameClause} ${startClause} ${endClause}
-          ORDER BY s.started_at DESC
-          LIMIT ${query.pageSize} OFFSET ${offset}
-        `),
-        dbQuery(sql`
-          SELECT COUNT(*) AS total FROM sessions s
-          WHERE s.user_id = ${userId}
-            ${platformClause} ${gameClause} ${startClause} ${endClause}
-        `),
-      ])
-
-      const total = Number((countResult.rows[0] as { total: string } | undefined)?.total ?? '0')
-
-      return reply.send({
-        success: true,
-        data: rows.rows,
-        meta: { page: query.page, pageSize: query.pageSize, total, hasMore: offset + rows.rows.length < total },
+    await db.update(sessions)
+      .set({
+        scBalanceCurrent: String(sc_balance),
+        gcBalanceCurrent: String(gc_balance),
+        lastActivityAt: new Date()
       })
+      .where(and(eq(sessions.id, sessionId), eq(sessions.userId, userId)))
+
+    return { success: true, data: { message: 'Balance updated' } }
+  })
+
+  // End session
+  fastify.patch('/:sessionId/end', {
+    schema: {
+      params: z.object({ sessionId: z.string().uuid() }),
+      body: z.object({ ended_at: z.string().datetime() })
     }
-  )
+  }, async (request, reply) => {
+    const { sessionId } = request.params as { sessionId: string }
+    const { ended_at } = request.body as { ended_at: string }
+    const userId = request.user?.id
+    if (!userId) return reply.code(401).send({ success: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } })
 
-  // ─── GET /sessions/:id ─────────────────────────────────────────────────────
-  app.get(
-    '/sessions/:id',
-    {
-      schema: {
-        tags: ['Sessions'],
-        summary: 'Get a single session with all transactions',
-        security: [{ bearerAuth: [] }],
-        params: {
-          type: 'object',
-          properties: { id: { type: 'string', format: 'uuid' } },
-          required: ['id'],
-        },
-      },
-    },
-    async (request, reply) => {
-      const { id } = SessionParamsSchema.parse(request.params)
-      const userId = request.user!.id
+    // Calculate final stats
+    const stats = await calculateSessionStats(sessionId)
 
-      const [session, transactions] = await Promise.all([
-        dbQuery(sql`
-          SELECT s.*, p.name AS platform_name, p.logo_url AS platform_logo_url
-          FROM sessions s
-          INNER JOIN platforms p ON p.id = s.platform_id
-          WHERE s.id = ${id} AND s.user_id = ${userId}
-        `),
-        dbQuery(sql`
-          SELECT t.*, g.name AS game_name
-          FROM transactions t
-          LEFT JOIN games g ON g.id = t.game_id
-          WHERE t.session_id = ${id}
-          ORDER BY t.occurred_at ASC
-          LIMIT 1000
-        `),
-      ])
-
-      if (!session.rows.length) {
-        return reply.code(404).send({
-          success: false,
-          error: { code: 'NOT_FOUND', message: 'Session not found' },
-        })
-      }
-
-      return reply.send({
-        success: true,
-        data: { ...session.rows[0], transactions: transactions.rows },
+    await db.update(sessions)
+      .set({
+        endedAt: new Date(ended_at),
+        status: 'completed',
+        totalWagered: String(stats.totalWagered),
+        totalWon: String(stats.totalWon),
+        netResult: String(stats.netResult),
+        rtp: String(stats.rtp),
+        spinCount: stats.spinCount
       })
-    }
-  )
+      .where(and(eq(sessions.id, sessionId), eq(sessions.userId, userId)))
 
-  // ─── POST /sessions/transactions/batch ────────────────────────────────────
-  // Hot path — called by extension every few seconds during active play
-  app.post(
-    '/sessions/transactions/batch',
-    {
-      schema: {
-        tags: ['Sessions'],
-        summary: 'Batch-insert transactions captured by the browser extension',
-        security: [{ bearerAuth: [] }],
-        body: {
-          type: 'object',
-          required: ['sessionId', 'transactions'],
-          properties: {
-            sessionId: { type: 'string', format: 'uuid' },
-            transactions: { type: 'array', minItems: 1, maxItems: 500 },
-          },
-        },
-      },
-    },
-    async (request, reply) => {
-      const body = BatchTransactionsBody.parse(request.body)
-      const userId = request.user!.id
-
-      // Verify session belongs to this user
-      const sessionCheck = await dbQuery(sql`
-        SELECT id FROM sessions WHERE id = ${body.sessionId} AND user_id = ${userId}
-      `)
-
-      if (!sessionCheck.rows.length) {
-        return reply.code(403).send({
-          success: false,
-          error: { code: 'FORBIDDEN', message: 'Session not found or unauthorized' },
-        })
+    return {
+      success: true,
+      data: {
+        rtp: stats.rtp,
+        netResult: stats.netResult
       }
-
-      // Build VALUES list for bulk insert
-      const valuesList = body.transactions.map(
-        (t) => sql`(
-          ${body.sessionId},
-          ${t.type},
-          ${t.amount},
-          ${t.gameId ?? null},
-          ${t.multiplier ?? null},
-          ${t.balanceBefore ?? null},
-          ${t.balanceAfter ?? null},
-          ${new Date(t.occurredAt)},
-          ${JSON.stringify(t.metadata ?? {})}
-        )`
-      )
-
-      await dbQuery(sql`
-        INSERT INTO transactions
-          (session_id, type, amount, game_id, multiplier, balance_before, balance_after, occurred_at, metadata)
-        VALUES ${sql.join(valuesList, sql`, `)}
-        ON CONFLICT DO NOTHING
-      `)
-
-      // Update session running totals in a single UPDATE
-      await dbQuery(sql`
-        UPDATE sessions
-        SET
-          total_bets = total_bets + (
-            SELECT COUNT(*) FROM unnest(${body.transactions.map((t) => t.type)}::text[]) AS tx_type
-            WHERE tx_type = 'bet'
-          ),
-          total_wagered = total_wagered + (
-            SELECT COALESCE(SUM(amount), 0) FROM unnest(
-              ARRAY[${body.transactions.filter((t) => t.type === 'bet').map((t) => t.amount).join(',')}]::numeric[]
-            ) AS amount
-          ),
-          total_won = total_won + (
-            SELECT COALESCE(SUM(amount), 0) FROM unnest(
-              ARRAY[${body.transactions.filter((t) => t.type === 'win').map((t) => t.amount).join(',')}]::numeric[]
-            ) AS amount
-          ),
-          updated_at = NOW()
-        WHERE id = ${body.sessionId}
-      `)
-
-      return reply.code(201).send({
-        success: true,
-        data: { inserted: body.transactions.length },
-      })
     }
-  )
+  })
+
+  // Get session details
+  fastify.get('/:sessionId', {
+    schema: {
+      params: z.object({ sessionId: z.string().uuid() })
+    }
+  }, async (request, reply) => {
+    const { sessionId } = request.params as { sessionId: string }
+    const userId = request.user?.id
+    if (!userId) return reply.code(401).send({ success: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } })
+
+    const [session] = await db
+      .select()
+      .from(sessions)
+      .where(and(eq(sessions.id, sessionId), eq(sessions.userId, userId)))
+      .limit(1)
+
+    if (!session) {
+      return reply.code(404).send({ success: false, error: { code: 'SESSION_NOT_FOUND', message: 'Session not found' } })
+    }
+
+    // Fetch transactions separately
+    const sessionTransactions = await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.sessionId, sessionId))
+      .orderBy(desc(transactions.timestamp))
+      .limit(100)
+
+    return { success: true, data: { ...session, transactions: sessionTransactions } }
+  })
+}
+
+// Helper functions
+async function updateSessionStats(sessionId: string) {
+  const stats = await calculateSessionStats(sessionId)
+
+  await db.update(sessions)
+    .set({
+      totalWagered: String(stats.totalWagered),
+      totalWon: String(stats.totalWon),
+      netResult: String(stats.netResult),
+      rtp: String(stats.rtp),
+      spinCount: stats.spinCount,
+      lastActivityAt: new Date()
+    })
+    .where(eq(sessions.id, sessionId))
+}
+
+async function calculateSessionStats(sessionId: string) {
+  const txs = await db
+    .select()
+    .from(transactions)
+    .where(eq(transactions.sessionId, sessionId))
+
+  const totalWagered = txs.reduce((sum: number, tx: { betAmount: string | null }) => sum + Number(tx.betAmount ?? 0), 0)
+  const totalWon = txs.reduce((sum: number, tx: { winAmount: string | null }) => sum + Number(tx.winAmount ?? 0), 0)
+  const netResult = totalWon - totalWagered
+  const rtp = totalWagered > 0 ? (totalWon / totalWagered) * 100 : 0
+
+  return {
+    totalWagered,
+    totalWon,
+    netResult,
+    rtp,
+    spinCount: txs.length
+  }
 }

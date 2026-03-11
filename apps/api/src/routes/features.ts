@@ -516,7 +516,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
       })
     }
 
-    return reply.send({ success: true })
+    return reply.send({ success: true, data: { id: updatedRows[0]!.id } })
   })
 
   // GET /features/stats
