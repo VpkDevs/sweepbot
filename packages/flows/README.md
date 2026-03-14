@@ -103,7 +103,12 @@ import { FlowExecutor } from '@sweepbot/flows'
 
 const executor = new FlowExecutor()
 
-const executionResult = await executor.execute(flow.id, flow.userId)
+const executionResult = await executor.execute(flow, flow.userId, undefined, {
+  responsiblePlay: {
+    // IMPORTANT: cooldown is runtime state (do not persist it into the flow)
+    isInCooldown: false,
+  },
+})
 
 console.log(executionResult.metrics)
 // {

@@ -94,6 +94,15 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+function toQS(params?: Record<string, string | number | boolean | undefined>): string {
+  if (!params) return ''
+  const filtered = Object.fromEntries(
+    Object.entries(params).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)])
+  )
+  const qs = new URLSearchParams(filtered).toString()
+  return qs ? `?${qs}` : ''
+}
+
 /**
  * Enhanced fetch with timeout support
  */
@@ -316,8 +325,7 @@ export const api = {
   // Sessions
   sessions: {
     list: (params?: { page?: number; limit?: number; platformId?: string }) => {
-      const qs = new URLSearchParams(params as Record<string, string>).toString()
-      return request<unknown[]>(`/sessions${qs ? `?${qs}` : ''}`)
+      return request<unknown[]>(`/sessions${toQS(params)}`)
     },
     get: (id: string) => request<Record<string, unknown>>(`/sessions/${id}`),
     create: (data: Record<string, unknown>) =>
@@ -350,8 +358,7 @@ export const api = {
   // Jackpots
   jackpots: {
     list: (params?: { page?: number; limit?: number; platform?: string }) => {
-      const qs = new URLSearchParams(params as Record<string, string>).toString()
-      return request<unknown[]>(`/jackpots${qs ? `?${qs}` : ''}`)
+      return request<unknown[]>(`/jackpots${toQS(params)}`)
     },
     history: (id: string) => request<unknown[]>(`/jackpots/${id}/history`),
     leaderboard: () => request<unknown[]>('/jackpots/leaderboard'),
@@ -362,8 +369,7 @@ export const api = {
   // Redemptions
   redemptions: {
     list: (params?: { page?: number; limit?: number; status?: string }) => {
-      const qs = new URLSearchParams(params as Record<string, string>).toString()
-      return request<unknown[]>(`/redemptions${qs ? `?${qs}` : ''}`)
+      return request<unknown[]>(`/redemptions${toQS(params)}`)
     },
     get: (id: string) => request<Record<string, unknown>>(`/redemptions/${id}`),
     create: (data: Record<string, unknown>) =>
@@ -406,8 +412,7 @@ export const api = {
     streaks: () => request<Record<string, unknown>>('/features/streaks'),
     records: () => request<unknown[]>('/features/records'),
     bigWins: (params?: { page?: number; limit?: number }) => {
-      const qs = new URLSearchParams(params as Record<string, string>).toString()
-      return request<unknown[]>(`/features/big-wins${qs ? `?${qs}` : ''}`)
+      return request<unknown[]>(`/features/big-wins${toQS(params)}`)
     },
     heatmap: () => request<unknown[]>('/features/heatmap'),
   },
@@ -415,8 +420,7 @@ export const api = {
   // Notifications
   notifications: {
     list: (params?: { page?: number; limit?: number; unreadOnly?: boolean }) => {
-      const qs = new URLSearchParams(params as Record<string, string>).toString()
-      return request<unknown[]>(`/notifications${qs ? `?${qs}` : ''}`)
+      return request<unknown[]>(`/notifications${toQS(params)}`)
     },
     markRead: (id: string) =>
       request(`/notifications/${id}/read`, { method: 'POST' }),

@@ -51,6 +51,10 @@ const envSchema = z.object({
   // App
   APP_URL: z.string().url().default('https://app.sweepbot.app'),
   ADMIN_SECRET: z.string().min(1).optional(),
+
+  // Supabase webhook shared secret (used to authenticate inbound webhook POSTs)
+  // Generate with: openssl rand -hex 32 and set same value in Supabase Auth > Webhooks
+  SUPABASE_WEBHOOK_SECRET: z.string().min(16).optional(),
 })
 
 const _parsed = envSchema.safeParse(process.env)

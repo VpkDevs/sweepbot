@@ -49,8 +49,20 @@ export async function buildServer(): Promise<FastifyInstance> {
     max: 200,
     timeWindow: '1 minute',
     redis: undefined, // Will add Redis in Phase 2
-    keyGenerator: (request) =>
-      request.headers['x-forwarded-for']?.toString() ?? request.ip,
+    keyGenerator: (request) => {
+      // Safely extract IP from x-forwarded-for header which can be string or array
+      const forwarded = request.headers['x-forwarded-for']
+      let ip = request.ip
+      if (typeof forwarded === 'string') {
+        // Comma-separated list of IPs; take the first one
+        const ips = forwarded.split(',').map((s) => s.trim())
+        ip = ips[0] || request.ip
+      } else if (Array.isArray(forwarded)) {
+        // Some HTTP libraries may parse as array; take first element
+        ip = (forwarded[0] as string) || request.ip
+      }
+      return ip
+    },
     errorResponseBuilder: (_request, context) => ({
       success: false,
       error: {

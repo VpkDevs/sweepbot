@@ -45,7 +45,7 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
       const { limit, unread_only } = request.query as z.infer<typeof listQuerySchema>
       const userId = request.user!.id
 
-      const rows = await query<{
+      const { rows } = await query<{
         id: string
         type: string
         title: string
@@ -181,7 +181,7 @@ export async function createNotification(opts: {
       ${opts.body},
       ${opts.icon ?? null},
       ${opts.href ?? null},
-      ${opts.data ? sql.raw(`'${JSON.stringify(opts.data)}'::jsonb`) : null}
+      ${opts.data ? sql`${JSON.stringify(opts.data)}::jsonb` : null}
     )
   `)
 }

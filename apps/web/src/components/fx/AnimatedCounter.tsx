@@ -155,18 +155,21 @@ export function AnimatedValue({
   className?: string
 }) {
   const [displayed, setDisplayed] = useState(0)
+  const displayedRef = useRef(0)
   const rafRef = useRef<number>(0)
 
   useEffect(() => {
     const startTime = performance.now()
-    const startVal = displayed
+    const startVal = displayedRef.current
 
     function tick(now: number) {
       const elapsed = now - startTime
       const progress = Math.min(elapsed / duration, 1)
       // Spring-like easing
       const eased = 1 - Math.pow(1 - progress, 4)
-      setDisplayed(startVal + (value - startVal) * eased)
+      const next = startVal + (value - startVal) * eased
+      displayedRef.current = next
+      setDisplayed(next)
       if (progress < 1) rafRef.current = requestAnimationFrame(tick)
     }
 

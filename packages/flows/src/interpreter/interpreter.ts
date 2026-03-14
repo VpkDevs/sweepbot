@@ -11,7 +11,6 @@ import type {
   EntityMap,
   FlowNode,
   FlowTrigger,
-  ResponsiblePlayGuardrail,
   FlowWarning,
   FlowActionNode,
   FlowConditionNode,
@@ -19,9 +18,11 @@ import type {
   FlowValue,
 } from '../types'
 import { EntityRecognizer } from './entity-recognizer'
+import { ResponsiblePlayValidator } from '../validator/responsible-play-validator'
 
 export class FlowInterpreter {
   private entityRecognizer: EntityRecognizer = new EntityRecognizer()
+  private responsiblePlayValidator: ResponsiblePlayValidator = new ResponsiblePlayValidator()
 
   async interpret(request: FlowInterpretationRequest): Promise<FlowInterpretationResult> {
     // Pass 1: Entity Extraction
@@ -34,7 +35,7 @@ export class FlowInterpreter {
     const flowNode = this.buildFlowAST(entities, intent, request.rawInput)
 
     // Pass 4: Responsible Play Validation
-    const guardrails = this.validateResponsiblePlay(flowNode, request.userId, request.rawInput)
+    const guardrails = this.responsiblePlayValidator.validate(flowNode, request.userId, request.rawInput)
 
     // Calculate confidence
     let confidence = this.calculateConfidence(entities, intent)
@@ -346,54 +347,6 @@ export class FlowInterpreter {
       }
     }
     return null
-  }
-
-  /**
-   * Pass 4: Validate responsible play constraints
-   */
-private validateResponsiblePlay(flowNode: FlowNode, userId: string, rawText?: string): ResponsiblePlayGuardrail[] {
-    const guardrails: ResponsiblePlayGuardrail[] = []
-
-    // Every flow gets a default max duration of 2 hours
-    guardrails.push({
-      type: 'max_duration',
-      value: 2 * 60 * 60 * 1000, // 2 hours in ms
-      source: 'system_default',
-      overridable: true,
-    })
-
-    // System mandatory: cool-down check
-    guardrails.push({
-      type: 'cool_down_check',
-      value: true,
-      source: 'system_mandatory',
-      overridable: false,
-    })
-
-    if (rawText) {
-      // user-specified max loss
-      const lossMatch = rawText.match(/lose\s+more\s+than\s+\$?(\d+)/i)
-      if (lossMatch) {
-        guardrails.push({
-          type: 'max_loss',
-          value: parseFloat(lossMatch[1]!),
-          source: 'user_specified',
-          overridable: true,
-        })
-      }
-
-      // chase detection keyword
-      if (/double\s+my\s+bet|chase/i.test(rawText)) {
-        guardrails.push({
-          type: 'chase_detection',
-          value: true,
-          source: 'system_mandatory',
-          overridable: false,
-        })
-      }
-    }
-
-    return guardrails
   }
 
   /**

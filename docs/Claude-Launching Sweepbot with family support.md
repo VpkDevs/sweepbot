@@ -184,21 +184,13 @@ Great list — and the Texas/real casino question is the right one to ask first.
 
 ---
 
-## Texas + Real Online Casinos: The Legal Reality
+## Texas + Sweepstakes Platforms: The Legal Reality
 
-**Short answer: You cannot legally operate as an online casino from Texas, and you cannot legally facilitate real-money gambling for Texas residents.** But — and this is important — that's not actually what you'd be doing, and the distinction matters enormously.
+**SweepBot is a sweepstakes-only platform.** It tracks, analyzes, and automates activity on sweepstakes social casinos — platforms that operate under a promotional sweepstakes model and do not involve real-money wagering. SweepBot never facilitates or refers users to real-money gambling operators (online casinos, sportsbooks, or similar).
 
-Here's what you *can* do from Texas:
+**The key distinction:** Sweepstakes social casinos award prizes through a free-play model governed by sweepstakes law, which is distinct from regulated gambling. SweepBot's sole focus is this sweepstakes category.
 
-**Affiliate marketing for online casinos is legal in Texas.** You're not operating a casino. You're running a software platform that links to casinos. The casinos operate in licensed jurisdictions (Malta, Gibraltar, Curaçao, New Jersey, Pennsylvania, etc.). You're just sending them traffic and earning a commission. This is how every major casino affiliate site in the world operates — most of them are run from states and countries where gambling itself is restricted.
-
-**The key legal distinction:** SweepBot never touches player money. Never holds funds. Never facilitates a wager. It tracks, analyzes, automates, and refers. That's it. You're a technology and marketing company, not a gambling company.
-
-**What you should absolutely ask your CPA/Tax Attorney:** How to structure the affiliate relationships properly, whether your LLC needs any specific language in its operating agreement, and whether any Texas-specific statutes touch affiliate marketing in the gambling vertical. My strong suspicion is they won't find a problem, but get it confirmed in writing.
-
-**iGaming affiliates specifically** — networks like Income Access, Cellxpert, MyAffiliates, and direct programs at BetMGM, DraftKings, FanDuel (in legal states) all work with affiliates nationwide regardless of the affiliate's home state. The player's state determines legality of play, not yours.
-
-So yes — you can branch into real online casinos as an affiliate from Texas. The question is just execution timing and positioning.
+**What to discuss with a CPA/Tax Attorney:** How to structure affiliate relationships with sweepstakes platforms properly, LLC operating agreement language, and any applicable state-law considerations for sweepstakes-adjacent software companies.
 
 ---
 
@@ -212,7 +204,7 @@ You've now dramatically expanded that. Here's my honest assessment of your 45:
 
 **Promote immediately to Tier 1 (do these at launch):**
 
-Your sweepstakes affiliate commissions, online casino affiliate commissions, sportsbook affiliate commissions, and crypto casino affiliate commissions can all be unified under a single "SweepBot Affiliate Network" infrastructure. One system, four verticals, all generating from day one. Crypto casino affiliates in particular pay obscenely well — $200-500 CPA in some cases — and have minimal regulatory friction.
+Your sweepstakes affiliate commissions are the core revenue stream for launch. SweepBot's affiliate relationships are limited to sweepstakes social casino platforms — operators that run under the promotional sweepstakes model. One unified affiliate tracking system, focused on the sweepstakes vertical, generating from day one.
 
 Sponsored/featured listings and lead generation to operators are essentially the same revenue stream dressed differently. Consolidate them into one "Platform Partnership" tier and charge accordingly.
 
@@ -298,7 +290,7 @@ That prompt will give Claude Code enough specificity to actually build rather th
 1. **(96%) Confirm Texas affiliate legality with your CPA/Tax Attorney** — get explicit sign-off on iGaming affiliate marketing before activating those streams
 2. **(93%) Apply to affiliate programs immediately** — Chumba, LuckyLand, Stake.us, and at least one iGaming network (Income Access is a good first call) — approval takes time, start now
 3. **(91%) Pass the monetization prompt above to Claude Code** — bake the revenue architecture in before you build more features on top of an incomplete foundation
-4. **(88%) Apply to crypto casino affiliate programs** — these pay best and have fastest approval; look at Stake, BC.Game, Roobet affiliate programs
+4. **(88%) Apply to sweepstakes platform affiliate programs** — these align directly with SweepBot's sweepstakes-only product focus and have clear approval criteria
 5. **(85%) Apply to NordVPN affiliate program** — easy approval, recurring commissions, contextually perfect placement
 6. **(82%) Stripe account setup** — get this done this week, approval can take a few days and you need it before any subscription can process
 7. **(78%) Draft your Platform Partnership deck** — one-pager explaining sponsored placement and SweepBot Certified to send to platform BD contacts
@@ -466,7 +458,7 @@ Moat: 5 | Day-One: 9 | Quality: 7 | Trust: 8 | Simplicity: 10 | Ceiling: 6 | Leg
 
 **8. Sportsbook Affiliate Commissions — Score: 7.71**
 Moat: 5 | Day-One: 8 | Quality: 8 | Trust: 7 | Simplicity: 8 | Ceiling: 9 | Legal: 7
-*Strong programs at DraftKings, FanDuel, BetMGM. Legal in many states and growing. Slight moat disconnect since sportsbooks aren't core SweepBot territory — but the audience overlap is significant.*
+*(This vertical falls outside SweepBot's sweepstakes-only product scope and is not pursued.)*
 
 ---
 

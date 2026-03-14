@@ -275,8 +275,21 @@ export const api = {
       const qs = params ? '?' + new URLSearchParams(params).toString() : ''
       return request<Record<string, unknown>>(`/analytics/rtp${qs}`)
     },
-    temporal: () => request<Record<string, unknown>>('/analytics/temporal'),
-    bonus: () => request<Record<string, unknown>>('/analytics/bonus'),
+    temporal: (params?: Record<string, string>) => {
+      const qs = params ? '?' + new URLSearchParams(params).toString() : ''
+      return request<Record<string, unknown>>(`/analytics/temporal${qs}`)
+    },
+    bonus: (params?: Record<string, string>) => {
+      const qs = params ? '?' + new URLSearchParams(params).toString() : ''
+      return request<Record<string, unknown>>(`/analytics/bonus${qs}`)
+    },
+    streaks: (params?: Record<string, string>) => {
+      const qs = params ? '?' + new URLSearchParams(params).toString() : ''
+      return request<Record<string, unknown>>(`/analytics/streaks${qs}`)
+    },
+    insights: () => request<Record<string, unknown>>('/analytics/insights'),
+    export: (params: { start_date: string; end_date: string }) =>
+      `/analytics/export?start_date=${params.start_date}&end_date=${params.end_date}`,
   },
 
   // Jackpots
@@ -306,12 +319,74 @@ export const api = {
 
   // Trust Index
   trust: {
+    /** Ranked list of all platforms with current Trust Index scores */
     list: (params?: Record<string, string>) => {
       const qs = params ? '?' + new URLSearchParams(params).toString() : ''
       return request<Record<string, unknown>[]>(`/trust-index${qs}`)
     },
+    /** Summary for a single platform (score + component breakdown) */
     get: (platformId: string) =>
       request<Record<string, unknown>>(`/trust-index/${platformId}`),
+    /** Full detail including historical score trend, TOS snapshots, redemption samples */
+    detail: (platformId: string) =>
+      request<Record<string, unknown>>(`/trust-index/${platformId}`),
+    /** Top-ranked platforms + score distribution charts */
+    leaderboard: () =>
+      request<Record<string, unknown>>('/trust-index/leaderboard'),
+    /** User's percentile rank relative to all SweepBot users for a platform */
+    percentile: (platformId: string) =>
+      request<Record<string, unknown>>(`/trust-index/${platformId}/percentile`),
+    /** List the current user's alert subscriptions */
+    alerts: () =>
+      request<Record<string, unknown>[]>('/trust-index/alerts'),
+    /** Subscribe to score change alerts for a platform */
+    addAlert: (data: { platform_id: string; threshold_direction?: string; threshold_score?: number }) =>
+      request<Record<string, unknown>>('/trust-index/alerts', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    /** Unsubscribe from alerts for a platform */
+    removeAlert: (platformId: string) =>
+      request<Record<string, unknown>>(`/trust-index/alerts/${platformId}`, {
+        method: 'DELETE',
+      }),
+  },
+
+  // TOS Monitor
+  tos: {
+    /** All changes across every monitored platform, most-recent-first */
+    changes: (params?: { severity?: string; platform_id?: string; limit?: number; page?: number }) =>
+      request<Record<string, unknown>[]>(`/tos/changes${toQS(params)}`),
+    /** Aggregate stats: monitored count, changes this week, major alerts */
+    stats: () => request<Record<string, unknown>>('/tos/stats'),
+    /** Full diff text for a specific change */
+    diff: (changeId: string) => request<Record<string, unknown>>(`/tos/changes/${changeId}/diff`),
+    /** Toggle watched status for a platform */
+    watch: (platformId: string, watching: boolean) =>
+      request<Record<string, unknown>>(`/tos/watch/${platformId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ watching }),
+      }),
+    /** Platforms the user is watching */
+    watchlist: () => request<Record<string, unknown>[]>('/tos/watchlist'),
+    /** Historical snapshot list for a specific platform */
+    platformHistory: (platformId: string) =>
+      request<Record<string, unknown>[]>(`/tos/platforms/${platformId}/history`),
+  },
+
+  // Tax Center
+  tax: {
+    /** Full tax-year summary: redemptions, estimated liability, monthly breakdown */
+    summary: (year: number) => request<Record<string, unknown>>(`/tax/summary?year=${year}`),
+    /** Redemption line-items for tax purposes (paginated) */
+    transactions: (params?: { year?: number; page?: number; limit?: number }) =>
+      request<Record<string, unknown>[]>(`/tax/transactions${toQS(params)}`),
+    /** CSV export URL (returns download URL, not the raw CSV) */
+    exportUrl: (year: number) => `${API_BASE}/tax/export?year=${year}`,
+    /** Month-by-month chart data */
+    monthly: (year: number) => request<Record<string, unknown>[]>(`/tax/monthly?year=${year}`),
+    /** Multi-year P&amp;L overview */
+    yearOverYear: () => request<Record<string, unknown>[]>('/tax/year-over-year'),
   },
 
   // Phase 2 Features

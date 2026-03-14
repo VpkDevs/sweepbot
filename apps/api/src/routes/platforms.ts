@@ -27,7 +27,7 @@ const GamesQuerySchema = z.object({
 export async function platformRoutes(app: FastifyInstance): Promise<void> {
   // ─── GET /platforms ───────────────────────────────────────────────────────
   app.get(
-    '/platforms',
+    '/',
     {
       schema: {
         tags: ['Platforms'],
@@ -53,7 +53,11 @@ export async function platformRoutes(app: FastifyInstance): Promise<void> {
         ? sql`AND (p.name ILIKE ${'%' + query.search + '%'} OR p.slug ILIKE ${'%' + query.search + '%'})`
         : sql``
 
-      const statusClause = query.status ? sql`AND p.status = ${query.status}` : sql``
+      const statusClause = query.status
+        ? query.status === 'active'
+          ? sql`AND p.is_active = true`
+          : sql`AND p.is_active = false`
+        : sql``
 
       const orderClause =
         query.sortBy === 'trust_score'
@@ -70,7 +74,7 @@ export async function platformRoutes(app: FastifyInstance): Promise<void> {
             p.slug,
             p.url,
             p.logo_url,
-            p.status,
+            CASE WHEN p.is_active THEN 'active' ELSE 'inactive' END AS status,
             p.founded_year,
             p.sweepcoins_name,
             p.gold_coins_name,
@@ -118,7 +122,7 @@ export async function platformRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── GET /platforms/:id ───────────────────────────────────────────────────
   app.get(
-    '/platforms/:id',
+    '/:id',
     {
       schema: {
         tags: ['Platforms'],
@@ -197,7 +201,7 @@ export async function platformRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── GET /platforms/:id/games ─────────────────────────────────────────────
   app.get(
-    '/platforms/:id/games',
+    '/:id/games',
     {
       schema: {
         tags: ['Platforms'],
@@ -227,15 +231,14 @@ export async function platformRoutes(app: FastifyInstance): Promise<void> {
           g.name,
           g.slug,
           g.thumbnail_url,
-          g.volatility,
+          g.volatility_class  AS volatility,
           g.theoretical_rtp,
-          g.community_rtp_aggregate,
-          g.community_rtp_sample_size,
-          g.bonus_trigger_frequency,
+          g.is_featured,
+          g.jackpot_eligible,
           gp.name AS provider_name,
           gp.slug AS provider_slug
         FROM games g
-        INNER JOIN game_providers gp ON gp.id = g.provider_id
+        LEFT JOIN game_providers gp ON gp.id = g.provider_id
         WHERE g.platform_id = ${id}
           AND g.is_active = TRUE
           ${providerClause}
@@ -257,7 +260,7 @@ export async function platformRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── GET /platforms/:id/tos-history ──────────────────────────────────────
   app.get(
-    '/platforms/:id/tos-history',
+    '/:id/tos-history',
     {
       preValidation: [requireAuth],
       schema: {
@@ -292,7 +295,7 @@ export async function platformRoutes(app: FastifyInstance): Promise<void> {
   // ─── POST /platforms/:id/upvote-trust ─────────────────────────────────────
   // Community sentiment signal for Trust Index
   app.post(
-    '/platforms/:id/upvote-trust',
+    '/:id/upvote-trust',
     {
       preValidation: [requireAuth],
       schema: {

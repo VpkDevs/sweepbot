@@ -51,12 +51,20 @@ export const tosSnapshots = pgTable('tos_snapshots', {
   wordCount: integer('word_count'),
   capturedAt: timestamp('captured_at', { withTimezone: true }).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  // Change detection fields — populated by the TOS monitor service when a diff is detected.
+  // These are queried by trust.ts (tos_stability scoring) and platforms.ts (tos-history endpoint).
+  changesDetected: boolean('changes_detected').notNull().default(false),
+  changeSeverity:  text('change_severity'),    // 'minor' | 'moderate' | 'major' | 'critical'
+  changeSummary:   text('change_summary'),     // Human-readable plain-English description of what changed
+  affectedSections: text('affected_sections').array(), // e.g. ['eligibility', 'redemption_rules']
 }, (table) => ({
   platformTimeIdx: index('idx_tos_snapshots_platform_time').on(table.platformId, table.capturedAt.desc()),
   hashIdx: index('idx_tos_snapshots_hash').on(table.contentHash),
   capturedIdx: index('idx_tos_snapshots_captured').on(table.capturedAt.desc()),
+  changesIdx: index('idx_tos_snapshots_changes').on(table.changesDetected, table.capturedAt.desc()),
   // Full-text search index created via raw SQL
 }));
+
 
 /**
  * Platform Health Checks - Uptime and response time monitoring

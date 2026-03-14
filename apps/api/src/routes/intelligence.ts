@@ -10,7 +10,7 @@ export const gameIntelligenceRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preValidation', requireAuth)
 
   // Game RTP analysis - community aggregated data
-  fastify.get('/intelligence/games/rtp', {
+  fastify.get('/games/rtp', {
     schema: {
       querystring: z.object({
         platform_id: z.string().uuid().optional(),
@@ -54,7 +54,7 @@ export const gameIntelligenceRoutes: FastifyPluginAsync = async (fastify) => {
   })
 
   // Hot/Cold game analysis - NEW FEATURE
-  fastify.get('/intelligence/games/temperature', async (request, reply) => {
+  fastify.get('/games/temperature', async (request, reply) => {
     const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000)
     const last7Days = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
 
@@ -98,7 +98,7 @@ export const gameIntelligenceRoutes: FastifyPluginAsync = async (fastify) => {
   })
 
   // Optimal bet sizing analysis - NEW FEATURE
-  fastify.get('/intelligence/betting/optimal-size', {
+  fastify.get('/betting/optimal-size', {
     schema: {
       querystring: z.object({
         game_id: z.string().optional(),
@@ -146,7 +146,7 @@ export const gameIntelligenceRoutes: FastifyPluginAsync = async (fastify) => {
   })
 
   // Session timing analysis - when to play
-  fastify.get('/intelligence/timing/optimal-hours', async (request, reply) => {
+  fastify.get('/timing/optimal-hours', async (request, reply) => {
     const userId = request.user?.id
 
     const timingAnalysis = await db
@@ -172,7 +172,7 @@ export const gameIntelligenceRoutes: FastifyPluginAsync = async (fastify) => {
   })
 
   // Bonus prediction model - NEW FEATURE
-  fastify.get('/intelligence/bonus/prediction', {
+  fastify.get('/bonus/prediction', {
     schema: {
       querystring: z.object({
         game_id: z.string(),
@@ -215,7 +215,7 @@ export const gameIntelligenceRoutes: FastifyPluginAsync = async (fastify) => {
   })
 
   // Platform comparison intelligence
-  fastify.get('/intelligence/platforms/comparison', async (request, reply) => {
+  fastify.get('/platforms/comparison', async (request, reply) => {
     const platformComparison = await db
       .select({
         platform_name: platforms.displayName,

@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react'
+import type { CSSProperties } from 'react'
 import { cn } from '../../lib/utils'
 
 /**
@@ -27,7 +28,7 @@ export function MarqueeStrip({
     '--marquee-speed': `${speed}s`,
     '--marquee-gap': `${gap}px`,
     '--marquee-direction': direction === 'left' ? 'normal' : 'reverse',
-  } as React.CSSProperties
+  } as CSSProperties
 
   return (
     <div

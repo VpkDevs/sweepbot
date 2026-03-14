@@ -62,11 +62,14 @@ function useLiveJackpots() {
   const [events, setEvents] = useState<LiveEvent[]>([])
   const [connected, setConnected] = useState(false)
   const wsRef = useRef<WebSocket | null>(null)
+  const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     const wsUrl = import.meta.env.VITE_API_WS_URL ?? 'ws://localhost:3001/ws/jackpots'
+    let destroyed = false
 
     function connect() {
+      if (destroyed) return
       try {
         const ws = new WebSocket(wsUrl)
         wsRef.current = ws
@@ -74,8 +77,9 @@ function useLiveJackpots() {
         ws.onopen = () => setConnected(true)
         ws.onclose = () => {
           setConnected(false)
-          // Reconnect after 5s
-          setTimeout(connect, 5000)
+          if (!destroyed) {
+            reconnectTimer.current = setTimeout(connect, 5000)
+          }
         }
         ws.onerror = () => ws.close()
 
@@ -95,12 +99,16 @@ function useLiveJackpots() {
         }
       } catch {
         // WebSocket not available (dev without API), reconnect later
-        setTimeout(connect, 10000)
+        if (!destroyed) {
+          reconnectTimer.current = setTimeout(connect, 10000)
+        }
       }
     }
 
     connect()
     return () => {
+      destroyed = true
+      if (reconnectTimer.current !== null) clearTimeout(reconnectTimer.current)
       wsRef.current?.close()
     }
   }, [])

@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { useRouter } from '@tanstack/react-router'
 
 const STORAGE_KEY = 'sweepbot_onboarding_v1_complete'
 
@@ -56,32 +57,68 @@ const steps: Step[] = [
 ]
 
 export function OnboardingTour() {
+  const router = useRouter()
   const [step, setStep] = useState(0)
   const [visible, setVisible] = useState(false)
   const [animating, setAnimating] = useState(false)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const goToTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Only show tour on dashboard route
+  const isDashboard = router.state.location.pathname === '/'
 
   useEffect(() => {
-    const done = localStorage.getItem(STORAGE_KEY)
-    if (!done) {
-      // Small delay so the dashboard renders first
-      const t = setTimeout(() => setVisible(true), 600)
-      return () => clearTimeout(t)
+    if (!isDashboard) {
+      setVisible(false)
+      return
     }
-  }, [])
+
+    // Try to read from localStorage with error handling
+    try {
+      const done = localStorage.getItem(STORAGE_KEY)
+      if (!done) {
+        // Small delay so the dashboard renders first
+        timeoutRef.current = setTimeout(() => setVisible(true), 600)
+      }
+    } catch (err) {
+      // localStorage may be unavailable (private browsing, etc.)
+      console.warn('localStorage unavailable for onboarding', err)
+    }
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
+      }
+    }
+  }, [isDashboard])
 
   const dismiss = () => {
-    localStorage.setItem(STORAGE_KEY, '1')
+    try {
+      localStorage.setItem(STORAGE_KEY, '1')
+    } catch (err) {
+      console.warn('Could not save onboarding state', err)
+    }
     setVisible(false)
   }
 
   const goTo = (nextStep: number) => {
     if (animating) return
     setAnimating(true)
-    setTimeout(() => {
+    goToTimeoutRef.current = setTimeout(() => {
       setStep(nextStep)
       setAnimating(false)
     }, 150)
   }
+
+  useEffect(() => {
+    return () => {
+      if (goToTimeoutRef.current) {
+        clearTimeout(goToTimeoutRef.current)
+        goToTimeoutRef.current = null
+      }
+    }
+  }, [])
 
   const prev = () => {
     if (step > 0) goTo(step - 1)

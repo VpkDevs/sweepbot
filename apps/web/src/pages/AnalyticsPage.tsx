@@ -12,7 +12,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts'
-import { Zap, TrendingUp, TrendingDown, BarChart2, Clock, Star } from 'lucide-react'
+import { Zap, TrendingUp, TrendingDown, BarChart2, Clock, Star, Flame, Download, Lightbulb } from 'lucide-react'
 import { api } from '../lib/api'
 import { cn, formatRTP, formatSC, confidenceColor, CHART_TOOLTIP_STYLE } from '../lib/utils'
 
@@ -36,9 +36,27 @@ export function AnalyticsPage() {
     queryFn: () => api.analytics.bonus(),
   })
 
+  // New endpoints from gap analysis
+  const { data: streakData } = useQuery({
+    queryKey: ['analytics', 'streaks'],
+    queryFn: () => api.analytics.streaks(),
+  })
+
+  const { data: insightsData } = useQuery({
+    queryKey: ['analytics', 'insights'],
+    queryFn: () => api.analytics.insights(),
+  })
+
   const rtp = rtpData as Record<string, unknown> | undefined
   const temporal = temporalData as Record<string, unknown> | undefined
   const bonus = bonusData as Record<string, unknown> | undefined
+
+  const streak  = streakData as Record<string, unknown> | undefined
+  const insights = insightsData as Record<string, unknown> | undefined
+
+  const currentStreak  = streak?.['daily_streak']    as number ?? streak?.['current_streak'] as number ?? 0
+  const longestStreak  = streak?.['longest_streak']  as number ?? 0
+  const insightItems   = (insights?.['insights'] as Record<string, unknown>[]) ?? []
 
   const overallRTP = rtp?.['overall_rtp'] as number ?? 0
   const overallFmt = formatRTP(overallRTP)
@@ -63,13 +81,52 @@ export function AnalyticsPage() {
     day: DOW_LABELS[d['dow'] as number] ?? d['dow'],
   }))
 
+  function handleExport() {
+    const today = new Date()
+    const startOfYear = `${today.getFullYear()}-01-01`
+    const todayStr    = today.toISOString().slice(0, 10)
+    // api.analytics.export returns the URL string directly
+    const url = `${import.meta.env.VITE_API_URL ?? '/api/v1'}${api.analytics.export({ start_date: startOfYear, end_date: todayStr })}`
+    window.open(url, '_blank')
+  }
+
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Analytics</h1>
-        <p className="text-zinc-400 text-sm mt-1">
-          Deep intelligence on your personal RTP, bonus performance, and temporal patterns.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Analytics</h1>
+          <p className="text-zinc-400 text-sm mt-1">
+            Deep intelligence on your personal RTP, bonus performance, and temporal patterns.
+          </p>
+        </div>
+        <button
+          id="analytics-export-btn"
+          onClick={handleExport}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-800 border border-zinc-700 text-sm text-zinc-300 hover:text-white hover:border-brand-500 transition-all"
+        >
+          <Download className="w-4 h-4" />
+          Export CSV
+        </button>
+      </div>
+
+      {/* Streak cards row */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4 space-y-1">
+          <div className="flex items-center gap-2 text-amber-400">
+            <Flame className="w-4 h-4" />
+            <span className="text-xs font-medium uppercase tracking-wide">Current Streak</span>
+          </div>
+          <p className="text-3xl font-black tabular-nums text-amber-400">{currentStreak}d</p>
+          <p className="text-xs text-zinc-500">consecutive active days</p>
+        </div>
+        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4 space-y-1">
+          <div className="flex items-center gap-2 text-zinc-400">
+            <Flame className="w-4 h-4" />
+            <span className="text-xs font-medium uppercase tracking-wide">Longest Streak</span>
+          </div>
+          <p className="text-3xl font-black tabular-nums text-zinc-300">{longestStreak}d</p>
+          <p className="text-xs text-zinc-500">personal best</p>
+        </div>
       </div>
 
       {/* RTP Overview */}
@@ -364,6 +421,30 @@ export function AnalyticsPage() {
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+      {/* Analytics Insights */}
+      {insightItems.length > 0 && (
+        <div className="bg-zinc-900 rounded-xl border border-zinc-800">
+          <h2 className="text-sm font-semibold text-zinc-300 px-5 py-4 border-b border-zinc-800 flex items-center gap-2">
+            <Lightbulb className="w-4 h-4 text-brand-400" />
+            Personalized Insights
+          </h2>
+          <div className="divide-y divide-zinc-800">
+            {insightItems.map((insight, i) => (
+              <div key={i} className="px-5 py-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 w-2 h-2 rounded-full bg-brand-500 flex-shrink-0" />
+                  <div>
+                    {insight['title'] && (
+                      <p className="text-sm font-medium text-white mb-0.5">{insight['title'] as string}</p>
+                    )}
+                    <p className="text-sm text-zinc-400">{(insight['message'] ?? insight['text'] ?? insight['description']) as string}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

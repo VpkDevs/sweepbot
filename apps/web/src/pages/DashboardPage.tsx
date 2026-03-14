@@ -103,7 +103,7 @@ export function DashboardPage() {
             </TextReveal>
 
             <p className="text-zinc-400 text-lg lg:text-xl font-medium leading-relaxed mb-8 max-w-xl">
-              Your real-time sweepstakes intelligence hub. Track performance, optimize your edge, and dominate the platforms.
+              Your real-time sweepstakes intelligence hub. Track performance, understand your patterns, and stay informed across every platform.
             </p>
 
             {/* Quick stats row */}
@@ -150,7 +150,7 @@ export function DashboardPage() {
           <MarqueeItem icon={<Coins className="w-4 h-4 text-yellow-400" />} label="Total SC Wagered" value={totalBets.toLocaleString()} />
           <MarqueeItem
             icon={netProfit >= 0 ? <TrendingUp className="w-4 h-4 text-emerald-400" /> : <TrendingDown className="w-4 h-4 text-red-400" />}
-            label="Net Profit"
+            label="Net P&L"
             value={`${netProfit >= 0 ? '+' : ''}${formatSC(netProfit)} SC`}
           />
         </MarqueeStrip>
@@ -187,7 +187,7 @@ export function DashboardPage() {
             formatter={(v) => String(Math.round(v))}
             icon={Gamepad2}
             valueClass="text-white"
-            sub="actively generating edge"
+            sub="actively being tracked"
             accentColor="violet"
           />
         </ScrollReveal>
@@ -216,8 +216,8 @@ export function DashboardPage() {
                   <BarChart3 className="w-5 h-5 text-brand-400" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-white tracking-tight">7-Day Profit Curve</h2>
-                  <p className="text-xs font-semibold text-zinc-500 tracking-wider">NET PERFORMANCE MATRIX</p>
+                  <h2 className="text-lg font-black text-white tracking-tight">7-Day SC Balance Chart</h2>
+                  <p className="text-xs font-semibold text-zinc-500 tracking-wider">NET ACTIVITY SUMMARY</p>
                 </div>
               </div>
               <span className="text-[10px] font-bold text-brand-300 uppercase tracking-widest bg-brand-950/80 px-3 py-1.5 rounded-full border border-brand-500/20 backdrop-blur-md">Live Sync</span>
@@ -337,7 +337,7 @@ export function DashboardPage() {
                 </div>
                 <div>
                   <h2 className="text-lg font-black text-white tracking-tight">Platform Performance</h2>
-                  <p className="text-[11px] font-semibold text-zinc-500 tracking-widest uppercase mt-0.5">Where your edge lives</p>
+                  <p className="text-[11px] font-semibold text-zinc-500 tracking-widest uppercase mt-0.5">Your activity by platform</p>
                 </div>
               </div>
               <MagneticButton as="a" strength={0.25} radius={80}>

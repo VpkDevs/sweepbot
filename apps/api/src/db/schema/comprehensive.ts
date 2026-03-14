@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, timestamp, decimal, integer, boolean, jsonb, index, primaryKey } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, varchar, text, timestamp, decimal, integer, boolean, jsonb, index, primaryKey, date } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
 // ── Core Tables ───────────────────────────────────────────────────────────────
@@ -32,9 +32,15 @@ export const games = pgTable('games', {
   externalGameId: varchar('external_game_id', { length: 100 }).notNull(),
   name: varchar('name', { length: 255 }).notNull(),
   provider: varchar('provider', { length: 100 }),
+  // Optional FK to game_providers table for structured provider data
+  providerId: uuid('provider_id'),
   slug: varchar('slug', { length: 100 }),
+  thumbnailUrl: text('thumbnail_url'),
   theoreticalRtp: decimal('theoretical_rtp', { precision: 5, scale: 2 }),
   volatilityClass: varchar('volatility_class', { length: 20 }),
+  isFeatured: boolean('is_featured').default(false),
+  jackpotEligible: boolean('jackpot_eligible').default(false),
+  releaseDate: date('release_date'),
   isActive: boolean('is_active').default(true),
   createdAt: timestamp('created_at').defaultNow()
 })
@@ -64,6 +70,10 @@ export const sessions = pgTable('sessions', {
   spinCount: integer('spin_count').default(0),
   
   lastActivityAt: timestamp('last_activity_at'),
+  // Added: duration in seconds computed at session close (gap #10)
+  durationSeconds: integer('duration_seconds'),
+  // Added: JSONB bag for extension metadata including client_session_id idempotency key (gap #10)
+  metadata: jsonb('metadata').default('{}'),
   createdAt: timestamp('created_at').defaultNow()
 }, (table) => ({
   userIdIdx: index('sessions_user_id_idx').on(table.userId),
@@ -177,12 +187,19 @@ export const jackpotSnapshots = pgTable('jackpot_snapshots', {
   id: uuid('id').primaryKey().defaultRandom(),
   platformId: uuid('platform_id').references(() => platforms.id).notNull(),
   gameId: varchar('game_id', { length: 100 }).notNull(),
-  value: decimal('value', { precision: 12, scale: 2 }).notNull(),
+  // jackpotName: e.g. 'Mega', 'Major' for games with multiple pools (gap #9)
+  jackpotName: varchar('jackpot_name', { length: 100 }),
+  // amount: renamed from 'value' to match query usage in jackpots.ts (gap #9)
+  amount: decimal('amount', { precision: 12, scale: 2 }).notNull(),
   currency: varchar('currency', { length: 10 }).default('SC'),
+  // Hit tracking fields (gap #9)
+  lastHitAt: timestamp('last_hit_at'),
+  lastHitAmount: decimal('last_hit_amount', { precision: 12, scale: 2 }),
   capturedAt: timestamp('captured_at').defaultNow()
 }, (table) => ({
   gameIdIdx: index('jackpot_snapshots_game_id_idx').on(table.gameId),
-  capturedAtIdx: index('jackpot_snapshots_captured_at_idx').on(table.capturedAt)
+  capturedAtIdx: index('jackpot_snapshots_captured_at_idx').on(table.capturedAt),
+  platformGameIdx: index('jackpot_snapshots_platform_game_idx').on(table.platformId, table.gameId)
 }))
 
 // ── Relations ─────────────────────────────────────────────────────────────────

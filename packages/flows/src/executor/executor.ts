@@ -17,6 +17,27 @@ import type {
 import { logger } from '@sweepbot/utils'
 import { safeEvaluate } from '../utils'
 
+type ResponsiblePlayRuntime = {
+  isInCooldown?: boolean
+  cooldownUntil?: Date | string
+  now?: Date
+}
+
+export type FlowExecutorOptions = {
+  responsiblePlay?: ResponsiblePlayRuntime
+}
+
+class GuardrailStop extends Error {
+  readonly guardrail: string
+  readonly details: Record<string, unknown>
+
+  constructor(guardrail: string, details: Record<string, unknown> = {}) {
+    super(`Stopped by guardrail: ${guardrail}`)
+    this.guardrail = guardrail
+    this.details = details
+  }
+}
+
 export class FlowExecutor {
   /**
    * Execute a Flow definition
@@ -25,14 +46,16 @@ export class FlowExecutor {
   async execute(
     flowDefinition: FlowDefinition,
     userId: string,
-    context?: Record<string, unknown>
+    context?: Record<string, unknown>,
+    options?: FlowExecutorOptions
   ): Promise<FlowExecutionContext> {
+    const now = options?.responsiblePlay?.now ?? new Date()
     const executionContext: FlowExecutionContext = {
       flowId: flowDefinition.id,
       executionId: `exec_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
       userId,
       variables: new Map(Object.entries(context || {})),
-      startedAt: new Date(),
+      startedAt: now,
       currentNode: flowDefinition.rootNode.id,
       status: 'running',
       log: [],
@@ -52,17 +75,26 @@ export class FlowExecutor {
       },
     }
 
-    // Check responsible play before execution
+    // Responsible play checks before execution (runtime-only; no persisted/irreversible state)
     const rpGuards = flowDefinition.responsiblePlayGuardrails
     const cooldownGuard = rpGuards.find((g) => g.type === 'cool_down_check')
-    if (cooldownGuard && cooldownGuard.value === true) {
+    const cooldownCheckEnabled = cooldownGuard ? cooldownGuard.value !== false : false
+    const isInCooldown = options?.responsiblePlay?.isInCooldown === true
+    if (cooldownCheckEnabled && isInCooldown) {
       executionContext.log.push({
         timestamp: new Date(),
         nodeId: 'root',
         type: 'guardrail_triggered',
-        details: { guardrail: 'cool_down_check' },
+        details: {
+          guardrail: 'cool_down_check',
+          cooldownUntil:
+            options?.responsiblePlay?.cooldownUntil instanceof Date
+              ? options.responsiblePlay.cooldownUntil.toISOString()
+              : options?.responsiblePlay?.cooldownUntil,
+        },
       })
       executionContext.status = 'stopped_by_guardrail'
+      executionContext.metrics.guardrailsTriggered.push('cool_down_check')
       return executionContext
     }
 
@@ -71,6 +103,16 @@ export class FlowExecutor {
       await this.executeNode(flowDefinition.rootNode, executionContext, flowDefinition)
       executionContext.status = 'completed'
     } catch (error) {
+      if (error instanceof GuardrailStop) {
+        executionContext.log.push({
+          timestamp: new Date(),
+          nodeId: executionContext.currentNode,
+          type: 'guardrail_triggered',
+          details: { guardrail: error.guardrail, ...error.details },
+        })
+        executionContext.status = 'stopped_by_guardrail'
+        executionContext.metrics.guardrailsTriggered.push(error.guardrail)
+      } else {
       executionContext.log.push({
         timestamp: new Date(),
         nodeId: executionContext.currentNode,
@@ -78,6 +120,7 @@ export class FlowExecutor {
         details: { error: String(error) },
       })
       executionContext.status = 'failed'
+      }
     }
 
     // Calculate total duration
@@ -95,6 +138,14 @@ export class FlowExecutor {
     flow: FlowDefinition
   ): Promise<void> {
     ctx.currentNode = node.id
+
+    const maxDurationGuard = flow.responsiblePlayGuardrails.find((g) => g.type === 'max_duration')
+    if (maxDurationGuard && typeof maxDurationGuard.value === 'number') {
+      const elapsed = Date.now() - ctx.startedAt.getTime()
+      if (elapsed > maxDurationGuard.value) {
+        throw new GuardrailStop('max_duration', { elapsedMs: elapsed, maxMs: maxDurationGuard.value })
+      }
+    }
 
     switch (node.type) {
       case 'action':

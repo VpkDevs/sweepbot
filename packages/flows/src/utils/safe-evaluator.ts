@@ -101,44 +101,72 @@ function sanitizeExpression(expression: string): string | null {
 }
 
 /**
- * Replace $variableName patterns with their numeric values
+ * Validate that a variable name contains only safe identifier characters.
+ * Rejects names with regex metacharacters that could cause issues if the name
+ * were ever used in a dynamically-constructed regular expression.
+ */
+function isSafeVariableName(name: string): boolean {
+  return /^[A-Za-z_][A-Za-z0-9_]*$/.test(name)
+}
+
+/**
+ * Replace $variableName patterns with their numeric values.
+ *
+ * Uses index-based string splicing (rather than String.prototype.replace) to
+ * prevent JavaScript's special $& / $1 / $` replacement sequences from
+ * misinterpreting a substituted value that happens to contain a $ character.
  */
 function replaceVariables(expression: string, variables: Map<string, unknown>): string | null {
-  let result = expression
-
   // Find all $variable patterns
-  const variablePattern = /\$([A-Za-z_][A-Za-z0-9_]*)\b/g
-  const matches = [...result.matchAll(variablePattern)]
+  const variablePattern = /\$([A-Za-z_][A-Za-z0-9_]*)/g
+  const matches = [...expression.matchAll(variablePattern)]
 
   if (matches.length === 0) {
-    return result
+    return expression
   }
 
-  // Replace each variable with its value
-  for (const match of matches) {
+  let result = expression
+
+  // Replace in reverse order so that earlier string offsets remain valid
+  // after each index-based splice.
+  for (let i = matches.length - 1; i >= 0; i--) {
+    const match = matches[i]!
     const varName = match[1]!
+
+    // Guard: reject variable names that do not match the safe identifier pattern.
+    if (!isSafeVariableName(varName)) {
+      logger.warn('Unsafe variable name rejected', { varName })
+      return null
+    }
+
     const value = variables.get(varName)
+    let numericStr: string
 
     if (value === undefined || value === null) {
       logger.debug('Variable not found, treating as 0', { varName })
-      result = result.replace(match[0], '0')
+      numericStr = '0'
     } else if (typeof value === 'number') {
       if (!isFinite(value)) {
         logger.warn('Variable value is not finite', { varName, value })
         return null
       }
-      result = result.replace(match[0], String(value))
+      numericStr = String(value)
     } else if (typeof value === 'string') {
       const num = Number(value)
       if (isNaN(num)) {
         logger.warn('Variable is not a number', { varName, value })
         return null
       }
-      result = result.replace(match[0], String(num))
+      numericStr = String(num)
     } else {
       logger.warn('Variable has unsupported type', { varName, type: typeof value })
       return null
     }
+
+    // Index-based splice: completely avoids String.prototype.replace special chars
+    const start = match.index!
+    const end = start + match[0].length
+    result = result.slice(0, start) + numericStr + result.slice(end)
   }
 
   return result

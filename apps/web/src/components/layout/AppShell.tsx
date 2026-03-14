@@ -19,6 +19,8 @@ import {
   Sparkles,
   PanelLeftClose,
   PanelLeft,
+  FileText,
+  Scale,
 } from 'lucide-react'
 import { useState, useEffect, useMemo } from 'react'
 import { useAuthStore } from '../../stores/auth'
@@ -40,6 +42,13 @@ const navSections = [
       { to: '/jackpots', label: 'Jackpots', icon: Trophy },
       { to: '/redemptions', label: 'Redemptions', icon: Banknote },
       { to: '/trust-index', label: 'Trust Index', icon: ShieldCheck },
+    ],
+  },
+  {
+    label: 'Intelligence',
+    items: [
+      { to: '/tos-monitor', label: 'TOS Monitor', icon: FileText },
+      { to: '/tax-center', label: 'Tax Center', icon: Scale },
     ],
   },
   {
@@ -81,6 +90,8 @@ const ROUTE_LABELS: Record<string, string> = {
   '/heatmap': 'Heatmap',
   '/records': 'Records',
   '/big-wins': 'Big Wins',
+  '/tos-monitor': 'TOS Monitor',
+  '/tax-center': 'Tax Center',
   '/settings': 'Settings',
   '/pricing': 'Pricing',
 }
@@ -343,6 +354,39 @@ export function AppShell() {
             <Outlet />
           </ErrorBoundary>
         </main>
+
+        {/* ─── Compliance disclaimer strip ─────────────────────────── */}
+        {/* Required persistent notice: SweepBot is a data-tracking tool,
+            not a gambling product. Historical data only. No advice given. */}
+        <footer
+          className="shrink-0 px-4 py-1.5 border-t border-white/[0.03] bg-zinc-950/80 backdrop-blur-sm flex items-center justify-center gap-1.5 flex-wrap"
+          aria-label="Legal disclaimer"
+        >
+          <ShieldCheck className="w-3 h-3 text-zinc-600 flex-shrink-0" aria-hidden="true" />
+          <p className="text-[10px] text-zinc-600 text-center leading-snug">
+            SweepBot is a data-tracking and transparency tool, not a gambling product or service.
+            All data shown is historical and informational only.
+            SweepBot does not provide gambling advice, predict outcomes, or recommend play strategies.
+            {' '}
+            <a
+              href="https://sweepbot.app/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 hover:text-zinc-400 transition-colors"
+            >
+              Terms
+            </a>
+            {' · '}
+            <a
+              href="https://sweepbot.app/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 hover:text-zinc-400 transition-colors"
+            >
+              Privacy
+            </a>
+          </p>
+        </footer>
       </div>
     </div>
   )

@@ -82,5 +82,8 @@ tmpclaude-*
 _tmp_*-*
 .gemini/
 
+# Claude Code local settings (contains sensitive dev-specific config)
+.claude/settings.local.json
+
 # Personal / non-technical documents (do not commit to repo)
 docs/What\ Vince\ Did.txt
