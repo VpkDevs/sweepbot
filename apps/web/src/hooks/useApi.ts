@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api } from '../lib/api-enhanced'
+import { api } from '../lib/api'
 
 export const queryKeys = {
   health: ['health'] as const,
@@ -224,8 +224,7 @@ export function useExecuteFlow() {
 
 export function useInterpretFlow() {
   return useMutation({
-    mutationFn: ({ message, conversationId }: { message: string; conversationId?: string }) =>
-      api.flows.interpret(message, conversationId),
+    mutationFn: (rawInput: string) => api.flows.interpret(rawInput),
   })
 }
 

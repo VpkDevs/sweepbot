@@ -77,7 +77,7 @@ export function FlowDetailPage() {
 
   const handleArchive = async () => {
     await api.flows.update(flowId, { status: 'archived' })
-    navigate({ to: '/flows' })
+    navigate({ to: '/app/flows' })
   }
 
   if (flowLoading) {
@@ -124,7 +124,7 @@ export function FlowDetailPage() {
       {/* Breadcrumb */}
       <ScrollReveal>
         <button
-          onClick={() => navigate({ to: '/flows' })}
+          onClick={() => navigate({ to: '/app/flows' })}
           className="flex items-center gap-2 text-sm text-zinc-400 hover:text-zinc-300 transition-colors mb-2"
         >
           <ChevronLeft className="w-4 h-4" />

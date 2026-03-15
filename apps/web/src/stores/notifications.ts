@@ -1,16 +1,16 @@
 import { create } from 'zustand'
-import { api } from '../lib/api-enhanced'
+import { api } from '../lib/api'
 
 interface Notification {
   id: string
   type: string
   title: string
   body: string
-  icon?: string
-  href?: string
-  isRead: boolean
-  readAt?: string
-  createdAt: string
+  icon: string | null
+  href: string | null
+  is_read: boolean
+  read_at: string | null
+  created_at: string
   data?: Record<string, unknown>
 }
 
@@ -41,8 +41,8 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
     set({ isLoading: true })
 
     try {
-      const data = (await api.notifications.list({ page: nextPage, limit: 20 })) as Notification[]
-      const unread = data.filter((n) => !n.isRead).length
+      const data = (await api.notifications.list({ limit: 20 })) as Notification[]
+      const unread = data.filter((n) => !n.is_read).length
 
       set((state) => ({
         notifications: reset ? data : [...state.notifications, ...data],
@@ -60,7 +60,7 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
     await api.notifications.markRead(id)
     set((state) => ({
       notifications: state.notifications.map((n) =>
-        n.id === id ? { ...n, isRead: true, readAt: new Date().toISOString() } : n
+        n.id === id ? { ...n, is_read: true, read_at: new Date().toISOString() } : n
       ),
       unreadCount: Math.max(0, state.unreadCount - 1),
     }))
@@ -71,8 +71,8 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
     set((state) => ({
       notifications: state.notifications.map((n) => ({
         ...n,
-        isRead: true,
-        readAt: n.readAt ?? new Date().toISOString(),
+        is_read: true,
+        read_at: n.read_at ?? new Date().toISOString(),
       })),
       unreadCount: 0,
     }))
@@ -83,7 +83,7 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
     await api.notifications.delete(id)
     set((state) => ({
       notifications: state.notifications.filter((n) => n.id !== id),
-      unreadCount: notification && !notification.isRead
+      unreadCount: notification && !notification.is_read
         ? Math.max(0, state.unreadCount - 1)
         : state.unreadCount,
     }))

@@ -161,7 +161,7 @@ export async function achievementRoutes(app: FastifyInstance): Promise<void> {
     },
   }, async (request, reply) => {
     try {
-      const today = new Date().toISOString().split('T')[0] ?? new Date().toISOString().substring(0, 10)
+      const today = new Date().toISOString().split('T')[0]!
       const userId = request.user!.id
 
       // Get current streak
@@ -174,10 +174,10 @@ export async function achievementRoutes(app: FastifyInstance): Promise<void> {
       let lastDate = ''
 
       if (currentRows.length > 0) {
-        const data = currentRows[0] as { current_streak: number; longest_streak: number; last_session_date: string }
+        const data = currentRows[0] as { current_streak: number; longest_streak: number; last_activity_date: string }
         currentStreak = data.current_streak
         longestStreak = data.longest_streak
-        lastDate = data.last_session_date
+        lastDate = data.last_activity_date
       }
 
       // Check if same day
@@ -207,14 +207,13 @@ export async function achievementRoutes(app: FastifyInstance): Promise<void> {
 
       // Update database
       await dbQuery(
-        sql`INSERT INTO user_streaks (user_id, current_streak, longest_streak, last_session_date, total_sessions)
-            VALUES (${userId}, ${currentStreak}, ${longestStreak}, ${today}, 1)
+        sql`INSERT INTO user_streaks (user_id, current_streak, longest_streak, last_activity_date)
+            VALUES (${userId}, ${currentStreak}, ${longestStreak}, ${today})
             ON CONFLICT (user_id)
-            DO UPDATE SET 
+            DO UPDATE SET
               current_streak = ${currentStreak},
               longest_streak = ${longestStreak},
-              last_session_date = ${today},
-              total_sessions = user_streaks.total_sessions + 1,
+              last_activity_date = ${today},
               updated_at = NOW()`
       )
 

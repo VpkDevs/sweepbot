@@ -261,6 +261,8 @@ export const api = {
       request('/sessions', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: Record<string, unknown>) =>
       request(`/sessions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    end: (id: string) =>
+      request(`/sessions/${id}/end`, { method: 'POST' }),
     batchTransactions: (data: Record<string, unknown>) =>
       request('/sessions/transactions/batch', {
         method: 'POST',
@@ -324,11 +326,8 @@ export const api = {
       const qs = params ? '?' + new URLSearchParams(params).toString() : ''
       return request<Record<string, unknown>[]>(`/trust-index${qs}`)
     },
-    /** Summary for a single platform (score + component breakdown) */
+    /** Full detail for a single platform (score + component breakdown + history) */
     get: (platformId: string) =>
-      request<Record<string, unknown>>(`/trust-index/${platformId}`),
-    /** Full detail including historical score trend, TOS snapshots, redemption samples */
-    detail: (platformId: string) =>
       request<Record<string, unknown>>(`/trust-index/${platformId}`),
     /** Top-ranked platforms + score distribution charts */
     leaderboard: () =>

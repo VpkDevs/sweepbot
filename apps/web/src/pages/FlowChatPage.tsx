@@ -151,7 +151,7 @@ export function FlowChatPage() {
         guardrails: confirmation.flow.guardrails,
       })
       const flowId = result['id'] as string
-      navigate({ to: `/flows/${flowId}` })
+      navigate({ to: `/app/flows/${flowId}` })
     } catch {
       setMessages((prev) => [
         ...prev,

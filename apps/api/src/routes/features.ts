@@ -65,6 +65,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
   // GET /features/achievements
   // Full catalogue with earned status + progress for the authed user
   app.get('/achievements', async (request, reply) => {
+    try {
     const userId = request.user!.id
 
     // Lazy-seed: if the achievements table is empty, populate it now.
@@ -119,11 +120,16 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
         summary: totalPoints.rows[0] ?? { total_points: 0, earned_count: 0 },
       },
     })
+    } catch (error) {
+      app.log.error({ error }, 'GET /features/achievements error')
+      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to load achievements' } })
+    }
   })
 
   // GET /features/achievements/mine
   // Only earned achievements for the authed user
   app.get('/achievements/mine', async (request, reply) => {
+    try {
     const userId = request.user!.id
 
     const rows = await dbQuery(sql`
@@ -138,11 +144,16 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     `)
 
     return reply.send({ success: true, data: rows.rows })
+    } catch (error) {
+      app.log.error({ error }, 'GET /features/achievements/mine error')
+      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to load achievements' } })
+    }
   })
 
   // GET /features/achievements/leaderboard
   // Users ranked by total achievement points
   app.get('/achievements/leaderboard', async (request, reply) => {
+    try {
     const rows = await dbQuery(sql`
       SELECT
         ua.user_id,
@@ -157,14 +168,23 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     `)
 
     return reply.send({ success: true, data: rows.rows })
+    } catch (error) {
+      app.log.error({ error }, 'GET /features/achievements/leaderboard error')
+      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to load leaderboard' } })
+    }
   })
 
   // POST /features/achievements/check
   // Re-evaluate all achievement conditions for the authed user and award any newly earned
   app.post('/achievements/check', async (request, reply) => {
+    try {
     const userId = request.user!.id
     const newlyEarned = await checkAndAwardAchievements(userId)
     return reply.send({ success: true, data: { newlyEarned } })
+    } catch (error) {
+      app.log.error({ error }, 'POST /features/achievements/check error')
+      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to check achievements' } })
+    }
   })
 
   // ══════════════════════════════════════════════════════════════════════
@@ -174,6 +194,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
   // GET /features/heatmap
   // Daily P&L calendar data for the past year (or specified year)
   app.get('/heatmap', async (request, reply) => {
+    try {
     const userId = request.user!.id
     const { year, platformId } = HeatmapQuerySchema.parse(request.query)
 
@@ -230,6 +251,10 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
         summary: summary.rows[0] ?? null,
       },
     })
+    } catch (error) {
+      app.log.error({ error }, 'GET /features/heatmap error')
+      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to load heatmap' } })
+    }
   })
 
   // ══════════════════════════════════════════════════════════════════════
@@ -239,6 +264,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
   // GET /features/streaks
   // Current and historical win/loss streaks
   app.get('/streaks', async (request, reply) => {
+    try {
     const userId = request.user!.id
 
     const rows = await dbQuery(sql`
@@ -306,6 +332,10 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
         history: streaks,
       },
     })
+    } catch (error) {
+      app.log.error({ error }, 'GET /features/streaks error')
+      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to load streaks' } })
+    }
   })
 
   // ══════════════════════════════════════════════════════════════════════
@@ -315,6 +345,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
   // GET /features/records
   // Current personal records for the authed user
   app.get('/records', async (request, reply) => {
+    try {
     const userId = request.user!.id
 
     const record = await dbQuery(sql`
@@ -347,17 +378,26 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
         percentiles: percentiles.rows[0] ?? { win_percentile: null },
       },
     })
+    } catch (error) {
+      app.log.error({ error }, 'GET /features/records error')
+      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to load records' } })
+    }
   })
 
   // POST /features/records/refresh
   // Recompute all personal records from raw session data
   app.post('/records/refresh', async (request, reply) => {
+    try {
     const userId = request.user!.id
     await refreshPersonalRecords(userId)
     const record = await dbQuery(sql`
       SELECT * FROM personal_records WHERE user_id = ${userId}
     `)
     return reply.send({ success: true, data: record.rows[0] ?? null })
+    } catch (error) {
+      app.log.error({ error }, 'POST /features/records/refresh error')
+      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to refresh records' } })
+    }
   })
 
   // ══════════════════════════════════════════════════════════════════════
@@ -367,6 +407,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
   // GET /features/big-wins
   // Paginated public leaderboard
   app.get('/big-wins', async (request, reply) => {
+    try {
     const { page, pageSize, platform, period, minMultiplier } = BigWinsQuerySchema.parse(
       request.query
     )
@@ -440,11 +481,16 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
       },
       meta: { page, pageSize, total, hasMore: offset + pageSize < total },
     })
+    } catch (error) {
+      app.log.error({ error }, 'GET /features/big-wins error')
+      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to load big wins' } })
+    }
   })
 
   // POST /features/big-wins
   // Submit a big win for the community board
   app.post('/big-wins', async (request, reply) => {
+    try {
     const userId = request.user!.id
     const body = SubmitBigWinSchema.parse(request.body)
 
@@ -474,11 +520,16 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     await checkAndAwardAchievements(userId)
 
     return reply.code(201).send({ success: true, data: { id: bigWinId, verificationStatus } })
+    } catch (error) {
+      app.log.error({ error }, 'POST /features/big-wins error')
+      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to submit big win' } })
+    }
   })
 
   // GET /features/big-wins/mine
   // User's own submissions (all statuses)
   app.get('/big-wins/mine', async (request, reply) => {
+    try {
     const userId = request.user!.id
 
     const rows = await dbQuery(sql`
@@ -489,11 +540,16 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     `)
 
     return reply.send({ success: true, data: rows.rows })
+    } catch (error) {
+      app.log.error({ error }, 'GET /features/big-wins/mine error')
+      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to load your big wins' } })
+    }
   })
 
   // PATCH /features/big-wins/:id
   // Update visibility or display name
   app.patch('/big-wins/:id', async (request, reply) => {
+    try {
     const userId = request.user!.id
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params)
     const body = z
@@ -517,11 +573,16 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     }
 
     return reply.send({ success: true, data: { id: updatedRows[0]!.id } })
+    } catch (error) {
+      app.log.error({ error }, 'PATCH /features/big-wins/:id error')
+      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to update big win' } })
+    }
   })
 
   // GET /features/stats
   // Quick aggregated stats for the user dashboard
   app.get('/stats', async (request, reply) => {
+    try {
     const userId = request.user!.id
 
     const [sessionStats, achievementStats, bigWinStats] = await Promise.all([
@@ -552,6 +613,10 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
         bigWins: bigWins ?? { total_big_wins: 0 },
       },
     })
+    } catch (error) {
+      app.log.error({ error }, 'GET /features/stats error')
+      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to load stats' } })
+    }
   })
 }
 
