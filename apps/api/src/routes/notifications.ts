@@ -268,7 +268,21 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
       WHERE user_id = ${userId}
     `)
 
-    return reply.send({ success: true, data: rows[0] ?? null })
+    const row = rows[0]
+
+    const preferences = row
+      ? {
+          jackpotAlerts: row.jackpot_alerts,
+          tosChanges: row.tos_changes,
+          platformOutages: row.platform_outages,
+          flowErrors: row.flow_errors,
+          trialReminders: row.trial_reminders,
+          dailySummary: row.daily_summary,
+          weeklyReport: row.weekly_report,
+        }
+      : null
+
+    return reply.send({ success: true, data: preferences })
   })
 
   // ── PUT /notifications/preferences ───────────────────────────────────────────
