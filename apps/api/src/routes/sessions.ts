@@ -369,13 +369,17 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
 
       // Pre-compute running-total deltas in application code — this keeps the
       // UPDATE simple and avoids building dynamic SQL arrays from user data.
-      const betCount = body.transactions.filter((t) => t.type === 'bet').length
-      const wageredDelta = body.transactions
-        .filter((t) => t.type === 'bet')
-        .reduce((sum, t) => sum + t.amount, 0)
-      const wonDelta = body.transactions
-        .filter((t) => t.type === 'win')
-        .reduce((sum, t) => sum + t.amount, 0)
+      let betCount = 0
+      let wageredDelta = 0
+      let wonDelta = 0
+      for (const t of body.transactions) {
+        if (t.type === 'bet') {
+          betCount++
+          wageredDelta += t.amount
+        } else if (t.type === 'win') {
+          wonDelta += t.amount
+        }
+      }
 
       // Build typed rows for the bulk insert
       const txRows = body.transactions.map((t) => ({
