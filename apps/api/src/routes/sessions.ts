@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { query as dbQuery, unsafeQuery, withTransaction } from '../db/client.js'
+import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { requireAuth } from '../middleware/auth.js'
 import { sql } from 'drizzle-orm'
 
@@ -367,20 +367,6 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
         })
       }
 
-      // Pre-compute running-total deltas in application code — this keeps the
-      // UPDATE simple and avoids building dynamic SQL arrays from user data.
-      let betCount = 0
-      let wageredDelta = 0
-      let wonDelta = 0
-      for (const t of body.transactions) {
-        if (t.type === 'bet') {
-          betCount++
-          wageredDelta += t.amount
-        } else if (t.type === 'win') {
-          wonDelta += t.amount
-        }
-      }
-
       // Build typed rows for the bulk insert
       const txRows = body.transactions.map((t) => ({
         session_id: body.sessionId,
@@ -394,34 +380,46 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
         metadata: t.metadata ?? {},
       }))
 
-      // Atomic: both the INSERT and the UPDATE must succeed together.
-      // If either fails the entire transaction rolls back automatically.
-      await withTransaction(async (txn) => {
-        // Build a parameterized bulk INSERT via txn.unsafe().
-        // Using unsafe() here lets us control the JSONB cast for the metadata
-        // column while keeping every value parameterized.
-        // Keep COLS in sync with the explicit column list in the INSERT below.
-        const COLS = 9
-        const placeholders = txRows
-          .map((_, i) => {
-            const b = i * COLS
-            return (
-              '(' +
-              Array.from({ length: COLS }, (__, j) => {
-                const pos = b + j + 1
-                return j === COLS - 1 ? `$${pos}::jsonb` : `$${pos}`
-              }).join(',') +
-              ')'
-            )
-          })
-          .join(',')
+      // Single atomic CTE: INSERT then UPDATE using only the rows that were
+      // *actually* inserted (RETURNING).  ON CONFLICT DO NOTHING skips
+      // duplicates, so retries are safe — they only add new rows and the
+      // aggregations over RETURNING are always correct.
+      // Keep COLS in sync with the explicit column list in the INSERT below.
+      const COLS = 9
+      const placeholders = txRows
+        .map((_, i) => {
+          const b = i * COLS
+          return (
+            '(' +
+            Array.from({ length: COLS }, (__, j) => {
+              const pos = b + j + 1
+              return j === COLS - 1 ? `$${pos}::jsonb` : `$${pos}`
+            }).join(',') +
+            ')'
+          )
+        })
+        .join(',')
 
-        await txn.unsafe(
-          `INSERT INTO transactions
+      // sessionId is the last parameter, appended after all row values
+      const sessionIdParam = `$${txRows.length * COLS + 1}`
+
+      await unsafeQuery(
+        `WITH inserted AS (
+           INSERT INTO transactions
              (session_id, type, amount, game_id, multiplier, balance_before, balance_after, occurred_at, metadata)
            VALUES ${placeholders}
-           ON CONFLICT DO NOTHING`,
-          txRows.flatMap((r) => [
+           ON CONFLICT DO NOTHING
+           RETURNING type, amount
+         )
+         UPDATE sessions
+         SET
+           total_bets    = total_bets    + (SELECT COUNT(*)              FROM inserted WHERE type = 'bet'),
+           total_wagered = total_wagered + (SELECT COALESCE(SUM(amount), 0) FROM inserted WHERE type = 'bet'),
+           total_won     = total_won     + (SELECT COALESCE(SUM(amount), 0) FROM inserted WHERE type = 'win'),
+           updated_at    = NOW()
+         WHERE id = ${sessionIdParam}`,
+        [
+          ...txRows.flatMap((r) => [
             r.session_id,
             r.type,
             r.amount,
@@ -431,19 +429,10 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
             r.balance_after,
             r.occurred_at,
             JSON.stringify(r.metadata),
-          ])
-        )
-
-        await txn`
-          UPDATE sessions
-          SET
-            total_bets     = total_bets     + ${betCount},
-            total_wagered  = total_wagered  + ${wageredDelta},
-            total_won      = total_won      + ${wonDelta},
-            updated_at     = NOW()
-          WHERE id = ${body.sessionId}
-        `
-      })
+          ]),
+          body.sessionId,
+        ]
+      )
 
       return reply.code(201).send({
         success: true,

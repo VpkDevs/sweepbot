@@ -175,6 +175,37 @@ describe('registerAuditHook', () => {
     expect(recordStr).not.toContain('secret123')
     expect(recordStr).not.toContain('4242424242424242')
   })
+
+  it('extracts first IP from x-forwarded-for string header', async () => {
+    vi.mocked(logger.info).mockClear()
+    await app.inject({
+      method: 'POST',
+      url: '/items',
+      payload: {},
+      headers: { 'x-forwarded-for': '10.0.0.1, 10.0.0.2, 10.0.0.3' },
+    })
+    const auditCalls = vi.mocked(logger.info).mock.calls.filter(
+      (call) => (call[0] as Record<string, unknown>)['audit'] === true
+    )
+    const record = auditCalls[0]![0] as Record<string, unknown>
+    expect(record['ip']).toBe('10.0.0.1')
+  })
+
+  it('extracts first IP from x-forwarded-for array header', async () => {
+    vi.mocked(logger.info).mockClear()
+    // Fastify allows injecting multiple values for the same header as an array
+    await app.inject({
+      method: 'POST',
+      url: '/items',
+      payload: {},
+      headers: { 'x-forwarded-for': ['10.1.1.1, 10.1.1.2', '10.1.1.3'] },
+    })
+    const auditCalls = vi.mocked(logger.info).mock.calls.filter(
+      (call) => (call[0] as Record<string, unknown>)['audit'] === true
+    )
+    const record = auditCalls[0]![0] as Record<string, unknown>
+    expect(record['ip']).toBe('10.1.1.1')
+  })
 })
 
 describe('x-request-id header (buildServer correlation IDs)', () => {

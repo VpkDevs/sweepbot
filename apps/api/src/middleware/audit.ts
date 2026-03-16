@@ -69,9 +69,13 @@ export function registerAuditHook(app: FastifyInstance): void {
         method,
         path: request.routeOptions?.url ?? request.url,
         statusCode,
-        ip:
-          (request.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ??
-          request.ip,
+        // x-forwarded-for can be a string, a comma-separated string, or an
+        // array (multiple headers).  Normalise all three cases before splitting.
+        ip: (() => {
+          const xff = request.headers['x-forwarded-for']
+          const raw = Array.isArray(xff) ? xff[0] : xff
+          return raw?.split(',')[0]?.trim() ?? request.ip
+        })(),
         userAgent: request.headers['user-agent'],
         latencyMs,
         timestamp: new Date().toISOString(),
