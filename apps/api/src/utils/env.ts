@@ -51,6 +51,9 @@ const envSchema = z.object({
   // App
   APP_URL: z.string().url().default('https://app.sweepbot.app'),
   ADMIN_SECRET: z.string().min(1).optional(),
+
+  // Internal cron shared secret (required to call /nightly-check, /expire-trials, etc.)
+  CRON_SECRET: z.string().min(1).optional(),
 })
 
 const _parsed = envSchema.safeParse(process.env)

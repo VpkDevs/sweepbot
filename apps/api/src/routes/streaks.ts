@@ -8,6 +8,7 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { requireAuth } from '../middleware/auth.js'
+import { requireCronSecret } from '../middleware/cron-auth.js'
 import { streakManager } from '../services/streak-manager.js'
 
 const LeaderboardQuerySchema = z.object({
@@ -109,7 +110,8 @@ export async function streakRoutes(app: FastifyInstance): Promise<void> {
   )
 
   // ─── POST /streaks/nightly-check ──────────────────────────────────────────
-  // Internal endpoint — called by a nightly cron job, no auth required.
+  // Internal endpoint — called by a nightly cron job.
+  // Protected via shared secret to prevent arbitrary external triggering.
   app.post(
     '/nightly-check',
     {
@@ -117,6 +119,7 @@ export async function streakRoutes(app: FastifyInstance): Promise<void> {
         tags: ['Internal'],
         summary: 'Run nightly streak check — protect or reset streaks for inactive users',
       },
+      preValidation: [requireCronSecret('nightly-check')],
     },
     async (_request, reply) => {
       try {

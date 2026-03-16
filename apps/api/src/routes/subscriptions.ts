@@ -8,6 +8,7 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { requireAuth } from '../middleware/auth.js'
+import { requireCronSecret } from '../middleware/cron-auth.js'
 import { trialManager } from '../services/trial-manager.js'
 
 const StartTrialBody = z.object({
@@ -100,7 +101,8 @@ export async function subscriptionRoutes(app: FastifyInstance): Promise<void> {
   )
 
   // ─── POST /subscriptions/expire-trials ────────────────────────────────────
-  // Internal endpoint — called by a cron job, no auth required.
+  // Internal endpoint — called by a cron job.
+  // Protected via shared secret to prevent arbitrary external triggering.
   app.post(
     '/expire-trials',
     {
@@ -108,6 +110,7 @@ export async function subscriptionRoutes(app: FastifyInstance): Promise<void> {
         tags: ['Internal'],
         summary: 'Batch-expire all past-due trials (cron use only)',
       },
+      preValidation: [requireCronSecret('expire-trials')],
     },
     async (_request, reply) => {
       try {
