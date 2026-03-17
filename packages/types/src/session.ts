@@ -21,7 +21,7 @@ export const SessionSchema = z.object({
   totalWagered: z.number().min(0),
   totalWon: z.number().min(0),
   netResult: z.number(),
-  rtp: z.number().nullable(),   // e.g. 0.9650 = 96.50%
+  rtp: z.number().nullable(), // e.g. 0.9650 = 96.50%
   spinCount: z.number().int().min(0),
   bonusTriggers: z.number().int().min(0),
   largestWin: z.number().min(0).nullable(),
@@ -76,17 +76,20 @@ export type Transaction = z.infer<typeof TransactionSchema>
 
 export const BatchTransactionsSchema = z.object({
   sessionId: z.string().uuid(),
-  transactions: z.array(
-    z.object({
-      occurredAt: z.string().datetime(),
-      betAmount: z.number().min(0),
-      winAmount: z.number().min(0),
-      balanceAfter: z.number().optional(),
-      isBonusSpin: z.boolean().optional(),
-      isBonusTrigger: z.boolean().optional(),
-      isJackpot: z.boolean().optional(),
-    })
-  ).min(1).max(500),
+  transactions: z
+    .array(
+      z.object({
+        occurredAt: z.string().datetime(),
+        betAmount: z.number().min(0),
+        winAmount: z.number().min(0),
+        balanceAfter: z.number().optional(),
+        isBonusSpin: z.boolean().optional(),
+        isBonusTrigger: z.boolean().optional(),
+        isJackpot: z.boolean().optional(),
+      })
+    )
+    .min(1)
+    .max(500),
 })
 
 export type BatchTransactionsInput = z.infer<typeof BatchTransactionsSchema>
@@ -98,11 +101,11 @@ export type BatchTransactionsInput = z.infer<typeof BatchTransactionsSchema>
 export interface RTPSnapshot {
   totalWagered: number
   totalWon: number
-  rtp: number           // 0–1 decimal (e.g. 0.965)
-  rtpPercent: number    // Human-readable (e.g. 96.5)
+  rtp: number // 0–1 decimal (e.g. 0.965)
+  rtpPercent: number // Human-readable (e.g. 96.5)
   spinCount: number
   netResult: number
-  confidenceLevel: 'low' | 'medium' | 'high'  // Based on spin count
+  confidenceLevel: 'low' | 'medium' | 'high' // Based on spin count
 }
 
 /** Determine confidence based on spin count */
@@ -113,7 +116,11 @@ export function getRTPConfidenceLevel(spinCount: number): RTPSnapshot['confidenc
 }
 
 /** Calculate RTP snapshot from raw totals */
-export function calculateRTP(totalWagered: number, totalWon: number, spinCount: number): RTPSnapshot {
+export function calculateRTP(
+  totalWagered: number,
+  totalWon: number,
+  spinCount: number
+): RTPSnapshot {
   const rtp = totalWagered > 0 ? totalWon / totalWagered : 0
   return {
     totalWagered,

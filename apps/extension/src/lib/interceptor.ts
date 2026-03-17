@@ -74,11 +74,14 @@ export class NetworkInterceptor {
       return self.originalFetch!.apply(this, args).then((response) => {
         // Clone response for parsing without consuming the stream
         const cloned = response.clone()
-        cloned.json().then((data) => {
-          self.extractDataFromResponse(url, data)
-        }).catch(() => {
-          // Not JSON or failed to parse, ignore
-        })
+        cloned
+          .json()
+          .then((data) => {
+            self.extractDataFromResponse(url, data)
+          })
+          .catch(() => {
+            // Not JSON or failed to parse, ignore
+          })
         return response
       })
     } as typeof fetch
@@ -164,9 +167,7 @@ export class NetworkInterceptor {
           ? this.getDeepValue(data, pattern.winAmountPath)
           : null
         const gameId = pattern.gameIdPath ? this.getDeepValue(data, pattern.gameIdPath) : null
-        const roundId = pattern.roundIdPath
-          ? this.getDeepValue(data, pattern.roundIdPath)
-          : null
+        const roundId = pattern.roundIdPath ? this.getDeepValue(data, pattern.roundIdPath) : null
 
         if (
           typeof betAmount === 'number' &&
@@ -174,8 +175,7 @@ export class NetworkInterceptor {
           typeof gameId === 'string' &&
           typeof roundId === 'string'
         ) {
-          const result =
-            winAmount > betAmount ? 'win' : winAmount < betAmount ? 'loss' : 'push'
+          const result = winAmount > betAmount ? 'win' : winAmount < betAmount ? 'loss' : 'push'
 
           this.onTransaction?.({
             platformSlug: this.platform.slug,

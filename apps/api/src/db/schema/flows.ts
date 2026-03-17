@@ -3,7 +3,17 @@
  * Drizzle ORM table definitions for Flow automation engine
  */
 
-import { pgTable, uuid, varchar, text, jsonb, timestamp, integer, boolean, decimal } from 'drizzle-orm/pg-core'
+import {
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  jsonb,
+  timestamp,
+  integer,
+  boolean,
+  decimal,
+} from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
 // ============================================================================
@@ -35,7 +45,9 @@ export const flows = pgTable('flows', {
 
 export const flowExecutions = pgTable('flow_executions', {
   id: uuid('id').primaryKey().defaultRandom(),
-  flowId: uuid('flow_id').notNull().references(() => flows.id, { onDelete: 'cascade' }),
+  flowId: uuid('flow_id')
+    .notNull()
+    .references(() => flows.id, { onDelete: 'cascade' }),
   userId: uuid('user_id').notNull(),
   status: varchar('status', { length: 30 }).notNull(), // running, completed, failed, stopped_by_guardrail
   startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
@@ -74,7 +86,9 @@ export const sharedFlows = pgTable('shared_flows', {
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description').notNull(),
   category: varchar('category', { length: 50 }).notNull(), // bonus_collection, play_strategy, etc.
-  tags: jsonb('tags').notNull().default(sql`'[]'::jsonb`),
+  tags: jsonb('tags')
+    .notNull()
+    .default(sql`'[]'::jsonb`),
   flowTemplate: jsonb('flow_template').notNull(), // Serialized FlowDefinition with placeholders
   priceCents: integer('price_cents').notNull().default(0), // 0 = free
   imports: integer('imports').notNull().default(0),

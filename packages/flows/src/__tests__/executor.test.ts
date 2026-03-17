@@ -5,7 +5,13 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { FlowExecutor } from '../executor/executor'
-import type { FlowDefinition, FlowNode, FlowActionNode, FlowConditionNode, FlowLoopNode } from '../types'
+import type {
+  FlowDefinition,
+  FlowNode,
+  FlowActionNode,
+  FlowConditionNode,
+  FlowLoopNode,
+} from '../types'
 
 describe('FlowExecutor', () => {
   let executor: FlowExecutor
@@ -616,7 +622,12 @@ describe('FlowExecutor', () => {
         responsiblePlay: { isInCooldown: true, cooldownUntil: new Date(Date.now() + 60_000) },
       })
       expect(ctx.status).toBe('stopped_by_guardrail')
-      expect(ctx.log.some(l => l.type === 'guardrail_triggered' && (l.details as any).guardrail === 'cool_down_check')).toBe(true)
+      expect(
+        ctx.log.some(
+          (l) =>
+            l.type === 'guardrail_triggered' && (l.details as any).guardrail === 'cool_down_check'
+        )
+      ).toBe(true)
     })
 
     it('should not stop execution just because cool_down_check exists (no runtime cooldown)', async () => {
@@ -737,9 +748,23 @@ describe('FlowExecutor', () => {
           left: { type: 'literal', value: 1 },
           operator: '==',
           right: { type: 'literal', value: 1 },
-          onTrue: { type: 'action', id: 'body-a', action: 'spin', parameters: {}, timeout: 1000, onFailure: 'stop' },
+          onTrue: {
+            type: 'action',
+            id: 'body-a',
+            action: 'spin',
+            parameters: {},
+            timeout: 1000,
+            onFailure: 'stop',
+          },
         },
-        body: { type: 'action', id: 'body-a', action: 'spin', parameters: {}, timeout: 1000, onFailure: 'stop' },
+        body: {
+          type: 'action',
+          id: 'body-a',
+          action: 'spin',
+          parameters: {},
+          timeout: 1000,
+          onFailure: 'stop',
+        },
         maxIterations: 3,
         maxDuration: 60_000,
       }

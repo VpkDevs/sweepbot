@@ -27,16 +27,17 @@ export function standardDeviation(values: number[]): number {
 export function rtpConfidenceInterval(
   wins: number,
   total: number,
-  confidence = 0.95,
+  confidence = 0.95
 ): { lower: number; upper: number; rtp: number } {
   const rtp = (wins / total) * 100
   if (total === 0) return { lower: 0, upper: 100, rtp: 0 }
 
   const z = confidence === 0.95 ? 1.96 : 2.576 // 95% or 99% CI
   const phat = wins / total
-  const denominator = 1 + z * z / total
-  const centre = (phat + z * z / (2 * total)) / denominator
-  const margin = (z * Math.sqrt(phat * (1 - phat) / total + z * z / (4 * total * total))) / denominator
+  const denominator = 1 + (z * z) / total
+  const centre = (phat + (z * z) / (2 * total)) / denominator
+  const margin =
+    (z * Math.sqrt((phat * (1 - phat)) / total + (z * z) / (4 * total * total))) / denominator
 
   return {
     rtp,
@@ -72,10 +73,7 @@ export function averageWin(totalWins: number, winCount: number): number {
 /**
  * Calculate session volatility classification
  */
-export function classifyVolatility(
-  values: number[],
-  mean: number,
-): 'low' | 'medium' | 'high' {
+export function classifyVolatility(values: number[], mean: number): 'low' | 'medium' | 'high' {
   const stdDev = standardDeviation(values)
   const cv = stdDev / (mean || 1) // Coefficient of variation
 

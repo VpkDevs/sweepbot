@@ -26,14 +26,14 @@ The core revenue engine. Five-tier model designed to capture users across spendi
 
 ### Tier Structure
 
-| Tier | Price | Annual | Max Platforms | Features | Target User |
-|------|-------|--------|---|---|---|
-| **Free** | $0/mo | $0 | 2 | Manual tracking, 7-day history, read-only community, affiliate links | Acquisition funnel |
-| **Starter** | $14.99/mo | $119/yr | 8 | 1 daily auto-run, 90-day history, mail bonus scraper, daily digest | Casual player |
-| **Pro** | $29.99/mo | $239/yr | Unlimited | Unlimited auto-runs, full mail scraper, redemption tracker, household (3 users) | Serious player |
-| **Analyst** | $39.99/mo | $319/yr | Unlimited | Full RTP analytics, bonus analytics, game intelligence DB, community data access, tax exports | Data-driven player |
-| **Elite** | $59.99/mo | $399/yr | Unlimited | Everything + household (6 users), API access, white-glove onboarding, priority features | Power user / Affiliate |
-| **Lifetime** | $499 (one-time) | -- | Unlimited | Pro-tier features forever; periodic limited availability | FOMO conversion |
+| Tier         | Price           | Annual  | Max Platforms | Features                                                                                      | Target User            |
+| ------------ | --------------- | ------- | ------------- | --------------------------------------------------------------------------------------------- | ---------------------- |
+| **Free**     | $0/mo           | $0      | 2             | Manual tracking, 7-day history, read-only community, affiliate links                          | Acquisition funnel     |
+| **Starter**  | $14.99/mo       | $119/yr | 8             | 1 daily auto-run, 90-day history, mail bonus scraper, daily digest                            | Casual player          |
+| **Pro**      | $29.99/mo       | $239/yr | Unlimited     | Unlimited auto-runs, full mail scraper, redemption tracker, household (3 users)               | Serious player         |
+| **Analyst**  | $39.99/mo       | $319/yr | Unlimited     | Full RTP analytics, bonus analytics, game intelligence DB, community data access, tax exports | Data-driven player     |
+| **Elite**    | $59.99/mo       | $399/yr | Unlimited     | Everything + household (6 users), API access, white-glove onboarding, priority features       | Power user / Affiliate |
+| **Lifetime** | $499 (one-time) | --      | Unlimited     | Pro-tier features forever; periodic limited availability                                      | FOMO conversion        |
 
 ### Pricing Logic
 
@@ -47,6 +47,7 @@ The core revenue engine. Five-tier model designed to capture users across spendi
 ### Revenue Math
 
 Assume 10,000 total users by end of Year 1:
+
 - 7,000 Free (0% ARPU) = $0
 - 1,500 Starter (@$180/yr) = $270K
 - 800 Pro (@$300/yr) = $240K
@@ -91,6 +92,7 @@ Assume 10,000 total users by end of Year 1:
 ### Revenue Projections
 
 **Conversion Funnel:**
+
 - 100,000 users download extension
 - 30,000 active users (30% engagement)
 - 15,000 make a redemption request (platform verification)
@@ -98,11 +100,13 @@ Assume 10,000 total users by end of Year 1:
 - Average $60 bounty per signup
 
 **Year 1**:
+
 - Conservative: 5,000 affiliate signups × $60 × 75% take = **$225K**
 - Moderate: 7,500 affiliate signups × $75 × 75% take = **$421.9K**
 - Optimistic: 10,000 affiliate signups × $80 × 75% take = **$600K**
 
 **Year 2**:
+
 - Scale to 50,000 active users
 - 25,000 affiliate signups × $100 × 75% = **$1.875M**
 
@@ -133,6 +137,7 @@ Assume 10,000 total users by end of Year 1:
 ### Models
 
 #### A. Sponsored Placement
+
 - Platforms pay $2-5K/month to be featured prominently in Game Intelligence DB
 - Trust Index "Certified" badge (builds trust with players)
 - Featured in "Recommended Platforms" section of web app
@@ -140,12 +145,14 @@ Assume 10,000 total users by end of Year 1:
 **Revenue**: 10 platforms × $3K/mo = **$360K/yr**
 
 #### B. Trust Index Certification
+
 - Annual certification program: $10K-50K based on tier (how many players use platform)
 - Platforms get: Badge, marketing materials, featured listing, API access for their own data
 
 **Revenue**: 5 Tier-A × $30K + 10 Tier-B × $15K = **$300K/yr**
 
 #### C. Data Licensing
+
 - Platforms can license aggregated, anonymized player data: "Here's how your RTP compares to industry average"
 - One-time: $5-10K per platform
 
@@ -160,6 +167,7 @@ Assume 10,000 total users by end of Year 1:
 ### Tier Breakdown
 
 #### A. API Access (Elite tier + premium)
+
 - **Starter Tier**: Read-only API (user's own session data)
 - **Pro Tier**: Same as starter
 - **Analyst Tier**: + Game Intelligence DB API
@@ -167,12 +175,14 @@ Assume 10,000 total users by end of Year 1:
 - **Enterprise**: Custom API contracts ($50K-200K/yr)
 
 #### B. Data Reports
+
 - **Quarterly Industry Report**: "$299 per copy" — RTP trends, platform rankings, seasonal patterns
 - **Subscriber Exclusive**: Free for Analyst+ tiers
 
 **Revenue**: 100 copies × $299 = **$29.9K/yr** (conservative; B2B affiliates, analysts, platforms buy these)
 
 #### C. Game Intelligence Database
+
 - Database of 500+ games with crowdsourced RTP, volatility, bonus triggers
 - License to content creators, streamers, review sites: $99-999/yr
 
@@ -187,6 +197,7 @@ Assume 10,000 total users by end of Year 1:
 ### Models
 
 #### Strategy Guides
+
 - "The 2024 Guide to WOW Vegas Bonuses" ($9.99)
 - "RTP Optimization: Choosing Your Game" ($4.99)
 - "Redemption in All 50 States" ($7.99)
@@ -194,6 +205,7 @@ Assume 10,000 total users by end of Year 1:
 **Revenue**: 500 sales/mo × $7 avg = **$42K/yr**
 
 #### Custom Automation Scripts
+
 - Pre-built automation templates for power users
 - "Daily Bonus Claimer for Stake.us" ($19.99)
 - "Multi-platform Session Logger" ($29.99)
@@ -201,6 +213,7 @@ Assume 10,000 total users by end of Year 1:
 **Revenue**: 200 sales/mo × $20 avg = **$48K/yr**
 
 #### Marketplace Commission
+
 - Creator marketplace where users share scripts, guides
 - SweepBot takes 20-30% commission on sales
 
@@ -213,6 +226,7 @@ Assume 10,000 total users by end of Year 1:
 ## 7. Events & Community
 
 ### SweepCon (Annual)
+
 - Virtual convention for sweepstakes community — targeting 2026 launch
 - Talks: RTP trends, platform reviews, responsible play
 - Sponsorship tiers: $5K-50K per sponsor (platforms, affiliates, services)
@@ -220,6 +234,7 @@ Assume 10,000 total users by end of Year 1:
 **Revenue**: 8 sponsors × $15K = **$120K/yr**
 
 ### Meetups & Regional Events
+
 - Partner with local communities for in-person events
 - Sponsorships + ticket sales
 
@@ -233,29 +248,29 @@ Assume 10,000 total users by end of Year 1:
 
 ### Year 1
 
-| Stream | Conservative | Moderate | Optimistic |
-|--------|---|---|---|
-| Subscriptions | $500K | $863K | $1.2M |
-| Affiliate | $225K | $421.9K | $600K |
-| Lifetime Deals | $100K | $249.5K | $400K |
-| Partnerships | $300K | $420K | $500K |
-| Data / API | $20K | $40K | $60K |
-| Marketplace | $50K | $100K | $200K |
-| Events | $80K | $140K | $200K |
-| **Total** | **$1.275M** | **$2.234M** | **$3.16M** |
+| Stream         | Conservative | Moderate    | Optimistic |
+| -------------- | ------------ | ----------- | ---------- |
+| Subscriptions  | $500K        | $863K       | $1.2M      |
+| Affiliate      | $225K        | $421.9K     | $600K      |
+| Lifetime Deals | $100K        | $249.5K     | $400K      |
+| Partnerships   | $300K        | $420K       | $500K      |
+| Data / API     | $20K         | $40K        | $60K       |
+| Marketplace    | $50K         | $100K       | $200K      |
+| Events         | $80K         | $140K       | $200K      |
+| **Total**      | **$1.275M**  | **$2.234M** | **$3.16M** |
 
 ### Year 2 (With Scale)
 
-| Stream | Projection |
-|--------|---|
-| Subscriptions | $1.5M - $2M (user growth) |
-| Affiliate | $1M - $1.875M (more active users) |
-| Lifetime Deals | $500K (2-3 events) |
-| Partnerships | $600K - $800K (more platforms) |
-| Data / API | $150K (B2B enterprise) |
-| Marketplace | $250K - $500K (creator ecosystem) |
-| Events | $250K (in-person + virtual) |
-| **Total** | **$4.25M - $5.925M** |
+| Stream         | Projection                        |
+| -------------- | --------------------------------- |
+| Subscriptions  | $1.5M - $2M (user growth)         |
+| Affiliate      | $1M - $1.875M (more active users) |
+| Lifetime Deals | $500K (2-3 events)                |
+| Partnerships   | $600K - $800K (more platforms)    |
+| Data / API     | $150K (B2B enterprise)            |
+| Marketplace    | $250K - $500K (creator ecosystem) |
+| Events         | $250K (in-person + virtual)       |
+| **Total**      | **$4.25M - $5.925M**              |
 
 ---
 
@@ -270,6 +285,7 @@ Assume 10,000 total users by end of Year 1:
 ### Customer Lifetime Value (CLV)
 
 **Free-to-Starter Conversion Path:**
+
 - Free user converts to Starter: $180/yr
 - 40% convert within 6 months
 - 20% convert to Pro: +$300/yr
@@ -318,11 +334,11 @@ Assume 10,000 total users by end of Year 1:
 
 ## Financial Projections (3-Year)
 
-| Year | Revenue | Margin | Cash Positive |
-|------|---------|--------|---|
-| Year 1 | $1.5M - $2.5M | 10-15% | Month 10-12 |
-| Year 2 | $4M - $6M | 30-40% | ✓ Profitable |
-| Year 3 | $8M - $12M | 45-55% | ✓ Strong margin |
+| Year   | Revenue       | Margin | Cash Positive   |
+| ------ | ------------- | ------ | --------------- |
+| Year 1 | $1.5M - $2.5M | 10-15% | Month 10-12     |
+| Year 2 | $4M - $6M     | 30-40% | ✓ Profitable    |
+| Year 3 | $8M - $12M    | 45-55% | ✓ Strong margin |
 
 ---
 
@@ -336,28 +352,32 @@ Assume 10,000 total users by end of Year 1:
 4. **Platform Quality**: No revenue from problem platforms (withdraw partnership if compliance fails)
 5. **No Predatory Growth**: Never gamify or reward excessive play
 
-**Commitment**: SweepBot generates revenue from *transparency and automation*, not addiction.
+**Commitment**: SweepBot generates revenue from _transparency and automation_, not addiction.
 
 ---
 
 ## Implementation Roadmap
 
 ### Month 1-3 (MVP Launch)
+
 - Launch free tier + Starter tier
 - Implement affiliate link injection in extension
 - Basic Trust Index (3-4 platforms)
 
 ### Month 4-6 (Monetization Ramp)
+
 - Introduce Pro tier, Lifetime deals
 - Expand affiliate program to 10+ platforms
 - Platform partnership pitches (5-7 early adopters)
 
 ### Month 7-9 (Scale)
+
 - Analyst tier launch (Game Intelligence DB)
 - Data report product (quarterly industry report)
 - Marketplace beta (5-10 creators)
 
 ### Month 10-12 (Diversification)
+
 - Elite tier + API access
 - Events planning (SweepCon 2025)
 - B2B enterprise pilots
@@ -368,13 +388,13 @@ Assume 10,000 total users by end of Year 1:
 
 **Why SweepBot Wins on Monetization:**
 
-| Factor | SweepBot | Typical Casino Affiliate | Analysis Platform |
-|--------|---|---|---|
-| User Acquisition | Free (affiliate revenue) | Paid marketing | Paid marketing |
-| Switching Cost | High (personal data) | Low | Medium |
-| Revenue Diversity | 7 streams | 1 stream | 2-3 streams |
-| Defensibility | Data moat + community | None | Moderate |
-| TAM | $5M+ monthly sweeps players | Casinos only | Industry professionals |
-| Profitability | Path to 50%+ margins | 20-30% margins | 30-40% margins |
+| Factor            | SweepBot                    | Typical Casino Affiliate | Analysis Platform      |
+| ----------------- | --------------------------- | ------------------------ | ---------------------- |
+| User Acquisition  | Free (affiliate revenue)    | Paid marketing           | Paid marketing         |
+| Switching Cost    | High (personal data)        | Low                      | Medium                 |
+| Revenue Diversity | 7 streams                   | 1 stream                 | 2-3 streams            |
+| Defensibility     | Data moat + community       | None                     | Moderate               |
+| TAM               | $5M+ monthly sweeps players | Casinos only             | Industry professionals |
+| Profitability     | Path to 50%+ margins        | 20-30% margins           | 30-40% margins         |
 
 **Conclusion**: SweepBot is positioned to be **the most profitable competitor in the space** through architectural design and multi-stream revenue.

@@ -34,7 +34,7 @@ if (import.meta.env.VITE_SENTRY_DSN) {
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30_000,        // 30s stale time — data is fresh enough for analytics
+      staleTime: 30_000, // 30s stale time — data is fresh enough for analytics
       retry: 1,
       refetchOnWindowFocus: false,
     },

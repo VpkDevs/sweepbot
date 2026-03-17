@@ -1,7 +1,7 @@
 /**
  * Centralized Logging Infrastructure
  * Replaces console.log with structured logging that works in all environments
- * 
+ *
  * Usage:
  *   logger.info('User logged in', { userId: '123' })
  *   logger.error('API call failed', { error, endpoint: '/api/users' })
@@ -71,7 +71,11 @@ class Logger {
     }
   }
 
-  private async sendToRemote(level: LogLevel, message: string, context?: LogContext): Promise<void> {
+  private async sendToRemote(
+    level: LogLevel,
+    message: string,
+    context?: LogContext
+  ): Promise<void> {
     if (!this.config.remoteEndpoint) return
 
     try {
@@ -114,7 +118,7 @@ class Logger {
   child(fixedContext: LogContext): Logger {
     const childLogger = new Logger(this.config)
     const originalLog = childLogger.log.bind(childLogger)
-    
+
     childLogger.log = (level: LogLevel, message: string, context?: LogContext) => {
       originalLog(level, message, { ...fixedContext, ...context })
     }

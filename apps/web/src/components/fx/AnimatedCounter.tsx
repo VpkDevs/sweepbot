@@ -31,7 +31,10 @@ export function AnimatedCounter({
   }, [value, prefix, suffix, decimals])
 
   return (
-    <span className={cn('inline-flex items-baseline tabular-nums', className)} aria-label={formatted}>
+    <span
+      className={cn('inline-flex items-baseline tabular-nums', className)}
+      aria-label={formatted}
+    >
       {formatted.split('').map((char, i) => {
         const isDigit = /\d/.test(char)
         if (isDigit) {
@@ -108,15 +111,13 @@ function RollingDigit({
   return (
     <span
       ref={containerRef}
-      className={cn('inline-block overflow-hidden relative', className)}
+      className={cn('relative inline-block overflow-hidden', className)}
       style={{ height: digitHeight, lineHeight: digitHeight }}
     >
       <span
         className="inline-flex flex-col transition-transform"
         style={{
-          transform: isAnimating
-            ? `translateY(-${(strip.length - 1) * 100}%)`
-            : 'translateY(0%)',
+          transform: isAnimating ? `translateY(-${(strip.length - 1) * 100}%)` : 'translateY(0%)',
           transition: isAnimating
             ? `transform ${duration}ms cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms`
             : 'none',

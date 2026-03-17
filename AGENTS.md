@@ -8,7 +8,7 @@
 ## What SweepBot Is
 
 **SweepBot** is the operating system for the sweepstakes casino player ecosystem.
-Tagline: *"We give players what the house never wants them to have."*
+Tagline: _"We give players what the house never wants them to have."_
 
 It is a **SaaS + browser extension + desktop automation** platform that gives sweepstakes casino players:
 
@@ -49,31 +49,31 @@ sweepbot/                         ← pnpm workspace root (Turborepo)
 
 ## Tech Stack — Closed Decisions (Do Not Re-Litigate)
 
-| Layer | Choice | Do NOT suggest |
-| ---- | ---- | ---- |
-| Package manager | pnpm | npm, yarn |
-| Build orchestration | Turborepo | nx, lerna |
-| Frontend framework | React 18 | Vue, Svelte, Next.js |
-| Frontend bundler | Vite | webpack, Parcel |
-| Routing (web) | TanStack Router v1.56+ | React Router, Next.js routing |
-| Styling | Tailwind CSS v4 + shadcn/ui | styled-components, emotion, MUI |
-| Backend framework | Fastify 5 | Express, Hono, NestJS |
-| ORM | Drizzle ORM | Prisma, TypeORM, Sequelize |
-| Database | PostgreSQL 16 via Supabase | MySQL, MongoDB, SQLite (server-side) |
-| Cache / queues | Redis via Upstash + BullMQ | RabbitMQ, SQS |
-| Auth | Supabase Auth (JWT) | Auth0, Clerk, NextAuth |
-| Payments | Stripe | PayPal, Paddle |
-| State (web) | Zustand + TanStack Query | Redux, Jotai, SWR |
-| Extension framework | WXT (Web Extension Tools) | Plasmo, vanilla manifest |
-| Extension manifest | MV3 only | MV2 — Chrome Web Store rejects it |
-| Language | TypeScript 5.5+ strict | JavaScript, `any` types in core logic |
-| Test runner | Vitest | Jest |
-| Email | Resend | SendGrid, Mailgun |
-| Error monitoring | Sentry | Datadog, Rollbar |
-| Analytics | PostHog | Mixpanel, Amplitude |
-| CI/CD | GitHub Actions | CircleCI, Jenkins |
-| Web hosting | Vercel | Netlify, AWS Amplify |
-| API hosting | Railway | Heroku, Fly.io |
+| Layer               | Choice                      | Do NOT suggest                        |
+| ------------------- | --------------------------- | ------------------------------------- |
+| Package manager     | pnpm                        | npm, yarn                             |
+| Build orchestration | Turborepo                   | nx, lerna                             |
+| Frontend framework  | React 18                    | Vue, Svelte, Next.js                  |
+| Frontend bundler    | Vite                        | webpack, Parcel                       |
+| Routing (web)       | TanStack Router v1.56+      | React Router, Next.js routing         |
+| Styling             | Tailwind CSS v4 + shadcn/ui | styled-components, emotion, MUI       |
+| Backend framework   | Fastify 5                   | Express, Hono, NestJS                 |
+| ORM                 | Drizzle ORM                 | Prisma, TypeORM, Sequelize            |
+| Database            | PostgreSQL 16 via Supabase  | MySQL, MongoDB, SQLite (server-side)  |
+| Cache / queues      | Redis via Upstash + BullMQ  | RabbitMQ, SQS                         |
+| Auth                | Supabase Auth (JWT)         | Auth0, Clerk, NextAuth                |
+| Payments            | Stripe                      | PayPal, Paddle                        |
+| State (web)         | Zustand + TanStack Query    | Redux, Jotai, SWR                     |
+| Extension framework | WXT (Web Extension Tools)   | Plasmo, vanilla manifest              |
+| Extension manifest  | MV3 only                    | MV2 — Chrome Web Store rejects it     |
+| Language            | TypeScript 5.5+ strict      | JavaScript, `any` types in core logic |
+| Test runner         | Vitest                      | Jest                                  |
+| Email               | Resend                      | SendGrid, Mailgun                     |
+| Error monitoring    | Sentry                      | Datadog, Rollbar                      |
+| Analytics           | PostHog                     | Mixpanel, Amplitude                   |
+| CI/CD               | GitHub Actions              | CircleCI, Jenkins                     |
+| Web hosting         | Vercel                      | Netlify, AWS Amplify                  |
+| API hosting         | Railway                     | Heroku, Fly.io                        |
 
 ---
 
@@ -228,26 +228,25 @@ SweepBot is a **transparency and productivity tool**, not a gambling tool. Never
 
 ## Where to Find Things
 
-| I need... | Go to |
-| ---- | ---- |
-| Full product requirements | `docs/PRD.md` |
-| System architecture | `docs/TECHNICAL_ARCHITECTURE.md` |
-| Database schema (canonical) | `docs/DATABASE_SCHEMA.md` + `apps/api/src/db/schema/` |
-| API reference | `docs/API_DESIGN.md` |
-| Development phases + task tracking | `docs/DEVELOPMENT_ROADMAP.md` |
-| Data advantage roadmap | `docs/DATA_MOAT_ROADMAP.md` |
-| Revenue model | `docs/MONETIZATION_STRATEGY.md` |
-| Platform list + affiliates | `docs/PLATFORM_COVERAGE.md` |
-| Extension architecture | `apps/extension/README.md` |
-| NLP flows API reference | `packages/flows/README.md` |
-| UI page map + design system | `docs/UI_DOCUMENTATION.md` |
-| Phase 1 completion details | `docs/milestones/PHASE_1_COMPLETION.md` |
-| Phase 1 implementation summary | `docs/milestones/IMPLEMENTATION_SUMMARY.md` |
-| Security architecture | `docs/SECURITY_ARCHITECTURE.md` |
-| Trust Index methodology | `docs/TRUST_INDEX_METHODOLOGY.md` |
-| Privacy Policy | `docs/PRIVACY_POLICY.md` |
-| Terms of Service | `docs/TERMS_OF_SERVICE.md` |
-| Launch gate checklist | `docs/LAUNCH_CHECKLIST.md` |
-| Extension store submission | `docs/EXTENSION_SUBMISSION_CHECKLIST.md` |
-| Developer onboarding | `docs/DEVELOPER_ONBOARDING.md` |
-
+| I need...                          | Go to                                                 |
+| ---------------------------------- | ----------------------------------------------------- |
+| Full product requirements          | `docs/PRD.md`                                         |
+| System architecture                | `docs/TECHNICAL_ARCHITECTURE.md`                      |
+| Database schema (canonical)        | `docs/DATABASE_SCHEMA.md` + `apps/api/src/db/schema/` |
+| API reference                      | `docs/API_DESIGN.md`                                  |
+| Development phases + task tracking | `docs/DEVELOPMENT_ROADMAP.md`                         |
+| Data advantage roadmap             | `docs/DATA_MOAT_ROADMAP.md`                           |
+| Revenue model                      | `docs/MONETIZATION_STRATEGY.md`                       |
+| Platform list + affiliates         | `docs/PLATFORM_COVERAGE.md`                           |
+| Extension architecture             | `apps/extension/README.md`                            |
+| NLP flows API reference            | `packages/flows/README.md`                            |
+| UI page map + design system        | `docs/UI_DOCUMENTATION.md`                            |
+| Phase 1 completion details         | `docs/milestones/PHASE_1_COMPLETION.md`               |
+| Phase 1 implementation summary     | `docs/milestones/IMPLEMENTATION_SUMMARY.md`           |
+| Security architecture              | `docs/SECURITY_ARCHITECTURE.md`                       |
+| Trust Index methodology            | `docs/TRUST_INDEX_METHODOLOGY.md`                     |
+| Privacy Policy                     | `docs/PRIVACY_POLICY.md`                              |
+| Terms of Service                   | `docs/TERMS_OF_SERVICE.md`                            |
+| Launch gate checklist              | `docs/LAUNCH_CHECKLIST.md`                            |
+| Extension store submission         | `docs/EXTENSION_SUBMISSION_CHECKLIST.md`              |
+| Developer onboarding               | `docs/DEVELOPER_ONBOARDING.md`                        |

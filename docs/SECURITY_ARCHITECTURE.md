@@ -72,6 +72,7 @@ NOTHING is transmitted to SweepBot servers.
 ### Content Security Policy
 
 The extension enforces a strict CSP:
+
 - No `eval()` or `new Function()`
 - No inline scripts
 - Script sources restricted to the extension's own bundle
@@ -93,6 +94,7 @@ The extension enforces a strict CSP:
 ### Message Validation
 
 All messages between content scripts and the background service worker are:
+
 1. Typed with strict TypeScript interfaces
 2. Validated at runtime with Zod schemas
 3. Rejected if they don't conform to the expected shape
@@ -102,6 +104,7 @@ This prevents a compromised casino page from injecting malicious messages into t
 ### XHR Interception
 
 The content script monkey-patches `XMLHttpRequest` and `fetch` to capture transaction data. This is:
+
 - Read-only (it observes responses, it does not modify them)
 - Scoped only to responses matching known API patterns for approved platforms
 - Stripped of any PII before being sent to the background worker
@@ -117,6 +120,7 @@ Every API endpoint uses Fastify's built-in JSON Schema validation combined with 
 ### Rate Limiting
 
 All endpoints are rate-limited via `@fastify/rate-limit` backed by Redis:
+
 - Authentication endpoints: 5 requests / minute / IP
 - Standard endpoints: 100 requests / minute / user
 - Batch ingestion (`/transactions/batch`): 10 requests / minute / device
@@ -136,13 +140,13 @@ Drizzle ORM uses parameterized queries exclusively. No raw SQL string concatenat
 
 ## 6. Data Privacy
 
-| Data Type | Storage | Who Can Access |
-|-----------|---------|----------------|
-| Session & transaction data | Supabase (encrypted at rest) | User only (RLS) |
-| Casino credentials | Local device only | User only |
-| Aggregate RTP / leaderboard | Supabase (anonymized) | All users |
-| Jackpot time-series | Supabase | All users |
-| Stripe billing data | Stripe (never stored by SweepBot) | Stripe + User |
+| Data Type                   | Storage                           | Who Can Access  |
+| --------------------------- | --------------------------------- | --------------- |
+| Session & transaction data  | Supabase (encrypted at rest)      | User only (RLS) |
+| Casino credentials          | Local device only                 | User only       |
+| Aggregate RTP / leaderboard | Supabase (anonymized)             | All users       |
+| Jackpot time-series         | Supabase                          | All users       |
+| Stripe billing data         | Stripe (never stored by SweepBot) | Stripe + User   |
 
 **No user data is sold or shared with third parties for advertising.**
 
@@ -167,4 +171,4 @@ Before merging any PR that touches security-sensitive areas:
 
 ---
 
-*Security architecture maintained by APPYness. Last updated March 2026.*
+_Security architecture maintained by APPYness. Last updated March 2026._

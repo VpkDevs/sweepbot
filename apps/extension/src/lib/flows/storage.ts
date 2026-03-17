@@ -68,10 +68,7 @@ async function deleteFlow(id: string): Promise<void> {
  * @param id - The identifier of the flow to update
  * @param status - The new status value to assign to the flow
  */
-async function updateFlowStatus(
-  id: string,
-  status: FlowDefinition['status'],
-): Promise<void> {
+async function updateFlowStatus(id: string, status: FlowDefinition['status']): Promise<void> {
   const flow = await getFlow(id)
   if (!flow) return
   await saveFlow({ ...flow, status, updatedAt: Date.now() })

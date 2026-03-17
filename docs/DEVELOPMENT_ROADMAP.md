@@ -20,6 +20,7 @@
 **Goal:** Monorepo setup, shared infrastructure, data moat collection begins.
 
 ### Infrastructure ✅
+
 - [x] Monorepo init (pnpm + Turborepo)
 - [x] `packages/types` — All shared TypeScript interfaces
 - [x] `packages/utils` — Shared utilities
@@ -33,6 +34,7 @@
 - [ ] Sentry error monitoring
 
 ### Always-On Data Collection — ⚠️ DEPLOY NOW (P0)
+
 - [ ] **Jackpot poller** — scrape progressive jackpot values every 60s (Replit)
 - [ ] **TOS monitor** — daily diff-check of platform terms (Replit)
 - [ ] **Platform health checker** — uptime every 5 minutes (Replit)
@@ -47,6 +49,7 @@
 **Goal:** Users can describe automation routines in plain English. SweepBot converts them to safe, executable scripts.
 
 ### Core Engine ✅ (100% complete)
+
 - [x] Natural Language Entity Recognition (13+ platforms, 10+ games, 10+ action types)
 - [x] 4-pass interpretation pipeline (→ entity → intent → AST → validation)
 - [x] Flow Definition AST (9 node types)
@@ -68,6 +71,7 @@
 **Goal:** Connect the Flow Engine to real browser actions. Begin live data collection. Achieve first revenue.
 
 ### Extension — Action Execution (P0 — Connect Phase 1 to Reality)
+
 - [ ] Platform detection engine for 15+ platforms
 - [ ] XHR/fetch interceptor — per-platform parsers for spin data extraction
 - [ ] Real-time RTP calculation engine
@@ -79,6 +83,7 @@
 - [ ] Chrome Web Store submission
 
 ### API — Data Ingestion
+
 - [ ] Fastify server full setup with TypeScript
 - [ ] Supabase auth integration (JWT validation middleware)
 - [ ] `/sessions` endpoints
@@ -89,11 +94,13 @@
 - [ ] Rate limiting + Sentry + Pino structured logging
 
 ### LLM Fallback for Flow Interpreter
+
 - [ ] Claude API integration for confidence < 0.7 interpretations
 - [ ] Fallback response formatted into FlowInterpretationResult
 - [ ] Cost tracking per user per month (guard against abuse)
 
 ### Web Dashboard
+
 - [ ] Authentication (sign up / in / reset)
 - [ ] Onboarding flow (add first platform, install extension CTA)
 - [ ] Command Center (portfolio overview)
@@ -104,6 +111,7 @@
 - [ ] Stripe subscription management
 
 ### Stripe Integration
+
 - [ ] Products/prices in Stripe (all 5 tiers)
 - [ ] Checkout flow
 - [ ] Customer portal
@@ -111,6 +119,7 @@
 - [ ] Feature-gating middleware (tier → feature map)
 
 **Phase 2 Launch Criteria:**
+
 - Extension installable from Chrome Web Store
 - At least 5 platforms fully supported (full action execution)
 - Dashboard live and accepting signups
@@ -178,15 +187,15 @@ Delays in these items cascade into every phase:
 
 ## Sprint Velocity Reference
 
-| Phase | Duration | Primary Output |
-|-------|----------|----------------|
-| Phase 0 | Complete | Monorepo + infrastructure |
-| Phase 1 | Complete | NLP Flow Engine |
-| Phase 2 | Weeks 1–10 | Extension actions + dashboard + Stripe |
+| Phase   | Duration    | Primary Output                              |
+| ------- | ----------- | ------------------------------------------- |
+| Phase 0 | Complete    | Monorepo + infrastructure                   |
+| Phase 1 | Complete    | NLP Flow Engine                             |
+| Phase 2 | Weeks 1–10  | Extension actions + dashboard + Stripe      |
 | Phase 3 | Weeks 11–20 | Analytics + Trust Index + Game Intelligence |
-| Phase 4 | Weeks 21–32 | Community + Data Products |
-| Phase 5 | Weeks 33+ | Mobile + Scale |
+| Phase 4 | Weeks 21–32 | Community + Data Products                   |
+| Phase 5 | Weeks 33+   | Mobile + Scale                              |
 
 ---
 
-*Roadmap maintained by APPYness. Phases reflect current ground truth as of March 2026.*
+_Roadmap maintained by APPYness. Phases reflect current ground truth as of March 2026._

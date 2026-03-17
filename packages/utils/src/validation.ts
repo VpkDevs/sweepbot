@@ -122,7 +122,10 @@ export function validateRange(value: number, min: number, max: number): boolean 
 /**
  * Validate enum value
  */
-export function validateEnum<T extends string | number>(value: unknown, allowedValues: readonly T[]): value is T {
+export function validateEnum<T extends string | number>(
+  value: unknown,
+  allowedValues: readonly T[]
+): value is T {
   return allowedValues.includes(value as T)
 }
 
@@ -131,7 +134,7 @@ export function validateEnum<T extends string | number>(value: unknown, allowedV
  */
 export function validateObjectShape<T extends Record<string, unknown>>(
   obj: unknown,
-  schema: Record<string, 'string' | 'number' | 'boolean' | 'object'>,
+  schema: Record<string, 'string' | 'number' | 'boolean' | 'object'>
 ): obj is T {
   if (typeof obj !== 'object' || obj === null) return false
 

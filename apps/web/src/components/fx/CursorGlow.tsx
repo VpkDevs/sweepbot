@@ -71,7 +71,7 @@ export function CursorGlow({
       ref={glowRef}
       aria-hidden
       className={cn(
-        'pointer-events-none fixed inset-0 z-[1] will-change-transform cursor-glow-base',
+        'cursor-glow-base pointer-events-none fixed inset-0 z-[1] will-change-transform',
         sizeClass,
         colorClass,
         blendClass

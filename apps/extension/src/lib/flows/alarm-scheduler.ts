@@ -127,7 +127,7 @@ function cronToAlarmParams(cron: string): AlarmParams {
   if (dow !== '*') {
     // Weekly schedule: find next occurrence of target day at target time
     const targetDow = parseInt(dow)
-    
+
     // First, check if today at target time hasn't passed yet
     if (candidate.getTime() > now.getTime() && candidate.getDay() === targetDow) {
       // Today is the right day and time hasn't passed
@@ -136,12 +136,12 @@ function cronToAlarmParams(cron: string): AlarmParams {
         periodMs: 7 * 24 * 60 * 60_000,
       }
     }
-    
+
     // Otherwise, find the next occurrence of this day of week
     const daysUntilTarget = (targetDow - candidate.getDay() + 7) % 7
     const daysToAdd = daysUntilTarget === 0 ? 7 : daysUntilTarget
     candidate.setDate(candidate.getDate() + daysToAdd)
-    
+
     return {
       nextMs: candidate.getTime() - Date.now(),
       periodMs: 7 * 24 * 60 * 60_000,

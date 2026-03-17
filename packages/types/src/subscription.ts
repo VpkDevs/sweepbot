@@ -1,9 +1,22 @@
 import { z } from 'zod'
 
-export const SubscriptionTierSchema = z.enum(['free', 'starter', 'pro', 'analyst', 'elite', 'lifetime'])
+export const SubscriptionTierSchema = z.enum([
+  'free',
+  'starter',
+  'pro',
+  'analyst',
+  'elite',
+  'lifetime',
+])
 export type SubscriptionTier = z.infer<typeof SubscriptionTierSchema>
 
-export const SubscriptionStatusSchema = z.enum(['active', 'trialing', 'past_due', 'cancelled', 'paused'])
+export const SubscriptionStatusSchema = z.enum([
+  'active',
+  'trialing',
+  'past_due',
+  'cancelled',
+  'paused',
+])
 export type SubscriptionStatus = z.infer<typeof SubscriptionStatusSchema>
 
 export const SubscriptionSchema = z.object({

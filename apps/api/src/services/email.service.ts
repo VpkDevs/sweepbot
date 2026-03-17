@@ -78,7 +78,11 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
   })
 }
 
-export async function sendAchievementEmail(to: string, achievementName: string, description: string) {
+export async function sendAchievementEmail(
+  to: string,
+  achievementName: string,
+  description: string
+) {
   await sendEmail({
     to,
     subject: `Achievement unlocked: ${achievementName}`,
@@ -92,6 +96,55 @@ export async function sendAchievementEmail(to: string, achievementName: string, 
   })
 }
 
+export async function sendTrialStartEmail(to: string, trialEndsAt: Date, username?: string) {
+  const endDateStr = trialEndsAt.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  })
+  await sendEmail({
+    to,
+    subject: 'Your SweepBot Pro trial has started — 14 days free',
+    html: `
+      <h1>Welcome to Pro${username ? `, ${username}` : ''}!</h1>
+      <p>Your 14-day SweepBot Pro trial is now active. You have full access to all Pro features until <strong>${endDateStr}</strong>.</p>
+      <p>Explore what's included: advanced analytics, flow automation, priority redemption tracking, and more.</p>
+      <p><a href="${APP_URL}/dashboard">Go to Dashboard →</a></p>
+      <p style="color:#888;font-size:12px;">No charge until your trial ends. You can cancel anytime in Settings.</p>
+    `,
+    text: `Welcome to Pro${username ? `, ${username}` : ''}!\n\nYour 14-day SweepBot Pro trial is active until ${endDateStr}.\n\nDashboard: ${APP_URL}/dashboard`,
+  })
+}
+
+export async function sendTrialEndingEmail(to: string, daysLeft: number) {
+  await sendEmail({
+    to,
+    subject: `Your SweepBot Pro trial ends in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`,
+    html: `
+      <h1>Your trial is ending soon</h1>
+      <p>You have <strong>${daysLeft} day${daysLeft === 1 ? '' : 's'}</strong> left on your SweepBot Pro trial.</p>
+      <p>Upgrade now to keep your Pro features and avoid any interruption.</p>
+      <p><a href="${APP_URL}/pricing">Upgrade to Pro →</a></p>
+      <p style="color:#888;font-size:12px;">If you don't upgrade, your account will revert to the Free plan.</p>
+    `,
+    text: `Your SweepBot Pro trial ends in ${daysLeft} day${daysLeft === 1 ? '' : 's'}.\n\nUpgrade: ${APP_URL}/pricing`,
+  })
+}
+
+export async function sendTrialExpiredEmail(to: string) {
+  await sendEmail({
+    to,
+    subject: 'Your SweepBot Pro trial has ended',
+    html: `
+      <h1>Your trial has ended</h1>
+      <p>Your 14-day SweepBot Pro trial has expired. Your account is now on the Free plan.</p>
+      <p>You can upgrade anytime to regain access to Pro features.</p>
+      <p><a href="${APP_URL}/pricing">View Pro plans →</a></p>
+    `,
+    text: `Your SweepBot Pro trial has expired. Upgrade to keep Pro features: ${APP_URL}/pricing`,
+  })
+}
+
 export async function sendRedemptionStatusEmail(
   to: string,
   platform: string,
@@ -100,8 +153,16 @@ export async function sendRedemptionStatusEmail(
   notes?: string
 ) {
   const statusMessages = {
-    approved: { emoji: '✅', label: 'Approved', text: 'Your redemption has been approved and is being processed.' },
-    declined: { emoji: '❌', label: 'Declined', text: 'Unfortunately your redemption was declined.' },
+    approved: {
+      emoji: '✅',
+      label: 'Approved',
+      text: 'Your redemption has been approved and is being processed.',
+    },
+    declined: {
+      emoji: '❌',
+      label: 'Declined',
+      text: 'Unfortunately your redemption was declined.',
+    },
     paid: { emoji: '💰', label: 'Paid', text: 'Your redemption has been paid!' },
   }
 

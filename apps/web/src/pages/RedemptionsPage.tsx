@@ -22,10 +22,26 @@ import { cn, formatSC } from '../lib/utils'
 type RedemptionStatus = 'pending' | 'processing' | 'completed' | 'rejected' | 'all'
 
 const STATUS_CONFIG = {
-  pending: { label: 'Pending', icon: Clock, className: 'text-yellow-400 bg-yellow-900/30 border-yellow-800' },
-  processing: { label: 'Processing', icon: Timer, className: 'text-blue-400 bg-blue-900/30 border-blue-800' },
-  completed: { label: 'Completed', icon: CheckCircle2, className: 'text-green-400 bg-green-900/30 border-green-800' },
-  rejected: { label: 'Rejected', icon: XCircle, className: 'text-red-400 bg-red-900/30 border-red-800' },
+  pending: {
+    label: 'Pending',
+    icon: Clock,
+    className: 'text-yellow-400 bg-yellow-900/30 border-yellow-800',
+  },
+  processing: {
+    label: 'Processing',
+    icon: Timer,
+    className: 'text-blue-400 bg-blue-900/30 border-blue-800',
+  },
+  completed: {
+    label: 'Completed',
+    icon: CheckCircle2,
+    className: 'text-green-400 bg-green-900/30 border-green-800',
+  },
+  rejected: {
+    label: 'Rejected',
+    icon: XCircle,
+    className: 'text-red-400 bg-red-900/30 border-red-800',
+  },
 } as const
 
 const PAYMENT_METHODS = [
@@ -46,8 +62,13 @@ function StatusBadge({ status }: { status: keyof typeof STATUS_CONFIG }) {
   const cfg = STATUS_CONFIG[status]
   const Icon = cfg.icon
   return (
-    <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border', cfg.className)}>
-      <Icon className="w-3 h-3" />
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium',
+        cfg.className
+      )}
+    >
+      <Icon className="h-3 w-3" />
       {cfg.label}
     </span>
   )
@@ -116,36 +137,36 @@ function LogRedemptionModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-md bg-zinc-950 rounded-2xl border border-zinc-800 shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
+      <div className="relative z-10 w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl">
+        <div className="flex items-center justify-between border-b border-zinc-800 px-6 py-4">
           <h2 className="text-base font-semibold text-white">Log Redemption</h2>
           <button
             type="button"
             onClick={onClose}
             title="Close modal"
             aria-label="Close modal"
-            className="text-zinc-500 hover:text-white transition-colors"
+            className="text-zinc-500 transition-colors hover:text-white"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
+        <div className="space-y-4 p-6">
           {error && (
-            <div className="px-3 py-2 rounded-lg bg-red-950/50 border border-red-800 text-red-300 text-sm">
+            <div className="rounded-lg border border-red-800 bg-red-950/50 px-3 py-2 text-sm text-red-300">
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Platform *</label>
+            <label className="mb-1.5 block text-xs font-medium text-zinc-400">Platform *</label>
             <select
               aria-label="Redemption platform"
               title="Redemption platform"
               value={form.platform_id}
               onChange={(e) => setForm({ ...form, platform_id: e.target.value })}
               required
-              className="w-full bg-zinc-900 border border-zinc-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="focus:ring-brand-500 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2"
             >
               <option value="">Select platform…</option>
               {platforms.map((p) => (
@@ -158,7 +179,9 @@ function LogRedemptionModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Amount (SC) *</label>
+              <label className="mb-1.5 block text-xs font-medium text-zinc-400">
+                Amount (SC) *
+              </label>
               <input
                 type="number"
                 min="0.01"
@@ -168,47 +191,55 @@ function LogRedemptionModal({
                 value={form.amount_sc}
                 onChange={(e) => setForm({ ...form, amount_sc: e.target.value })}
                 placeholder="50.00"
-                className="w-full bg-zinc-900 border border-zinc-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="focus:ring-brand-500 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Requested Date *</label>
+              <label className="mb-1.5 block text-xs font-medium text-zinc-400">
+                Requested Date *
+              </label>
               <input
                 type="date"
                 aria-label="Requested date"
                 title="Requested date"
                 value={form.requested_at}
                 onChange={(e) => setForm({ ...form, requested_at: e.target.value })}
-                className="w-full bg-zinc-900 border border-zinc-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="focus:ring-brand-500 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Payment Method *</label>
+            <label className="mb-1.5 block text-xs font-medium text-zinc-400">
+              Payment Method *
+            </label>
             <select
               aria-label="Redemption payment method"
               title="Redemption payment method"
               value={form.payment_method}
               onChange={(e) => setForm({ ...form, payment_method: e.target.value })}
               required
-              className="w-full bg-zinc-900 border border-zinc-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="focus:ring-brand-500 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2"
             >
               <option value="">Select method…</option>
               {PAYMENT_METHODS.map((m) => (
-                <option key={m} value={m}>{m}</option>
+                <option key={m} value={m}>
+                  {m}
+                </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Notes (optional)</label>
+            <label className="mb-1.5 block text-xs font-medium text-zinc-400">
+              Notes (optional)
+            </label>
             <textarea
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               rows={2}
               placeholder="Any relevant details…"
-              className="w-full bg-zinc-900 border border-zinc-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+              className="focus:ring-brand-500 w-full resize-none rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2"
             />
           </div>
         </div>
@@ -217,17 +248,19 @@ function LogRedemptionModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium rounded-lg transition-colors"
+            className="flex-1 rounded-lg bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={() => mutation.mutate()}
-            disabled={mutation.isPending || !form.platform_id || !form.amount_sc || !form.payment_method}
-            className="flex-1 px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            disabled={
+              mutation.isPending || !form.platform_id || !form.amount_sc || !form.payment_method
+            }
+            className="bg-brand-600 hover:bg-brand-500 flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {mutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+            {mutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             Log Redemption
           </button>
         </div>
@@ -272,51 +305,61 @@ function MarkCompleteModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-sm bg-zinc-950 rounded-2xl border border-zinc-800 shadow-2xl p-6 space-y-4">
+      <div className="relative z-10 w-full max-w-sm space-y-4 rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl">
         <h2 className="text-base font-semibold text-white">Mark as Completed</h2>
         <p className="text-sm text-zinc-400">
           Record when{' '}
-          <span className="text-white font-medium">{formatSC(redemption['amount_sc'] as number)} SC</span>
-          {' '}from{' '}
-          <span className="text-white font-medium">{redemption['platform_name'] as string}</span>
-          {' '}arrived.
+          <span className="font-medium text-white">
+            {formatSC(redemption['amount_sc'] as number)} SC
+          </span>{' '}
+          from{' '}
+          <span className="font-medium text-white">{redemption['platform_name'] as string}</span>{' '}
+          arrived.
         </p>
 
         <div>
-          <label className="block text-xs font-medium text-zinc-400 mb-1.5">Completed Date</label>
+          <label className="mb-1.5 block text-xs font-medium text-zinc-400">Completed Date</label>
           <input
             type="date"
             aria-label="Completed date"
             title="Completed date"
             value={completedAt}
             onChange={(e) => setCompletedAt(e.target.value)}
-            className="w-full bg-zinc-900 border border-zinc-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="focus:ring-brand-500 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2"
           />
         </div>
 
         {processingDays >= 0 && (
-          <div className={cn(
-            'flex items-center gap-2 px-3 py-2 rounded-lg text-sm',
-            processingDays <= 3 ? 'bg-green-900/20 text-green-400' :
-            processingDays <= 7 ? 'bg-yellow-900/20 text-yellow-400' :
-            'bg-red-900/20 text-red-400'
-          )}>
-            <Clock className="w-4 h-4 shrink-0" />
+          <div
+            className={cn(
+              'flex items-center gap-2 rounded-lg px-3 py-2 text-sm',
+              processingDays <= 3
+                ? 'bg-green-900/20 text-green-400'
+                : processingDays <= 7
+                  ? 'bg-yellow-900/20 text-yellow-400'
+                  : 'bg-red-900/20 text-red-400'
+            )}
+          >
+            <Clock className="h-4 w-4 shrink-0" />
             Processing time: {processingDays} day{processingDays !== 1 ? 's' : ''}
           </div>
         )}
 
         <div className="flex gap-3">
-          <button type="button" onClick={onClose} className="flex-1 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium rounded-lg transition-colors">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 rounded-lg bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
+          >
             Cancel
           </button>
           <button
             type="button"
             onClick={() => mutation.mutate()}
             disabled={mutation.isPending}
-            className="flex-1 px-4 py-2.5 bg-green-700 hover:bg-green-600 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-600 disabled:opacity-50"
           >
-            {mutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+            {mutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             Confirm
           </button>
         </div>
@@ -329,14 +372,16 @@ function MarkCompleteModal({
 
 function CommunityStats({ communityData }: { communityData: Record<string, unknown>[] }) {
   return (
-    <div className="bg-zinc-900 rounded-xl border border-zinc-800">
-      <div className="px-5 py-4 border-b border-zinc-800">
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900">
+      <div className="border-b border-zinc-800 px-5 py-4">
         <h2 className="text-sm font-semibold text-zinc-300">Community Actual Processing Times</h2>
-        <p className="text-xs text-zinc-500 mt-0.5">Crowdsourced real-world data, not platform claims</p>
+        <p className="mt-0.5 text-xs text-zinc-500">
+          Crowdsourced real-world data, not platform claims
+        </p>
       </div>
       <div className="divide-y divide-zinc-800">
         {communityData.length === 0 ? (
-          <div className="flex items-center justify-center h-24 text-sm text-zinc-600">
+          <div className="flex h-24 items-center justify-center text-sm text-zinc-600">
             No community data yet.
           </div>
         ) : (
@@ -359,15 +404,22 @@ function CommunityStats({ communityData }: { communityData: Record<string, unkno
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-zinc-500">Reject %</p>
-                    <p className={cn('text-sm font-medium tabular-nums',
-                      rejRate < 2 ? 'text-green-400' : rejRate < 10 ? 'text-yellow-400' : 'text-red-400'
-                    )}>
+                    <p
+                      className={cn(
+                        'text-sm font-medium tabular-nums',
+                        rejRate < 2
+                          ? 'text-green-400'
+                          : rejRate < 10
+                            ? 'text-yellow-400'
+                            : 'text-red-400'
+                      )}
+                    >
                       {rejRate.toFixed(1)}%
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-zinc-500">Samples</p>
-                    <p className="text-sm text-zinc-300 tabular-nums">
+                    <p className="text-sm tabular-nums text-zinc-300">
                       {(row['sample_count'] as number).toLocaleString()}
                     </p>
                   </div>
@@ -422,11 +474,11 @@ export function RedemptionsPage() {
     staleTime: 300_000,
   })
 
-  const redemptions = ((redemptionsData as { data?: Record<string, unknown>[] })?.data ?? [])
+  const redemptions = (redemptionsData as { data?: Record<string, unknown>[] })?.data ?? []
   const totalPages = (redemptionsData as { total_pages?: number })?.total_pages ?? 1
   const stats = statsData as Record<string, unknown> | undefined
-  const community = ((communityData as { data?: Record<string, unknown>[] })?.data ?? [])
-  const userPlatforms = ((platformsData as { data?: Record<string, unknown>[] })?.data ?? [])
+  const community = (communityData as { data?: Record<string, unknown>[] })?.data ?? []
+  const userPlatforms = (platformsData as { data?: Record<string, unknown>[] })?.data ?? []
 
   const platforms = Array.from(
     new Map(userPlatforms.map((p) => [p['platform_id'], p['platform_name']])).entries()
@@ -444,27 +496,27 @@ export function RedemptionsPage() {
         onClose={() => setMarkCompleteTarget(null)}
       />
 
-      <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      <div className="mx-auto max-w-7xl space-y-6 p-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white">Redemption Tracker</h1>
-            <p className="text-zinc-400 text-sm mt-1">
+            <p className="mt-1 text-sm text-zinc-400">
               Log, track, and crowdsource real processing times across all platforms.
             </p>
           </div>
           <button
             type="button"
             onClick={() => setShowLogModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-lg transition-colors"
+            className="bg-brand-600 hover:bg-brand-500 flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-colors"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="h-4 w-4" />
             Log Redemption
           </button>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {[
             {
               label: 'Total Redeemed',
@@ -496,12 +548,18 @@ export function RedemptionsPage() {
                 : '—',
               sub: 'your personal rate',
               icon: TrendingDown,
-              color: stats && (stats['rejection_rate'] as number) > 5 ? 'text-red-400' : 'text-green-400',
+              color:
+                stats && (stats['rejection_rate'] as number) > 5
+                  ? 'text-red-400'
+                  : 'text-green-400',
             },
           ].map(({ label, value, sub, icon: Icon, color }) => (
-            <div key={label} className="bg-zinc-900 rounded-xl border border-zinc-800 p-4 space-y-1">
+            <div
+              key={label}
+              className="space-y-1 rounded-xl border border-zinc-800 bg-zinc-900 p-4"
+            >
               <div className="flex items-center gap-2 text-zinc-400">
-                <Icon className="w-4 h-4" />
+                <Icon className="h-4 w-4" />
                 <span className="text-xs font-medium uppercase tracking-wide">{label}</span>
               </div>
               <p className={cn('text-3xl font-black tabular-nums', color)}>{value}</p>
@@ -511,64 +569,78 @@ export function RedemptionsPage() {
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-400 hover:text-white text-xs transition-colors"
+            className="flex items-center gap-1.5 rounded-lg bg-zinc-800 px-3 py-1.5 text-xs text-zinc-400 transition-colors hover:text-white"
           >
-            <Filter className="w-3 h-3" />
+            <Filter className="h-3 w-3" />
             Platform
-            <ChevronDown className={cn('w-3 h-3 transition-transform', showFilters && 'rotate-180')} />
+            <ChevronDown
+              className={cn('h-3 w-3 transition-transform', showFilters && 'rotate-180')}
+            />
           </button>
 
-          {(['all', 'pending', 'processing', 'completed', 'rejected'] as RedemptionStatus[]).map((s) => (
-            <button
-              type="button"
-              key={s}
-              onClick={() => { setStatusFilter(s); setPage(1) }}
-              className={cn(
-                'px-2.5 py-1 text-xs rounded-md transition-colors capitalize',
-                statusFilter === s ? 'bg-brand-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:text-white'
-              )}
-            >
-              {s}
-            </button>
-          ))}
+          {(['all', 'pending', 'processing', 'completed', 'rejected'] as RedemptionStatus[]).map(
+            (s) => (
+              <button
+                type="button"
+                key={s}
+                onClick={() => {
+                  setStatusFilter(s)
+                  setPage(1)
+                }}
+                className={cn(
+                  'rounded-md px-2.5 py-1 text-xs capitalize transition-colors',
+                  statusFilter === s
+                    ? 'bg-brand-600 text-white'
+                    : 'bg-zinc-800 text-zinc-400 hover:text-white'
+                )}
+              >
+                {s}
+              </button>
+            )
+          )}
         </div>
 
         {showFilters && (
-          <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4">
-            <label className="text-xs text-zinc-400 mb-1.5 block">Platform</label>
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+            <label className="mb-1.5 block text-xs text-zinc-400">Platform</label>
             <select
               aria-label="Filter redemptions by platform"
               title="Filter redemptions by platform"
               value={platformFilter}
-              onChange={(e) => { setPlatformFilter(e.target.value); setPage(1) }}
-              className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              onChange={(e) => {
+                setPlatformFilter(e.target.value)
+                setPage(1)
+              }}
+              className="focus:ring-brand-500 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2"
             >
               <option value="all">All Platforms</option>
               {platforms.map(([id, name]) => (
-                <option key={id as string} value={id as string}>{name as string}</option>
+                <option key={id as string} value={id as string}>
+                  {name as string}
+                </option>
               ))}
             </select>
           </div>
         )}
 
         {/* Redemptions table */}
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800">
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900">
           {isLoading ? (
-            <div className="flex items-center justify-center h-48">
-              <Loader2 className="w-6 h-6 animate-spin text-zinc-500" />
+            <div className="flex h-48 items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
             </div>
           ) : redemptions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-48 gap-3">
-              <AlertCircle className="w-8 h-8 text-zinc-600" />
+            <div className="flex h-48 flex-col items-center justify-center gap-3">
+              <AlertCircle className="h-8 w-8 text-zinc-600" />
               <p className="text-sm text-zinc-500">No redemptions found.</p>
               <button
                 type="button"
                 onClick={() => setShowLogModal(true)}
-                className="text-xs text-brand-400 hover:text-brand-300 transition-colors"
+                className="text-brand-400 hover:text-brand-300 text-xs transition-colors"
               >
                 Log your first redemption →
               </button>
@@ -579,12 +651,12 @@ export function RedemptionsPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-zinc-800">
-                      <th className="text-left px-5 py-3 text-zinc-500 font-medium">Platform</th>
-                      <th className="text-right px-5 py-3 text-zinc-500 font-medium">Amount</th>
-                      <th className="text-center px-5 py-3 text-zinc-500 font-medium">Method</th>
-                      <th className="text-center px-5 py-3 text-zinc-500 font-medium">Status</th>
-                      <th className="text-right px-5 py-3 text-zinc-500 font-medium">Requested</th>
-                      <th className="text-right px-5 py-3 text-zinc-500 font-medium">Processing</th>
+                      <th className="px-5 py-3 text-left font-medium text-zinc-500">Platform</th>
+                      <th className="px-5 py-3 text-right font-medium text-zinc-500">Amount</th>
+                      <th className="px-5 py-3 text-center font-medium text-zinc-500">Method</th>
+                      <th className="px-5 py-3 text-center font-medium text-zinc-500">Status</th>
+                      <th className="px-5 py-3 text-right font-medium text-zinc-500">Requested</th>
+                      <th className="px-5 py-3 text-right font-medium text-zinc-500">Processing</th>
                       <th className="px-5 py-3" />
                     </tr>
                   </thead>
@@ -595,12 +667,12 @@ export function RedemptionsPage() {
                       return (
                         <tr
                           key={r['redemption_id'] as string}
-                          className="border-b border-zinc-800/50 hover:bg-zinc-800/20 transition-colors"
+                          className="border-b border-zinc-800/50 transition-colors hover:bg-zinc-800/20"
                         >
                           <td className="px-5 py-3">
                             <p className="text-white">{r['platform_name'] as string}</p>
                           </td>
-                          <td className="px-5 py-3 text-right text-white font-medium tabular-nums">
+                          <td className="px-5 py-3 text-right font-medium tabular-nums text-white">
                             {formatSC(r['amount_sc'] as number)} SC
                           </td>
                           <td className="px-5 py-3 text-center text-zinc-400">
@@ -609,7 +681,7 @@ export function RedemptionsPage() {
                           <td className="px-5 py-3 text-center">
                             <StatusBadge status={status} />
                           </td>
-                          <td className="px-5 py-3 text-right text-zinc-400 tabular-nums">
+                          <td className="px-5 py-3 text-right tabular-nums text-zinc-400">
                             {new Date(r['requested_at'] as string).toLocaleDateString()}
                           </td>
                           <td className="px-5 py-3 text-right">
@@ -620,7 +692,7 @@ export function RedemptionsPage() {
                               <button
                                 type="button"
                                 onClick={() => setMarkCompleteTarget(r)}
-                                className="text-xs text-brand-400 hover:text-brand-300 transition-colors whitespace-nowrap"
+                                className="text-brand-400 hover:text-brand-300 whitespace-nowrap text-xs transition-colors"
                               >
                                 Mark done
                               </button>
@@ -634,7 +706,7 @@ export function RedemptionsPage() {
               </div>
 
               {/* Pagination */}
-              <div className="flex items-center justify-between px-5 py-3 border-t border-zinc-800">
+              <div className="flex items-center justify-between border-t border-zinc-800 px-5 py-3">
                 <p className="text-xs text-zinc-500">
                   Page {page} of {totalPages}
                 </p>
@@ -643,7 +715,7 @@ export function RedemptionsPage() {
                     type="button"
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page === 1}
-                    className="px-3 py-1 text-xs bg-zinc-800 text-zinc-400 rounded-md disabled:opacity-40 hover:text-white transition-colors"
+                    className="rounded-md bg-zinc-800 px-3 py-1 text-xs text-zinc-400 transition-colors hover:text-white disabled:opacity-40"
                   >
                     Prev
                   </button>
@@ -651,7 +723,7 @@ export function RedemptionsPage() {
                     type="button"
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page >= totalPages}
-                    className="px-3 py-1 text-xs bg-zinc-800 text-zinc-400 rounded-md disabled:opacity-40 hover:text-white transition-colors"
+                    className="rounded-md bg-zinc-800 px-3 py-1 text-xs text-zinc-400 transition-colors hover:text-white disabled:opacity-40"
                   >
                     Next
                   </button>
@@ -665,18 +737,18 @@ export function RedemptionsPage() {
         <CommunityStats communityData={community} />
 
         {/* Tax center promo */}
-        <div className="bg-gradient-to-r from-zinc-900 to-zinc-900 rounded-xl border border-zinc-700 p-5">
+        <div className="rounded-xl border border-zinc-700 bg-gradient-to-r from-zinc-900 to-zinc-900 p-5">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h3 className="text-sm font-semibold text-white">Tax Center</h3>
-              <p className="text-xs text-zinc-400 mt-1">
+              <p className="mt-1 text-xs text-zinc-400">
                 Your total redemptions feed directly into the Tax Center for estimated liability,
                 1099 reconciliation, and accountant-ready PDF exports.
               </p>
             </div>
             <a
               href="/settings?tab=tax"
-              className="shrink-0 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium rounded-lg transition-colors whitespace-nowrap"
+              className="shrink-0 whitespace-nowrap rounded-lg bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
             >
               View Tax Center →
             </a>

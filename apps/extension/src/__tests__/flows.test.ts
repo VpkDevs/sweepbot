@@ -50,6 +50,6 @@ describe('flow automation executor (extension)', () => {
     }
 
     const exec = await executeFlow(flow)
-    expect(['limit_reached','stopped']).toContain(exec.status)
+    expect(['limit_reached', 'stopped']).toContain(exec.status)
   })
 })

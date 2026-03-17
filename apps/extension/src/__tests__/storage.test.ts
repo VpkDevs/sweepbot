@@ -38,9 +38,9 @@ describe('StorageManager', () => {
           }),
         },
         onChanged: {
-          addListener: vi.fn()
-        }
-      }
+          addListener: vi.fn(),
+        },
+      },
     }
   })
 

@@ -422,9 +422,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
             ? sql`AND bw.occurred_at >= NOW() - INTERVAL '30 days'`
             : sql``
 
-    const platformFilter = platform
-      ? sql`AND LOWER(bw.platform_name) = LOWER(${platform})`
-      : sql``
+    const platformFilter = platform ? sql`AND LOWER(bw.platform_name) = LOWER(${platform})` : sql``
 
     const multiplierFilter =
       minMultiplier !== undefined ? sql`AND bw.multiplier >= ${minMultiplier}` : sql``
@@ -459,7 +457,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
         ${periodFilter} ${platformFilter} ${multiplierFilter}
     `)
 
-    const total = (countResult.rows[0] as Record<string, number>)?.['total'] as number ?? 0
+    const total = ((countResult.rows[0] as Record<string, number>)?.['total'] as number) ?? 0
 
     // Community aggregate stats banner
     const stats = await dbQuery(sql`
@@ -553,7 +551,10 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     const userId = request.user!.id
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params)
     const body = z
-      .object({ isPublic: z.boolean().optional(), displayName: z.string().min(1).max(100).optional() })
+      .object({
+        isPublic: z.boolean().optional(),
+        displayName: z.string().min(1).max(100).optional(),
+      })
       .parse(request.body)
 
     const { rows: updatedRows } = await dbQuery<{ id: string }>(sql`
