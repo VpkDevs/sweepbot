@@ -25,18 +25,47 @@ const rpValidator = new ResponsiblePlayValidator()
 // Conversation manager with persistence helpers
 const conversationManager = new ConversationManager({
   onStateLoad: async (conversationId: string): Promise<ConversationState | null> => {
-    const { rows } = await dbQuery<ConversationState>(
-      sql`SELECT * FROM flow_conversations WHERE id = ${conversationId}`
-    )
-    return rows[0] ?? null
+    const { rows } = await dbQuery<{
+      id: string
+      user_id: string
+      flow_id: string | null
+      full_state: string
+      turns: string
+      status: string
+    }>(sql`SELECT * FROM flow_conversations WHERE id = ${conversationId}`)
+    if (!rows[0]) return null
+    const row = rows[0]
+    // If full_state column exists (persisted after #3 fix), deserialise it directly.
+    // Fall back to a minimal reconstruction for rows saved by older code.
+    if (row.full_state) {
+      try {
+        return JSON.parse(row.full_state) as ConversationState
+      } catch {
+        // fall through to legacy reconstruction
+      }
+    }
+    // Legacy fallback: reconstruct minimal state from individual columns
+    return {
+      sessionId: row.id,
+      userId: row.user_id,
+      currentFlow: {},
+      turns: JSON.parse(row.turns as string) as ConversationState['turns'],
+      pendingQuestions: [],
+      status: row.status as ConversationState['status'],
+    }
   },
   onStateSave: async (state) => {
     await unsafeQuery(
       `
-      INSERT INTO flow_conversations (id, user_id, flow_id, turns, status, created_at, updated_at)
-      VALUES ($1, $2, $3, $4::jsonb, $5, NOW(), NOW())
+      INSERT INTO flow_conversations
+        (id, user_id, flow_id, turns, status, full_state, created_at, updated_at)
+      VALUES ($1, $2, $3, $4::jsonb, $5, $6::jsonb, NOW(), NOW())
       ON CONFLICT (id)
-      DO UPDATE SET turns = $4::jsonb, status = $5, updated_at = NOW()
+      DO UPDATE SET
+        turns      = $4::jsonb,
+        status     = $5,
+        full_state = $6::jsonb,
+        updated_at = NOW()
       `,
       [
         state.sessionId,
@@ -47,6 +76,8 @@ const conversationManager = new ConversationManager({
           : null,
         JSON.stringify(state.turns),
         state.status,
+        // Persist the complete state so ConversationManager.continue() can fully reload it
+        JSON.stringify(state),
       ]
     )
   },
@@ -61,8 +92,18 @@ const FlowInterpretRequestSchema = z.object({
 })
 
 const FlowCreateSchema = z.object({
-  name: z.string().min(1).max(255).trim(),
-  description: z.string().min(1).max(1000).trim(),
+  name: z
+    .string()
+    .min(1)
+    .max(255)
+    .trim()
+    .refine((s) => s.length > 0, 'name cannot be only whitespace'),
+  description: z
+    .string()
+    .min(1)
+    .max(1000)
+    .trim()
+    .refine((s) => s.length > 0, 'description cannot be only whitespace'),
   definition: z
     .record(z.unknown())
     .refine((obj) => Object.keys(obj).length > 0, 'definition cannot be empty'),
@@ -74,7 +115,13 @@ const FlowCreateSchema = z.object({
 
 const FlowUpdateSchema = z.object({
   status: z.enum(['draft', 'active', 'paused', 'archived']).optional(),
-  name: z.string().min(1).max(255).trim().optional(),
+  name: z
+    .string()
+    .min(1)
+    .max(255)
+    .trim()
+    .refine((s) => s.length > 0, 'name cannot be only whitespace')
+    .optional(),
   definition: z
     .record(z.unknown())
     .refine((obj) => Object.keys(obj).length > 0, 'definition cannot be empty')
@@ -84,6 +131,23 @@ const FlowUpdateSchema = z.object({
 const PaginationSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
+})
+
+const ConversationStartSchema = z.object({
+  initialMessage: z
+    .string()
+    .min(1, 'initialMessage is required')
+    .max(2000, 'initialMessage must be ≤ 2000 characters')
+    .trim(),
+})
+
+const ConversationContinueSchema = z.object({
+  conversationId: z.string().uuid('conversationId must be a valid UUID'),
+  userMessage: z
+    .string()
+    .min(1, 'userMessage is required')
+    .max(1000, 'userMessage must be ≤ 1000 characters')
+    .trim(),
 })
 
 // ============================================================================
@@ -137,11 +201,9 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
       } catch (error) {
         app.log.error({ error }, 'Flow interpretation failed')
         return reply.code(400).send({
-          success: false,
-          error: {
-            code: 'INTERPRETATION_ERROR',
-            message: 'Failed to interpret natural language input',
-          },
+          error: 'INTERPRETATION_ERROR',
+          message: 'Failed to interpret natural language input',
+          status: 400,
         })
       }
     }
@@ -159,7 +221,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
    * POST /flows/conversations
    * Start a new multi‑turn conversation for building a Flow.
    */
-  app.post<{ Body: { initialMessage: string } }>(
+  app.post<{ Body: z.infer<typeof ConversationStartSchema> }>(
     '/conversations',
     {
       schema: {
@@ -175,7 +237,15 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     async (request, reply) => {
-      const { initialMessage } = request.body
+      let validated: z.infer<typeof ConversationStartSchema>
+      try {
+        validated = ConversationStartSchema.parse(request.body)
+      } catch (err) {
+        return reply
+          .code(400)
+          .send({ error: 'VALIDATION_ERROR', message: 'initialMessage is required', status: 400 })
+      }
+      const { initialMessage } = validated
       const conversationId = randomUUID()
       try {
         const state = await conversationManager.startConversation(
@@ -186,10 +256,9 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         return reply.code(201).send({ success: true, data: state })
       } catch (error) {
         app.log.error({ error }, 'Failed to start conversation')
-        return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Could not start conversation' },
-        })
+        return reply
+          .code(500)
+          .send({ error: 'INTERNAL_ERROR', message: 'Could not start conversation', status: 500 })
       }
     }
   )
@@ -198,7 +267,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
    * POST /flows/converse
    * Continue multi-turn conversation for Flow building
    */
-  app.post<{ Body: { conversationId: string; userMessage: string } }>(
+  app.post<{ Body: z.infer<typeof ConversationContinueSchema> }>(
     '/converse',
     {
       schema: {
@@ -215,32 +284,45 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     async (request, reply) => {
+      let validated: z.infer<typeof ConversationContinueSchema>
       try {
-        // Ensure the conversation belongs to the user
+        validated = ConversationContinueSchema.parse(request.body)
+      } catch (err) {
+        return reply.code(400).send({
+          error: 'VALIDATION_ERROR',
+          message: 'conversationId and userMessage are required',
+          status: 400,
+        })
+      }
+      try {
+        // Ensure the conversation belongs to the authenticated user
         const { rows } = await dbQuery(
-          sql`SELECT * FROM flow_conversations WHERE id = ${request.body.conversationId} AND user_id = ${request.user!.id}`
+          sql`SELECT id FROM flow_conversations WHERE id = ${validated.conversationId} AND user_id = ${request.user!.id}`
         )
 
         if (rows.length === 0) {
           return reply.code(404).send({
             success: false,
-            error: { code: 'NOT_FOUND', message: 'Conversation not found' },
+            error: 'NOT_FOUND',
+            message: 'Conversation not found',
+            status: 404,
           })
         }
 
         // Delegate business logic to ConversationManager which will
         // load and save state via the hooks we configured above.
         const updatedState = await conversationManager.continue(
-          request.body.conversationId,
-          request.body.userMessage
+          validated.conversationId,
+          validated.userMessage
         )
 
         return reply.send({ success: true, data: updatedState })
       } catch (error) {
         app.log.error({ error }, 'Conversation error')
         return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to continue conversation' },
+          error: 'INTERNAL_ERROR',
+          message: 'Failed to continue conversation',
+          status: 500,
         })
       }
     }
@@ -290,13 +372,9 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         })
       } catch (error) {
         app.log.error({ error }, 'Flow creation error')
-        return reply.code(400).send({
-          success: false,
-          error: {
-            code: 'CREATION_ERROR',
-            message: 'Failed to create Flow',
-          },
-        })
+        return reply
+          .code(400)
+          .send({ error: 'CREATION_ERROR', message: 'Failed to create Flow', status: 400 })
       }
     }
   )
@@ -348,10 +426,9 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         })
       } catch (error) {
         app.log.error({ error }, 'List flows error')
-        return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to list Flows' },
-        })
+        return reply
+          .code(500)
+          .send({ error: 'INTERNAL_ERROR', message: 'Failed to list Flows', status: 500 })
       }
     }
   )
@@ -380,10 +457,9 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         )
 
         if (rows.length === 0) {
-          return reply.code(404).send({
-            success: false,
-            error: { code: 'NOT_FOUND', message: 'Flow not found' },
-          })
+          return reply
+            .code(404)
+            .send({ error: 'NOT_FOUND', message: 'Flow not found', status: 404 })
         }
 
         return reply.send({
@@ -392,10 +468,9 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         })
       } catch (error) {
         app.log.error({ error }, 'Get flow error')
-        return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to get Flow' },
-        })
+        return reply
+          .code(500)
+          .send({ error: 'INTERNAL_ERROR', message: 'Failed to get Flow', status: 500 })
       }
     }
   )
@@ -446,10 +521,9 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         )
 
         if (rows.length === 0) {
-          return reply.code(404).send({
-            success: false,
-            error: { code: 'NOT_FOUND', message: 'Flow not found' },
-          })
+          return reply
+            .code(404)
+            .send({ error: 'NOT_FOUND', message: 'Flow not found', status: 404 })
         }
 
         return reply.send({
@@ -458,10 +532,9 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         })
       } catch (error) {
         app.log.error({ error }, 'Flow update error')
-        return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to update Flow' },
-        })
+        return reply
+          .code(500)
+          .send({ error: 'INTERNAL_ERROR', message: 'Failed to update Flow', status: 500 })
       }
     }
   )
@@ -494,10 +567,9 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         )
 
         if (flowRows.length === 0) {
-          return reply.code(404).send({
-            success: false,
-            error: { code: 'NOT_FOUND', message: 'Flow not found' },
-          })
+          return reply
+            .code(404)
+            .send({ error: 'NOT_FOUND', message: 'Flow not found', status: 404 })
         }
 
         const flow = flowRows[0] as { definition: unknown; [key: string]: unknown }
@@ -536,10 +608,9 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         })
       } catch (error) {
         app.log.error({ error }, 'Flow execution error')
-        return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to execute Flow' },
-        })
+        return reply
+          .code(500)
+          .send({ error: 'INTERNAL_ERROR', message: 'Failed to execute Flow', status: 500 })
       }
     }
   )
@@ -590,8 +661,9 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
       } catch (error) {
         app.log.error({ error }, 'Get executions error')
         return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to get execution history' },
+          error: 'INTERNAL_ERROR',
+          message: 'Failed to get execution history',
+          status: 500,
         })
       }
     }
@@ -621,10 +693,9 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         )
 
         if (rows.length === 0) {
-          return reply.code(404).send({
-            success: false,
-            error: { code: 'NOT_FOUND', message: 'Flow not found' },
-          })
+          return reply
+            .code(404)
+            .send({ error: 'NOT_FOUND', message: 'Flow not found', status: 404 })
         }
 
         return reply.send({
@@ -633,10 +704,89 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         })
       } catch (error) {
         app.log.error({ error }, 'Delete flow error')
-        return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to delete Flow' },
+        return reply
+          .code(500)
+          .send({ error: 'INTERNAL_ERROR', message: 'Failed to delete Flow', status: 500 })
+      }
+    }
+  )
+
+  /**
+   * GET /flows/:id/execution/current
+   * Get the most recent flow execution
+   */
+  app.get<{ Params: { id: string } }>(
+    '/:id/execution/current',
+    {
+      schema: {
+        tags: ['Flows'],
+        summary: 'Get current/most recent flow execution',
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: { id: { type: 'string', format: 'uuid' } },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { rows } = await dbQuery(
+          sql`SELECT * FROM flow_executions WHERE flow_id = ${request.params.id} AND user_id = ${request.user!.id} ORDER BY started_at DESC LIMIT 1`
+        )
+
+        return reply.send({
+          success: true,
+          data: rows[0] ?? null,
         })
+      } catch (error) {
+        app.log.error({ error }, 'Get current execution error')
+        return reply.code(500).send({
+          error: 'INTERNAL_ERROR',
+          message: 'Failed to get current execution',
+          status: 500,
+        })
+      }
+    }
+  )
+
+  /**
+   * POST /flows/:id/execution/cancel
+   * Cancel a running flow execution
+   */
+  app.post<{ Params: { id: string } }>(
+    '/:id/execution/cancel',
+    {
+      schema: {
+        tags: ['Flows'],
+        summary: 'Cancel a running flow execution',
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: { id: { type: 'string', format: 'uuid' } },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { rows } = await dbQuery(
+          sql`UPDATE flow_executions SET status = 'stopped_by_user', completed_at = NOW() WHERE flow_id = ${request.params.id} AND status = 'running' AND user_id = ${request.user!.id} RETURNING id`
+        )
+
+        if (rows.length === 0) {
+          return reply
+            .code(404)
+            .send({ error: 'NOT_FOUND', message: 'No running execution found', status: 404 })
+        }
+
+        return reply.send({
+          success: true,
+          data: { id: rows[0]!['id'] },
+        })
+      } catch (error) {
+        app.log.error({ error }, 'Cancel execution error')
+        return reply
+          .code(500)
+          .send({ error: 'INTERNAL_ERROR', message: 'Failed to cancel execution', status: 500 })
       }
     }
   )

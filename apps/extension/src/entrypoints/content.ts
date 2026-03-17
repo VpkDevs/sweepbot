@@ -14,6 +14,8 @@ import { storage } from '@/lib/storage'
 import { extensionApi } from '@/lib/api'
 import { executeFlow } from '@/lib/flows/automation-executor'
 import { createLogger } from '@/lib/logger'
+import { streakTracker } from '@/lib/streak-tracker'
+import { recordsTracker } from '@/lib/records-tracker'
 import type { ContentScriptMessage } from '@/types/extension'
 
 const log = createLogger('Content')
@@ -78,7 +80,12 @@ export default defineContentScript({
       networkInterceptor.onTransactionDetected(async (tx) => {
         rtpCalculator.recordSpin(tx.betAmount, tx.winAmount)
 
-        if (currentSessionId) {
+        // The API only accepts 'win' | 'loss' | 'bonus'. A 'push' (tie) is neutral —
+        // it does not affect balance and should not be counted as a loss. Skip sending
+        // it to avoid distorting RTP calculations.
+        if (tx.result === 'push') {
+          log.debug('Push outcome detected — skipping transaction record (neutral result)')
+        } else if (currentSessionId) {
           try {
             await extensionApi.recordTransaction(currentSessionId, {
               game_id: tx.gameId,
@@ -139,14 +146,56 @@ export default defineContentScript({
         rtpCalculator.reset()
         log.info(`Session started: ${currentSessionId}`)
 
+        // Track streak
+        const streakUpdate = await streakTracker.recordSession(currentPlatform.slug)
+        if (streakUpdate.milestoneReached) {
+          chrome.runtime.sendMessage({
+            type: 'SHOW_NOTIFICATION',
+            payload: {
+              title: `🔥 ${streakUpdate.milestoneReached}-Day Streak!`,
+              message: `You've played ${streakUpdate.milestoneReached} days in a row. Keep it up!`,
+            },
+          })
+        }
+
         await storage.set('sessionData', {
           sessionId: currentSessionId,
           platformSlug: currentPlatform.slug,
           startedAt: Date.now(),
+          tabId: null,
+          gameId: null,
+          gameSwitches: [],
           coinsStart: { sc: 0, gc: 0 },
           coinsCurrent: { sc: 0, gc: 0 },
+          balanceHistory: [],
+          spinTimeline: [],
           transactionCount: 0,
+          bonusEvents: [],
+          bigWins: [],
+          inBonusRound: false,
+          activeBonusIndex: null,
+          rtpSamples: [],
+          rtpCurrent: 0,
+          volatilityIndex: 0,
+          streakSummary: { current: 0, longestWin: 0, longestLoss: 0, direction: 'none' },
+          netResult: 0,
+          totalWagered: 0,
+          totalWon: 0,
+          largestWin: 0,
+          largestWinSpinNumber: 0,
+          phase: 'warmup',
+          phaseChangedAt: Date.now(),
           lastActivityAt: Date.now(),
+          idleStartedAt: null,
+          totalIdleMs: 0,
+          activeMs: 0,
+          lastHeartbeatAt: Date.now(),
+          transactionBuffer: [],
+          syncFailureCount: 0,
+          lastSyncedAt: 0,
+          totalSyncedTransactions: 0,
+          sessionQualityScore: 0,
+          annotations: [],
         })
       } catch (error) {
         log.error('Failed to start session:', error)
@@ -164,6 +213,34 @@ export default defineContentScript({
       try {
         const result = await extensionApi.endSession(currentSessionId)
         log.info(`Session ended. Final RTP: ${result.rtp.toFixed(2)}%`)
+
+        // Check for personal records
+        const stats = rtpCalculator.calculate()
+        const sessionData = await storage.get('sessionData')
+        const durationMinutes = sessionData ? (Date.now() - sessionData.startedAt) / (1000 * 60) : 0
+
+        const recordUpdates = await recordsTracker.checkAndUpdateRecords({
+          biggestWin: stats.largestWin,
+          rtp: stats.rtp,
+          durationMinutes,
+          spinCount: stats.spinCount,
+          netResult: result.netResult,
+          platformSlug: currentPlatform?.slug || 'unknown',
+          sessionId: currentSessionId,
+        })
+
+        // Notify user of new records
+        for (const update of recordUpdates) {
+          const recordName = update.recordType.replace(/([A-Z])/g, ' $1').trim()
+          chrome.runtime.sendMessage({
+            type: 'SHOW_NOTIFICATION',
+            payload: {
+              title: `🏆 New Personal Record!`,
+              message: `${recordName}: ${update.newRecord.value.toFixed(2)}`,
+            },
+          })
+        }
+
         currentSessionId = null
         await storage.set('sessionData', null)
       } catch (error) {

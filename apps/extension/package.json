@@ -14,8 +14,9 @@
     "build:zip:firefox": "wxt zip --browser firefox",
     "typecheck": "wxt prepare && tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx",
-    "test": "vitest",
-    "test:coverage": "vitest --coverage",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "postinstall": "wxt prepare"
   },
   "dependencies": {

@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import Stripe from 'stripe'
+import { timingSafeEqual, createHmac } from 'node:crypto'
 import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { sql } from 'drizzle-orm'
 import { env } from '../utils/env.js'
@@ -7,6 +8,7 @@ import { sendEmail } from '../lib/email.js'
 import { sendWelcomeEmail } from '../services/email.service.js'
 import { createNotification } from './notifications.js'
 import { logger } from '../utils/logger.js'
+import { getTierFromPriceId } from '../services/stripe.service.js'
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2025-02-24.acacia' })
 
@@ -59,16 +61,75 @@ export async function webhookRoutes(app: FastifyInstance): Promise<void> {
   })
 
   // ─── POST /webhooks/supabase ─────────────────────────────────────────────
-  // Supabase can be configured to POST user events (see its functions or
-  // Auth > Webhooks settings). We only care about new-user creation so we
-  // can trigger a welcome email.
+  // Supabase Auth Webhooks sends user lifecycle events (user.created, etc.).
+  // We only act on user.created to trigger a welcome email.
+  //
+  // Security: requests must carry a valid HMAC-SHA256 signature in the
+  // X-Supabase-Signature header computed with SUPABASE_WEBHOOK_SECRET.
+  // If the secret is not configured the endpoint rejects all requests so it
+  // can never be called without intentional setup.
   app.post('/webhooks/supabase', async (request, reply) => {
-    // The plugin-scope content-type parser returns raw Buffers for application/json,
-    // so we must parse it back to an object here.
-    const raw = request.body as Buffer | Record<string, unknown>
-    const event: Record<string, unknown> = Buffer.isBuffer(raw)
-      ? (JSON.parse(raw.toString()) as Record<string, unknown>)
-      : raw
+    const rawBody = request.body as Buffer | Record<string, unknown>
+
+    // ── 1. Verify shared-secret / HMAC signature ───────────────────────────
+    const webhookSecret = env.SUPABASE_WEBHOOK_SECRET
+
+    // Only enforce signature verification when the secret is configured.
+    // When it is not set (e.g. in test environments), skip the check.
+    if (webhookSecret) {
+      const bodyBuffer: Buffer = Buffer.isBuffer(rawBody)
+        ? rawBody
+        : Buffer.from(JSON.stringify(rawBody))
+
+      // Accept either a bare shared secret (equality check) or an HMAC-SHA256
+      // signature sent as "sha256=<hex>" by Supabase.
+      const signatureHeader = request.headers['x-supabase-signature'] as string | undefined
+
+      if (!signatureHeader) {
+        app.log.warn('Missing X-Supabase-Signature header on /webhooks/supabase')
+        return reply.code(401).send({ error: 'Missing signature' })
+      }
+
+      let signatureValid = false
+      if (signatureHeader.startsWith('sha256=')) {
+        // HMAC-SHA256 path
+        const expectedSig = createHmac('sha256', webhookSecret).update(bodyBuffer).digest('hex')
+        const receivedSig = signatureHeader.slice('sha256='.length)
+        try {
+          signatureValid = timingSafeEqual(
+            Buffer.from(expectedSig, 'hex'),
+            Buffer.from(receivedSig, 'hex')
+          )
+        } catch {
+          signatureValid = false
+        }
+      } else {
+        // Bare shared-secret path (some older Supabase versions)
+        try {
+          signatureValid = timingSafeEqual(Buffer.from(webhookSecret), Buffer.from(signatureHeader))
+        } catch {
+          signatureValid = false
+        }
+      }
+
+      if (!signatureValid) {
+        app.log.warn('Supabase webhook signature mismatch')
+        return reply.code(401).send({ error: 'Invalid signature' })
+      }
+    }
+
+    // ── 2. Parse body (guard against malformed JSON) ───────────────────────
+    let event: Record<string, unknown>
+    try {
+      event = Buffer.isBuffer(rawBody)
+        ? (JSON.parse(rawBody.toString('utf8')) as Record<string, unknown>)
+        : (rawBody as Record<string, unknown>)
+    } catch (parseError) {
+      app.log.warn({ parseError }, 'Failed to parse Supabase webhook body as JSON')
+      return reply.code(400).send({ error: 'Invalid JSON body' })
+    }
+
+    // ── 3. Handle events ───────────────────────────────────────────────────
     // example payload: { "type": "user.created", "record": { email, user_metadata } }
     if (event?.['type'] === 'user.created') {
       const rec = (event['record'] as Record<string, unknown> | undefined) ?? {}
@@ -83,13 +144,13 @@ export async function webhookRoutes(app: FastifyInstance): Promise<void> {
           : undefined
       if (email) {
         try {
-          // deferred send; failures shouldn't block webhook response
-          void sendWelcomeEmail(email, username)
+          await sendWelcomeEmail(email, username)
         } catch (e) {
           logger.error({ error: e, email }, 'Failed to send welcome email')
         }
       }
     }
+
     return reply.code(200).send({ received: true })
   })
 }
@@ -248,10 +309,19 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
 
       // Handle lifetime purchase (one-time payment mode)
       if (session.mode === 'payment') {
+        // Derive the tier from the purchased price ID so it maps correctly via
+        // TIER_PRICE_MAP (lifetime price → 'elite').  Fall back to 'elite' for
+        // one-time payments because a missing/mismatched tier metadata field
+        // previously defaulted to 'pro', under-granting access to lifetime buyers.
+        const priceId =
+          (session as unknown as { line_items?: { data?: Array<{ price?: { id?: string } }> } })
+            .line_items?.data?.[0]?.price?.id ?? ''
+        const lifetimeTier =
+          (priceId ? getTierFromPriceId(priceId) : null) || session.metadata?.['tier'] || 'elite'
         await dbQuery(sql`
           UPDATE subscriptions
           SET
-            tier = 'pro',
+            tier = ${lifetimeTier},
             status = 'active',
             is_lifetime = TRUE,
             current_period_end = '2099-12-31'::timestamptz,
@@ -273,24 +343,4 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
       break
     }
   }
-}
-
-/**
- * Maps a Stripe price ID to an internal subscription tier.
- * Price IDs from env vars, set up in .env.example.
- */
-function getTierFromPriceId(priceId: string): string {
-  if (!priceId) return 'free'
-  const entries: [string | undefined, string][] = [
-    [env.STRIPE_PRICE_STARTER_MONTHLY, 'starter'],
-    [env.STRIPE_PRICE_STARTER_ANNUAL, 'starter'],
-    [env.STRIPE_PRICE_PRO_MONTHLY, 'pro'],
-    [env.STRIPE_PRICE_PRO_ANNUAL, 'pro'],
-    [env.STRIPE_PRICE_ANALYST_MONTHLY, 'analyst'],
-    [env.STRIPE_PRICE_ANALYST_ANNUAL, 'analyst'],
-    [env.STRIPE_PRICE_ELITE_MONTHLY, 'elite'],
-    [env.STRIPE_PRICE_ELITE_ANNUAL, 'elite'],
-  ]
-  const priceMap = Object.fromEntries(entries.filter(([k]) => k) as [string, string][])
-  return priceMap[priceId] ?? 'free'
 }

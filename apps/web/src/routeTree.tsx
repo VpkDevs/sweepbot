@@ -24,8 +24,8 @@ import { BigWinsPage } from './pages/BigWinsPage'
 import { FlowsPage } from './pages/FlowsPage'
 import { FlowChatPage } from './pages/FlowChatPage'
 import { FlowDetailPage } from './pages/FlowDetailPage'
-import { StreakLeaderboard } from './pages/StreakLeaderboard'
-import { NotificationsInbox } from './pages/NotificationsInbox'
+import { TosMonitorPage } from './pages/TosMonitorPage'
+import { TaxCenterPage } from './pages/TaxCenterPage'
 import { SignInPage } from './pages/auth/SignInPage'
 import { SignUpPage } from './pages/auth/SignUpPage'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
@@ -86,9 +86,12 @@ const appRoute = createRoute({
   component: AppShell,
   beforeLoad: async ({ context }) => {
     await context.auth.refreshSession()
-    // In dev with stub Supabase creds, skip auth so the UI is previewable
+    // In dev with stub mode active (placeholder URL or VITE_DEV_STUB=true),
+    // skip auth so the UI is previewable without real credentials.
     const isDevStub =
-      import.meta.env.DEV && import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')
+      import.meta.env.DEV &&
+      (import.meta.env.VITE_SUPABASE_URL?.includes('placeholder') ||
+        import.meta.env.VITE_DEV_STUB === 'true')
     if (!context.auth.user && !isDevStub) {
       throw redirect({ to: '/sign-in' })
     }
@@ -191,16 +194,16 @@ const flowDetailRoute = createRoute({
   component: FlowDetailPage,
 })
 
-const streakLeaderboardRoute = createRoute({
+const tosMonitorRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: '/streaks/leaderboard',
-  component: StreakLeaderboard,
+  path: '/tos-monitor',
+  component: TosMonitorPage,
 })
 
-const notificationsInboxRoute = createRoute({
+const taxCenterRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: '/notifications',
-  component: NotificationsInbox,
+  path: '/tax-center',
+  component: TaxCenterPage,
 })
 
 // ── Route tree assembly ───────────────────────────────────────────────────────
@@ -225,7 +228,7 @@ export const routeTree = rootRoute.addChildren([
     flowsRoute,
     flowChatRoute,
     flowDetailRoute,
-    streakLeaderboardRoute,
-    notificationsInboxRoute,
+    tosMonitorRoute,
+    taxCenterRoute,
   ]),
 ])

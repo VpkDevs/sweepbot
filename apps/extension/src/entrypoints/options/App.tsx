@@ -12,7 +12,11 @@ export default function OptionsApp() {
     enableJackpotAlerts: true,
     enableDailyDigest: true,
     enableBonusReminders: true,
+    enableStreakAlerts: true,
+    enableBigWinCelebrations: true,
+    enableSessionQualityWarnings: true,
     muted: false,
+    bigWinThresholdMultiplier: 10,
   })
   const [saved, setSaved] = useState(false)
 

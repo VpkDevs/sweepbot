@@ -70,6 +70,8 @@ export const flowConversations = pgTable('flow_conversations', {
   flowId: uuid('flow_id').references(() => flows.id, { onDelete: 'set null' }), // NULL while building
   turns: jsonb('turns').notNull(), // ConversationTurn[]
   status: varchar('status', { length: 20 }).notNull(), // building, confirming, modifying, complete
+  // Full serialized ConversationState — used for efficient load without reconstruction
+  fullState: jsonb('full_state'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 })

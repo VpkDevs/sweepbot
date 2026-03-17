@@ -1,374 +1,823 @@
 /**
- * Background service worker.
- * Manages extension state, handles message passing, and coordinates data sync.
- * Also handles Flow scheduling via Chrome Alarms and dispatch to content scripts.
+ * Sweepbot Background Service Worker
+ *
+ * Full session orchestration engine responsible for:
+ *
+ *   ┌─────────────────────────────────────────────────────────────────────┐
+ *   │  SessionLifecycleManager                                            │
+ *   │   • Start / end / pause / resume sessions via API                  │
+ *   │   • Auto-end sessions on platform tab close                         │
+ *   │   • Recover orphaned sessions on service-worker restart             │
+ *   ├─────────────────────────────────────────────────────────────────────┤
+ *   │  TransactionFlushQueue                                              │
+ *   │   • Buffers spins locally while offline                             │
+ *   │   • Batch-flushes to API when connectivity returns                  │
+ *   │   • Exponential back-off on failure (2^n × 5 s, capped at 5 min)   │
+ *   ├─────────────────────────────────────────────────────────────────────┤
+ *   │  HeartbeatManager                                                   │
+ *   │   • chrome.alarms fires every 30 s to keep session alive            │
+ *   │   • Writes lastHeartbeatAt into SessionStorageData                  │
+ *   │   • Detects and marks stale sessions (no heartbeat for 5 min)       │
+ *   ├─────────────────────────────────────────────────────────────────────┤
+ *   │  IdleDetector                                                       │
+ *   │   • Monitors chrome.idle state (IDLE / LOCKED / ACTIVE)            │
+ *   │   • Pauses session timer when user goes idle                        │
+ *   │   • Updates totalIdleMs and activeMs in SessionStorageData          │
+ *   ├─────────────────────────────────────────────────────────────────────┤
+ *   │  BadgeManager                                                       │
+ *   │   • Displays live session RTP in the extension badge                │
+ *   │   • Green badge: RTP ≥ 95 %  |  Amber: 80–95 %  |  Red: < 80 %    │
+ *   ├─────────────────────────────────────────────────────────────────────┤
+ *   │  TabMonitor                                                         │
+ *   │   • Tracks which tabs are on recognised sweep-casino platforms      │
+ *   │   • Fires SESSION_CONTEXT_CHANGED when the active platform changes  │
+ *   ├─────────────────────────────────────────────────────────────────────┤
+ *   │  MessageRouter                                                      │
+ *   │   • Routes all content-script ↔ background messages                │
+ *   │   • Replies synchronously or defers to async where needed          │
+ *   └─────────────────────────────────────────────────────────────────────┘
  */
 
 import { defineBackground } from 'wxt/sandbox'
-import { storage } from '@/lib/storage'
-import { flowStorage } from '@/lib/flows/storage'
-import {
-  scheduleFlow,
-  unscheduleFlow,
-  isFlowAlarm,
-  getFlowIdFromAlarm,
-} from '@/lib/flows/alarm-scheduler'
-import { createLogger } from '@/lib/logger'
-import type { BackgroundMessage, MessageResponse } from '@/types/extension'
-import type { NavigateStep } from '@/lib/flows/types'
+import { storage } from '../lib/storage'
+import { extensionApi } from '../lib/api'
+import { streakTracker } from '../lib/streak-tracker'
+import { recordsTracker } from '../lib/records-tracker'
+import type {
+  SessionStorageData,
+  BufferedTransaction,
+  BalanceSnapshot,
+  SpinEvent,
+  SessionPhase,
+  SessionAnnotation,
+} from '../lib/storage'
+import type { BackgroundMessage } from '../types/extension'
+import { createLogger } from '../lib/logger'
 
 const log = createLogger('Background')
 
-export default defineBackground(() => {
-  // ── Initialization ──────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────────
 
-  storage.init().catch((error) => {
-    log.error('Failed to initialize storage', { error })
-  })
+const HEARTBEAT_ALARM = 'sweepbot:heartbeat'
+const FLUSH_ALARM = 'sweepbot:flush'
+const HEARTBEAT_INTERVAL_MINUTES = 0.5 // 30 s
+const FLUSH_INTERVAL_MINUTES = 0.25 // 15 s
+const IDLE_THRESHOLD_SECONDS = 120 // 2 min before "idle"
+const ORPHAN_THRESHOLD_MS = 5 * 60_000 // session with no heartbeat >5 min
+const MAX_BATCH_FLUSH_SIZE = 25 // max transactions per API call
+const SESSION_AUTO_END_DELAY_MS = 30_000 // wait 30 s after tab closes before ending
 
-  // Rehydrate Chrome alarms for any active scheduled flows on startup
-  reactivateScheduledFlows()
+// Badge colour thresholds (RTP %)
+const BADGE_GREEN_THRESHOLD = 95
+const BADGE_AMBER_THRESHOLD = 80
 
-  // ── Message handler ─────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Badge Manager
+// ─────────────────────────────────────────────────────────────────────────────
 
-  chrome.runtime.onMessage.addListener(
-    (
-      message: BackgroundMessage,
-      sender: chrome.runtime.MessageSender,
-      sendResponse: (response: MessageResponse) => void
-    ) => {
-      handleMessage(message, sender)
-        .then((data) => sendResponse({ success: true, data }))
-        .catch((error) => sendResponse({ success: false, error: String(error) }))
-      return true // Async response
-    }
-  )
+const BadgeManager = {
+  async showRTP(rtp: number): Promise<void> {
+    const label = rtp > 0 ? `${Math.round(rtp)}%` : ''
+    const color =
+      rtp >= BADGE_GREEN_THRESHOLD
+        ? '#22c55e' // green-500
+        : rtp >= BADGE_AMBER_THRESHOLD
+          ? '#f59e0b' // amber-500
+          : '#ef4444' // red-500
+    await chrome.action.setBadgeText({ text: label })
+    await chrome.action.setBadgeBackgroundColor({ color })
+  },
+
+  async showStatus(symbol: string, color = '#8b5cf6'): Promise<void> {
+    await chrome.action.setBadgeText({ text: symbol })
+    await chrome.action.setBadgeBackgroundColor({ color })
+  },
+
+  async clear(): Promise<void> {
+    await chrome.action.setBadgeText({ text: '' })
+  },
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Transaction Flush Queue
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TransactionFlushQueue = {
+  /** True while a flush is in progress (prevents concurrent flushes). */
+  _flushing: false,
 
   /**
-   * Handle an incoming background message and perform the requested operation (authentication, analytics, flow management, or notifications).
-   *
-   * @param message - The background message to handle; its `type` determines the performed action and expected `payload`.
-   * @param _sender - The runtime message sender (originating tab or extension component).
-   * @returns The response for the handled message; structure varies by message type — for example, auth state objects, `{ success: true | false }` results with optional `error` or `eventCount`, or an array of flows.
-   * @throws Error if `message.type` is not recognized.
+   * Flush all pending transactions that are ready for retry.
+   * Groups them by sessionId and sends up to MAX_BATCH_FLUSH_SIZE per call.
    */
-  async function handleMessage(
-    message: BackgroundMessage,
-    _sender: chrome.runtime.MessageSender
-  ): Promise<unknown> {
-    switch (message.type) {
-      // ── Auth ──────────────────────────────────────────────────────────────
+  async flush(): Promise<void> {
+    if (this._flushing) return
+    this._flushing = true
 
-      case 'GET_AUTH_STATE': {
-        const authToken = await storage.get('authToken')
-        const userId = await storage.get('userId')
-        const userRefCode = await storage.get('userRefCode')
-        return { authToken, userId, userRefCode, isAuthenticated: !!authToken }
+    try {
+      const session = await storage.get('sessionData')
+      if (!session) return
+
+      const now = Date.now()
+      const ready = session.transactionBuffer.filter((tx) => !tx.synced && tx.nextRetryAt <= now)
+      if (ready.length === 0) return
+
+      // Group by sessionId (should almost always be a single group)
+      const bySession = new Map<string, BufferedTransaction[]>()
+      for (const tx of ready) {
+        const group = bySession.get(tx.sessionId) ?? []
+        group.push(tx)
+        bySession.set(tx.sessionId, group)
       }
 
-      case 'SET_AUTH_STATE': {
-        const { token, userId, refCode } = message.payload!
-        await storage.set('authToken', token)
-        await storage.set('userId', userId)
-        await storage.set('userRefCode', refCode)
-        return { success: true }
-      }
+      for (const [sessionId, txs] of bySession) {
+        const batch = txs.slice(0, MAX_BATCH_FLUSH_SIZE)
+        const localIds = batch.map((tx) => tx.localId)
 
-      case 'CLEAR_AUTH': {
-        await storage.set('authToken', null)
-        await storage.set('userId', null)
-        await storage.set('userRefCode', null)
-        return { success: true }
-      }
+        try {
+          await extensionApi.batchTransactions(
+            sessionId,
+            batch.map((tx) => ({
+              game_id: tx.gameId,
+              bet_amount: tx.betAmount,
+              win_amount: tx.winAmount,
+              result: tx.result,
+              bonus_triggered: tx.bonusTriggered,
+              jackpot_hit: tx.jackpotHit,
+              round_id: tx.roundId,
+              timestamp: new Date(tx.timestamp).toISOString(),
+            }))
+          )
+          await storage.markTransactionsSynced(localIds)
+          log.info(`Flushed ${batch.length} transactions for session ${sessionId}`)
 
-      // ── Analytics ─────────────────────────────────────────────────────────
-
-      case 'LOG_ANALYTICS': {
-        await storage.logEvent({
-          type: message.payload!['type'] as import('@/lib/storage').AnalyticsEvent['type'],
-          platformSlug: message.payload!['platformSlug'] as string,
-          timestamp: Date.now(),
-          data: message.payload!,
-        })
-        return { success: true }
-      }
-
-      case 'SYNC_TO_SERVER': {
-        const events = await storage.get('analyticsEvents')
-        if (events && events.length > 0) {
-          try {
-            log.info('Syncing analytics events to server', { count: events.length })
-            // await extensionApi.syncAnalytics(events)
-            return { success: true, eventCount: events.length }
-          } catch (error) {
-            log.error('Failed to sync analytics', { error })
-            return { success: false, error: String(error) }
-          }
-        }
-        return { success: true, eventCount: 0 }
-      }
-
-      // ── Flows management ──────────────────────────────────────────────────
-
-      case 'GET_FLOWS': {
-        const flows = await flowStorage.getAllFlows()
-        return flows
-      }
-
-      case 'SAVE_FLOW': {
-        const { flow } = message.payload!
-        await flowStorage.saveFlow(flow)
-        // If active + scheduled, register the Chrome alarm
-        if (flow.status === 'active' && flow.trigger.type === 'scheduled') {
-          scheduleFlow(flow)
-        }
-        log.info('Flow saved', { id: flow.id, name: flow.name })
-        return { success: true }
-      }
-
-      case 'UPDATE_FLOW_STATUS': {
-        const { flowId, status } = message.payload!
-        await flowStorage.updateFlowStatus(flowId, status)
-        const flow = await flowStorage.getFlow(flowId)
-        if (!flow) return { success: false, error: 'Flow not found' }
-
-        if (status === 'active' && flow.trigger.type === 'scheduled') {
-          scheduleFlow(flow)
-          log.info('Flow reactivated', { flowId })
-        } else {
-          unscheduleFlow(flowId)
-          log.info('Flow unscheduled', { flowId, status })
-        }
-        return { success: true }
-      }
-
-      case 'DELETE_FLOW': {
-        const { flowId } = message.payload!
-        unscheduleFlow(flowId)
-        await flowStorage.deleteFlow(flowId)
-        log.info('Flow deleted', { flowId })
-        return { success: true }
-      }
-
-      case 'EXECUTE_FLOW_NOW': {
-        const { flowId } = message.payload!
-        const flow = await flowStorage.getFlow(flowId)
-        if (!flow) return { success: false, error: 'Flow not found' }
-        // Fire and forget — result comes back as FLOW_COMPLETED message
-        dispatchFlowToTab(flow).catch((err) =>
-          log.error('EXECUTE_FLOW_NOW failed', { flowId, error: err })
-        )
-        return { success: true }
-      }
-
-      // ── Flow execution feedback from content scripts ───────────────────────
-
-      case 'FLOW_COMPLETED': {
-        const { flowId, success: ok, error } = message.payload!
-        log.info('Flow completed', { flowId, ok, error: error ?? undefined })
-        if (!ok && error) {
-          // Surface a notification so the user knows something went wrong
-          chrome.notifications.create(`flow-error-${flowId}`, {
-            type: 'basic',
-            iconUrl: chrome.runtime.getURL('icons/icon-48.png'),
-            title: 'SweepBot Flow Error',
-            message: error,
+          await storage.logEvent({
+            type: 'sync_success',
+            platformSlug: session.platformSlug,
+            timestamp: Date.now(),
+            data: { count: batch.length, sessionId },
+          })
+        } catch (err) {
+          log.error('Batch flush failed', { err })
+          await storage.markTransactionSyncFailed(localIds)
+          await storage.logEvent({
+            type: 'sync_failure',
+            platformSlug: session.platformSlug,
+            timestamp: Date.now(),
+            data: { count: batch.length, sessionId, error: String(err) },
           })
         }
-        return { success: true }
       }
 
-      case 'FLOW_NEED_INPUT': {
-        const { flowId, prompt } = message.payload!
-        log.info('Flow needs user input', { flowId, prompt })
-        // Bring the extension popup / notification to the user's attention
-        chrome.notifications.create(`flow-input-${flowId}`, {
-          type: 'basic',
-          iconUrl: chrome.runtime.getURL('icons/icon-48.png'),
-          title: 'SweepBot: Action Required',
-          message: prompt,
-        })
-        return { success: true }
-      }
-
-      default:
-        throw new Error(`Unknown message type: ${(message as { type: string }).type}`)
+      // Refresh badge after flush
+      const updated = await storage.get('sessionData')
+      if (updated) await BadgeManager.showRTP(updated.rtpCurrent)
+    } finally {
+      this._flushing = false
     }
-  }
+  },
+}
 
-  // ── Alarm listener ──────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Heartbeat Manager
+// ─────────────────────────────────────────────────────────────────────────────
 
-  chrome.alarms.create('syncAnalytics', { periodInMinutes: 5 })
+const HeartbeatManager = {
+  async tick(): Promise<void> {
+    const session = await storage.get('sessionData')
+    if (!session || session.phase === 'idle') return
 
-  chrome.alarms.onAlarm.addListener(async (alarm) => {
-    // Analytics sync
-    if (alarm.name === 'syncAnalytics') {
-      const events = await storage.get('analyticsEvents')
-      if (events && events.length > 0) {
-        log.info('Periodic analytics sync', { count: events.length })
-        // await extensionApi.syncAnalytics(events)
-      }
+    const now = Date.now()
+
+    // Detect orphaned session (no heartbeat for >5 min while supposedly active)
+    if (
+      session.phase !== 'syncing' &&
+      session.lastHeartbeatAt > 0 &&
+      now - session.lastHeartbeatAt > ORPHAN_THRESHOLD_MS
+    ) {
+      log.warn('Orphaned session detected — marking as idle', { sessionId: session.sessionId })
+      await storage.mutateSession((s) => ({
+        ...s,
+        phase: 'idle' as SessionPhase,
+        phaseChangedAt: now,
+        idleStartedAt: s.idleStartedAt ?? now,
+      }))
+      await BadgeManager.showStatus('⏸', '#6b7280')
       return
     }
 
-    // Flow execution alarm
-    if (isFlowAlarm(alarm.name)) {
-      const flowId = getFlowIdFromAlarm(alarm.name)
-      if (!flowId) return
+    // Normal heartbeat
+    await storage.mutateSession((s) => ({ ...s, lastHeartbeatAt: now }))
+    await BadgeManager.showRTP(session.rtpCurrent)
+  },
+}
 
-      const flow = await flowStorage.getFlow(flowId)
-      if (!flow || flow.status !== 'active') {
-        log.debug('Skipping alarm for inactive/missing flow', { flowId })
-        return
-      }
+// ─────────────────────────────────────────────────────────────────────────────
+// Session Lifecycle Manager
+// ─────────────────────────────────────────────────────────────────────────────
 
-      log.info('Alarm fired for flow', { flowId, name: flow.name })
-      dispatchFlowToTab(flow).catch((err) =>
-        log.error('Flow alarm execution failed', { flowId, error: err })
-      )
-    }
-  })
-
-  // ── Tab update handler ───────────────────────────────────────────────────────
-
-  chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status === 'complete' && tab.url) {
-      chrome.tabs.sendMessage(tabId, { type: 'PAGE_LOADED' }).catch(() => {
-        // Content script not loaded on this tab — fine
-      })
-    }
-  })
-
-  // ── Helpers ──────────────────────────────────────────────────────────────────
-
+const SessionLifecycleManager = {
   /**
-   * Rehydrate Chrome alarms for all active scheduled flows on service worker
-   * startup (Chrome clears alarms when the service worker restarts).
+   * Create a new session both locally (storage) and remotely (API).
+   * Returns the new SessionStorageData or null on failure.
    */
-  async function reactivateScheduledFlows(): Promise<void> {
+  async startSession(opts: {
+    platformSlug: string
+    gameId: string | null
+    tabId: number | null
+    scBalance: number
+    gcBalance: number
+  }): Promise<SessionStorageData | null> {
+    // Guard: only one active session at a time
+    const existing = await storage.get('sessionData')
+    if (existing && existing.phase !== 'idle') {
+      log.warn('Tried to start session while one is active', { existing: existing.sessionId })
+      return null
+    }
+
+    const now = Date.now()
+
+    // Call API to register the session
+    let remoteSessionId: string
     try {
-      const flows = await flowStorage.getAllFlows()
-      let count = 0
-      for (const flow of flows) {
-        if (flow.status === 'active' && flow.trigger.type === 'scheduled') {
-          scheduleFlow(flow)
-          count++
-        }
-      }
-      if (count > 0) {
-        log.info('Reactivated scheduled flows on startup', { count })
-      }
+      const res = await extensionApi.createSession(opts.platformSlug, opts.gameId ?? '')
+      remoteSessionId = res.sessionId
     } catch (err) {
-      log.error('Failed to reactivate scheduled flows', { error: err })
-    }
-  }
-
-  /**
-   * Locate or open a browser tab on the flow's target platform and send the flow to its content script for execution.
-   *
-   * Searches for a Navigate step in the flow to determine a target URL; if found, reuses or opens a tab on that origin and navigates to the target URL as needed. If no Navigate step exists, attempts to find an existing casino tab by known URL patterns. Once a suitable tab is available and loaded, sends an `EXECUTE_FLOW` message with the flow.
-   *
-   * @param flow - The flow definition to dispatch to a content script.
-   * @throws Error - If no suitable tab can be found or opened to execute the flow.
-   */
-  async function dispatchFlowToTab(
-    flow: import('@/lib/flows/types').FlowDefinition
-  ): Promise<void> {
-    // Derive the target URL from the first NavigateStep in the flow
-    const navigateStep = flow.steps.find((s) => s.type === 'navigate') as NavigateStep | undefined
-    const targetUrl = navigateStep?.url
-
-    let tabId: number | undefined
-
-    if (targetUrl) {
-      const origin = new URL(targetUrl).origin
-      // Prefer a tab that's already on this platform
-      const existing = await chrome.tabs.query({ url: `${origin}/*` })
-      if (existing.length > 0 && existing[0].id != null) {
-        tabId = existing[0].id
-        // Navigate if not already at the right URL (e.g. on a different game page)
-        if (!existing[0].url?.startsWith(targetUrl)) {
-          await chrome.tabs.update(tabId, { url: targetUrl })
-          await waitForTabLoad(tabId!)
-        }
-      } else {
-        // Open a new tab and wait for it to load
-        const tab = await chrome.tabs.create({ url: targetUrl })
-        const newTabId = tab.id ?? 0
-        tabId = newTabId
-        await waitForTabLoad(newTabId)
-      }
-    } else {
-      // No navigate step — try to find any active casino tab
-      const casinoUrls = [
-        '*://*.chumbacasino.com/*',
-        '*://*.luckyland.com/*',
-        '*://*.stake.us/*',
-        '*://*.pulsz.com/*',
-        '*://*.wowvegas.com/*',
-        '*://*.fortunecoins.com/*',
-      ]
-      for (const pattern of casinoUrls) {
-        const tabs = await chrome.tabs.query({ url: pattern })
-        if (tabs.length > 0 && tabs[0].id != null) {
-          tabId = tabs[0].id
-          break
-        }
-      }
+      log.error('Failed to create remote session', { err })
+      return null
     }
 
-    if (tabId == null) {
-      throw new Error('No suitable tab found to execute flow')
+    const session: SessionStorageData = {
+      sessionId: remoteSessionId,
+      platformSlug: opts.platformSlug,
+      startedAt: now,
+      tabId: opts.tabId,
+
+      gameId: opts.gameId,
+      gameSwitches: [],
+
+      coinsStart: { sc: opts.scBalance, gc: opts.gcBalance },
+      coinsCurrent: { sc: opts.scBalance, gc: opts.gcBalance },
+      balanceHistory: [
+        { ts: now, sc: opts.scBalance, gc: opts.gcBalance, source: 'session_start' },
+      ],
+
+      spinTimeline: [],
+      transactionCount: 0,
+
+      bonusEvents: [],
+      bigWins: [],
+      inBonusRound: false,
+      activeBonusIndex: null,
+
+      rtpSamples: [],
+      rtpCurrent: 0,
+      volatilityIndex: 0,
+      streakSummary: { current: 0, longestWin: 0, longestLoss: 0, direction: 'none' },
+      netResult: 0,
+      totalWagered: 0,
+      totalWon: 0,
+      largestWin: 0,
+      largestWinSpinNumber: 0,
+
+      phase: 'warmup',
+      phaseChangedAt: now,
+
+      lastActivityAt: now,
+      idleStartedAt: null,
+      totalIdleMs: 0,
+      activeMs: 0,
+      lastHeartbeatAt: now,
+
+      transactionBuffer: [],
+      syncFailureCount: 0,
+      lastSyncedAt: 0,
+      totalSyncedTransactions: 0,
+
+      sessionQualityScore: 20,
+      annotations: [
+        {
+          ts: now,
+          source: 'system',
+          text: `Session started on ${opts.platformSlug}${opts.gameId ? ` playing ${opts.gameId}` : ''}.`,
+        },
+      ],
     }
 
-    // Dispatch the flow to the content script
-    await chrome.tabs.sendMessage(tabId, {
-      type: 'EXECUTE_FLOW',
-      payload: { flow },
+    await storage.set('sessionData', session)
+
+    // Record the streak
+    await streakTracker.recordSession(opts.platformSlug)
+
+    // Badge
+    await BadgeManager.showStatus('▶', '#22c55e')
+
+    // Log analytics
+    await storage.logEvent({
+      type: 'session_start',
+      platformSlug: opts.platformSlug,
+      timestamp: now,
+      data: { sessionId: remoteSessionId, scBalance: opts.scBalance, gcBalance: opts.gcBalance },
     })
 
-    log.debug('Dispatched flow to tab', { name: flow.name, tabId })
-  }
+    log.info('Session started', { sessionId: remoteSessionId, platform: opts.platformSlug })
+    return session
+  },
 
   /**
-   * Resolve when the specified tab reaches loading status "complete".
-   *
-   * @param tabId - ID of the tab to observe
-   * @param timeoutMs - Maximum time in milliseconds to wait before rejecting (default: 30000)
-   * @returns Resolves when the tab's status becomes `complete`; rejects with an `Error` if the timeout is reached before completion
+   * End the active session: flush any buffered transactions, call the API,
+   * check personal records, then clear local session state.
    */
-  function waitForTabLoad(tabId: number, timeoutMs = 30_000): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        chrome.tabs.onUpdated.removeListener(listener)
-        reject(new Error(`Tab ${tabId} did not finish loading within ${timeoutMs}ms`))
-      }, timeoutMs)
+  async endSession(reason: 'user' | 'tab_closed' | 'idle_timeout' | 'forced'): Promise<void> {
+    const session = await storage.get('sessionData')
+    if (!session) return
 
-      /**
-       * Handles tab update events for waitForTabLoad and resolves when the given tab reaches 'complete' status.
-       *
-       * @param id - The id of the tab that was updated
-       * @param info - Change information for the tab update (e.g., `status`)
-       */
-      function listener(id: number, info: chrome.tabs.TabChangeInfo) {
-        if (id === tabId && info.status === 'complete') {
-          clearTimeout(timer)
-          chrome.tabs.onUpdated.removeListener(listener)
-          // Small delay to let the content script initialize
-          setTimeout(resolve, 800)
-        }
-      }
+    const now = Date.now()
+    log.info('Ending session', { sessionId: session.sessionId, reason })
 
-      chrome.tabs.onUpdated.addListener(listener)
-      // Also check if it's already loaded
-      chrome.tabs.get(tabId, (tab) => {
-        if (chrome.runtime.lastError) return
-        if (tab.status === 'complete') {
-          clearTimeout(timer)
-          chrome.tabs.onUpdated.removeListener(listener)
-          setTimeout(resolve, 800)
+    // Flush outstanding transactions first
+    await TransactionFlushQueue.flush()
+
+    // Compute final balance if possible
+    const closingBalance = session.coinsCurrent
+
+    // Call API to end session
+    try {
+      const result = await extensionApi.endSession(session.sessionId)
+      log.info('Session ended', { rtp: result.rtp, netResult: result.netResult })
+    } catch (err) {
+      log.error('Failed to end remote session', { err })
+    }
+
+    // Check personal records
+    const durationMinutes = (now - session.startedAt - session.totalIdleMs) / 60_000
+    await recordsTracker.checkAndUpdateRecords({
+      biggestWin: session.largestWin,
+      rtp: session.rtpCurrent,
+      durationMinutes,
+      spinCount: session.transactionCount,
+      netResult: session.netResult,
+      platformSlug: session.platformSlug,
+      gameId: session.gameId ?? undefined,
+      sessionId: session.sessionId,
+    })
+
+    // Increment session counter
+    const count = await storage.get('completedSessionCount')
+    await storage.set('completedSessionCount', (count ?? 0) + 1)
+
+    // Final annotation
+    const finalAnnotation: SessionAnnotation = {
+      ts: now,
+      source: 'system',
+      text: `Session ended (${reason}). RTP: ${session.rtpCurrent.toFixed(1)} %. Net: ${session.netResult >= 0 ? '+' : ''}${session.netResult.toFixed(2)} SC. Duration: ${Math.round(durationMinutes)} min.`,
+    }
+
+    // Persist a compact session record in analytics before clearing
+    await storage.logEvent({
+      type: 'session_end',
+      platformSlug: session.platformSlug,
+      timestamp: now,
+      data: {
+        sessionId: session.sessionId,
+        rtp: session.rtpCurrent,
+        netResult: session.netResult,
+        spinCount: session.transactionCount,
+        durationMinutes: Math.round(durationMinutes),
+        reason,
+        largestWin: session.largestWin,
+        bonusTriggers: session.bonusEvents.length,
+        qualityScore: session.sessionQualityScore,
+        closingBalance,
+        finalAnnotation,
+      },
+    })
+
+    await storage.set('sessionData', null)
+    await BadgeManager.clear()
+  },
+
+  /**
+   * Pause the active session (e.g., user went idle).
+   */
+  async pauseSession(reason: 'idle' | 'user' | 'navigation'): Promise<void> {
+    const now = Date.now()
+    await storage.mutateSession((s) => ({
+      ...s,
+      phase: 'idle' as SessionPhase,
+      phaseChangedAt: now,
+      idleStartedAt: s.idleStartedAt ?? now,
+    }))
+    await BadgeManager.showStatus('⏸', '#6b7280')
+    const session = await storage.get('sessionData')
+    if (session) {
+      await storage.logEvent({
+        type: 'session_paused',
+        platformSlug: session.platformSlug,
+        timestamp: now,
+        data: { reason },
+      })
+    }
+  },
+
+  /**
+   * Resume a paused session.
+   */
+  async resumeSession(): Promise<void> {
+    const session = await storage.get('sessionData')
+    if (!session || session.phase !== 'idle') return
+
+    const now = Date.now()
+    const idleMs = session.idleStartedAt ? now - session.idleStartedAt : 0
+
+    await storage.mutateSession((s) => ({
+      ...s,
+      phase: s.transactionCount < 20 ? ('warmup' as SessionPhase) : ('active' as SessionPhase),
+      phaseChangedAt: now,
+      idleStartedAt: null,
+      totalIdleMs: s.totalIdleMs + idleMs,
+      lastHeartbeatAt: now,
+    }))
+
+    await BadgeManager.showRTP(session.rtpCurrent)
+    await storage.logEvent({
+      type: 'session_resumed',
+      platformSlug: session.platformSlug,
+      timestamp: now,
+      data: { idleMs },
+    })
+    log.info('Session resumed', { idleMs })
+  },
+
+  /**
+   * Record a balance update.  Updates coinsCurrent and balanceHistory.
+   */
+  async recordBalance(sc: number, gc: number, source: BalanceSnapshot['source']): Promise<void> {
+    const snapshot: BalanceSnapshot = { ts: Date.now(), sc, gc, source }
+    await storage.recordBalance(snapshot)
+
+    // Sync to API if we have a session ID
+    const session = await storage.get('sessionData')
+    if (session) {
+      extensionApi
+        .updateSessionBalance(session.sessionId, sc, gc)
+        .catch((err) => log.warn('Balance sync failed', { err }))
+    }
+  },
+
+  /**
+   * Record a completed spin.  Enqueues it to the local buffer and
+   * immediately attempts a flush if connectivity allows.
+   */
+  async recordSpin(spin: SpinEvent): Promise<void> {
+    await storage.recordSpin(spin)
+
+    const session = await storage.get('sessionData')
+    if (!session) return
+
+    // Build a buffered transaction
+    const tx: BufferedTransaction = {
+      localId: `${spin.ts}-${spin.roundId || crypto.randomUUID()}`,
+      sessionId: session.sessionId,
+      gameId: spin.gameId,
+      roundId: spin.roundId,
+      betAmount: spin.bet,
+      winAmount: spin.win,
+      result: spin.result === 'push' ? 'loss' : spin.result,
+      bonusTriggered: spin.bonusTriggered,
+      jackpotHit: spin.jackpotHit,
+      timestamp: spin.ts,
+      retryCount: 0,
+      nextRetryAt: Date.now(),
+      synced: false,
+    }
+
+    await storage.enqueueTransaction(tx)
+
+    // Opportunistic flush every 5 spins
+    if (session.transactionCount % 5 === 0) {
+      TransactionFlushQueue.flush().catch((e) => log.warn('Opportunistic flush failed', { e }))
+    }
+
+    // Badge update
+    const updated = await storage.get('sessionData')
+    if (updated) {
+      await BadgeManager.showRTP(updated.rtpCurrent)
+    }
+  },
+
+  /**
+   * On startup: look for an active session whose last heartbeat is recent
+   * (service worker may have been killed and restarted).  If the heartbeat
+   * is stale, mark the session as orphaned.
+   */
+  async recoverOrphanedSessions(): Promise<void> {
+    const session = await storage.get('sessionData')
+    if (!session) return
+
+    const now = Date.now()
+    const staleness = now - session.lastHeartbeatAt
+
+    if (staleness > ORPHAN_THRESHOLD_MS) {
+      log.warn('Found orphaned session on startup', {
+        sessionId: session.sessionId,
+        staleness,
+      })
+      await storage.mutateSession((s) => ({
+        ...s,
+        phase: 'idle' as SessionPhase,
+        phaseChangedAt: now,
+        idleStartedAt: s.idleStartedAt ?? now,
+      }))
+      await BadgeManager.showStatus('!', '#ef4444')
+    } else {
+      // Still fresh — resume heartbeat transparently
+      await HeartbeatManager.tick()
+    }
+  },
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tab Monitor
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Tracks the browser tab the current session is running in. */
+const TabMonitor = {
+  /** pendingEndTimers keyed by tabId */
+  _pendingEnd: new Map<number, ReturnType<typeof setTimeout>>(),
+
+  onTabRemoved(tabId: number): void {
+    storage
+      .get('sessionData')
+      .then((s) => {
+        if (!s || s.tabId !== tabId) return
+        log.info('Platform tab closed — scheduling session end', { tabId })
+
+        const timer = setTimeout(async () => {
+          this._pendingEnd.delete(tabId)
+          await SessionLifecycleManager.endSession('tab_closed')
+        }, SESSION_AUTO_END_DELAY_MS)
+
+        this._pendingEnd.set(tabId, timer)
+      })
+      .catch(() => {})
+  },
+
+  onTabUpdated(tabId: number, url: string): void {
+    // If the tab navigated away from the platform, trigger end with delay
+    storage
+      .get('sessionData')
+      .then(async (s) => {
+        if (!s || s.tabId !== tabId) return
+        // Could check URL against platform patterns here — for now just track
+        // that the platform tab is still alive
+        if (this._pendingEnd.has(tabId)) {
+          clearTimeout(this._pendingEnd.get(tabId)!)
+          this._pendingEnd.delete(tabId)
+          log.info('Tab navigation — session end timer cancelled', { tabId, url })
         }
       })
-    })
+      .catch(() => {})
+  },
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Message Router
+// ─────────────────────────────────────────────────────────────────────────────
+
+type ExtendedBackgroundMessage =
+  | BackgroundMessage
+  | {
+      type: 'SESSION_START'
+      payload: {
+        platformSlug: string
+        gameId?: string
+        tabId?: number
+        scBalance?: number
+        gcBalance?: number
+      }
+    }
+  | { type: 'SESSION_END'; payload: { reason?: 'user' | 'forced' } }
+  | { type: 'SESSION_PAUSE' }
+  | { type: 'SESSION_RESUME' }
+  | { type: 'SPIN_RECORDED'; payload: SpinEvent }
+  | { type: 'BALANCE_UPDATED'; payload: { sc: number; gc: number } }
+  | { type: 'GET_SESSION_STATE' }
+  | { type: 'ADD_ANNOTATION'; payload: { text: string; spinNumber?: number } }
+  | { type: 'GAME_SWITCHED'; payload: { toGameId: string } }
+
+function routeMessage(
+  message: ExtendedBackgroundMessage,
+  sender: chrome.runtime.MessageSender,
+  sendResponse: (response?: unknown) => void
+): boolean {
+  const tabId = sender.tab?.id ?? null
+
+  switch (message.type) {
+    case 'SHOW_NOTIFICATION':
+      showNotification(
+        (message as BackgroundMessage & { type: 'SHOW_NOTIFICATION' }).payload.title,
+        (message as BackgroundMessage & { type: 'SHOW_NOTIFICATION' }).payload.message
+      )
+      return false
+
+    case 'FLOW_COMPLETED': {
+      const p = (message as BackgroundMessage & { type: 'FLOW_COMPLETED' }).payload
+      if (p.success) {
+        showNotification('Flow Completed', `Flow ${p.flowId} executed successfully`)
+      } else {
+        showNotification('Flow Failed', `Flow ${p.flowId} failed: ${p.error ?? 'Unknown error'}`)
+      }
+      return false
+    }
+
+    case 'SESSION_START': {
+      const p = (
+        message as {
+          type: 'SESSION_START'
+          payload: {
+            platformSlug: string
+            gameId?: string
+            tabId?: number
+            scBalance?: number
+            gcBalance?: number
+          }
+        }
+      ).payload
+      SessionLifecycleManager.startSession({
+        platformSlug: p.platformSlug,
+        gameId: p.gameId ?? null,
+        tabId: p.tabId ?? tabId,
+        scBalance: p.scBalance ?? 0,
+        gcBalance: p.gcBalance ?? 0,
+      }).then((session) => sendResponse({ success: !!session, sessionId: session?.sessionId }))
+      return true // async response
+    }
+
+    case 'SESSION_END': {
+      const p = (message as { type: 'SESSION_END'; payload?: { reason?: 'user' | 'forced' } })
+        .payload
+      SessionLifecycleManager.endSession(p?.reason ?? 'user').then(() =>
+        sendResponse({ success: true })
+      )
+      return true
+    }
+
+    case 'SESSION_PAUSE':
+      SessionLifecycleManager.pauseSession('user').then(() => sendResponse({ success: true }))
+      return true
+
+    case 'SESSION_RESUME':
+      SessionLifecycleManager.resumeSession().then(() => sendResponse({ success: true }))
+      return true
+
+    case 'SPIN_RECORDED': {
+      const spin = (message as { type: 'SPIN_RECORDED'; payload: SpinEvent }).payload
+      SessionLifecycleManager.recordSpin(spin).then(() => sendResponse({ success: true }))
+      return true
+    }
+
+    case 'BALANCE_UPDATED': {
+      const { sc, gc } = (
+        message as { type: 'BALANCE_UPDATED'; payload: { sc: number; gc: number } }
+      ).payload
+      SessionLifecycleManager.recordBalance(sc, gc, 'intercepted').then(() =>
+        sendResponse({ success: true })
+      )
+      return true
+    }
+
+    case 'GET_SESSION_STATE':
+      storage.get('sessionData').then((s) => sendResponse({ session: s }))
+      return true
+
+    case 'ADD_ANNOTATION': {
+      const { text, spinNumber } = (
+        message as { type: 'ADD_ANNOTATION'; payload: { text: string; spinNumber?: number } }
+      ).payload
+      storage
+        .mutateSession((s) => {
+          const annotation: SessionAnnotation = {
+            ts: Date.now(),
+            source: 'user',
+            text,
+            spinNumber,
+          }
+          return { ...s, annotations: [...s.annotations, annotation] }
+        })
+        .then(() => sendResponse({ success: true }))
+      return true
+    }
+
+    case 'GAME_SWITCHED': {
+      const { toGameId } = (message as { type: 'GAME_SWITCHED'; payload: { toGameId: string } })
+        .payload
+      storage
+        .mutateSession((s) => ({
+          ...s,
+          gameId: toGameId,
+          gameSwitches: [
+            ...s.gameSwitches,
+            {
+              ts: Date.now(),
+              fromGameId: s.gameId,
+              toGameId,
+              spinCountAtSwitch: s.transactionCount,
+            },
+          ],
+        }))
+        .then(() => sendResponse({ success: true }))
+      return true
+    }
+
+    default:
+      return false
   }
-}) // end defineBackground
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+function showNotification(title: string, message: string): void {
+  chrome.notifications.create({
+    type: 'basic',
+    iconUrl: '/icon/128.png',
+    title,
+    message,
+  })
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Entry point
+// ─────────────────────────────────────────────────────────────────────────────
+
+export default defineBackground(async () => {
+  log.info('Background service worker started')
+
+  // ── Recover any orphaned session from a previous service-worker run ───────
+  await SessionLifecycleManager.recoverOrphanedSessions()
+
+  // ── Set up periodic alarms ─────────────────────────────────────────────
+  chrome.alarms.create(HEARTBEAT_ALARM, { periodInMinutes: HEARTBEAT_INTERVAL_MINUTES })
+  chrome.alarms.create(FLUSH_ALARM, { periodInMinutes: FLUSH_INTERVAL_MINUTES })
+
+  chrome.alarms.onAlarm.addListener(async (alarm) => {
+    if (alarm.name === HEARTBEAT_ALARM) {
+      await HeartbeatManager.tick()
+    } else if (alarm.name === FLUSH_ALARM) {
+      await TransactionFlushQueue.flush()
+    }
+  })
+
+  // ── Idle detection ─────────────────────────────────────────────────────
+  chrome.idle.setDetectionInterval(IDLE_THRESHOLD_SECONDS)
+  chrome.idle.onStateChanged.addListener(async (state) => {
+    log.info('Idle state changed', { state })
+    if (state === 'idle' || state === 'locked') {
+      await SessionLifecycleManager.pauseSession('idle')
+    } else if (state === 'active') {
+      await SessionLifecycleManager.resumeSession()
+    }
+  })
+
+  // ── Tab lifecycle ──────────────────────────────────────────────────────
+  chrome.tabs.onRemoved.addListener((tabId) => {
+    TabMonitor.onTabRemoved(tabId)
+  })
+
+  chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
+    if (changeInfo.url && tab.id) {
+      TabMonitor.onTabUpdated(tab.id, changeInfo.url)
+    }
+  })
+
+  // ── Message routing ────────────────────────────────────────────────────
+  chrome.runtime.onMessage.addListener((message: ExtendedBackgroundMessage, sender, sendResponse) =>
+    routeMessage(message, sender, sendResponse)
+  )
+
+  // ── Storage change watcher: badge reflects any external mutation ───────
+  storage.onChanged(async (changes) => {
+    if ('sessionData' in changes) {
+      const newSession = changes['sessionData']?.newValue as SessionStorageData | null
+      if (newSession) {
+        await BadgeManager.showRTP(newSession.rtpCurrent)
+      } else {
+        await BadgeManager.clear()
+      }
+    }
+  })
+
+  // ── Initial badge state ────────────────────────────────────────────────
+  const existingSession = await storage.get('sessionData')
+  if (existingSession && existingSession.phase !== 'idle') {
+    await BadgeManager.showRTP(existingSession.rtpCurrent)
+  } else {
+    await BadgeManager.clear()
+  }
+
+  log.info('Background service worker ready')
+})

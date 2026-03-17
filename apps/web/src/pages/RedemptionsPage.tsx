@@ -104,14 +104,17 @@ function LogRedemptionModal({
   const [error, setError] = useState<string | null>(null)
 
   const mutation = useMutation({
-    mutationFn: () =>
-      api.redemptions.create({
+    mutationFn: () => {
+      const amount = parseFloat(form.amount_sc)
+      if (isNaN(amount) || amount <= 0) return Promise.reject(new Error('Invalid amount'))
+      return api.redemptions.create({
         platform_id: form.platform_id,
-        amount_sc: parseFloat(form.amount_sc),
+        amount_sc: amount,
         payment_method: form.payment_method,
         requested_at: form.requested_at,
         notes: form.notes || undefined,
-      }),
+      })
+    },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['redemptions'] })
       void qc.invalidateQueries({ queryKey: ['redemptions', 'stats'] })

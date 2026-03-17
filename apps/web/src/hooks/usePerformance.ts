@@ -74,11 +74,15 @@ export function useMemoAsync<T>(factory: () => Promise<T>, deps: DependencyList)
   useEffect(() => {
     let cancelled = false
 
-    factory().then((result) => {
-      if (!cancelled) {
-        setValue(result)
-      }
-    })
+    factory()
+      .then((result) => {
+        if (!cancelled) {
+          setValue(result)
+        }
+      })
+      .catch(() => {
+        // silently ignore — callers that need error state should manage it directly
+      })
 
     return () => {
       cancelled = true
@@ -133,27 +137,31 @@ export function usePerformanceMonitor(componentName: string, enabled = import.me
 /**
  * Intersection Observer hook for lazy loading
  * Returns true when element enters viewport
+ *
+ * NOTE: `options` is captured once on mount via a ref — pass a stable/memoized
+ * object if you need to change observer options after mount.
  */
 export function useIntersectionObserver(
   ref: React.RefObject<Element>,
   options: IntersectionObserverInit = {}
 ): boolean {
   const [isIntersecting, setIsIntersecting] = React.useState(false)
+  const optionsRef = useRef(options)
 
   useEffect(() => {
     const element = ref.current
     if (!element) return
 
     const observer = new IntersectionObserver(([entry]) => {
-      setIsIntersecting(entry.isIntersecting)
-    }, options)
+      setIsIntersecting(entry!.isIntersecting)
+    }, optionsRef.current)
 
     observer.observe(element)
 
     return () => {
       observer.disconnect()
     }
-  }, [ref, options])
+  }, [ref])
 
   return isIntersecting
 }

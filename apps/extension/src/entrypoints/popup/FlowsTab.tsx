@@ -21,16 +21,24 @@ import {
   Check,
   AlertTriangle,
   Loader2,
+  ShieldCheck,
+  Eye,
+  EyeOff,
 } from 'lucide-react'
 import { VoiceRecorder, type RecordingState } from '@/lib/voice-recorder'
+import { storage } from '@/lib/storage'
 import { flowInterpreter } from '@/lib/flows/interpreter'
 import { flowStorage } from '@/lib/flows/storage'
 import { scheduleFlow, unscheduleFlow } from '@/lib/flows/alarm-scheduler'
-import type { FlowDefinition, InterpretationResult } from '@/lib/flows/types'
+import type { FlowDefinition, FlowStep, InterpretationResult } from '@/lib/flows/types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type TabView = 'record' | 'flows'
+
+function hasPlatform(step: FlowStep): step is Extract<FlowStep, { platform: string }> {
+  return 'platform' in step
+}
 
 /**
  * Render the FlowsTab UI for recording voice-driven automations and managing saved flows.
@@ -55,6 +63,8 @@ export default function FlowsTab() {
   const [saved, setSaved] = useState(false)
   const [expandedFlowId, setExpandedFlowId] = useState<string | null>(null)
   const [isSupported, setIsSupported] = useState(true)
+  const [voiceConsent, setVoiceConsent] = useState<boolean | null>(null)
+  const [privacyMode, setPrivacyMode] = useState(false)
 
   const recorderRef = useRef<VoiceRecorder | null>(null)
 
@@ -62,8 +72,25 @@ export default function FlowsTab() {
 
   useEffect(() => {
     setIsSupported(VoiceRecorder.isSupported())
+    loadSettings()
     loadFlows()
   }, [])
+
+  // Cleanup on unmount — ensure mic is dead
+  useEffect(() => {
+    return () => {
+      if (recorderRef.current) {
+        recorderRef.current.abort()
+      }
+    }
+  }, [])
+
+  async function loadSettings() {
+    const consent = await storage.get('voiceConsentGranted')
+    const pMode = await storage.get('voicePrivacyMode')
+    setVoiceConsent(consent ?? false)
+    setPrivacyMode(pMode ?? false)
+  }
 
   /**
    * Load saved flows from persistent storage into the component state.
@@ -98,8 +125,33 @@ export default function FlowsTab() {
 
       // Interpret the transcript
       const result = flowInterpreter.interpret(transcript)
+
+      // Fallback & Responsible Play Stub
+      if (result.confidence < 0.6) {
+        // AI Fallback stub: In the future, this calls an LLM instead
+        result.warnings.push('Confidence low. Attempted to enhance via AI (Stub).')
+      }
+      if (!result.flow.limits || result.flow.limits.maxDurationMs > 60 * 60 * 1000) {
+        result.flow.limits = { ...result.flow.limits, maxDurationMs: 60 * 60 * 1000 }
+        if (!result.warnings.includes('Added mandatory 1-hour session limit.')) {
+          result.warnings.push('Added mandatory 1-hour session limit.')
+        }
+      }
+
       setInterpretation(result)
       setRecordingState('idle')
+
+      // TTS Feedback
+      if (window.speechSynthesis) {
+        const platform = result.flow.steps.find(hasPlatform)?.platform ?? 'sweepstakes casino'
+        const msg =
+          result.confidence >= 0.6
+            ? `Got it. Ready to save your automation for ${platform}.`
+            : `I'm not quite sure I got that right. Please review the details.`
+        const utterance = new SpeechSynthesisUtterance(msg)
+        utterance.rate = 1.1
+        window.speechSynthesis.speak(utterance)
+      }
     } catch (err) {
       setError(String(err))
       setRecordingState('idle')
@@ -113,42 +165,46 @@ export default function FlowsTab() {
 
   // ── Save flow ─────────────────────────────────────────────────────────────
 
-  const saveFlow = useCallback(async () => {
-    if (!interpretation) return
+  const saveFlow = useCallback(
+    async (customFlow?: FlowDefinition) => {
+      if (!interpretation) return
 
-    setSaving(true)
-    try {
-      const flow: FlowDefinition = {
-        ...interpretation.flow,
-        status: interpretation.flow.trigger.type === 'scheduled' ? 'active' : 'draft',
+      setSaving(true)
+      try {
+        const targetFlow = customFlow && (customFlow as any).id ? customFlow : interpretation.flow
+        const flow: FlowDefinition = {
+          ...targetFlow,
+          status: targetFlow.trigger.type === 'scheduled' ? 'active' : 'draft',
+        }
+
+        await flowStorage.saveFlow(flow)
+
+        if (flow.trigger.type === 'scheduled' && flow.status === 'active') {
+          scheduleFlow(flow)
+        }
+
+        setFlows((prev) => {
+          const filtered = prev.filter((f) => f.id !== flow.id)
+          return [flow, ...filtered]
+        })
+
+        setSaved(true)
+        setInterpretation(null)
+        setFinalTranscript('')
+
+        // Switch to flows list after save
+        setTimeout(() => {
+          setView('flows')
+          setSaved(false)
+        }, 1200)
+      } catch (err) {
+        setError(`Failed to save flow: ${err}`)
+      } finally {
+        setSaving(false)
       }
-
-      await flowStorage.saveFlow(flow)
-
-      if (flow.trigger.type === 'scheduled' && flow.status === 'active') {
-        scheduleFlow(flow)
-      }
-
-      setFlows((prev) => {
-        const filtered = prev.filter((f) => f.id !== flow.id)
-        return [flow, ...filtered]
-      })
-
-      setSaved(true)
-      setInterpretation(null)
-      setFinalTranscript('')
-
-      // Switch to flows list after save
-      setTimeout(() => {
-        setView('flows')
-        setSaved(false)
-      }, 1200)
-    } catch (err) {
-      setError(`Failed to save flow: ${err}`)
-    } finally {
-      setSaving(false)
-    }
-  }, [interpretation])
+    },
+    [interpretation]
+  )
 
   // ── Flow management ───────────────────────────────────────────────────────
 
@@ -221,95 +277,124 @@ export default function FlowsTab() {
       {/* ── Record view ──────────────────────────────────────────────────────── */}
       {view === 'record' && (
         <div className="flex-1 space-y-4 overflow-y-auto p-4">
-          {!isSupported ? (
-            <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-xs text-yellow-800">
-              <AlertTriangle className="mr-1 inline h-3 w-3" />
-              Voice input requires Chrome. Try typing your automation below instead.
-            </div>
-          ) : null}
-
-          {/* Mic button */}
-          <div className="flex flex-col items-center gap-3">
-            <p className="text-center text-xs leading-relaxed text-gray-500">
-              Speak your automation aloud — SweepBot will build the script instantly.
-            </p>
-
-            <button
-              onClick={recordingState === 'listening' ? stopRecording : startRecording}
-              disabled={recordingState === 'processing'}
-              className={`flex h-16 w-16 items-center justify-center rounded-full shadow-lg transition-all ${
-                recordingState === 'listening'
-                  ? 'animate-pulse bg-red-500 hover:bg-red-600'
-                  : recordingState === 'processing'
-                    ? 'cursor-not-allowed bg-gray-400'
-                    : 'bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'
-              } `}
-            >
-              {recordingState === 'processing' ? (
-                <Loader2 className="h-7 w-7 animate-spin text-white" />
-              ) : recordingState === 'listening' ? (
-                <MicOff className="h-7 w-7 text-white" />
-              ) : (
-                <Mic className="h-7 w-7 text-white" />
-              )}
-            </button>
-
-            <p className="text-xs font-medium text-gray-600">
-              {recordingState === 'listening'
-                ? 'Listening… tap to stop'
-                : recordingState === 'processing'
-                  ? 'Processing…'
-                  : 'Tap to speak'}
-            </p>
-          </div>
-
-          {/* Live transcript */}
-          {(interimText || finalTranscript) && (
-            <div className="min-h-[48px] rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
-              <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                Transcript
-              </span>
-              <p className="mt-1 leading-relaxed">
-                {finalTranscript || interimText}
-                {recordingState === 'listening' && (
-                  <span className="animate-blink ml-1 inline-block h-4 w-0.5 bg-blue-500 align-middle" />
-                )}
-              </p>
-            </div>
-          )}
-
-          {/* Error */}
-          {error && (
-            <div className="flex gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
-              <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
-              {error}
-            </div>
-          )}
-
-          {/* Interpretation preview */}
-          {interpretation && !error && (
-            <InterpretationPreview
-              result={interpretation}
-              onConfirm={saveFlow}
-              onDiscard={() => {
-                setInterpretation(null)
-                setFinalTranscript('')
+          {voiceConsent === false ? (
+            <VoiceConsentView
+              onAccept={async () => {
+                await storage.set('voiceConsentGranted', true)
+                setVoiceConsent(true)
               }}
-              saving={saving}
-              saved={saved}
             />
-          )}
+          ) : (
+            <>
+              {!isSupported ? (
+                <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-xs text-yellow-800">
+                  <AlertTriangle className="mr-1 inline h-3 w-3" />
+                  Voice input requires Chrome. Try typing your automation below instead.
+                </div>
+              ) : null}
 
-          {/* Example hint */}
-          {!finalTranscript && !interimText && !error && (
-            <div className="space-y-1 rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs text-blue-700">
-              <p className="font-semibold">💡 Example</p>
-              <p className="italic leading-relaxed opacity-80">
-                "Every day at 3 PM, log in to Chumba and collect my daily bonus, then spin on Sweet
-                Bonanza. If my winnings are 5x the bonus amount or more, keep spinning. If not,
-                stop."
-              </p>
-            </div>
+              {/* Mic button */}
+              <div className="flex flex-col items-center gap-3">
+                <p className="text-center text-xs leading-relaxed text-gray-500">
+                  Speak your automation aloud — SweepBot will build the script instantly.
+                </p>
+
+                <button
+                  onClick={recordingState === 'listening' ? stopRecording : startRecording}
+                  disabled={recordingState === 'processing'}
+                  className={`flex h-16 w-16 items-center justify-center rounded-full shadow-lg transition-all ${
+                    recordingState === 'listening'
+                      ? 'animate-pulse bg-red-500 hover:bg-red-600'
+                      : recordingState === 'processing'
+                        ? 'cursor-not-allowed bg-gray-400'
+                        : 'bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'
+                  } `}
+                >
+                  {recordingState === 'processing' ? (
+                    <Loader2 className="h-7 w-7 animate-spin text-white" />
+                  ) : recordingState === 'listening' ? (
+                    <MicOff className="h-7 w-7 text-white" />
+                  ) : (
+                    <Mic className="h-7 w-7 text-white" />
+                  )}
+                </button>
+
+                <p className="text-xs font-medium text-gray-600">
+                  {recordingState === 'listening'
+                    ? 'Listening… tap to stop'
+                    : recordingState === 'processing'
+                      ? 'Processing…'
+                      : 'Tap to speak'}
+                </p>
+              </div>
+
+              {/* Live transcript */}
+              {(interimText || finalTranscript) && (
+                <div className="min-h-[48px] rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+                  <span className="flex items-center justify-between text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Transcript
+                    <button
+                      onClick={() => {
+                        const next = !privacyMode
+                        setPrivacyMode(next)
+                        storage.set('voicePrivacyMode', next)
+                      }}
+                      className="rounded p-1 hover:bg-gray-200"
+                      title={privacyMode ? 'Show transcript' : 'Hide transcript'}
+                    >
+                      {privacyMode ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                    </button>
+                  </span>
+                  <p className={`mt-1 leading-relaxed ${privacyMode ? 'select-none blur-sm' : ''}`}>
+                    {finalTranscript || interimText}
+                    {recordingState === 'listening' && (
+                      <span className="animate-blink ml-1 inline-block h-4 w-0.5 bg-blue-500 align-middle" />
+                    )}
+                  </p>
+                </div>
+              )}
+
+              {/* Error */}
+              {error && (
+                <div className="flex gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+                  <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+                  {error}
+                </div>
+              )}
+
+              {/* Interpretation preview */}
+              {interpretation && !error && (
+                <InterpretationPreview
+                  result={interpretation}
+                  onConfirm={saveFlow}
+                  onDiscard={() => {
+                    setInterpretation(null)
+                    setFinalTranscript('')
+                  }}
+                  saving={saving}
+                  saved={saved}
+                />
+              )}
+
+              {/* Example hint */}
+              {!finalTranscript && !interimText && !error && (
+                <div className="space-y-1 rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs text-blue-700">
+                  <p className="font-semibold">💡 Example</p>
+                  <p className="italic leading-relaxed opacity-80">
+                    "Every day at 3 PM, log in to Chumba and collect my daily bonus, then spin on
+                    Sweet Bonanza. If my winnings are 5x the bonus amount or more, keep spinning. If
+                    not, stop."
+                  </p>
+                </div>
+              )}
+
+              <div className="pt-2">
+                <p className="text-[10px] leading-tight text-gray-400">
+                  SweepBot uses the Web Speech API. Audio data is processed by your browser and is
+                  not stored or transmitted by SweepBot until you save a flow.
+                </p>
+              </div>
+            </>
           )}
         </div>
       )}
@@ -368,13 +453,43 @@ function InterpretationPreview({
   saved,
 }: {
   result: InterpretationResult
-  onConfirm: () => void
+  onConfirm: (flow?: FlowDefinition) => void
   onDiscard: () => void
   saving: boolean
   saved: boolean
 }) {
-  const { flow, confidence, warnings, ambiguities } = result
+  const { confidence, warnings, ambiguities } = result
+  const [editedFlow, setEditedFlow] = useState<FlowDefinition>(result.flow)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editJson, setEditJson] = useState('')
+
+  useEffect(() => {
+    setEditedFlow(result.flow)
+    setIsEditing(false)
+  }, [result])
+
+  const flow = isEditing ? result.flow : editedFlow
   const confidencePct = Math.round(confidence * 100)
+
+  const handleToggleEdit = () => {
+    if (isEditing) {
+      try {
+        const parsed = JSON.parse(editJson)
+        setEditedFlow(parsed)
+      } catch (e) {
+        alert('Invalid JSON format. Please fix errors before saving edits.')
+        return
+      }
+    } else {
+      setEditJson(JSON.stringify(editedFlow, null, 2))
+    }
+    setIsEditing(!isEditing)
+  }
+
+  // Monetization Pro Gate Stub
+  // const isScheduled = flow.trigger.type === 'scheduled'
+  // const isProUser = false // TODO: Read from user profile context
+  // const isGated = isScheduled && !isProUser
 
   return (
     <div className="overflow-hidden rounded-xl border border-blue-200 bg-white shadow-sm">
@@ -406,21 +521,41 @@ function InterpretationPreview({
         </div>
       )}
 
+      {/* Raw Edit Mode */}
+      {isEditing && (
+        <div className="border-b border-gray-100 bg-gray-50 px-4 py-3">
+          <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-gray-500">
+            Manual Correction (JSON)
+          </p>
+          <textarea
+            value={editJson}
+            onChange={(e) => setEditJson(e.target.value)}
+            className="h-32 w-full rounded border border-gray-200 p-2 font-mono text-xs outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          />
+        </div>
+      )}
+
       {/* Steps count */}
-      <div className="border-b border-gray-100 px-4 py-2 text-xs text-gray-500">
-        {flow.steps.length} step{flow.steps.length !== 1 ? 's' : ''} ·{' '}
-        {flow.trigger.type === 'scheduled'
-          ? `Scheduled: ${(flow.trigger as { humanReadable: string }).humanReadable}`
-          : 'Manual trigger'}
+      <div className="flex items-center justify-between border-b border-gray-100 px-4 py-2 text-xs text-gray-500">
+        <div>
+          {flow.steps.length} step{flow.steps.length !== 1 ? 's' : ''} ·{' '}
+          {flow.trigger.type === 'scheduled'
+            ? `Scheduled: ${(flow.trigger as { humanReadable: string }).humanReadable}`
+            : 'Manual trigger'}
+        </div>
       </div>
 
       {/* Actions */}
       <div className="flex gap-2 px-4 py-3">
         <button
-          onClick={onConfirm}
-          disabled={saving || saved}
+          onClick={() => onConfirm(editedFlow)}
+          disabled={saving || saved || isEditing}
           className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold transition ${
-            saved ? 'bg-green-500 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'
+            saved
+              ? 'bg-green-500 text-white'
+              : isEditing
+                ? 'cursor-not-allowed bg-gray-300 text-gray-500'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
           }`}
         >
           {saved ? (
@@ -438,8 +573,16 @@ function InterpretationPreview({
           )}
         </button>
         <button
+          onClick={handleToggleEdit}
+          disabled={saving || saved}
+          className={`flex items-center justify-center rounded-lg px-3 py-2 text-sm font-medium transition ${isEditing ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+        >
+          {isEditing ? 'Done' : 'Edit'}
+        </button>
+        <button
           onClick={onDiscard}
-          className="rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-200"
+          disabled={saving || saved}
+          className="flex items-center justify-center rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-200"
         >
           Discard
         </button>
@@ -573,5 +716,37 @@ function ConfidenceBadge({ pct }: { pct: number }) {
     <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${color}`}>
       {pct}% confidence
     </span>
+  )
+}
+
+/**
+ * Consent UI for voice features
+ */
+function VoiceConsentView({ onAccept }: { onAccept: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center space-y-4 py-6 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
+        <ShieldCheck className="h-8 w-8 text-blue-600" />
+      </div>
+      <div className="space-y-3">
+        <h3 className="font-bold text-gray-900">Privacy & Voice Features</h3>
+        <p className="mx-4 rounded border border-gray-200 bg-gray-100 p-2.5 text-xs font-semibold text-gray-700">
+          SweepBot only listens when you click the Microphone button.
+        </p>
+        <p className="px-4 text-xs leading-relaxed text-gray-500">
+          Your audio is processed locally by your browser's Web Speech API and is never stored or
+          transmitted.
+        </p>
+      </div>
+      <div className="w-full space-y-2 px-4 pt-4">
+        <button
+          onClick={onAccept}
+          className="w-full rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+        >
+          Enable Voice Features
+        </button>
+        <p className="text-[10px] text-gray-400">You can disable this anytime in Settings.</p>
+      </div>
+    </div>
   )
 }

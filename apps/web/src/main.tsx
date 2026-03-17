@@ -11,11 +11,13 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import posthog from 'posthog-js'
 import * as Sentry from '@sentry/react'
 
-// Initialize PostHog if a key is configured
-if (import.meta.env.VITE_POSTHOG_KEY) {
+// Initialize PostHog only when analytics is enabled AND a key is configured.
+// VITE_ENABLE_ANALYTICS guards the feature flag; VITE_POSTHOG_KEY provides the key.
+if (import.meta.env.VITE_ENABLE_ANALYTICS !== 'false' && import.meta.env.VITE_POSTHOG_KEY) {
   posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
     api_host: import.meta.env.VITE_POSTHOG_HOST || 'https://app.posthog.com',
-    // capture_pageview will be fired manually below via router subscription
+    // capture_pageview is fired manually below via router subscription
+    capture_pageview: false,
   })
 }
 
@@ -58,7 +60,8 @@ function App() {
 
   // pageview tracking: tanstack-router emits location changes
   useEffect(() => {
-    if (import.meta.env.VITE_POSTHOG_KEY && posthog) {
+    const analyticsEnabled = import.meta.env.VITE_ENABLE_ANALYTICS !== 'false'
+    if (analyticsEnabled && import.meta.env.VITE_POSTHOG_KEY && posthog) {
       const unsub = router.subscribe('onResolved', () => {
         posthog.capture('$pageview', { path: router.state.location.pathname })
       })

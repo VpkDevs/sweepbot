@@ -19,8 +19,8 @@ import {
   Sparkles,
   PanelLeftClose,
   PanelLeft,
-  Flame,
-  Bell,
+  FileText,
+  Scale,
 } from 'lucide-react'
 import { useState, useEffect, useMemo } from 'react'
 import { useAuthStore } from '../../stores/auth'
@@ -30,7 +30,6 @@ import { OnboardingTour } from '../ui/OnboardingTour'
 import { CursorGlow } from '../fx/CursorGlow'
 import { NoiseOverlay } from '../fx/NoiseOverlay'
 import { ErrorBoundary } from '../ErrorBoundary'
-import { TrialBanner } from './TrialBanner'
 
 const navSections = [
   {
@@ -46,6 +45,13 @@ const navSections = [
     ],
   },
   {
+    label: 'Intelligence',
+    items: [
+      { to: '/tos-monitor', label: 'TOS Monitor', icon: FileText },
+      { to: '/tax-center', label: 'Tax Center', icon: Scale },
+    ],
+  },
+  {
     label: 'Automation',
     items: [{ to: '/flows', label: 'SweepBot Flows', icon: Bot }],
   },
@@ -56,8 +62,6 @@ const navSections = [
       { to: '/heatmap', label: 'Heatmap', icon: CalendarDays },
       { to: '/records', label: 'Records', icon: Star },
       { to: '/big-wins', label: 'Big Wins', icon: Trophy },
-      { to: '/streaks/leaderboard', label: 'Streak Board', icon: Flame },
-      { to: '/notifications', label: 'Notifications', icon: Bell },
     ],
   },
 ] as const
@@ -104,8 +108,8 @@ const ROUTE_LABELS: Record<string, string> = {
   '/heatmap': 'Heatmap',
   '/records': 'Records',
   '/big-wins': 'Big Wins',
-  '/streaks/leaderboard': 'Streak Leaderboard',
-  '/notifications': 'Notifications',
+  '/tos-monitor': 'TOS Monitor',
+  '/tax-center': 'Tax Center',
   '/settings': 'Settings',
   '/pricing': 'Pricing',
 }
@@ -177,10 +181,12 @@ export function AppShell() {
       {/* ─── Sidebar ─────────────────────────────────────────────── */}
       <aside
         className={cn(
-          'glass-sidebar fixed inset-y-0 left-0 z-30 flex flex-col transition-all duration-300 ease-out lg:static',
+          'glass-sidebar fixed inset-y-0 left-0 z-30 flex flex-col overflow-y-auto transition-all duration-300 ease-out lg:static',
           collapsed ? 'w-[72px]' : 'w-[260px]',
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
+        role="navigation"
+        aria-label="Main navigation"
       >
         {/* Logo */}
         <div
@@ -335,30 +341,36 @@ export function AppShell() {
       {/* ─── Main content ────────────────────────────────────────── */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* Topbar */}
-        <header className="glass-panel z-10 flex h-14 shrink-0 items-center gap-4 px-6">
+        <header
+          className="glass-panel z-10 flex h-14 shrink-0 items-center gap-3 px-4 sm:px-6"
+          role="banner"
+        >
           <button
-            className="press-scale text-zinc-400 transition-colors hover:text-white lg:hidden"
+            className="press-scale focus:outline-brand-500 rounded-lg p-1 text-zinc-400 transition-colors hover:text-white focus:outline-2 focus:outline-offset-2 lg:hidden"
             onClick={() => setMobileOpen(true)}
             type="button"
             title="Open navigation"
-            aria-label="Open navigation"
+            aria-label="Open navigation menu"
+            aria-expanded={mobileOpen}
           >
             <Menu className="h-5 w-5" />
           </button>
 
           {/* Breadcrumb / Page title */}
-          <div className="flex items-center gap-2 text-sm">
-            <span className="hidden text-zinc-600 sm:inline">{getGreeting()}</span>
+          <div className="flex min-w-0 items-center gap-2 text-sm">
+            <span className="hidden whitespace-nowrap text-zinc-600 sm:inline">
+              {getGreeting()}
+            </span>
             <span className="hidden text-zinc-700 sm:inline">·</span>
-            <span className="font-medium text-zinc-300">{currentLabel}</span>
+            <span className="truncate font-medium text-zinc-300">{currentLabel}</span>
           </div>
 
           <div className="flex-1" />
 
           {/* Search trigger (placeholder for future) */}
-          <div className="hidden cursor-pointer items-center gap-2 rounded-xl border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-600 transition-all hover:border-white/[0.06] hover:bg-white/[0.05] md:flex">
+          <div className="focus-within:ring-brand-500/20 hidden cursor-pointer items-center gap-2 rounded-xl border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-600 transition-all focus-within:ring-2 hover:border-white/[0.06] hover:bg-white/[0.05] md:flex">
             <span className="text-xs">⌘K</span>
-            <span className="text-zinc-600">Search...</span>
+            <span className="hidden text-zinc-600 lg:inline">Search...</span>
           </div>
 
           <NotificationPanel />
@@ -368,12 +380,47 @@ export function AppShell() {
         <div className="glow-line shrink-0" />
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto scroll-smooth">
-          <TrialBanner />
+        <main
+          className="focus:outline-brand-500 flex-1 overflow-y-auto scroll-smooth focus:outline-2 focus:outline-offset-0"
+          id="main-content"
+          role="main"
+        >
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>
         </main>
+
+        {/* ─── Compliance disclaimer strip ─────────────────────────── */}
+        {/* Required persistent notice: SweepBot is a data-tracking tool,
+            not a gambling product. Historical data only. No advice given. */}
+        <footer
+          className="flex shrink-0 flex-wrap items-center justify-center gap-1.5 border-t border-white/[0.03] bg-zinc-950/80 px-4 py-1.5 backdrop-blur-sm"
+          aria-label="Legal disclaimer"
+        >
+          <ShieldCheck className="h-3 w-3 flex-shrink-0 text-zinc-600" aria-hidden="true" />
+          <p className="text-center text-[10px] leading-snug text-zinc-600">
+            SweepBot is a data-tracking and transparency tool, not a gambling product or service.
+            All data shown is historical and informational only. SweepBot does not provide gambling
+            advice, predict outcomes, or recommend play strategies.{' '}
+            <a
+              href="https://sweepbot.app/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 transition-colors hover:text-zinc-400"
+            >
+              Terms
+            </a>
+            {' · '}
+            <a
+              href="https://sweepbot.app/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 transition-colors hover:text-zinc-400"
+            >
+              Privacy
+            </a>
+          </p>
+        </footer>
       </div>
     </div>
   )

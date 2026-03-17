@@ -103,7 +103,7 @@ const PLANS: PlanConfig[] = [
   {
     id: 'analyst',
     name: 'Analyst',
-    tagline: 'Data-driven edge over the house',
+    tagline: 'Data-driven performance transparency',
     priceMonthly: 39.99,
     priceAnnual: 319,
     badge: 'Best Value',
@@ -125,7 +125,7 @@ const PLANS: PlanConfig[] = [
   {
     id: 'elite',
     name: 'Elite',
-    tagline: 'Maximum intelligence, maximum edge',
+    tagline: 'Maximum intelligence, maximum clarity',
     priceMonthly: 59.99,
     priceAnnual: 399,
     features: [
@@ -409,12 +409,12 @@ export function PricingPage() {
             SweepBot Intelligence Platform
           </div>
           <h1 className="text-4xl font-black tracking-tight lg:text-5xl">
-            Give yourself the edge
+            Know exactly what's happening
             <br />
-            <span className="text-brand-400">the house never wants you to have.</span>
+            <span className="text-brand-400">with your sweepstakes data.</span>
           </h1>
           <p className="mx-auto max-w-2xl text-zinc-400">
-            The Bloomberg Terminal of sweepstakes gambling. Track, automate, and analyze across 100+
+            The Bloomberg Terminal of sweepstakes play. Track, automate, and analyze across 100+
             platforms. Start free, upgrade when you're ready.
           </p>
 
@@ -514,6 +514,19 @@ export function PricingPage() {
           </div>
         </div>
 
+        {/* Compliance notice */}
+        <div className="mx-auto flex max-w-3xl items-start gap-3 rounded-xl border border-zinc-800 bg-zinc-900/60 px-5 py-4">
+          <Shield className="mt-0.5 h-4 w-4 flex-shrink-0 text-zinc-500" />
+          <p className="text-xs leading-relaxed text-zinc-500">
+            <span className="font-semibold text-zinc-400">Legal notice:</span> SweepBot is a
+            data-tracking and transparency tool, not a gambling product or service. All analytics,
+            RTP figures, and historical data shown are informational only and reflect your personal
+            logged activity. SweepBot does not provide gambling advice, predict outcomes, recommend
+            play strategies, or guarantee any particular results. Sweepstakes play involves no
+            real-money wagers. Please play responsibly.
+          </p>
+        </div>
+
         {/* Social proof strip */}
         <div className="space-y-4 text-center">
           <p className="text-sm text-zinc-500">
@@ -545,13 +558,13 @@ export function PricingPage() {
         {/* Bottom CTA */}
         <div className="from-brand-950 border-brand-800/40 space-y-4 rounded-2xl border bg-gradient-to-br to-zinc-900 p-12 text-center">
           <h2 className="text-3xl font-black text-white">
-            Start building your edge today.
+            Start tracking your data today.
             <br />
             <span className="text-brand-400">It's free.</span>
           </h2>
           <p className="mx-auto max-w-lg text-zinc-400">
-            Every day you track is a day of data the house doesn't have. Even free users are
-            profitable users.
+            Every session you log is another data point working for you. Full transparency, zero
+            guesswork.
           </p>
           <a
             href="/sign-up"

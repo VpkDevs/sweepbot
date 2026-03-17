@@ -19,7 +19,7 @@ import type {
   ReadValueStep,
   SpinStep,
 } from './types'
-import { PLATFORM_SELECTORS } from './interpreter'
+import { PLATFORM_SELECTORS } from './platform-selectors'
 import { createLogger } from '../logger'
 
 const log = createLogger('AutomationExecutor')

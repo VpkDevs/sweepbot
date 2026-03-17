@@ -189,6 +189,41 @@ function toQS(params?: Record<string, string | number | boolean | undefined>): s
   return qs ? `?${qs}` : ''
 }
 
+// ─── Shared public types ──────────────────────────────────────────────────────
+
+export interface NotificationItem {
+  id: string
+  type: string
+  title: string
+  body: string
+  is_read: boolean
+  read_at: string | null
+  icon: string | null
+  href: string | null
+  data: unknown
+  created_at: string
+}
+
+export interface StreakLeaderboardEntry {
+  user_id: string
+  display_name: string | null
+  current_streak: number
+  longest_streak: number
+}
+
+export interface TrialStatus {
+  isActive: boolean
+  daysRemaining: number
+  trialEndsAt: string | null
+  tier: string
+  converted: boolean
+}
+
+export interface RecordActivityResult {
+  currentStreak: number
+  milestoneReached?: number
+}
+
 // ─── Typed API client ─────────────────────────────────────────────────────────
 export const api = {
   // Health
@@ -265,6 +300,15 @@ export const api = {
       request('/sessions', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: Record<string, unknown>) =>
       request(`/sessions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    end: (
+      id: string,
+      data: {
+        ended_at: string
+        sc_balance_close?: number
+        gc_balance_close?: number
+        notes?: string
+      }
+    ) => request(`/sessions/${id}/end`, { method: 'PATCH', body: JSON.stringify(data) }),
     batchTransactions: (data: Record<string, unknown>) =>
       request('/sessions/transactions/batch', {
         method: 'POST',
@@ -279,8 +323,21 @@ export const api = {
       const qs = params ? '?' + new URLSearchParams(params).toString() : ''
       return request<Record<string, unknown>>(`/analytics/rtp${qs}`)
     },
-    temporal: () => request<Record<string, unknown>>('/analytics/temporal'),
-    bonus: () => request<Record<string, unknown>>('/analytics/bonus'),
+    temporal: (params?: Record<string, string>) => {
+      const qs = params ? '?' + new URLSearchParams(params).toString() : ''
+      return request<Record<string, unknown>>(`/analytics/temporal${qs}`)
+    },
+    bonus: (params?: Record<string, string>) => {
+      const qs = params ? '?' + new URLSearchParams(params).toString() : ''
+      return request<Record<string, unknown>>(`/analytics/bonus${qs}`)
+    },
+    streaks: (params?: Record<string, string>) => {
+      const qs = params ? '?' + new URLSearchParams(params).toString() : ''
+      return request<Record<string, unknown>>(`/analytics/streaks${qs}`)
+    },
+    insights: () => request<Record<string, unknown>>('/analytics/insights'),
+    export: (params: { start_date: string; end_date: string }) =>
+      `/analytics/export?start_date=${params.start_date}&end_date=${params.end_date}`,
   },
 
   // Jackpots
@@ -310,11 +367,76 @@ export const api = {
 
   // Trust Index
   trust: {
+    /** Ranked list of all platforms with current Trust Index scores */
     list: (params?: Record<string, string>) => {
       const qs = params ? '?' + new URLSearchParams(params).toString() : ''
       return request<Record<string, unknown>[]>(`/trust-index${qs}`)
     },
+    /** Full detail for a single platform (score + component breakdown + history) */
     get: (platformId: string) => request<Record<string, unknown>>(`/trust-index/${platformId}`),
+    /** Top-ranked platforms + score distribution charts */
+    leaderboard: () => request<Record<string, unknown>>('/trust-index/leaderboard'),
+    /** User's percentile rank relative to all SweepBot users for a platform */
+    percentile: (platformId: string) =>
+      request<Record<string, unknown>>(`/trust-index/${platformId}/percentile`),
+    /** List the current user's alert subscriptions */
+    alerts: () => request<Record<string, unknown>[]>('/trust-index/alerts'),
+    /** Subscribe to score change alerts for a platform */
+    addAlert: (data: {
+      platform_id: string
+      threshold_direction?: string
+      threshold_score?: number
+    }) =>
+      request<Record<string, unknown>>('/trust-index/alerts', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    /** Unsubscribe from alerts for a platform */
+    removeAlert: (platformId: string) =>
+      request<Record<string, unknown>>(`/trust-index/alerts/${platformId}`, {
+        method: 'DELETE',
+      }),
+  },
+
+  // TOS Monitor
+  tos: {
+    /** All changes across every monitored platform, most-recent-first */
+    changes: (params?: {
+      severity?: string
+      platform_id?: string
+      limit?: number
+      page?: number
+    }) => request<Record<string, unknown>[]>(`/tos/changes${toQS(params)}`),
+    /** Aggregate stats: monitored count, changes this week, major alerts */
+    stats: () => request<Record<string, unknown>>('/tos/stats'),
+    /** Full diff text for a specific change */
+    diff: (changeId: string) => request<Record<string, unknown>>(`/tos/changes/${changeId}/diff`),
+    /** Toggle watched status for a platform */
+    watch: (platformId: string, watching: boolean) =>
+      request<Record<string, unknown>>(`/tos/watch/${platformId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ watching }),
+      }),
+    /** Platforms the user is watching */
+    watchlist: () => request<Record<string, unknown>[]>('/tos/watchlist'),
+    /** Historical snapshot list for a specific platform */
+    platformHistory: (platformId: string) =>
+      request<Record<string, unknown>[]>(`/tos/platforms/${platformId}/history`),
+  },
+
+  // Tax Center
+  tax: {
+    /** Full tax-year summary: redemptions, estimated liability, monthly breakdown */
+    summary: (year: number) => request<Record<string, unknown>>(`/tax/summary?year=${year}`),
+    /** Redemption line-items for tax purposes (paginated) */
+    transactions: (params?: { year?: number; page?: number; limit?: number }) =>
+      request<Record<string, unknown>[]>(`/tax/transactions${toQS(params)}`),
+    /** CSV export URL (returns download URL, not the raw CSV) */
+    exportUrl: (year: number) => `${API_BASE}/tax/export?year=${year}`,
+    /** Month-by-month chart data */
+    monthly: (year: number) => request<Record<string, unknown>[]>(`/tax/monthly?year=${year}`),
+    /** Multi-year P&amp;L overview */
+    yearOverYear: () => request<Record<string, unknown>[]>('/tax/year-over-year'),
   },
 
   // Phase 2 Features
@@ -383,28 +505,31 @@ export const api = {
       }),
     execute: (id: string) =>
       request<Record<string, unknown>>(`/flows/${id}/execute`, { method: 'POST' }),
+    getCurrentExecution: (id: string) =>
+      request<Record<string, unknown> | null>(`/flows/${id}/execution/current`),
+    cancelExecution: (id: string) =>
+      request<Record<string, unknown>>(`/flows/${id}/execution/cancel`, { method: 'POST' }),
     executions: (id: string, params?: { page?: number; pageSize?: number }) =>
       request<Record<string, unknown>[]>(`/flows/${id}/executions${toQS(params)}`),
     delete: (id: string) => request<{ deleted: boolean }>(`/flows/${id}`, { method: 'DELETE' }),
   },
 
+  // Achievements API
+  achievements: {
+    streaks: () => request<Record<string, unknown>>('/achievements/streaks'),
+    records: () => request<Record<string, unknown>>('/achievements/records'),
+    summary: () => request<Record<string, unknown>>('/achievements/summary'),
+    recordSession: (data: Record<string, unknown>) =>
+      request<Record<string, unknown>>('/achievements/streaks/record', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+  },
+
   // Notifications
   notifications: {
     list: (params?: { limit?: number; unread_only?: boolean }) =>
-      request<
-        Array<{
-          id: string
-          type: string
-          title: string
-          body: string
-          icon: string | null
-          href: string | null
-          is_read: boolean
-          read_at: string | null
-          data: unknown
-          created_at: string
-        }>
-      >(`/notifications${toQS(params)}`),
+      request<NotificationItem[]>(`/notifications${toQS(params)}`),
     count: () => request<{ unread: number }>('/notifications/count'),
     markRead: (id: string) =>
       request<{ id: string }>(`/notifications/${id}/read`, { method: 'PATCH' }),
@@ -413,60 +538,52 @@ export const api = {
       request<{ deleted: boolean }>(`/notifications/${id}`, { method: 'DELETE' }),
     preferences: () => request<Record<string, boolean>>('/notifications/preferences'),
     updatePreferences: (data: Record<string, boolean>) =>
-      request<Record<string, boolean>>('/notifications/preferences', {
+      request<{ updated: boolean }>('/notifications/preferences', {
         method: 'PUT',
         body: JSON.stringify(data),
       }),
     subscribePush: (subscription: Record<string, unknown>) =>
-      request('/notifications/subscribe', { method: 'POST', body: JSON.stringify(subscription) }),
-    unsubscribePush: (endpoint: string) =>
-      request('/notifications/subscribe', { method: 'DELETE', body: JSON.stringify({ endpoint }) }),
+      request<{ subscribed: boolean }>('/notifications/subscribe', {
+        method: 'POST',
+        body: JSON.stringify(subscription),
+      }),
   },
 
-  // Subscriptions / Trial
+  // Subscriptions
   subscriptions: {
-    startTrial: () => request('/subscriptions/start-trial', { method: 'POST' }),
-    trialStatus: () =>
-      request<{
-        isActive: boolean
-        daysRemaining: number
-        trialEndsAt: string | null
-        tier: string
-        converted: boolean
-      } | null>('/subscriptions/trial-status'),
+    /** Returns the current user's trial status and subscription tier. */
+    trialStatus: () => request<TrialStatus>('/user/subscription'),
+    /** Activates a 14-day Pro trial for the current user. */
+    startTrial: () => request<Record<string, unknown>>('/user/start-trial', { method: 'POST' }),
   },
 
-  // Daily streaks
-  streaks: {
-    get: () =>
-      request<{
-        currentStreak: number
-        longestStreak: number
-        lastActivityDate: string | null
-        freezeCredits: number
-      }>('/streaks'),
-    recordActivity: () =>
-      request<{ currentStreak: number; milestoneReached?: number }>('/streaks/activity', {
-        method: 'POST',
-      }),
-    leaderboard: (limit?: number) =>
-      request<
-        Array<{
-          user_id: string
-          current_streak: number
-          longest_streak: number
-          display_name: string | null
-        }>
-      >(`/streaks/leaderboard${limit ? `?limit=${limit}` : ''}`),
-  },
-
-  // Session notes
+  // Session Notes
   sessionNotes: {
-    create: (sessionId: string, data: Record<string, unknown>) =>
-      request<Record<string, unknown>>(`/sessions/${sessionId}/notes`, {
+    /** List all notes for a session. */
+    list: (sessionId: string) =>
+      request<Record<string, unknown>[]>(`/session-notes/by-session/${sessionId}`),
+    /** Create a new note for a session. */
+    create: (
+      sessionId: string,
+      data: { content: string; noteType: string; audioUrl?: string; audioDuration?: number }
+    ) =>
+      request<Record<string, unknown>>('/session-notes', {
         method: 'POST',
-        body: JSON.stringify(data),
+        body: JSON.stringify({ sessionId, ...data }),
       }),
-    list: (sessionId: string) => request<Record<string, unknown>[]>(`/sessions/${sessionId}/notes`),
+    /** Delete a session note by id. */
+    delete: (id: string) =>
+      request<{ deleted: boolean }>(`/session-notes/${id}`, { method: 'DELETE' }),
+  },
+
+  // Streaks
+  streaks: {
+    /** Get the current user's streak data. */
+    get: () => request<Record<string, unknown>>('/streaks'),
+    /** Record activity for today (increments streak). */
+    recordActivity: () => request<RecordActivityResult>('/streaks/record', { method: 'POST' }),
+    /** Opt-in leaderboard — top N users by current streak. */
+    leaderboard: (limit = 50) =>
+      request<StreakLeaderboardEntry[]>(`/streaks/leaderboard${toQS({ limit })}`),
   },
 }

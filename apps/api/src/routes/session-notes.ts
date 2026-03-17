@@ -1,116 +1,173 @@
 /**
- * Session Notes routes.
- * No prefix — routes follow the /sessions/:sessionId/notes pattern.
- *
- * Supports both text and voice annotations for gaming sessions.
+ * Session Notes API Routes
+ * Text and voice annotations attached to gaming sessions
+ * Prefix: /session-notes
  */
 
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
+import { sql } from 'drizzle-orm'
 import { requireAuth } from '../middleware/auth.js'
-import { voiceNotesProcessor } from '../services/voice-notes-processor.js'
+import { query } from '../db/client.js'
 
-const SessionParamsSchema = z.object({
+// ─── Zod schemas ──────────────────────────────────────────────────────────────
+
+const sessionNoteParamsSchema = z.object({ id: z.string().uuid() })
+const sessionParamsSchema = z.object({ sessionId: z.string().uuid() })
+
+const createNoteSchema = z.object({
   sessionId: z.string().uuid(),
+  content: z.string().min(1),
+  noteType: z.enum(['text', 'voice', 'image']).default('text'),
+  audioUrl: z.string().url().optional(),
+  audioDuration: z.number().int().positive().optional(),
 })
 
-const SaveNoteBody = z.object({
-  content: z.string().min(1).max(10000),
-  noteType: z.enum(['text', 'voice']),
-  audioUrl: z.string().url().optional(),
-  audioDuration: z.number().int().min(1).optional(),
-})
+// ─── DB row shape ─────────────────────────────────────────────────────────────
+
+interface NoteRow {
+  id: string
+  session_id: string
+  user_id: string
+  content: string
+  note_type: string
+  audio_url: string | null
+  audio_duration: number | null
+  transcription_confidence: string | null
+  created_at: string
+  updated_at: string
+}
+
+function mapNoteRow(row: NoteRow) {
+  return {
+    id: row.id,
+    sessionId: row.session_id,
+    userId: row.user_id,
+    content: row.content,
+    noteType: row.note_type,
+    audioUrl: row.audio_url,
+    audioDuration: row.audio_duration,
+    transcriptionConfidence: row.transcription_confidence,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}
+
+// ─── Route registration ───────────────────────────────────────────────────────
 
 export async function sessionNotesRoutes(app: FastifyInstance): Promise<void> {
-  // ─── POST /sessions/:sessionId/notes ──────────────────────────────────────
-  app.post(
-    '/sessions/:sessionId/notes',
+  app.addHook('preValidation', requireAuth)
+
+  // ── GET /session-notes/by-session/:sessionId ──────────────────────────────
+  // Returns all notes for a session (must belong to the authed user).
+  app.get<{ Params: { sessionId: string } }>(
+    '/by-session/:sessionId',
     {
       schema: {
+        params: sessionParamsSchema,
         tags: ['Session Notes'],
-        summary: 'Add a text or voice note to a session',
-        security: [{ bearerAuth: [] }],
-        params: {
-          type: 'object',
-          required: ['sessionId'],
-          properties: { sessionId: { type: 'string', format: 'uuid' } },
-        },
-        body: {
-          type: 'object',
-          required: ['content', 'noteType'],
-          properties: {
-            content: { type: 'string', minLength: 1, maxLength: 10000 },
-            noteType: { type: 'string', enum: ['text', 'voice'] },
-            audioUrl: { type: 'string', format: 'uri' },
-            audioDuration: { type: 'integer', minimum: 1 },
-          },
-        },
+        summary: 'List notes for a session',
       },
-      preValidation: [requireAuth],
     },
     async (request, reply) => {
       try {
-        const { sessionId } = SessionParamsSchema.parse(request.params)
-        const body = SaveNoteBody.parse(request.body)
+        const { sessionId } = request.params
         const userId = request.user!.id
 
-        const note = await voiceNotesProcessor.saveNote(
-          sessionId,
-          userId,
-          body.content,
-          body.noteType,
-          body.audioUrl,
-          body.audioDuration
-        )
+        const { rows } = await query<NoteRow>(sql`
+          SELECT
+            id, session_id, user_id, content, note_type,
+            audio_url, audio_duration, transcription_confidence,
+            created_at, updated_at
+          FROM session_notes
+          WHERE session_id = ${sessionId}
+            AND user_id = ${userId}
+          ORDER BY created_at ASC
+        `)
 
-        // For voice notes, include the transcript analysis in the response
-        const analysis =
-          body.noteType === 'voice'
-            ? voiceNotesProcessor.analyzeTranscript(body.content)
-            : undefined
-
-        return reply.code(201).send({
-          success: true,
-          data: analysis ? { ...note, analysis } : note,
-        })
-      } catch (err) {
-        app.log.error({ err }, 'save note error')
+        return reply.send({ success: true, data: rows.map(mapNoteRow) })
+      } catch (error) {
+        app.log.error({ error }, 'GET /session-notes/by-session error')
         return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to save note' },
+          error: 'INTERNAL_ERROR',
+          message: 'Failed to fetch session notes',
+          status: 500,
         })
       }
     }
   )
 
-  // ─── GET /sessions/:sessionId/notes ───────────────────────────────────────
-  app.get(
-    '/sessions/:sessionId/notes',
+  // ── POST /session-notes ───────────────────────────────────────────────────
+  // Create a new note for a session.
+  app.post(
+    '/',
     {
       schema: {
         tags: ['Session Notes'],
-        summary: 'Get all notes for a session',
-        security: [{ bearerAuth: [] }],
-        params: {
-          type: 'object',
-          required: ['sessionId'],
-          properties: { sessionId: { type: 'string', format: 'uuid' } },
-        },
+        summary: 'Create a session note',
       },
-      preValidation: [requireAuth],
     },
     async (request, reply) => {
       try {
-        const { sessionId } = SessionParamsSchema.parse(request.params)
+        const userId = request.user!.id
+        const body = createNoteSchema.parse(request.body)
+
+        const { rows } = await query<NoteRow>(sql`
+          INSERT INTO session_notes (session_id, user_id, content, note_type, audio_url, audio_duration)
+          VALUES (
+            ${body.sessionId},
+            ${userId},
+            ${body.content},
+            ${body.noteType},
+            ${body.audioUrl ?? null},
+            ${body.audioDuration ?? null}
+          )
+          RETURNING
+            id, session_id, user_id, content, note_type,
+            audio_url, audio_duration, transcription_confidence,
+            created_at, updated_at
+        `)
+
+        return reply.code(201).send({ success: true, data: mapNoteRow(rows[0]!) })
+      } catch (error) {
+        app.log.error({ error }, 'POST /session-notes error')
+        return reply.code(500).send({
+          error: 'INTERNAL_ERROR',
+          message: 'Failed to create session note',
+          status: 500,
+        })
+      }
+    }
+  )
+
+  // ── DELETE /session-notes/:id ─────────────────────────────────────────────
+  // Delete a note (owner-only).
+  app.delete<{ Params: { id: string } }>(
+    '/:id',
+    {
+      schema: {
+        params: sessionNoteParamsSchema,
+        tags: ['Session Notes'],
+        summary: 'Delete a session note',
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { id } = request.params
         const userId = request.user!.id
 
-        const notes = await voiceNotesProcessor.getSessionNotes(sessionId, userId)
-        return reply.send({ success: true, data: notes })
-      } catch (err) {
-        app.log.error({ err }, 'get notes error')
+        await query(sql`
+          DELETE FROM session_notes
+          WHERE id = ${id} AND user_id = ${userId}
+        `)
+
+        return reply.send({ success: true, data: { deleted: true } })
+      } catch (error) {
+        app.log.error({ error }, 'DELETE /session-notes/:id error')
         return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to retrieve notes' },
+          error: 'INTERNAL_ERROR',
+          message: 'Failed to delete session note',
+          status: 500,
         })
       }
     }

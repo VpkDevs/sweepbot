@@ -1,127 +1,82 @@
 /**
- * Subscription routes.
- * Prefix: /subscriptions
+ * Subscriptions API — SweepBot
  *
- * Handles trial lifecycle: start, status, and batch expiry (for cron).
+ * Internal/admin endpoints for subscription lifecycle management.
+ *
+ * Endpoints:
+ *   POST /subscriptions/expire-trials  — [Admin] Bulk-expire overdue trials
  */
 
-import type { FastifyInstance } from 'fastify'
-import { z } from 'zod'
-import { requireAuth } from '../middleware/auth.js'
-import { trialManager } from '../services/trial-manager.js'
+import type { FastifyPluginAsync } from 'fastify'
+import { timingSafeEqual } from 'node:crypto'
+import { query as dbQuery } from '../db/client.js'
+import { sql } from 'drizzle-orm'
+import { env } from '../utils/env.js'
 
-const StartTrialBody = z.object({
-  displayName: z.string().max(100).optional(),
-})
+// ============================================================================
+// Helpers
+// ============================================================================
 
-export async function subscriptionRoutes(app: FastifyInstance): Promise<void> {
-  // ─── POST /subscriptions/start-trial ──────────────────────────────────────
-  app.post(
-    '/start-trial',
-    {
-      schema: {
-        tags: ['Subscriptions'],
-        summary: 'Start a 14-day Pro trial',
-        security: [{ bearerAuth: [] }],
-        body: {
-          type: 'object',
-          properties: {
-            displayName: { type: 'string', maxLength: 100 },
-          },
-        },
-      },
-      preValidation: [requireAuth],
-    },
-    async (request, reply) => {
-      try {
-        const body = StartTrialBody.parse(request.body)
-        const user = request.user!
+/**
+ * Constant-time comparison of two strings using Node's crypto.timingSafeEqual.
+ * Prevents timing-based side-channel attacks on secret comparisons.
+ */
+function safeCompare(a: string, b: string): boolean {
+  try {
+    const bufA = Buffer.from(a)
+    const bufB = Buffer.from(b)
+    // timingSafeEqual requires equal-length buffers; unequal lengths are always false
+    if (bufA.length !== bufB.length) return false
+    return timingSafeEqual(bufA, bufB)
+  } catch {
+    return false
+  }
+}
 
-        const result = await trialManager.startTrial(user.id, user.email ?? '', body.displayName)
+// ============================================================================
+// Route Handler
+// ============================================================================
 
-        return reply.code(201).send({
-          success: true,
-          data: {
-            trialEndsAt: result.trialEndsAt,
-            message: 'Your 14-day Pro trial has started. Enjoy full access!',
-          },
-        })
-      } catch (err) {
-        if (err instanceof Error && err.message === 'TRIAL_ALREADY_USED') {
-          return reply.code(409).send({
-            success: false,
-            error: {
-              code: 'TRIAL_ALREADY_USED',
-              message: 'You have already used your free trial.',
-            },
-          })
-        }
-        app.log.error({ err }, 'start-trial error')
-        return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to start trial' },
-        })
-      }
+export const subscriptionRoutes: FastifyPluginAsync = async (app) => {
+  /**
+   * POST /subscriptions/expire-trials
+   *
+   * Admin-only endpoint: marks all trial subscriptions whose trial_end is in
+   * the past as 'expired'. Intended to be called by a cron job or internal
+   * scheduler — NOT a public user-facing endpoint.
+   *
+   * Auth: x-admin-secret header must match env.ADMIN_SECRET (constant-time).
+   */
+  app.post('/expire-trials', async (request, reply) => {
+    const adminSecret = request.headers['x-admin-secret']
+
+    if (
+      !env.ADMIN_SECRET ||
+      typeof adminSecret !== 'string' ||
+      !safeCompare(adminSecret, env.ADMIN_SECRET)
+    ) {
+      return reply.code(401).send({
+        success: false,
+        error: { code: 'UNAUTHORIZED', message: 'Invalid or missing admin secret' },
+      })
     }
-  )
 
-  // ─── GET /subscriptions/trial-status ──────────────────────────────────────
-  app.get(
-    '/trial-status',
-    {
-      schema: {
-        tags: ['Subscriptions'],
-        summary: 'Get current trial status for the authenticated user',
-        security: [{ bearerAuth: [] }],
-      },
-      preValidation: [requireAuth],
-    },
-    async (request, reply) => {
-      try {
-        const status = await trialManager.getTrialStatus(request.user!.id)
+    const result = await dbQuery(sql`
+      UPDATE subscriptions
+      SET
+        status     = 'expired',
+        updated_at = NOW()
+      WHERE
+        status     = 'trialing'
+        AND trial_end < NOW()
+      RETURNING id
+    `)
 
-        if (!status) {
-          return reply.code(404).send({
-            success: false,
-            error: { code: 'NOT_FOUND', message: 'No subscription found for this user' },
-          })
-        }
+    const expiredCount = result.rows.length
 
-        return reply.send({ success: true, data: status })
-      } catch (err) {
-        app.log.error({ err }, 'trial-status error')
-        return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to retrieve trial status' },
-        })
-      }
-    }
-  )
-
-  // ─── POST /subscriptions/expire-trials ────────────────────────────────────
-  // Internal endpoint — called by a cron job, no auth required.
-  app.post(
-    '/expire-trials',
-    {
-      schema: {
-        tags: ['Internal'],
-        summary: 'Batch-expire all past-due trials (cron use only)',
-      },
-    },
-    async (_request, reply) => {
-      try {
-        const count = await trialManager.expireTrials()
-        return reply.send({
-          success: true,
-          data: { expired: count, message: `${count} trial(s) expired` },
-        })
-      } catch (err) {
-        app.log.error({ err }, 'expire-trials error')
-        return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to expire trials' },
-        })
-      }
-    }
-  )
+    return reply.code(200).send({
+      success: true,
+      data: { expiredCount },
+    })
+  })
 }

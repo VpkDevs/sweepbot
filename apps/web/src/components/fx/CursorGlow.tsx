@@ -1,10 +1,11 @@
 import { useEffect, useRef, useCallback } from 'react'
+import type { CSSProperties } from 'react'
 import { cn } from '../../lib/utils'
 
 interface CursorGlowProps {
   size?: number
   color?: string
-  blendMode?: React.CSSProperties['mixBlendMode']
+  blendMode?: CSSProperties['mixBlendMode']
 }
 
 /**
@@ -15,7 +16,7 @@ interface CursorGlowProps {
 export function CursorGlow({
   size = 600,
   color = 'rgba(139, 92, 246, 0.07)',
-  blendMode = 'normal' as React.CSSProperties['mixBlendMode'],
+  blendMode = 'normal' as CSSProperties['mixBlendMode'],
 }: CursorGlowProps) {
   const glowRef = useRef<HTMLDivElement>(null)
   const posRef = useRef({ x: -1000, y: -1000 })

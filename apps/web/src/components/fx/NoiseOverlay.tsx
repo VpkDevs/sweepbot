@@ -1,9 +1,10 @@
 import { useId } from 'react'
+import type { CSSProperties } from 'react'
 import { cn } from '../../lib/utils'
 
 interface NoiseOverlayProps {
   opacity?: number
-  blendMode?: React.CSSProperties['mixBlendMode']
+  blendMode?: CSSProperties['mixBlendMode']
   animate?: boolean
 }
 
@@ -15,7 +16,7 @@ interface NoiseOverlayProps {
  */
 export function NoiseOverlay({
   opacity = 0.018,
-  blendMode = 'overlay' as React.CSSProperties['mixBlendMode'],
+  blendMode = 'overlay' as CSSProperties['mixBlendMode'],
   animate = true,
 }: NoiseOverlayProps) {
   // Unique SVG filter ID to prevent collisions

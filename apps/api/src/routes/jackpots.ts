@@ -21,7 +21,7 @@ export async function jackpotRoutes(app: FastifyInstance): Promise<void> {
   // ─── GET /jackpots ─────────────────────────────────────────────────────────
   // Current jackpot leaderboard — the data moat in action
   app.get(
-    '/jackpots',
+    '/',
     {
       schema: {
         tags: ['Jackpots'],
@@ -123,7 +123,7 @@ export async function jackpotRoutes(app: FastifyInstance): Promise<void> {
   // ─── GET /jackpots/:gameId/history ────────────────────────────────────────
   // Historical jackpot data — pure data moat material
   app.get(
-    '/jackpots/:gameId/history',
+    '/:gameId/history',
     {
       schema: {
         tags: ['Jackpots'],
@@ -185,7 +185,7 @@ export async function jackpotRoutes(app: FastifyInstance): Promise<void> {
   // ─── GET /jackpots/stats ──────────────────────────────────────────────────
   // Aggregate statistics — marketing-friendly numbers
   app.get(
-    '/jackpots/stats',
+    '/stats',
     {
       schema: {
         tags: ['Jackpots'],

@@ -8,7 +8,7 @@
 
 ## Purpose
 
-The SweepBot Trust Index produces a **0–100 composite score** for each sweepstakes casino platform. It answers the question: _"How much should I trust this platform with my time and money?"_
+The SweepBot Trust Index produces a **0–100 composite score** for each sweepstakes casino platform. It answers the question: _"How reliable and transparent is this platform with my time and sweepstakes balance?"_
 
 The score is:
 

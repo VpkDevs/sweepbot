@@ -1,6 +1,6 @@
 # SweepBot Monetization Strategy
 
-Comprehensive revenue model for SweepBot — the Bloomberg Terminal of sweepstakes gambling.
+Comprehensive revenue model for SweepBot — the Bloomberg Terminal of sweepstakes play.
 
 ## Executive Summary
 
@@ -307,7 +307,7 @@ Assume 10,000 total users by end of Year 1:
 
 1. **Affiliate Integration**: Real-time, automated, zero-friction
 2. **Data Moat**: 6+ months of RTP data → Trust Index → network effects
-3. **User Stickiness**: Personal gambling history, achievements, leaderboards
+3. **User Stickiness**: Personal play history, achievements, leaderboards
 4. **Community Effects**: Reviews, guides, crowdsourced platform data
 5. **Regulatory Expertise**: TOS monitoring, compliance, state-by-state updates
 
