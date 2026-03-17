@@ -206,6 +206,19 @@ export interface StreakLeaderboardEntry {
   longest_streak: number
 }
 
+export interface TrialStatus {
+  isActive: boolean
+  daysRemaining: number
+  trialEndsAt: string | null
+  tier: string
+  converted: boolean
+}
+
+export interface RecordActivityResult {
+  currentStreak: number
+  milestoneReached?: number
+}
+
 // ─── Typed API client ─────────────────────────────────────────────────────────
 export const api = {
   // Health
@@ -512,7 +525,7 @@ export const api = {
   // Subscriptions
   subscriptions: {
     /** Returns the current user's trial status and subscription tier. */
-    trialStatus: () => request<Record<string, unknown>>('/user/subscription'),
+    trialStatus: () => request<TrialStatus>('/user/subscription'),
     /** Activates a 14-day Pro trial for the current user. */
     startTrial: () =>
       request<Record<string, unknown>>('/user/start-trial', { method: 'POST' }),
@@ -540,7 +553,7 @@ export const api = {
     get: () => request<Record<string, unknown>>('/streaks'),
     /** Record activity for today (increments streak). */
     recordActivity: () =>
-      request<Record<string, unknown>>('/streaks/record', { method: 'POST' }),
+      request<RecordActivityResult>('/streaks/record', { method: 'POST' }),
     /** Opt-in leaderboard — top N users by current streak. */
     leaderboard: (limit = 50) =>
       request<StreakLeaderboardEntry[]>(`/streaks/leaderboard${toQS({ limit })}`),
