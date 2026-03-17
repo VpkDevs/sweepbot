@@ -29,6 +29,9 @@ module.exports = {
     // Extension often uses non-null assertions for DOM / Chrome API
     '@typescript-eslint/no-non-null-assertion': 'warn',
 
+    // Project uses "semi: false" — leading semicolons are intentional ASI guards
+    'no-extra-semi': 'off',
+
     // --- Legacy code patterns in extension internals (warn, not error) ---
     // These should be fixed but won't block CI while the extension matures
     'no-case-declarations': 'warn',
