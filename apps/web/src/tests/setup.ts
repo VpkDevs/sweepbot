@@ -73,7 +73,7 @@ window.HTMLElement.prototype.scrollIntoView = vi.fn()
 
 // Mock chrome extension APIs for any shared components that reference them
 if (!('chrome' in globalThis)) {
-  ;(globalThis as typeof globalThis & { chrome: unknown }).chrome = {
+  (globalThis as typeof globalThis & { chrome: unknown }).chrome = {
     storage: {
       local: {
         get: vi.fn().mockResolvedValue({}),

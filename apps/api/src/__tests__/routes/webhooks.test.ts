@@ -43,7 +43,7 @@ describe('Stripe Webhook Routes', () => {
   })
 
   it('handles invoice.payment_failed by updating subs and sending email', async () => {
-    ;(dbQuery as any).mockResolvedValue({ rows: [] })
+    (dbQuery as any).mockResolvedValue({ rows: [] })
 
     const invoice = { customer: 'cus_test', customer_email: 'foo@example.com' }
     const event = { type: 'invoice.payment_failed', data: { object: invoice } }
