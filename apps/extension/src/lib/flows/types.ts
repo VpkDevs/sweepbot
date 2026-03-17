@@ -179,12 +179,7 @@ export interface FlowDefinition {
 
 // ─── Execution ────────────────────────────────────────────────────────────────
 
-export type FlowExecutionStatus =
-  | 'running'
-  | 'completed'
-  | 'stopped'
-  | 'failed'
-  | 'limit_reached'
+export type FlowExecutionStatus = 'running' | 'completed' | 'stopped' | 'failed' | 'limit_reached'
 
 export interface FlowExecution {
   id: string

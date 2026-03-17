@@ -35,7 +35,7 @@ describe('Flow routes (conversation endpoints)', () => {
   })
 
   it('starts a new conversation and persists state', async () => {
-    (unsafeQuery as any).mockResolvedValue({ rows: [] })
+    ;(unsafeQuery as any).mockResolvedValue({ rows: [] })
 
     const res = await app.inject({
       method: 'POST',
@@ -51,7 +51,7 @@ describe('Flow routes (conversation endpoints)', () => {
   })
 
   it('returns 404 when continuing unknown conversation', async () => {
-    (dbQuery as any).mockResolvedValue({ rows: [] })
+    ;(dbQuery as any).mockResolvedValue({ rows: [] })
 
     const res = await app.inject({
       method: 'POST',

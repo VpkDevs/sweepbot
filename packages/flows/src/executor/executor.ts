@@ -138,7 +138,11 @@ export class FlowExecutor {
   /**
    * Execute an action node
    */
-  private async executeAction(node: FlowActionNode, ctx: FlowExecutionContext, flow: FlowDefinition): Promise<void> {
+  private async executeAction(
+    node: FlowActionNode,
+    ctx: FlowExecutionContext,
+    flow: FlowDefinition
+  ): Promise<void> {
     ctx.log.push({
       timestamp: new Date(),
       nodeId: node.id,
@@ -235,14 +239,15 @@ export class FlowExecutor {
   /**
    * Execute a loop node
    */
-  private async executeLoop(node: FlowLoopNode, ctx: FlowExecutionContext, flow: FlowDefinition): Promise<void> {
+  private async executeLoop(
+    node: FlowLoopNode,
+    ctx: FlowExecutionContext,
+    flow: FlowDefinition
+  ): Promise<void> {
     const loopStartTime = Date.now()
     let iterationCount = 0
 
-    while (
-      iterationCount < node.maxIterations &&
-      Date.now() - loopStartTime < node.maxDuration
-    ) {
+    while (iterationCount < node.maxIterations && Date.now() - loopStartTime < node.maxDuration) {
       // Evaluate condition
       const left = await this.evaluateValue(node.condition.left, ctx)
       const right = await this.evaluateValue(node.condition.right, ctx)
@@ -346,7 +351,7 @@ export class FlowExecutor {
   private evaluateExpression(expr: string, ctx: FlowExecutionContext): number {
     // Replace variables with their values
     let evaluated = expr.trim()
-    
+
     // Replace all $variableName with their numeric values
     for (const [varName, value] of ctx.variables) {
       if (typeof value === 'number') {
@@ -392,7 +397,10 @@ export class FlowExecutor {
    * Execute an action (stub for real implementation)
    * In production, would call the browser extension or backend service
    */
-  private async executeAction_Impl(node: FlowActionNode, _ctx: FlowExecutionContext): Promise<unknown> {
+  private async executeAction_Impl(
+    node: FlowActionNode,
+    _ctx: FlowExecutionContext
+  ): Promise<unknown> {
     // Simulate different action outcomes
     switch (node.action) {
       case 'claim_bonus':

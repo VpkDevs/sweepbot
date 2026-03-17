@@ -68,10 +68,7 @@ export function useThrottle<T extends (...args: any[]) => any>(
  * Memoized async function
  * Caches the result of an async function based on stringified arguments
  */
-export function useMemoAsync<T>(
-  factory: () => Promise<T>,
-  deps: DependencyList
-): T | undefined {
+export function useMemoAsync<T>(factory: () => Promise<T>, deps: DependencyList): T | undefined {
   const [value, setValue] = React.useState<T>()
 
   useEffect(() => {
@@ -111,8 +108,9 @@ export function usePerformanceMonitor(componentName: string, enabled = import.me
     return () => {
       if (startTime.current) {
         const duration = performance.now() - startTime.current
-        
-        if (duration > 16) { // More than one frame (60fps)
+
+        if (duration > 16) {
+          // More than one frame (60fps)
           logger.warn('Slow component render', {
             component: componentName,
             duration: `${duration.toFixed(2)}ms`,

@@ -7,6 +7,7 @@
 Platforms change their Terms of Service to claw back player advantages, add restrictions, or modify redemption policies. **Historical ToS data cannot be reconstructed** — if you start monitoring today, you'll never know what the ToS said yesterday.
 
 **Business Impact:**
+
 - **Trust Index component:** ToS stability score (fewer changes = higher trust)
 - **User engagement:** Email alerts drive daily active usage
 - **Legal protection:** Historical record for disputes
@@ -26,6 +27,7 @@ Platforms change their Terms of Service to claw back player advantages, add rest
    - `.env` (create from `.env.example`)
 
 3. **Set environment variables:**
+
    ```bash
    SUPABASE_URL=https://your-project.supabase.co
    SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
@@ -33,6 +35,7 @@ Platforms change their Terms of Service to claw back player advantages, add rest
    ```
 
 4. **Test run:**
+
    ```bash
    python monitor.py
    ```
@@ -42,6 +45,7 @@ Platforms change their Terms of Service to claw back player advantages, add rest
 ## Database Requirements
 
 ### `tos_snapshots` table
+
 ```sql
 CREATE TABLE tos_snapshots (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -56,15 +60,16 @@ CREATE TABLE tos_snapshots (
 );
 
 -- Index for fast lookups
-CREATE INDEX idx_tos_snapshots_platform_time 
+CREATE INDEX idx_tos_snapshots_platform_time
   ON tos_snapshots(platform_id, captured_at DESC);
 
-CREATE INDEX idx_tos_snapshots_changes 
-  ON tos_snapshots(platform_id, change_detected) 
+CREATE INDEX idx_tos_snapshots_changes
+  ON tos_snapshots(platform_id, change_detected)
   WHERE change_detected = TRUE;
 ```
 
 ### `platform_alerts` table
+
 ```sql
 CREATE TABLE platform_alerts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -78,7 +83,7 @@ CREATE TABLE platform_alerts (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_platform_alerts_platform 
+CREATE INDEX idx_platform_alerts_platform
   ON platform_alerts(platform_id, created_at DESC);
 ```
 
@@ -124,6 +129,7 @@ IMPORTANT_KEYWORDS = [
 ## Monitoring
 
 ### Check Status
+
 ```sql
 -- Recent snapshots
 SELECT p.name, ts.captured_at, ts.change_detected, ts.content_length
@@ -150,9 +156,10 @@ LIMIT 10;
 ```
 
 ### View Change Diffs
+
 ```sql
 -- Get change summary for a specific snapshot
-SELECT 
+SELECT
   p.name,
   ts.captured_at,
   ts.change_summary->>'important_keywords' as keywords,
@@ -175,11 +182,11 @@ async function sendToSAlerts() {
     .where('alert_type', 'tos_change')
     .where('dismissed', false)
     .where('created_at', '>', new Date(Date.now() - 24*60*60*1000));
-  
+
   for (const alert of alerts) {
     const users = await db.users
       .where('platforms', 'contains', alert.platformId);
-    
+
     for (const user of users) {
       await resend.emails.send({
         to: user.email,
@@ -194,19 +201,25 @@ async function sendToSAlerts() {
 ## Troubleshooting
 
 ### "Could not find content selector"
+
 Update the CSS selector for that platform:
+
 ```python
 'content_selector': 'main'  # Try more generic selectors
 ```
 
 ### Partial content extracted
+
 Some platforms load ToS dynamically via JavaScript. Options:
+
 1. Use Playwright/Puppeteer for JS-rendered content
 2. Find API endpoint that returns ToS as JSON
 3. Contact platform for static ToS URL
 
 ### Too many false positives
+
 Filter out insignificant changes:
+
 ```python
 # Ignore changes with < 10 lines modified
 if change_summary['total_diff_lines'] < 10:
@@ -230,7 +243,7 @@ if change_summary['total_diff_lines'] < 10:
 ## Next Steps
 
 1. **Week 1:** Collect 7 days of baseline
-snapshots
+   snapshots
 2. **Week 2:** Implement email alert system
 3. **Month 1:** Add ToS stability score to Trust Index
 4. **Month 3:** Build public "ToS Change History" pages (SEO gold)

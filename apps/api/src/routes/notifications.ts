@@ -76,7 +76,7 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
       `)
 
       return reply.send({ success: true, data: rows })
-    },
+    }
   )
 
   // ── GET /notifications/count ─────────────────────────────────────────────────
@@ -110,7 +110,7 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
       `)
 
       return reply.send({ success: true, data: { id } })
-    },
+    }
   )
 
   // ── POST /notifications/read-all ─────────────────────────────────────────────
@@ -144,7 +144,7 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
       `)
 
       return reply.send({ success: true, data: { deleted: true } })
-    },
+    }
   )
 
   // ── POST /notifications/subscribe ────────────────────────────────────────────
@@ -199,7 +199,7 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
       `)
 
       return reply.code(201).send({ success: true, data: { subscribed: true } })
-    },
+    }
   )
 
   // ── DELETE /notifications/subscribe ──────────────────────────────────────────
@@ -216,9 +216,7 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     async (request, reply) => {
-      const { endpoint } = z
-        .object({ endpoint: z.string() })
-        .parse(request.body)
+      const { endpoint } = z.object({ endpoint: z.string() }).parse(request.body)
 
       const userId = request.user!.id
 
@@ -228,7 +226,7 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
       `)
 
       return reply.send({ success: true, data: { unsubscribed: true } })
-    },
+    }
   )
 
   // ── GET /notifications/preferences ───────────────────────────────────────────
@@ -328,7 +326,7 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
       `)
 
       return reply.send({ success: true, data: { updated: true } })
-    },
+    }
   )
 }
 

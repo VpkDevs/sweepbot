@@ -1,18 +1,22 @@
 # Agent 2: Quick Wins Monetization Sprint
 
 ## Mission
+
 Implement 4 high-ROI features that drive immediate conversion and retention improvements. These are 1-4 day features with outsized business impact.
 
 ## Context
+
 You are working on **SweepBot** — the Bloomberg Terminal for sweepstakes casino players. See `AGENTS.md` for full project context.
 
 **Current State:**
+
 - Phase 1 complete (NLP flows engine, extension core, API, web dashboard)
 - Phase 2 in progress (action execution, live data collection)
 - Subscription tiers defined: Free, Starter ($14.99), Pro ($29.99), Analyst ($39.99), Elite ($59.99)
 - Tech stack: React 18 + Vite, Fastify 5, PostgreSQL/Supabase, TypeScript strict mode
 
 **Problem:**
+
 - Free-to-paid conversion is sub-optimal (no trial, no streak mechanics, no engagement hooks)
 - Missing notification infrastructure for all planned alert features
 - Users don't see enough value in first 7 days to upgrade
@@ -21,12 +25,14 @@ You are working on **SweepBot** — the Bloomberg Terminal for sweepstakes casin
 Implement 4 quick-win features that increase conversion by 20-30% and daily active usage by 25%+.
 
 ## Parallel Work Safety
+
 **Agent 1** is building: `services/jackpot-poller/`, `services/tos-monitor/`, `services/health-checker/` (Replit deployments)
 **Agent 3** is building: Macro Recorder in `apps/extension/src/lib/macro-recorder.ts`
 
 **You own:** `apps/web/src/` (web dashboard), `apps/api/src/` (API routes/services), database migrations
 
 **Critical:** Do NOT touch:
+
 - `services/` directory
 - `apps/extension/src/lib/macro-recorder.ts`
 - Any files Agent 1 or Agent 3 are actively editing
@@ -38,7 +44,9 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
 **Business Impact:** +25% free-to-paid conversion (industry standard for SaaS trials)
 
 **Requirements:**
+
 1. **Database Schema:**
+
    ```sql
    -- Add to users/subscriptions table
    ALTER TABLE subscriptions ADD COLUMN trial_started_at TIMESTAMP;
@@ -70,6 +78,7 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
    - Disable Pro features (graceful degradation)
 
 **Files to Create/Edit:**
+
 - `apps/api/src/db/migrations/[timestamp]_add_trial_fields.sql`
 - `apps/api/src/services/trial-manager.ts`
 - `apps/api/src/routes/subscriptions.ts` (add trial endpoints)
@@ -78,6 +87,7 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
 - `apps/web/src/components/layout/TrialBanner.tsx`
 
 **Success Metrics:**
+
 - Trial activation rate: >80% of new signups
 - Trial-to-paid conversion: >20%
 
@@ -88,7 +98,9 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
 **Business Impact:** +30% DAU/MAU ratio (Duolingo proved this mechanic)
 
 **Requirements:**
+
 1. **Database Schema:**
+
    ```sql
    CREATE TABLE user_streaks (
      user_id UUID PRIMARY KEY REFERENCES users(id),
@@ -100,7 +112,7 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
      created_at TIMESTAMP DEFAULT NOW(),
      updated_at TIMESTAMP DEFAULT NOW()
    );
-   
+
    CREATE TABLE streak_activities (
      id UUID PRIMARY KEY,
      user_id UUID REFERENCES users(id),
@@ -134,6 +146,7 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
    - 365 days → "Legend" badge + 1 month free Pro
 
 **Files to Create/Edit:**
+
 - `apps/api/src/db/migrations/[timestamp]_create_streaks.sql`
 - `apps/api/src/services/streak-manager.ts`
 - `apps/api/src/routes/streaks.ts`
@@ -143,6 +156,7 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
 - `apps/web/src/hooks/useStreak.ts`
 
 **Success Metrics:**
+
 - 7-day streak rate: >40% of active users
 - DAU increase: +25-30%
 
@@ -153,14 +167,16 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
 **Business Impact:** Enables 20+ future alert features (jackpots, RTP warnings, bonus expiration, etc.)
 
 **Requirements:**
+
 1. **Database Schema:**
+
    ```sql
    CREATE TABLE user_notification_preferences (
      user_id UUID PRIMARY KEY REFERENCES users(id),
      email_enabled BOOLEAN DEFAULT TRUE,
      push_enabled BOOLEAN DEFAULT FALSE,
      push_subscription JSONB,  -- Web Push API subscription object
-     
+
      -- Per-category preferences
      jackpot_alerts BOOLEAN DEFAULT TRUE,
      rtp_warnings BOOLEAN DEFAULT TRUE,
@@ -168,15 +184,15 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
      redemption_updates BOOLEAN DEFAULT TRUE,
      trust_index_changes BOOLEAN DEFAULT TRUE,
      flow_execution_alerts BOOLEAN DEFAULT TRUE,
-     
+
      quiet_hours_start TIME,
      quiet_hours_end TIME,
      timezone TEXT DEFAULT 'America/New_York',
-     
+
      created_at TIMESTAMP DEFAULT NOW(),
      updated_at TIMESTAMP DEFAULT NOW()
    );
-   
+
    CREATE TABLE notifications (
      id UUID PRIMARY KEY,
      user_id UUID REFERENCES users(id),
@@ -185,16 +201,16 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
      body TEXT NOT NULL,
      data JSONB,
      priority TEXT CHECK (priority IN ('low', 'normal', 'high', 'critical')),
-     
+
      -- Delivery tracking
      sent_at TIMESTAMP,
      read_at TIMESTAMP,
      clicked_at TIMESTAMP,
      delivery_method TEXT[], -- ['email', 'push', 'in_app']
-     
+
      created_at TIMESTAMP DEFAULT NOW()
    );
-   
+
    CREATE INDEX idx_notifications_user_unread ON notifications(user_id, read_at) WHERE read_at IS NULL;
    ```
 
@@ -213,23 +229,24 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
    - `PUT /api/notifications/:userId/preferences` — Update prefs
 
 4. **Notification Service:**
+
    ```typescript
    class NotificationService {
      async send(userId: string, notification: NotificationPayload) {
-       const prefs = await this.getPreferences(userId);
-       
+       const prefs = await this.getPreferences(userId)
+
        // Check quiet hours
-       if (this.isQuietHours(prefs)) return;
-       
+       if (this.isQuietHours(prefs)) return
+
        // Check category preference
-       if (!prefs[notification.category]) return;
-       
+       if (!prefs[notification.category]) return
+
        // Send via enabled channels
-       if (prefs.email_enabled) await this.sendEmail(userId, notification);
-       if (prefs.push_enabled) await this.sendPush(userId, notification);
-       
+       if (prefs.email_enabled) await this.sendEmail(userId, notification)
+       if (prefs.push_enabled) await this.sendPush(userId, notification)
+
        // Always log to in-app inbox
-       await this.logToInbox(userId, notification);
+       await this.logToInbox(userId, notification)
      }
    }
    ```
@@ -241,6 +258,7 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
    - Full inbox page with filters (unread, category, date)
 
 **Files to Create/Edit:**
+
 - `apps/api/src/db/migrations/[timestamp]_create_notifications.sql`
 - `apps/api/src/services/notification-service.ts`
 - `apps/api/src/routes/notifications.ts`
@@ -252,6 +270,7 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
 - `apps/web/src/components/settings/NotificationPreferences.tsx`
 
 **Success Metrics:**
+
 - Push opt-in rate: >40%
 - Notification engagement (click-through): >25%
 
@@ -262,26 +281,28 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
 **Business Impact:** Unique feature no competitor has; hands-free journaling during play
 
 **Requirements:**
+
 1. **Database Schema:**
+
    ```sql
    CREATE TABLE session_notes (
      id UUID PRIMARY KEY,
      session_id UUID REFERENCES sessions(id),
      user_id UUID REFERENCES users(id),
-     
+
      -- Voice data
      audio_url TEXT,  -- Stored in Supabase Storage
      transcript TEXT,
      duration_seconds INTEGER,
-     
+
      -- Metadata extracted from transcript (NLP)
      mentioned_games TEXT[],
      sentiment TEXT, -- 'positive', 'neutral', 'negative', 'frustrated', 'excited'
      tags TEXT[],
-     
+
      created_at TIMESTAMP DEFAULT NOW()
    );
-   
+
    CREATE INDEX idx_session_notes_session ON session_notes(session_id);
    CREATE INDEX idx_session_notes_user ON session_notes(user_id);
    ```
@@ -311,6 +332,7 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
    - Sentiment trend chart (analytics page)
 
 **Files to Create/Edit:**
+
 - `apps/api/src/db/migrations/[timestamp]_create_session_notes.sql`
 - `apps/api/src/services/voice-notes-processor.ts`
 - `apps/api/src/routes/session-notes.ts`
@@ -320,6 +342,7 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
 - `apps/web/src/lib/sentiment-analyzer.ts` (simple keyword-based)
 
 **Success Metrics:**
+
 - Usage rate: >15% of Pro users record voice notes
 - Average notes per session: 1.5+
 - Sentiment correlation: Detect tilt patterns early
@@ -329,6 +352,7 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
 ## Implementation Order
 
 ### Day 1: 14-Day Pro Trial
+
 1. Database migration
 2. Trial manager service
 3. API endpoints
@@ -337,6 +361,7 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
 6. Test full flow
 
 ### Day 2: Daily Streak Counter
+
 1. Database migration
 2. Streak manager service
 3. Cron job for daily check
@@ -345,6 +370,7 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
 6. Leaderboard page
 
 ### Day 3-4: Push Notification System
+
 1. Database migration
 2. Generate VAPID keys
 3. Service worker setup
@@ -355,6 +381,7 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
 8. Test with sample notifications
 
 ### Day 5: Session Voice Notes
+
 1. Database migration
 2. Speech recognition hook
 3. Voice recorder component
@@ -367,17 +394,20 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
 ## Technical Guidelines
 
 **Database:**
+
 - All migrations in `apps/api/src/db/migrations/`
 - Use Drizzle ORM schema in `apps/api/src/db/schema/`
 - Run: `pnpm --filter @sweepbot/api db:migrate`
 
 **API:**
+
 - Fastify 5 routes
 - Type-safe with Zod validation
 - Response format: `{ success: true, data: T }` or `{ error: string }`
 - Middleware: JWT auth via Supabase
 
 **Frontend:**
+
 - React 18 + TypeScript strict mode
 - TanStack Query for data fetching
 - Zustand for client state
@@ -385,6 +415,7 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
 - Tailwind CSS v4
 
 **Testing:**
+
 - Vitest for unit tests
 - Test each service in isolation
 - E2E test critical flows (trial activation, streak increment)
@@ -405,6 +436,7 @@ Implement 4 quick-win features that increase conversion by 20-30% and daily acti
 ## Success Criteria
 
 Your sprint is complete when:
+
 - [ ] Trial flow works end-to-end (signup → activate → countdown → convert/downgrade)
 - [ ] Streaks increment correctly daily and persist across sessions
 - [ ] Push notifications can be sent programmatically and appear in browser

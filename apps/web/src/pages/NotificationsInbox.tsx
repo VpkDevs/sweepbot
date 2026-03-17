@@ -30,11 +30,11 @@ const FILTERS: Array<{ key: FilterKey; label: string }> = [
 ]
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
-  achievement: <Award className="w-4 h-4 text-yellow-400" />,
-  streak:      <Flame className="w-4 h-4 text-orange-400" />,
-  milestone:   <Trophy className="w-4 h-4 text-amber-400" />,
-  jackpot:     <Star className="w-4 h-4 text-brand-400" />,
-  default:     <Bell className="w-4 h-4 text-zinc-400" />,
+  achievement: <Award className="h-4 w-4 text-yellow-400" />,
+  streak: <Flame className="h-4 w-4 text-orange-400" />,
+  milestone: <Trophy className="h-4 w-4 text-amber-400" />,
+  jackpot: <Star className="text-brand-400 h-4 w-4" />,
+  default: <Bell className="h-4 w-4 text-zinc-400" />,
 }
 
 function getIcon(type: string): React.ReactNode {
@@ -59,11 +59,11 @@ function timeAgo(iso: string): string {
 }
 
 const EMPTY_MESSAGES: Record<FilterKey, string> = {
-  all:          'No notifications yet',
-  unread:       'You\'re all caught up! 🎉',
+  all: 'No notifications yet',
+  unread: "You're all caught up! 🎉",
   achievements: 'No achievement notifications',
-  streaks:      'No streak notifications',
-  milestones:   'No milestone notifications',
+  streaks: 'No streak notifications',
+  milestones: 'No milestone notifications',
 }
 
 /**
@@ -97,17 +97,19 @@ export function NotificationsInbox() {
   const unreadCount = notifications.filter((n) => !n.is_read).length
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 max-w-2xl mx-auto">
+    <div className="mx-auto max-w-2xl space-y-6 p-6 lg:p-8">
       {/* Header */}
       <ScrollReveal>
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <TextReveal as="h1" className="heading-display text-3xl text-white text-shimmer" stagger={50}>
+            <TextReveal
+              as="h1"
+              className="heading-display text-shimmer text-3xl text-white"
+              stagger={50}
+            >
               Notifications
             </TextReveal>
-            {unreadCount > 0 && (
-              <p className="text-sm text-zinc-500">{unreadCount} unread</p>
-            )}
+            {unreadCount > 0 && <p className="text-sm text-zinc-500">{unreadCount} unread</p>}
           </div>
           {unreadCount > 0 && (
             <button
@@ -115,15 +117,15 @@ export function NotificationsInbox() {
               onClick={() => markAllRead()}
               disabled={isMarkingAll}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all press-scale',
-                'text-zinc-400 hover:text-white ring-1 ring-white/[0.07] hover:ring-white/[0.12]',
-                isMarkingAll && 'opacity-60 cursor-wait',
+                'press-scale flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-all',
+                'text-zinc-400 ring-1 ring-white/[0.07] hover:text-white hover:ring-white/[0.12]',
+                isMarkingAll && 'cursor-wait opacity-60'
               )}
             >
               {isMarkingAll ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
+                <Loader2 className="h-3 w-3 animate-spin" />
               ) : (
-                <Check className="w-3 h-3" />
+                <Check className="h-3 w-3" />
               )}
               Mark all read
             </button>
@@ -133,17 +135,17 @@ export function NotificationsInbox() {
 
       {/* Filter tabs */}
       <ScrollReveal delay={50}>
-        <div className="flex items-center gap-1 p-1 glass-card rounded-xl">
+        <div className="glass-card flex items-center gap-1 rounded-xl p-1">
           {FILTERS.map(({ key, label }) => (
             <button
               key={key}
               type="button"
               onClick={() => setActiveFilter(key)}
               className={cn(
-                'flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all',
+                'flex-1 rounded-lg py-1.5 text-xs font-semibold transition-all',
                 activeFilter === key
                   ? 'bg-brand-500/20 text-brand-300 shadow-sm'
-                  : 'text-zinc-500 hover:text-zinc-300',
+                  : 'text-zinc-500 hover:text-zinc-300'
               )}
             >
               {label}
@@ -154,22 +156,22 @@ export function NotificationsInbox() {
 
       {/* List */}
       <ScrollReveal delay={100}>
-        <div className="glass-card rounded-2xl overflow-hidden">
+        <div className="glass-card overflow-hidden rounded-2xl">
           {isLoading ? (
             <div className="divide-y divide-white/[0.03]">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="flex items-start gap-3 px-4 py-3">
-                  <div className="w-8 h-8 rounded-full shimmer flex-shrink-0 mt-0.5" />
+                  <div className="shimmer mt-0.5 h-8 w-8 flex-shrink-0 rounded-full" />
                   <div className="flex-1 space-y-1.5">
-                    <div className="h-3.5 rounded shimmer w-2/3" />
-                    <div className="h-3 rounded shimmer w-full" />
+                    <div className="shimmer h-3.5 w-2/3 rounded" />
+                    <div className="shimmer h-3 w-full rounded" />
                   </div>
                 </div>
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="py-12 text-center text-zinc-500 text-sm">
-              <Bell className="w-8 h-8 mx-auto mb-3 text-zinc-700" />
+            <div className="py-12 text-center text-sm text-zinc-500">
+              <Bell className="mx-auto mb-3 h-8 w-8 text-zinc-700" />
               <p>{EMPTY_MESSAGES[activeFilter]}</p>
             </div>
           ) : (
@@ -177,35 +179,44 @@ export function NotificationsInbox() {
               {filtered.map((item) => (
                 <li
                   key={item.id}
-                  onClick={() => { if (!item.is_read) markRead(item.id) }}
+                  onClick={() => {
+                    if (!item.is_read) markRead(item.id)
+                  }}
                   className={cn(
-                    'flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-white/[0.02]',
-                    !item.is_read && 'bg-brand-500/[0.03]',
+                    'flex cursor-pointer items-start gap-3 px-4 py-3 transition-colors hover:bg-white/[0.02]',
+                    !item.is_read && 'bg-brand-500/[0.03]'
                   )}
                 >
                   {/* Icon */}
                   <div
                     className={cn(
-                      'mt-0.5 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-                      !item.is_read ? 'bg-brand-500/10 ring-1 ring-brand-500/20' : 'bg-white/[0.04]',
+                      'mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full',
+                      !item.is_read ? 'bg-brand-500/10 ring-brand-500/20 ring-1' : 'bg-white/[0.04]'
                     )}
                   >
                     {getIcon(item.type)}
                   </div>
 
                   {/* Text */}
-                  <div className="flex-1 min-w-0 space-y-0.5">
-                    <p className={cn('text-sm font-medium leading-snug', item.is_read ? 'text-zinc-400' : 'text-white')}>
+                  <div className="min-w-0 flex-1 space-y-0.5">
+                    <p
+                      className={cn(
+                        'text-sm font-medium leading-snug',
+                        item.is_read ? 'text-zinc-400' : 'text-white'
+                      )}
+                    >
                       {item.title}
                     </p>
-                    <p className="text-xs text-zinc-500 leading-relaxed line-clamp-2">{item.body}</p>
+                    <p className="line-clamp-2 text-xs leading-relaxed text-zinc-500">
+                      {item.body}
+                    </p>
                   </div>
 
                   {/* Meta */}
-                  <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-2">
+                  <div className="ml-2 flex flex-shrink-0 flex-col items-end gap-1">
                     <span className="text-[10px] text-zinc-600">{timeAgo(item.created_at)}</span>
                     {!item.is_read && (
-                      <span className="w-2 h-2 rounded-full bg-brand-400 shadow-sm shadow-brand-400/50" />
+                      <span className="bg-brand-400 shadow-brand-400/50 h-2 w-2 rounded-full shadow-sm" />
                     )}
                   </div>
                 </li>

@@ -44,7 +44,7 @@ docs/             → The knowledge base. Read before building.
 
 ## 3. Initial Setup
 
-```bash
+````bash
 # 1. Install dependencies (pnpm is mandatory — do not use npm or yarn)
 pnpm install
 
@@ -81,7 +81,7 @@ pnpm --filter "@sweepbot/web" preview
 
 # deploy (requires Vercel CLI and project configured)
 pnpm --filter "@sweepbot/web" deploy
-```
+````
 
 The repository already includes a GitHub Actions workflow that runs the build step and pushes to Vercel; the `deploy` script is mainly for local testing or manual pushes.
 
@@ -97,25 +97,33 @@ This is the most common extension task. Here's the exact sequence:
 
 **Step 1 — Add to the platform seed data**
 ```
-apps/api/src/db/schema/   → Find the platforms seed file
+
+apps/api/src/db/schema/ → Find the platforms seed file
+
 ```
 Add the new platform with its `slug`, `name`, `url`, and `affiliate_url`.
 
 **Step 2 — Register in the NLP Entity Recognizer**
 ```
+
 packages/flows/src/interpreter/entity-recognizer.ts
+
 ```
 Add the platform's name and all known aliases to the `PLATFORM_ALIASES` map.
 
 **Step 3 — Add host permission to extension**
 ```
+
 apps/extension/wxt.config.ts
+
 ```
 Add the platform's domain to `host_permissions`. Do not use wildcards beyond the subdomain level.
 
 **Step 4 — Write the XHR interceptor pattern**
 ```
+
 apps/extension/src/lib/interceptors/
+
 ```
 Each platform has a unique API response format for spin results. Write a parser for the new platform that extracts `{ bet, win, balance }` from its response payload.
 
@@ -130,24 +138,32 @@ Flow actions are what the executor runs when a user says "claim bonus" or "spin.
 
 **Step 1 — Define the type**
 ```
-packages/flows/src/types.ts  → FlowActionType union
+
+packages/flows/src/types.ts → FlowActionType union
+
 ```
 
 **Step 2 — Register in the Entity Recognizer**
 ```
-packages/flows/src/interpreter/entity-recognizer.ts  → ACTIONS map
+
+packages/flows/src/interpreter/entity-recognizer.ts → ACTIONS map
+
 ```
 Add the keywords that should map to this new action.
 
 **Step 3 — Implement the handler**
 ```
-packages/flows/src/executor/executor.ts  → executeAction()
+
+packages/flows/src/executor/executor.ts → executeAction()
+
 ```
 Add a case to the action type switch. The handler receives `FlowExecutionContext` and must return `FlowActionResult`.
 
 **Step 4 — Write tests**
 ```
-packages/flows/src/__tests__/executor.test.ts
+
+packages/flows/src/**tests**/executor.test.ts
+
 ```
 Add at minimum: a happy path test, a timeout test, and a guardrail-blocked test.
 
@@ -156,9 +172,11 @@ Add at minimum: a happy path test, a timeout test, and a guardrail-blocked test.
 ## 6. Adding a New API Endpoint
 
 ```
-apps/api/src/routes/  → Create or extend a route file
-apps/api/src/server.ts  → Register the route plugin
-```
+
+apps/api/src/routes/ → Create or extend a route file
+apps/api/src/server.ts → Register the route plugin
+
+````
 
 Every endpoint must have:
 1. **Zod input validation** — parse the request body/params before using them
@@ -192,7 +210,7 @@ Violation of these rules will cause CI to fail. Fix the types, don't suppress th
 Run coverage locally before pushing:
 ```bash
 pnpm test:coverage
-```
+````
 
 ---
 
@@ -234,16 +252,16 @@ PRs that fail CI are not merged. No exceptions.
 
 ## 11. Key Files to Bookmark
 
-| File | Why |
-|------|-----|
-| `packages/flows/src/types.ts` | Every Flow data type |
-| `packages/flows/src/interpreter/entity-recognizer.ts` | NLP keyword maps |
-| `packages/flows/src/executor/executor.ts` | Runtime execution logic |
-| `apps/api/src/server.ts` | API server config + plugin registration |
-| `packages/types/src/` | All shared interfaces |
-| `docs/TECHNICAL_ARCHITECTURE.md` | System-level decisions |
-| `docs/SECURITY_ARCHITECTURE.md` | Security constraints |
+| File                                                  | Why                                     |
+| ----------------------------------------------------- | --------------------------------------- |
+| `packages/flows/src/types.ts`                         | Every Flow data type                    |
+| `packages/flows/src/interpreter/entity-recognizer.ts` | NLP keyword maps                        |
+| `packages/flows/src/executor/executor.ts`             | Runtime execution logic                 |
+| `apps/api/src/server.ts`                              | API server config + plugin registration |
+| `packages/types/src/`                                 | All shared interfaces                   |
+| `docs/TECHNICAL_ARCHITECTURE.md`                      | System-level decisions                  |
+| `docs/SECURITY_ARCHITECTURE.md`                       | Security constraints                    |
 
 ---
 
-*Onboarding guide maintained by APPYness. Last updated March 2026.*
+_Onboarding guide maintained by APPYness. Last updated March 2026._

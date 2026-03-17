@@ -9,11 +9,10 @@ import { createLogger } from './logger'
 
 const log = createLogger('ExtensionApi')
 
-const API_BASE = (
-  typeof import.meta !== 'undefined'
+const API_BASE =
+  (typeof import.meta !== 'undefined'
     ? (import.meta.env as unknown as Record<string, string | undefined>)['VITE_API_URL']
-    : undefined
-) ?? 'https://api.sweepbot.app'
+    : undefined) ?? 'https://api.sweepbot.app'
 
 /** Requests that should NOT be retried (state-mutating or auth). */
 const NON_RETRY_METHODS = new Set(['POST', 'DELETE', 'PATCH'])
@@ -26,10 +25,7 @@ async function sleep(ms: number): Promise<void> {
 }
 
 class ExtensionApi {
-  async request<T = unknown>(
-    path: string,
-    options: RequestInit = {},
-  ): Promise<T> {
+  async request<T = unknown>(path: string, options: RequestInit = {}): Promise<T> {
     const method = (options.method ?? 'GET').toUpperCase()
     const canRetry = !NON_RETRY_METHODS.has(method)
     let lastError: unknown
@@ -116,7 +112,7 @@ class ExtensionApi {
   async updateSessionBalance(
     sessionId: string,
     scBalance: number,
-    gcBalance: number,
+    gcBalance: number
   ): Promise<void> {
     await this.request(`/api/sessions/${sessionId}/balance`, {
       method: 'PATCH',
@@ -124,12 +120,15 @@ class ExtensionApi {
     })
   }
 
-  async recordTransaction(sessionId: string, transaction: {
-    game_id: string
-    bet_amount: number
-    win_amount: number
-    result: 'win' | 'loss' | 'push'
-  }): Promise<void> {
+  async recordTransaction(
+    sessionId: string,
+    transaction: {
+      game_id: string
+      bet_amount: number
+      win_amount: number
+      result: 'win' | 'loss' | 'push'
+    }
+  ): Promise<void> {
     await this.request(`/api/sessions/${sessionId}/transactions`, {
       method: 'POST',
       body: JSON.stringify(transaction),
@@ -155,32 +154,37 @@ class ExtensionApi {
     return this.request(`/api/analytics/platform/${platformSlug}`)
   }
 
-  async getSessionHistory(platformSlug: string, limit = 10): Promise<Array<{
-    session_id: string
-    game_id: string
-    started_at: string
-    ended_at: string
-    rtp: number
-    wagered: number
-    won: number
-  }>> {
-    return this.request(
-      `/api/analytics/sessions?platform_slug=${platformSlug}&limit=${limit}`,
-    )
+  async getSessionHistory(
+    platformSlug: string,
+    limit = 10
+  ): Promise<
+    Array<{
+      session_id: string
+      game_id: string
+      started_at: string
+      ended_at: string
+      rtp: number
+      wagered: number
+      won: number
+    }>
+  > {
+    return this.request(`/api/analytics/sessions?platform_slug=${platformSlug}&limit=${limit}`)
   }
 
   // =========================================================================
   // Jackpot endpoints (for live jackpot alerts)
   // =========================================================================
 
-  async getActiveJackpots(platformSlug: string): Promise<Array<{
-    jackpot_id: string
-    game_id: string
-    current_amount: number
-    historical_high: number
-    growth_rate: number
-    last_hit_at: string
-  }>> {
+  async getActiveJackpots(platformSlug: string): Promise<
+    Array<{
+      jackpot_id: string
+      game_id: string
+      current_amount: number
+      historical_high: number
+      growth_rate: number
+      last_hit_at: string
+    }>
+  > {
     return this.request(`/api/jackpots?platform_slug=${platformSlug}`)
   }
 
@@ -244,7 +248,7 @@ export const extensionApi = new ExtensionApi()
 export class ApiError extends Error {
   constructor(
     message: string,
-    public readonly status: number,
+    public readonly status: number
   ) {
     super(message)
     this.name = 'ApiError'

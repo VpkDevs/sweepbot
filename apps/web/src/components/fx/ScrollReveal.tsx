@@ -51,7 +51,7 @@ export function ScrollReveal({
           setIsVisible(false)
         }
       },
-      { threshold, rootMargin: '0px 0px -40px 0px' },
+      { threshold, rootMargin: '0px 0px -40px 0px' }
     )
 
     observer.observe(el)
@@ -63,10 +63,18 @@ export function ScrollReveal({
 
     const transforms: string[] = []
     switch (direction) {
-      case 'up':    transforms.push(`translateY(${distance}px)`); break
-      case 'down':  transforms.push(`translateY(-${distance}px)`); break
-      case 'left':  transforms.push(`translateX(${distance}px)`); break
-      case 'right': transforms.push(`translateX(-${distance}px)`); break
+      case 'up':
+        transforms.push(`translateY(${distance}px)`)
+        break
+      case 'down':
+        transforms.push(`translateY(-${distance}px)`)
+        break
+      case 'left':
+        transforms.push(`translateX(${distance}px)`)
+        break
+      case 'right':
+        transforms.push(`translateX(-${distance}px)`)
+        break
     }
     if (scale !== 1) transforms.push(`scale(${scale})`)
     return transforms.join(' ') || 'none'

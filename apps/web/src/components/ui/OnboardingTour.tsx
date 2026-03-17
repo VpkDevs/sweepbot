@@ -15,13 +15,13 @@ const steps: Step[] = [
   {
     title: 'Welcome to SweepBot 👋',
     description:
-      "This is your Command Center — your complete sweepstakes portfolio at a glance. Let us take you on a quick tour so you know where everything lives.",
+      'This is your Command Center — your complete sweepstakes portfolio at a glance. Let us take you on a quick tour so you know where everything lives.',
     cardPosition: { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
   },
   {
     title: 'Your Key Stats',
     description:
-      'These four cards give you an instant snapshot: Net P&L shows your total profit or loss in SC, Personal RTP tracks your return-to-player percentage, Active Platforms counts what you\'re playing on, and Hours Played shows your total time invested.',
+      "These four cards give you an instant snapshot: Net P&L shows your total profit or loss in SC, Personal RTP tracks your return-to-player percentage, Active Platforms counts what you're playing on, and Hours Played shows your total time invested.",
     cardPosition: { top: '28%', left: '50%', transform: 'translateX(-50%)' },
     hint: '↑ Stat cards above',
   },
@@ -35,7 +35,7 @@ const steps: Step[] = [
   {
     title: 'Jackpot Tracker',
     description:
-      'The Jackpot Tracker monitors progressive jackpots across all your platforms in real time — total jackpots tracked, their combined value, 24-hour hits, and what\'s been paid out over the last 30 days.',
+      "The Jackpot Tracker monitors progressive jackpots across all your platforms in real time — total jackpots tracked, their combined value, 24-hour hits, and what's been paid out over the last 30 days.",
     cardPosition: { top: '58%', right: '2%', transform: 'translateY(-50%)' },
     hint: '← Jackpot panel to the left',
   },
@@ -49,7 +49,7 @@ const steps: Step[] = [
   {
     title: 'Sidebar Navigation',
     description:
-      'Use the sidebar to jump between every section: Sessions to log plays, Analytics for deep stats, Jackpots for live tracking, Redemptions for cash-out history, and SweepBot Flows to automate your entire grind. You\'re all set!',
+      "Use the sidebar to jump between every section: Sessions to log plays, Analytics for deep stats, Jackpots for live tracking, Redemptions for cash-out history, and SweepBot Flows to automate your entire grind. You're all set!",
     cardPosition: { top: '50%', left: '280px', transform: 'translateY(-50%)' },
     hint: '← Sidebar on the left',
   },
@@ -102,10 +102,7 @@ export function OnboardingTour() {
   return (
     <div className="fixed inset-0 z-50">
       {/* Blurred backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={dismiss}
-      />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={dismiss} />
 
       {/* Tour card */}
       <div
@@ -116,32 +113,26 @@ export function OnboardingTour() {
         }}
       >
         {/* Glow ring */}
-        <div className="absolute -inset-px rounded-2xl bg-gradient-to-br from-brand-500/40 via-transparent to-brand-700/20 pointer-events-none" />
+        <div className="from-brand-500/40 to-brand-700/20 pointer-events-none absolute -inset-px rounded-2xl bg-gradient-to-br via-transparent" />
 
-        <div className="relative bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl shadow-black/60 p-6 space-y-4">
+        <div className="relative space-y-4 rounded-2xl border border-zinc-700 bg-zinc-900 p-6 shadow-2xl shadow-black/60">
           {/* Close button */}
           <button
             onClick={dismiss}
-            className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors"
+            className="absolute right-4 top-4 text-zinc-500 transition-colors hover:text-white"
             aria-label="Close tour"
           >
-            <X className="w-4 h-4" />
+            <X className="h-4 w-4" />
           </button>
 
           {/* Title */}
-          <h3 className="text-white font-semibold text-base leading-snug pr-6">
-            {current.title}
-          </h3>
+          <h3 className="pr-6 text-base font-semibold leading-snug text-white">{current.title}</h3>
 
           {/* Description */}
-          <p className="text-zinc-400 text-sm leading-relaxed">
-            {current.description}
-          </p>
+          <p className="text-sm leading-relaxed text-zinc-400">{current.description}</p>
 
           {/* Hint label */}
-          {current.hint && (
-            <p className="text-brand-400/80 text-xs font-medium">{current.hint}</p>
-          )}
+          {current.hint && <p className="text-brand-400/80 text-xs font-medium">{current.hint}</p>}
 
           {/* Step dots */}
           <div className="flex justify-center gap-1.5 pt-1">
@@ -155,8 +146,8 @@ export function OnboardingTour() {
                 <span
                   className={`block rounded-full transition-all duration-200 ${
                     i === step
-                      ? 'w-4 h-1.5 bg-brand-500'
-                      : 'w-1.5 h-1.5 bg-zinc-600 hover:bg-zinc-500'
+                      ? 'bg-brand-500 h-1.5 w-4'
+                      : 'h-1.5 w-1.5 bg-zinc-600 hover:bg-zinc-500'
                   }`}
                 />
               </button>
@@ -165,14 +156,14 @@ export function OnboardingTour() {
 
           {/* Footer controls */}
           <div className="flex items-center justify-between pt-1">
-            <span className="text-xs text-zinc-500 font-medium tabular-nums">
+            <span className="text-xs font-medium tabular-nums text-zinc-500">
               {step + 1} of {steps.length}
             </span>
 
             <div className="flex items-center gap-2">
               <button
                 onClick={dismiss}
-                className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors px-2 py-1 rounded"
+                className="rounded px-2 py-1 text-xs text-zinc-500 transition-colors hover:text-zinc-300"
               >
                 Skip
               </button>
@@ -180,18 +171,18 @@ export function OnboardingTour() {
               <button
                 onClick={prev}
                 disabled={step === 0}
-                className="flex items-center justify-center w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed text-zinc-300 hover:text-white transition-colors"
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-800 text-zinc-300 transition-colors hover:bg-zinc-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
                 aria-label="Previous step"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="h-4 w-4" />
               </button>
 
               <button
                 onClick={next}
-                className="flex items-center justify-center w-8 h-8 rounded-lg bg-brand-600 hover:bg-brand-500 text-white transition-colors"
+                className="bg-brand-600 hover:bg-brand-500 flex h-8 w-8 items-center justify-center rounded-lg text-white transition-colors"
                 aria-label={step === steps.length - 1 ? 'Finish tour' : 'Next step'}
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="h-4 w-4" />
               </button>
             </div>
           </div>

@@ -233,18 +233,14 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
       const userId = request.user!.id
       const offset = (query.page - 1) * query.pageSize
 
-      const platformClause = query.platformId
-        ? sql`AND s.platform_id = ${query.platformId}`
-        : sql``
+      const platformClause = query.platformId ? sql`AND s.platform_id = ${query.platformId}` : sql``
 
       const gameClause = query.gameId ? sql`AND s.game_id = ${query.gameId}` : sql``
 
       const startClause = query.startDate
         ? sql`AND s.started_at >= ${new Date(query.startDate)}`
         : sql``
-      const endClause = query.endDate
-        ? sql`AND s.started_at <= ${new Date(query.endDate)}`
-        : sql``
+      const endClause = query.endDate ? sql`AND s.started_at <= ${new Date(query.endDate)}` : sql``
 
       const [rows, countResult] = await Promise.all([
         dbQuery(sql`
@@ -274,7 +270,12 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
       return reply.send({
         success: true,
         data: rows.rows,
-        meta: { page: query.page, pageSize: query.pageSize, total, hasMore: offset + rows.rows.length < total },
+        meta: {
+          page: query.page,
+          pageSize: query.pageSize,
+          total,
+          hasMore: offset + rows.rows.length < total,
+        },
       })
     }
   )
@@ -396,12 +397,18 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
           ),
           total_wagered = total_wagered + (
             SELECT COALESCE(SUM(amount), 0) FROM unnest(
-              ARRAY[${body.transactions.filter((t) => t.type === 'bet').map((t) => t.amount).join(',')}]::numeric[]
+              ARRAY[${body.transactions
+                .filter((t) => t.type === 'bet')
+                .map((t) => t.amount)
+                .join(',')}]::numeric[]
             ) AS amount
           ),
           total_won = total_won + (
             SELECT COALESCE(SUM(amount), 0) FROM unnest(
-              ARRAY[${body.transactions.filter((t) => t.type === 'win').map((t) => t.amount).join(',')}]::numeric[]
+              ARRAY[${body.transactions
+                .filter((t) => t.type === 'win')
+                .map((t) => t.amount)
+                .join(',')}]::numeric[]
             ) AS amount
           ),
           updated_at = NOW()

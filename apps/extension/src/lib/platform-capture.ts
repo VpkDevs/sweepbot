@@ -34,13 +34,20 @@ export interface PlatformCaptureAnalysis {
   transactionCandidates: CaptureCandidate[]
 }
 
-export function installPlatformCapture(): { installed: boolean; startedAt: number; currentUrl: string } {
-  const globalScope = window as typeof window & { __SWEEPBOT_PLATFORM_CAPTURE__?: PlatformCaptureSnapshot }
+export function installPlatformCapture(): {
+  installed: boolean
+  startedAt: number
+  currentUrl: string
+} {
+  const globalScope = window as typeof window & {
+    __SWEEPBOT_PLATFORM_CAPTURE__?: PlatformCaptureSnapshot
+  }
   const existing = globalScope.__SWEEPBOT_PLATFORM_CAPTURE__
   if (existing) {
     existing.active = true
     existing.updatedAt = Date.now()
-    if (!existing.pageUrls.includes(window.location.href)) existing.pageUrls.unshift(window.location.href)
+    if (!existing.pageUrls.includes(window.location.href))
+      existing.pageUrls.unshift(window.location.href)
     return { installed: true, startedAt: existing.startedAt, currentUrl: window.location.href }
   }
 
@@ -59,10 +66,16 @@ export function installPlatformCapture(): { installed: boolean; startedAt: numbe
 
   function trimValue(value: unknown, depth = 0): unknown {
     if (depth >= MAX_DEPTH) return '[truncated]'
-    if (value == null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    if (
+      value == null ||
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean'
+    ) {
       return value
     }
-    if (Array.isArray(value)) return value.slice(0, MAX_ARRAY_ITEMS).map((item) => trimValue(item, depth + 1))
+    if (Array.isArray(value))
+      return value.slice(0, MAX_ARRAY_ITEMS).map((item) => trimValue(item, depth + 1))
     if (typeof value === 'object') {
       const trimmed: Record<string, unknown> = {}
       for (const key of Object.keys(value as Record<string, unknown>).slice(0, MAX_KEYS)) {
@@ -73,7 +86,9 @@ export function installPlatformCapture(): { installed: boolean; startedAt: numbe
     return String(value)
   }
 
-  function appendRecord(record: Omit<CapturedRequestRecord, 'id' | 'pageUrl' | 'timestamp'> & { responseJson: unknown }): void {
+  function appendRecord(
+    record: Omit<CapturedRequestRecord, 'id' | 'pageUrl' | 'timestamp'> & { responseJson: unknown }
+  ): void {
     if (!state.active) return
     const pageUrl = window.location.href
     if (!state.pageUrls.includes(pageUrl)) state.pageUrls.unshift(pageUrl)
@@ -91,7 +106,10 @@ export function installPlatformCapture(): { installed: boolean; startedAt: numbe
     state.requests = state.requests.slice(0, MAX_RECORDS)
   }
 
-  function tryCapture(rawText: string, meta: Omit<CapturedRequestRecord, 'id' | 'pageUrl' | 'timestamp' | 'responseJson'>): void {
+  function tryCapture(
+    rawText: string,
+    meta: Omit<CapturedRequestRecord, 'id' | 'pageUrl' | 'timestamp' | 'responseJson'>
+  ): void {
     if (!rawText) return
     try {
       const parsed = JSON.parse(rawText)
@@ -111,14 +129,18 @@ export function installPlatformCapture(): { installed: boolean; startedAt: numbe
           ? { url: resource.toString(), method: init?.method ?? 'GET' }
           : resource
     const response = await originalFetch(...args)
-    response.clone().text().then((text) => {
-      tryCapture(text, {
-        kind: 'fetch',
-        method: request.method ?? 'GET',
-        status: response.status,
-        url: request.url,
+    response
+      .clone()
+      .text()
+      .then((text) => {
+        tryCapture(text, {
+          kind: 'fetch',
+          method: request.method ?? 'GET',
+          status: response.status,
+          url: request.url,
+        })
       })
-    }).catch(() => {})
+      .catch(() => {})
     return response
   }
 
@@ -126,7 +148,9 @@ export function installPlatformCapture(): { installed: boolean; startedAt: numbe
   const originalXhrSend = XMLHttpRequest.prototype.send
 
   XMLHttpRequest.prototype.open = function (method: string, url: string | URL) {
-    (this as XMLHttpRequest & { __sweepbotCaptureMeta__?: { method: string; url: string } }).__sweepbotCaptureMeta__ = {
+    ;(
+      this as XMLHttpRequest & { __sweepbotCaptureMeta__?: { method: string; url: string } }
+    ).__sweepbotCaptureMeta__ = {
       method,
       url: String(url),
     }
@@ -135,7 +159,9 @@ export function installPlatformCapture(): { installed: boolean; startedAt: numbe
 
   XMLHttpRequest.prototype.send = function () {
     this.addEventListener('load', () => {
-      const meta = (this as XMLHttpRequest & { __sweepbotCaptureMeta__?: { method: string; url: string } }).__sweepbotCaptureMeta__
+      const meta = (
+        this as XMLHttpRequest & { __sweepbotCaptureMeta__?: { method: string; url: string } }
+      ).__sweepbotCaptureMeta__
       if (!meta || typeof this.responseText !== 'string') return
       tryCapture(this.responseText, {
         kind: 'xhr',
@@ -152,7 +178,9 @@ export function installPlatformCapture(): { installed: boolean; startedAt: numbe
 }
 
 export function resetPlatformCapture(): PlatformCaptureSnapshot | null {
-  const globalScope = window as typeof window & { __SWEEPBOT_PLATFORM_CAPTURE__?: PlatformCaptureSnapshot }
+  const globalScope = window as typeof window & {
+    __SWEEPBOT_PLATFORM_CAPTURE__?: PlatformCaptureSnapshot
+  }
   const state = globalScope.__SWEEPBOT_PLATFORM_CAPTURE__
   if (!state) return null
   state.active = true
@@ -164,19 +192,29 @@ export function resetPlatformCapture(): PlatformCaptureSnapshot | null {
 }
 
 export function readPlatformCapture(): PlatformCaptureSnapshot | null {
-  const globalScope = window as typeof window & { __SWEEPBOT_PLATFORM_CAPTURE__?: PlatformCaptureSnapshot }
+  const globalScope = window as typeof window & {
+    __SWEEPBOT_PLATFORM_CAPTURE__?: PlatformCaptureSnapshot
+  }
   const state = globalScope.__SWEEPBOT_PLATFORM_CAPTURE__
   return state ? (JSON.parse(JSON.stringify(state)) as PlatformCaptureSnapshot) : null
 }
 
-function collectLeafPaths(value: unknown, prefix = '', paths: Array<{ path: string; value: string | number }> = []): Array<{ path: string; value: string | number }> {
+function collectLeafPaths(
+  value: unknown,
+  prefix = '',
+  paths: Array<{ path: string; value: string | number }> = []
+): Array<{ path: string; value: string | number }> {
   if (value == null) return paths
   if (typeof value === 'number' || typeof value === 'string') {
     if (prefix) paths.push({ path: prefix, value })
     return paths
   }
   if (Array.isArray(value)) {
-    value.slice(0, 5).forEach((item, index) => collectLeafPaths(item, prefix ? `${prefix}.${index}` : `${index}`, paths))
+    value
+      .slice(0, 5)
+      .forEach((item, index) =>
+        collectLeafPaths(item, prefix ? `${prefix}.${index}` : `${index}`, paths)
+      )
     return paths
   }
   if (typeof value === 'object') {
@@ -191,7 +229,10 @@ function firstPath(paths: Array<{ path: string }>, matcher: RegExp): string | un
   return paths.find((entry) => matcher.test(entry.path))?.path
 }
 
-function scoreBalanceCandidate(url: string, paths: Array<{ path: string; value: string | number }>): number {
+function scoreBalanceCandidate(
+  url: string,
+  paths: Array<{ path: string; value: string | number }>
+): number {
   let score = /balance|wallet|coin|account|profile/i.test(url) ? 3 : 0
   if (firstPath(paths, /(sweeps|sweep|\.sc\b|^sc\b)/i)) score += 2
   if (firstPath(paths, /(gold|fun|fc|\.gc\b|^gc\b)/i)) score += 2
@@ -199,7 +240,10 @@ function scoreBalanceCandidate(url: string, paths: Array<{ path: string; value: 
   return score
 }
 
-function scoreTransactionCandidate(url: string, paths: Array<{ path: string; value: string | number }>): number {
+function scoreTransactionCandidate(
+  url: string,
+  paths: Array<{ path: string; value: string | number }>
+): number {
   let score = /spin|bet|game|play|round|wager/i.test(url) ? 2 : 0
   if (firstPath(paths, /(bet|wager|stake|amount)/i)) score += 2
   if (firstPath(paths, /(win|payout|prize|award)/i)) score += 2
@@ -208,19 +252,24 @@ function scoreTransactionCandidate(url: string, paths: Array<{ path: string; val
   return score
 }
 
-function toCandidate(record: CapturedRequestRecord, score: number, kind: 'balance' | 'transaction'): CaptureCandidate {
+function toCandidate(
+  record: CapturedRequestRecord,
+  score: number,
+  kind: 'balance' | 'transaction'
+): CaptureCandidate {
   const paths = collectLeafPaths(record.responseJson)
-  const suggestedPaths = kind === 'balance'
-    ? ({
-        scPath: firstPath(paths, /(sweeps|sweep|\.sc\b|^sc\b)/i) ?? '',
-        gcPath: firstPath(paths, /(gold|fun|fc|\.gc\b|^gc\b)/i) ?? '',
-      } as Record<string, string>)
-    : ({
-        betAmountPath: firstPath(paths, /(bet|wager|stake|amount)/i) ?? '',
-        winAmountPath: firstPath(paths, /(win|payout|prize|award)/i) ?? '',
-        gameIdPath: firstPath(paths, /(game.*id|slot.*id|game\.|slot\.)/i) ?? '',
-        roundIdPath: firstPath(paths, /(round.*id|transaction.*id|spin.*id)/i) ?? '',
-      } as Record<string, string>)
+  const suggestedPaths =
+    kind === 'balance'
+      ? ({
+          scPath: firstPath(paths, /(sweeps|sweep|\.sc\b|^sc\b)/i) ?? '',
+          gcPath: firstPath(paths, /(gold|fun|fc|\.gc\b|^gc\b)/i) ?? '',
+        } as Record<string, string>)
+      : ({
+          betAmountPath: firstPath(paths, /(bet|wager|stake|amount)/i) ?? '',
+          winAmountPath: firstPath(paths, /(win|payout|prize|award)/i) ?? '',
+          gameIdPath: firstPath(paths, /(game.*id|slot.*id|game\.|slot\.)/i) ?? '',
+          roundIdPath: firstPath(paths, /(round.*id|transaction.*id|spin.*id)/i) ?? '',
+        } as Record<string, string>)
 
   return {
     id: record.id,
@@ -234,18 +283,26 @@ function toCandidate(record: CapturedRequestRecord, score: number, kind: 'balanc
   }
 }
 
-export function analyzePlatformCapture(snapshot: PlatformCaptureSnapshot | null): PlatformCaptureAnalysis {
+export function analyzePlatformCapture(
+  snapshot: PlatformCaptureSnapshot | null
+): PlatformCaptureAnalysis {
   if (!snapshot) return { balanceCandidates: [], transactionCandidates: [] }
 
   const balanceCandidates = snapshot.requests
-    .map((record) => ({ record, score: scoreBalanceCandidate(record.url, collectLeafPaths(record.responseJson)) }))
+    .map((record) => ({
+      record,
+      score: scoreBalanceCandidate(record.url, collectLeafPaths(record.responseJson)),
+    }))
     .filter(({ score }) => score >= 4)
     .sort((a, b) => b.score - a.score)
     .slice(0, 5)
     .map(({ record, score }) => toCandidate(record, score, 'balance'))
 
   const transactionCandidates = snapshot.requests
-    .map((record) => ({ record, score: scoreTransactionCandidate(record.url, collectLeafPaths(record.responseJson)) }))
+    .map((record) => ({
+      record,
+      score: scoreTransactionCandidate(record.url, collectLeafPaths(record.responseJson)),
+    }))
     .filter(({ score }) => score >= 4)
     .sort((a, b) => b.score - a.score)
     .slice(0, 5)
@@ -254,13 +311,17 @@ export function analyzePlatformCapture(snapshot: PlatformCaptureSnapshot | null)
   return { balanceCandidates, transactionCandidates }
 }
 
-export function buildPlatformCaptureExport(tabUrl: string | null, snapshot: PlatformCaptureSnapshot | null) {
+export function buildPlatformCaptureExport(
+  tabUrl: string | null,
+  snapshot: PlatformCaptureSnapshot | null
+) {
   return {
     captureType: 'sweepbot-platform-onboarding',
     capturedAt: new Date().toISOString(),
     tabUrl,
     snapshot,
     analysis: analyzePlatformCapture(snapshot),
-    instructions: 'Send this report back to Augment to generate a PlatformConfig entry and any needed extension changes.',
+    instructions:
+      'Send this report back to Augment to generate a PlatformConfig entry and any needed extension changes.',
   }
 }

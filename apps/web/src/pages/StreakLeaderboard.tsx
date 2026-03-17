@@ -25,8 +25,8 @@ function RankBadge({ rank }: { rank: number }) {
     return (
       <span
         className={cn(
-          'w-8 h-8 rounded-full flex items-center justify-center text-sm font-black ring-1 flex-shrink-0',
-          style,
+          'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-black ring-1',
+          style
         )}
       >
         {rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'}
@@ -34,7 +34,7 @@ function RankBadge({ rank }: { rank: number }) {
     )
   }
   return (
-    <span className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-zinc-500 ring-1 ring-zinc-700/40 flex-shrink-0 tabular-nums">
+    <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums text-zinc-500 ring-1 ring-zinc-700/40">
       {rank}
     </span>
   )
@@ -43,10 +43,10 @@ function RankBadge({ rank }: { rank: number }) {
 function SkeletonRow() {
   return (
     <div className="flex items-center gap-4 px-4 py-3">
-      <div className="w-8 h-8 rounded-full shimmer flex-shrink-0" />
-      <div className="flex-1 h-4 rounded shimmer" />
-      <div className="w-16 h-4 rounded shimmer" />
-      <div className="w-16 h-4 rounded shimmer" />
+      <div className="shimmer h-8 w-8 flex-shrink-0 rounded-full" />
+      <div className="shimmer h-4 flex-1 rounded" />
+      <div className="shimmer h-4 w-16 rounded" />
+      <div className="shimmer h-4 w-16 rounded" />
     </div>
   )
 }
@@ -70,14 +70,18 @@ export function StreakLeaderboard() {
   }))
 
   return (
-    <div className="p-6 lg:p-8 space-y-8 max-w-3xl mx-auto">
+    <div className="mx-auto max-w-3xl space-y-8 p-6 lg:p-8">
       {/* Header */}
       <ScrollReveal>
         <div className="space-y-1">
-          <TextReveal as="h1" className="heading-display text-3xl text-white text-shimmer" stagger={50}>
+          <TextReveal
+            as="h1"
+            className="heading-display text-shimmer text-3xl text-white"
+            stagger={50}
+          >
             🔥 Streak Leaderboard
           </TextReveal>
-          <p className="text-zinc-500 text-sm">
+          <p className="text-sm text-zinc-500">
             Opt-in leaderboard — only players who have enabled sharing appear here.
           </p>
         </div>
@@ -85,9 +89,9 @@ export function StreakLeaderboard() {
 
       {/* Table card */}
       <ScrollReveal delay={100}>
-        <div className="glass-card rounded-2xl overflow-hidden">
+        <div className="glass-card overflow-hidden rounded-2xl">
           {/* Column headers */}
-          <div className="flex items-center gap-4 px-4 py-2.5 border-b border-white/[0.04] text-[10px] text-zinc-600 font-bold uppercase tracking-[0.15em]">
+          <div className="flex items-center gap-4 border-b border-white/[0.04] px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-600">
             <span className="w-8 flex-shrink-0 text-center">#</span>
             <span className="flex-1">Player</span>
             <span className="w-24 text-right">Current</span>
@@ -102,8 +106,8 @@ export function StreakLeaderboard() {
               ))}
             </div>
           ) : entries.length === 0 ? (
-            <div className="py-12 text-center text-zinc-500 text-sm">
-              <Trophy className="w-8 h-8 mx-auto mb-3 text-zinc-700" />
+            <div className="py-12 text-center text-sm text-zinc-500">
+              <Trophy className="mx-auto mb-3 h-8 w-8 text-zinc-700" />
               <p>No entries yet. Be the first on the board!</p>
             </div>
           ) : (
@@ -115,15 +119,15 @@ export function StreakLeaderboard() {
                     key={entry.user_id}
                     className={cn(
                       'flex items-center gap-4 px-4 py-3 transition-colors hover:bg-white/[0.02]',
-                      isTop3 && 'bg-white/[0.01]',
+                      isTop3 && 'bg-white/[0.01]'
                     )}
                   >
                     <RankBadge rank={entry.rank} />
 
                     <span
                       className={cn(
-                        'flex-1 text-sm font-medium truncate',
-                        isTop3 ? 'text-white' : 'text-zinc-300',
+                        'flex-1 truncate text-sm font-medium',
+                        isTop3 ? 'text-white' : 'text-zinc-300'
                       )}
                     >
                       {entry.display_name ?? 'Anonymous'}
@@ -132,16 +136,16 @@ export function StreakLeaderboard() {
                     {/* Current streak */}
                     <span
                       className={cn(
-                        'w-24 text-right flex items-center justify-end gap-1 tabular-nums text-sm font-bold',
-                        entry.current_streak >= 7 ? 'text-orange-400' : 'text-zinc-300',
+                        'flex w-24 items-center justify-end gap-1 text-right text-sm font-bold tabular-nums',
+                        entry.current_streak >= 7 ? 'text-orange-400' : 'text-zinc-300'
                       )}
                     >
-                      <Flame className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />
+                      <Flame className="h-3.5 w-3.5 flex-shrink-0 text-orange-500" />
                       {entry.current_streak}d
                     </span>
 
                     {/* Longest streak */}
-                    <span className="w-24 text-right tabular-nums text-sm text-zinc-500 font-medium">
+                    <span className="w-24 text-right text-sm font-medium tabular-nums text-zinc-500">
                       {entry.longest_streak}d best
                     </span>
                   </li>
@@ -154,7 +158,7 @@ export function StreakLeaderboard() {
 
       {/* Privacy note */}
       <ScrollReveal delay={200}>
-        <p className="text-xs text-zinc-600 text-center">
+        <p className="text-center text-xs text-zinc-600">
           🛡️ Your streak is private by default. Enable leaderboard visibility in Settings → Privacy.
         </p>
       </ScrollReveal>

@@ -24,7 +24,13 @@ describe('<SettingsPage />', () => {
   it('calls selfExclude when danger zone button clicked', async () => {
     const excludeSpy = vi.spyOn(api.user, 'selfExclude').mockResolvedValue({ success: true })
 
-    render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><SettingsPage /></QueryClientProvider>)
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <SettingsPage />
+      </QueryClientProvider>
+    )
 
     // click the Danger Zone tab first so the self-exclusion button is rendered
     const dangerTab = screen.getByRole('button', { name: /danger zone/i })

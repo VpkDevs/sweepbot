@@ -60,17 +60,17 @@ export function TrialBanner() {
         'relative flex items-center gap-3 px-4 py-2.5 text-sm font-medium',
         'bg-gradient-to-r from-amber-600/90 via-orange-500/90 to-amber-500/90',
         'border-b border-orange-400/20',
-        'animate-fade-in',
+        'animate-fade-in'
       )}
       role="banner"
     >
-      <Zap className="w-4 h-4 text-white flex-shrink-0" />
-      <span className="text-white/95 flex-1">
+      <Zap className="h-4 w-4 flex-shrink-0 text-white" />
+      <span className="flex-1 text-white/95">
         ⚡ {days === 1 ? '1 day' : `${days} days`} left in your Pro trial
       </span>
       <Link
         to="/pricing"
-        className="px-3 py-1 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-semibold transition-colors press-scale flex-shrink-0"
+        className="press-scale flex-shrink-0 rounded-lg bg-white/20 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-white/30"
       >
         Upgrade Now
       </Link>
@@ -81,9 +81,9 @@ export function TrialBanner() {
           setDismissedToday()
           setDismissed(true)
         }}
-        className="flex-shrink-0 text-white/70 hover:text-white transition-colors press-scale"
+        className="press-scale flex-shrink-0 text-white/70 transition-colors hover:text-white"
       >
-        <X className="w-4 h-4" />
+        <X className="h-4 w-4" />
       </button>
     </div>
   )

@@ -121,9 +121,7 @@ export class StorageManager {
   /**
    * Get multiple values
    */
-  async getMultiple<K extends keyof StorageSchema>(
-    keys: K[],
-  ): Promise<Pick<StorageSchema, K>> {
+  async getMultiple<K extends keyof StorageSchema>(keys: K[]): Promise<Pick<StorageSchema, K>> {
     await this.init()
     const result = {} as Pick<StorageSchema, K>
     for (const key of keys) {
@@ -168,7 +166,7 @@ export class StorageManager {
         // Update cache
         for (const [key, change] of Object.entries(changes)) {
           if ('newValue' in change) {
-            (this.cache as Record<string, unknown>)[key] = change.newValue
+            ;(this.cache as Record<string, unknown>)[key] = change.newValue
           } else {
             delete (this.cache as Record<string, unknown>)[key]
           }

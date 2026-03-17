@@ -34,7 +34,7 @@ export async function buildServer(): Promise<FastifyInstance> {
   // ─── Security ────────────────────────────────────────────────────────────
 
   await server.register(helmet, {
-    contentSecurityPolicy: false,  // Managed at CDN level
+    contentSecurityPolicy: false, // Managed at CDN level
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   })
 
@@ -49,8 +49,7 @@ export async function buildServer(): Promise<FastifyInstance> {
     max: 200,
     timeWindow: '1 minute',
     redis: undefined, // Will add Redis in Phase 2
-    keyGenerator: (request) =>
-      request.headers['x-forwarded-for']?.toString() ?? request.ip,
+    keyGenerator: (request) => request.headers['x-forwarded-for']?.toString() ?? request.ip,
     errorResponseBuilder: (_request, context) => ({
       success: false,
       error: {

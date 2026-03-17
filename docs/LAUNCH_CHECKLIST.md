@@ -1,7 +1,7 @@
 # SweepBot — Launch Checklist
 
-*This is the gate document. Nothing ships until every P0 item is checked.*
-*Last reviewed: 2026-03-05*
+_This is the gate document. Nothing ships until every P0 item is checked._
+_Last reviewed: 2026-03-05_
 
 ---
 
@@ -16,6 +16,7 @@
 ## P0 — Must Be Done Before Any Public Launch
 
 ### Legal & Compliance
+
 - [ ] Privacy Policy live at a public URL (`https://sweepbot.app/privacy`)
 - [ ] Terms of Service live at a public URL (`https://sweepbot.app/terms`)
 - [ ] Privacy policy URL registered in Chrome Web Store developer console (required for extension submission)
@@ -25,6 +26,7 @@
 - [ ] Responsible play disclosures visible on automation features
 
 ### Infrastructure
+
 - [ ] Supabase project created (production) — URL and keys in `.env`
 - [ ] Supabase project created (staging) — separate environment
 - [ ] Database migration `001_initial_schema.sql` run on production
@@ -40,6 +42,7 @@
 - [ ] Environment variables set in Vercel (web) and Railway (api) — not just local `.env`
 
 ### Payments
+
 - [ ] Stripe account created and verified
 - [ ] Stripe Products created for all 5 tiers (Free, Starter, Pro, Analyst, Elite) + Lifetime
 - [ ] Stripe Prices created (monthly + annual for each)
@@ -51,6 +54,7 @@
 - [ ] Customer portal link working
 
 ### Authentication
+
 - [ ] Supabase Auth email provider enabled
 - [ ] Email confirmation flow working (sign up → confirm email → get access)
 - [ ] Password reset flow working
@@ -59,6 +63,7 @@
 - [ ] JWT validation working end-to-end (API rejects requests without valid token)
 
 ### Browser Extension — Chrome Web Store Submission
+
 - [ ] Extension built with `pnpm build:zip` (production build)
 - [ ] Privacy policy URL entered in extension submission form
 - [ ] Extension description written (2–5 sentences for Web Store listing)
@@ -74,16 +79,19 @@
 ## P1 — Strong Pre-Launch Requirements
 
 ### Error Monitoring
+
 - [ ] Sentry project created and DSN configured in production environments
 - [ ] Test error verified in Sentry (manually throw an error, confirm it appears)
 - [ ] Sentry alerts configured for critical errors (email/Slack notification)
 
 ### Product Analytics
+
 - [ ] PostHog project created
 - [ ] PostHog key configured in web app
 - [ ] Core events tracked: signup, subscription_upgrade, session_created, flow_created
 
 ### Email
+
 - [ ] Resend account created and API key configured
 - [ ] Sending domain configured and verified (`mail.sweepbot.app` or similar)
 - [ ] Welcome email template created and tested
@@ -91,6 +99,7 @@
 - [ ] Subscription confirmation email tested
 
 ### Core Functionality Testing
+
 - [ ] User can sign up, verify email, and access dashboard
 - [ ] User can add a platform (e.g., Chumba Casino) to their account
 - [ ] User installs extension → extension detects platform → HUD appears on casino page
@@ -101,12 +110,14 @@
 - [ ] Redemption can be logged and tracked
 
 ### Data Collection (Always-On Services)
+
 - [ ] Jackpot poller deployed (Replit or equivalent) → collecting data for seeded platforms
 - [ ] TOS monitor deployed → running daily diffs
 - [ ] Platform health checker deployed → running 5-minute pings
 - [ ] Verify at least 24 hours of jackpot data exists in `jackpot_snapshots` table before launch
 
 ### Content
+
 - [ ] Landing page / marketing site live at `sweepbot.app` (pre-login)
 - [ ] Pricing page accessible without login
 - [ ] Link to Privacy Policy and Terms of Service in footer
@@ -114,6 +125,7 @@
 - [ ] Social accounts created: Twitter/X (@sweepbot or similar), Reddit account for community presence
 
 ### Responsible Play
+
 - [ ] Session time limit alerts working in extension (if user has limit set)
 - [ ] Automation flow guardrails enforced: max_duration, cool_down_check cannot be bypassed
 - [ ] Responsible play resources link accessible from settings
@@ -123,19 +135,23 @@
 ## P2 — Launch Degraded But Acceptable
 
 ### Analytics Documentation
+
 - [ ] Google Analytics / web crawl verified (robots.txt is not blocking indexing)
 - [ ] Basic SEO: pages have title tags, meta descriptions
 
 ### Affiliate Program
+
 - [ ] At least 3 platforms enrolled in affiliate program with working tracking links
 - [ ] User affiliate dashboard accessible (even if placeholder for non-enrolled platforms)
 - [ ] `platforms.affiliate_url` populated for enrolled platforms
 
 ### Extension — Firefox
+
 - [ ] Firefox build tested (WXT handles cross-browser)
 - [ ] Firefox Add-ons submission (lower priority than Chrome; defer if needed)
 
 ### Community Presence
+
 - [ ] Reddit post in r/sweepstakescasino announcing SweepBot (after launch day)
 - [ ] Response plan for first day of questions/feedback
 
@@ -166,5 +182,5 @@
 
 ---
 
-*This document should be reviewed and updated with each launch-blocking issue resolved.*
-*Owner: Vincent Kinney / APPYness*
+_This document should be reviewed and updated with each launch-blocking issue resolved._
+_Owner: Vincent Kinney / APPYness_

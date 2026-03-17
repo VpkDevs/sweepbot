@@ -17,10 +17,18 @@ Object.defineProperty(window, 'localStorage', {
   writable: true,
   value: {
     getItem: (key: string) => _localStorage[key] ?? null,
-    setItem: (key: string, value: string) => { _localStorage[key] = value },
-    removeItem: (key: string) => { delete _localStorage[key] },
-    clear: () => { Object.keys(_localStorage).forEach(k => delete _localStorage[k]) },
-    get length() { return Object.keys(_localStorage).length },
+    setItem: (key: string, value: string) => {
+      _localStorage[key] = value
+    },
+    removeItem: (key: string) => {
+      delete _localStorage[key]
+    },
+    clear: () => {
+      Object.keys(_localStorage).forEach((k) => delete _localStorage[k])
+    },
+    get length() {
+      return Object.keys(_localStorage).length
+    },
     key: (index: number) => Object.keys(_localStorage)[index] ?? null,
   } as Storage,
 })
@@ -49,7 +57,9 @@ class MockIntersectionObserver {
   constructor() {}
   disconnect() {}
   observe() {}
-  takeRecords(): IntersectionObserverEntry[] { return [] }
+  takeRecords(): IntersectionObserverEntry[] {
+    return []
+  }
   unobserve() {}
 }
 global.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver
@@ -73,7 +83,7 @@ window.HTMLElement.prototype.scrollIntoView = vi.fn()
 
 // Mock chrome extension APIs for any shared components that reference them
 if (!('chrome' in globalThis)) {
-  (globalThis as typeof globalThis & { chrome: unknown }).chrome = {
+  ;(globalThis as typeof globalThis & { chrome: unknown }).chrome = {
     storage: {
       local: {
         get: vi.fn().mockResolvedValue({}),

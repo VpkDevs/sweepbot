@@ -3,7 +3,18 @@
  * Achievements, Personal Records, Big Wins Community Board
  */
 
-import { pgTable, uuid, varchar, text, integer, boolean, timestamp, decimal, jsonb, unique } from 'drizzle-orm/pg-core'
+import {
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  integer,
+  boolean,
+  timestamp,
+  decimal,
+  jsonb,
+  unique,
+} from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
 // ─── Achievement Catalogue ────────────────────────────────────────────────────
@@ -15,9 +26,9 @@ export const achievements = pgTable('achievements', {
   description: text('description').notNull(),
   icon: varchar('icon', { length: 100 }).notNull(),
   category: varchar('category', { length: 50 }).notNull(), // sessions | bonuses | jackpots | streaks | social | flows
-  tier: varchar('tier', { length: 20 }).notNull(),         // bronze | silver | gold | platinum
+  tier: varchar('tier', { length: 20 }).notNull(), // bronze | silver | gold | platinum
   points: integer('points').notNull().default(0),
-  requirement: jsonb('requirement').notNull(),               // { type: 'session_count', threshold: 100 }
+  requirement: jsonb('requirement').notNull(), // { type: 'session_count', threshold: 100 }
   isSecret: boolean('is_secret').notNull().default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
@@ -27,9 +38,11 @@ export const userAchievements = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     userId: uuid('user_id').notNull(),
-    achievementId: uuid('achievement_id').notNull().references(() => achievements.id),
+    achievementId: uuid('achievement_id')
+      .notNull()
+      .references(() => achievements.id),
     earnedAt: timestamp('earned_at').defaultNow().notNull(),
-    progress: jsonb('progress'),   // { current: 47, required: 100 }
+    progress: jsonb('progress'), // { current: 47, required: 100 }
     notified: boolean('notified').notNull().default(false),
   },
   (t) => ({ uniq: unique().on(t.userId, t.achievementId) })

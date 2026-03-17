@@ -4,7 +4,7 @@ import type { FlowDefinition } from '../lib/flows/types'
 describe('flow automation executor (extension)', () => {
   beforeAll(() => {
     // stub chrome.runtime.sendMessage for tests
-    (global as any).chrome = {
+    ;(global as any).chrome = {
       runtime: {
         sendMessage: vi.fn(() => Promise.resolve({})),
       },
@@ -50,6 +50,6 @@ describe('flow automation executor (extension)', () => {
     }
 
     const exec = await executeFlow(flow)
-    expect(['limit_reached','stopped']).toContain(exec.status)
+    expect(['limit_reached', 'stopped']).toContain(exec.status)
   })
 })

@@ -1,4 +1,8 @@
-import { analyzePlatformCapture, buildPlatformCaptureExport, type PlatformCaptureSnapshot } from '../lib/platform-capture'
+import {
+  analyzePlatformCapture,
+  buildPlatformCaptureExport,
+  type PlatformCaptureSnapshot,
+} from '../lib/platform-capture'
 
 describe('platform capture analysis', () => {
   const snapshot: PlatformCaptureSnapshot = {
@@ -26,7 +30,9 @@ describe('platform capture analysis', () => {
         url: 'https://api.examplecasino.com/game/spin',
         pageUrl: 'https://examplecasino.com/play/book-of-gold',
         timestamp: 3,
-        responseJson: { data: { bet: 1, payout: 4, game_id: 'book-of-gold', round_id: 'round-123' } },
+        responseJson: {
+          data: { bet: 1, payout: 4, game_id: 'book-of-gold', round_id: 'round-123' },
+        },
       },
     ],
   }
@@ -46,7 +52,10 @@ describe('platform capture analysis', () => {
   })
 
   it('builds a copyable export payload', () => {
-    const report = buildPlatformCaptureExport('https://examplecasino.com/play/book-of-gold', snapshot)
+    const report = buildPlatformCaptureExport(
+      'https://examplecasino.com/play/book-of-gold',
+      snapshot
+    )
     expect(report.captureType).toBe('sweepbot-platform-onboarding')
     expect(report.snapshot?.requests).toHaveLength(2)
     expect(report.analysis.transactionCandidates).toHaveLength(1)

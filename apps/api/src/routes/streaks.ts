@@ -50,7 +50,7 @@ export async function streakRoutes(app: FastifyInstance): Promise<void> {
           error: { code: 'INTERNAL_ERROR', message: 'Failed to retrieve streak' },
         })
       }
-    },
+    }
   )
 
   // ─── POST /streaks/activity ────────────────────────────────────────────────
@@ -75,7 +75,7 @@ export async function streakRoutes(app: FastifyInstance): Promise<void> {
           error: { code: 'INTERNAL_ERROR', message: 'Failed to record activity' },
         })
       }
-    },
+    }
   )
 
   // ─── GET /streaks/leaderboard ──────────────────────────────────────────────
@@ -105,7 +105,7 @@ export async function streakRoutes(app: FastifyInstance): Promise<void> {
           error: { code: 'INTERNAL_ERROR', message: 'Failed to retrieve leaderboard' },
         })
       }
-    },
+    }
   )
 
   // ─── POST /streaks/nightly-check ──────────────────────────────────────────
@@ -129,6 +129,6 @@ export async function streakRoutes(app: FastifyInstance): Promise<void> {
           error: { code: 'INTERNAL_ERROR', message: 'Nightly check failed' },
         })
       }
-    },
+    }
   )
 }

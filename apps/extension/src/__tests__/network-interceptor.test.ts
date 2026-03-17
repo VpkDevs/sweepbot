@@ -12,9 +12,7 @@ describe('NetworkInterceptor', () => {
     color: '',
     name: '',
     domain: '',
-    balanceApiPatterns: [
-      { urlPattern: /balance/, scPath: 'data.sc', gcPath: 'data.gc' },
-    ],
+    balanceApiPatterns: [{ urlPattern: /balance/, scPath: 'data.sc', gcPath: 'data.gc' }],
     transactionApiPatterns: [
       {
         urlPattern: /spin/,
@@ -61,7 +59,11 @@ describe('NetworkInterceptor', () => {
     ;(interceptor as any).extractDataFromResponse(url, data)
 
     expect(txs.length).toBe(1)
-    expect(txs[0]).toMatchObject({ platformSlug: 'test', betAmount: 5, winAmount: 15, result: 'win' })
+    expect(txs[0]).toMatchObject({
+      platformSlug: 'test',
+      betAmount: 5,
+      winAmount: 15,
+      result: 'win',
+    })
   })
-
 })

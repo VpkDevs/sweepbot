@@ -4,7 +4,13 @@
  * Manages conversation state, interprets user refinements, and guides users toward complete flows
  */
 
-import type { ConversationState, ConversationTurn, FlowDefinition, EntityMap, FlowWarning } from '../types'
+import type {
+  ConversationState,
+  ConversationTurn,
+  FlowDefinition,
+  EntityMap,
+  FlowWarning,
+} from '../types'
 import { FlowInterpreter } from '../interpreter/interpreter'
 import { logger as defaultLogger } from '@sweepbot/utils'
 
@@ -219,9 +225,10 @@ export class ConversationManager {
   /**
    * Detect what the user is trying to do with their message
    */
-  private detectUpdateIntent(
-    userMessage: string
-  ): { type: 'confirm' | 'refine' | 'question'; keywords: string[] } {
+  private detectUpdateIntent(userMessage: string): {
+    type: 'confirm' | 'refine' | 'question'
+    keywords: string[]
+  } {
     const lowerMessage = userMessage.toLowerCase()
 
     // Confirmation keywords
@@ -289,15 +296,21 @@ export class ConversationManager {
 
     // Check what we're missing
     if (!flow.trigger || flow.trigger.type === 'manual') {
-      questions.push('When should this Flow run? (e.g., "every day at 3 PM", "once a day", "manually")')
+      questions.push(
+        'When should this Flow run? (e.g., "every day at 3 PM", "once a day", "manually")'
+      )
     }
 
     if (!flow.rootNode) {
-      questions.push('What actions should the Flow perform? (e.g., "open Chumba and claim my bonus")')
+      questions.push(
+        'What actions should the Flow perform? (e.g., "open Chumba and claim my bonus")'
+      )
     }
 
     if (!flow.responsiblePlayGuardrails || flow.responsiblePlayGuardrails.length === 0) {
-      questions.push('Do you want any safety limits? (e.g., "max 2 hours", "stop if I lose more than $50")')
+      questions.push(
+        'Do you want any safety limits? (e.g., "max 2 hours", "stop if I lose more than $50")'
+      )
     }
 
     // If we have questions, return just the next one
@@ -352,10 +365,10 @@ export class ConversationManager {
     }
 
     if (/how do|how to|how can/i.test(lowerMessage)) {
-      return 'That\'s a great question! Can you be more specific about what you\'d like to do?'
+      return "That's a great question! Can you be more specific about what you'd like to do?"
     }
 
-    return 'I\'m not sure I understood that. Could you clarify?'
+    return "I'm not sure I understood that. Could you clarify?"
   }
 
   /**

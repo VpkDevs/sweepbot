@@ -79,7 +79,7 @@ CREATE TABLE jackpot_snapshots_2026_q2 PARTITION OF jackpot_snapshots
   FOR VALUES FROM ('2026-04-01') TO ('2026-07-01');
 
 -- Add index for fast queries
-CREATE INDEX idx_jackpot_snapshots_platform_game 
+CREATE INDEX idx_jackpot_snapshots_platform_game
   ON jackpot_snapshots(platform_id, game_name, captured_at DESC);
 ```
 
@@ -131,6 +131,7 @@ def parse_custom_platform(data: Dict, platform_slug: str) -> List[Dict]:
 ```
 
 ### Alert on Failures
+
 Set up Sentry (optional):
 
 ```python
@@ -139,6 +140,7 @@ sentry_sdk.init(dsn=os.environ.get('SENTRY_DSN'))
 ```
 
 ### Query Collected Data
+
 ```sql
 -- Total snapshots collected
 SELECT COUNT(*) FROM jackpot_snapshots;
@@ -171,7 +173,9 @@ LIMIT 10;
 ## Troubleshooting
 
 ### "Platform not found in DB"
+
 Run this query to seed platforms:
+
 ```sql
 INSERT INTO platforms (slug, name) VALUES
   ('chumba-casino', 'Chumba Casino'),
@@ -182,10 +186,12 @@ INSERT INTO platforms (slug, name) VALUES
 ```
 
 ### "Connection refused" errors
+
 - Check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY
 - Verify Supabase project is not paused (free tier pauses after 1 week inactivity)
 
 ### Rate limiting
+
 - Current delay: 1 second between platforms
 - Increase if needed: `time.sleep(2)`
 

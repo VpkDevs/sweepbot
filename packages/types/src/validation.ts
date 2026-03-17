@@ -23,13 +23,15 @@ export const userProfileSchema = z.object({
   updatedAt: z.string().datetime(),
 })
 
-export const updateProfileSchema = userProfileSchema.pick({
-  displayName: true,
-  avatarUrl: true,
-  bio: true,
-  timezone: true,
-  locale: true,
-}).partial()
+export const updateProfileSchema = userProfileSchema
+  .pick({
+    displayName: true,
+    avatarUrl: true,
+    bio: true,
+    timezone: true,
+    locale: true,
+  })
+  .partial()
 
 // ──────────────────────────────────────────────────────────────────────
 // Session Schemas
@@ -54,13 +56,15 @@ export const sessionSchema = z.object({
   largestWin: z.number().nonnegative().nullable(),
 })
 
-export const createSessionSchema = sessionSchema.pick({
-  platformId: true,
-  gameId: true,
-  openingBalance: true,
-}).extend({
-  startedAt: z.string().datetime().optional(),
-})
+export const createSessionSchema = sessionSchema
+  .pick({
+    platformId: true,
+    gameId: true,
+    openingBalance: true,
+  })
+  .extend({
+    startedAt: z.string().datetime().optional(),
+  })
 
 // ──────────────────────────────────────────────────────────────────────
 // Platform Schemas
@@ -189,14 +193,16 @@ export const resetPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),
 })
 
-export const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, 'Current password is required'),
-  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
-  confirmPassword: z.string().min(1, 'Please confirm your password'),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ['confirmPassword'],
-})
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Current password is required'),
+    newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  })
 
 // ──────────────────────────────────────────────────────────────────────
 // Type Exports

@@ -9,6 +9,7 @@ Sweepbot is a **dark-themed analytics platform** for sweepstakes casino players 
 ## 🏗️ Layout Architecture
 
 ### AppShell (Main Container)
+
 ```
 ┌─ Desktop (lg+) ──────────────────────────────────────┐
 │ ┌─────────────┬────────────────────────────────────┐ │
@@ -35,6 +36,7 @@ Sweepbot is a **dark-themed analytics platform** for sweepstakes casino players 
 ```
 
 ### Sidebar Components
+
 - **Logo Section**: SweepBot logo + brand
 - **Tier Badge**: Visual indicator (Free/Starter/Pro/Analyst/Elite)
 - **Main Navigation**: 12 primary links organized in 3 groups
@@ -45,6 +47,7 @@ Sweepbot is a **dark-themed analytics platform** for sweepstakes casino players 
 - **User Profile**: Avatar with initials, email address
 
 ### Topbar Components
+
 - **Mobile Menu**: Hamburger toggle (visible on mobile only)
 - **Notification Panel**: Real-time alerts and notifications
 
@@ -53,10 +56,13 @@ Sweepbot is a **dark-themed analytics platform** for sweepstakes casino players 
 ## 📄 Page Map
 
 ### 🔐 Authentication Pages (No AppShell)
+
 Use `AuthLayout` - centered, minimal design
 
 #### `/sign-in`
+
 **Sign In Page**
+
 - Email input field
 - Password input field
 - "Remember me" checkbox
@@ -65,7 +71,9 @@ Use `AuthLayout` - centered, minimal design
 - "Create account" link
 
 #### `/sign-up`
+
 **Sign Up Page**
+
 - Email input
 - Password input
 - Confirm password input
@@ -74,7 +82,9 @@ Use `AuthLayout` - centered, minimal design
 - "Already have an account?" link
 
 #### `/forgot-password`
+
 **Password Recovery**
+
 - Email input to request recovery
 - Recovery code input field
 - New password input
@@ -82,7 +92,9 @@ Use `AuthLayout` - centered, minimal design
 - Reset button
 
 #### `/pricing`
+
 **Pricing & Plans (Public)**
+
 - Tier comparison cards (Free, Starter, Pro, Analyst, Elite)
 - Feature matrix table
 - CTA buttons per tier
@@ -93,13 +105,16 @@ Use `AuthLayout` - centered, minimal design
 ### 📊 Core Dashboard Pages (With AppShell)
 
 #### `/` - **Dashboard (Command Center)**
-*Primary landing page after login*
+
+_Primary landing page after login_
 
 **Layout:**
+
 - Max width: 7xl, centered padding
 - Responsive grid system
 
 **Components:**
+
 1. **Header Section**
    - Title: "Command Center"
    - Subtitle: "Your complete sweepstakes portfolio at a glance."
@@ -139,7 +154,9 @@ Use `AuthLayout` - centered, minimal design
    - "View all →" link to /platforms
 
 #### `/sessions`
+
 **Session History & Management**
+
 - Sessions data table with filters
 - Columns: Date | Platform | Duration | Wagered | Net | RTP
 - Filter options: date range, platform, result type
@@ -148,7 +165,9 @@ Use `AuthLayout` - centered, minimal design
 - Search/quick filter
 
 #### `/platforms`
+
 **Platform Management**
+
 - Grid or list view of all platforms
 - Platform cards showing:
   - Platform logo
@@ -159,7 +178,9 @@ Use `AuthLayout` - centered, minimal design
 - Search functionality
 
 #### `/platforms/:platformId`
+
 **Platform Detail Page**
+
 - Platform header with logo & name
 - Overview stats cards
 - Session history for this platform
@@ -177,7 +198,9 @@ Use `AuthLayout` - centered, minimal design
 ### �📈 Analytics & Insights Pages
 
 #### `/analytics`
+
 **Comprehensive Performance Analysis**
+
 - Date range selector (7d, 30d, 90d, custom)
 - Multiple visualization options:
   - Time series line chart
@@ -188,7 +211,9 @@ Use `AuthLayout` - centered, minimal design
 - Comparison tools (vs previous period)
 
 #### `/jackpots`
+
 **Jackpot Tracking & Management**
+
 - Jackpots table with columns:
   - Name | Platform | Current Value | Last Hit | Status
 - Value timeline chart
@@ -197,7 +222,9 @@ Use `AuthLayout` - centered, minimal design
 - Notifications for value changes
 
 #### `/redemptions`
+
 **Prize Redemptions History**
+
 - Redemptions table:
   - Date | Platform | Amount | Prize Type | Status
 - Status badges (pending, completed, approved, denied)
@@ -208,7 +235,9 @@ Use `AuthLayout` - centered, minimal design
 - History timeline visualization
 
 #### `/trust-index`
+
 **Platform Reliability Metrics**
+
 - Trust score cards per platform (0-100)
 - Reliability indicators:
   - Payment speed
@@ -220,7 +249,9 @@ Use `AuthLayout` - centered, minimal design
 - Trust score explanation/legend
 
 #### `/heatmap`
+
 **Activity Calendar Visualization**
+
 - Calendar grid showing activity intensity
 - Color-coded cells (darker = more activity)
 - Date range selector
@@ -233,7 +264,9 @@ Use `AuthLayout` - centered, minimal design
 ### 🎯 Engagement & Gamification Pages
 
 #### `/achievements`
+
 **Badges & Milestones**
+
 - Achievement grid/card layout
 - Locked vs unlocked indicators
 - Progress bars for in-progress achievements
@@ -245,7 +278,9 @@ Use `AuthLayout` - centered, minimal design
 - Filter by status (all, unlocked, in-progress, locked)
 
 #### `/records`
+
 **Personal Records & Best Stats**
+
 - Record cards showing:
   - Biggest single win
   - Highest RTP session
@@ -260,7 +295,9 @@ Use `AuthLayout` - centered, minimal design
 - Trending direction indicators
 
 #### `/big-wins`
+
 **Major Wins Showcase**
+
 - Win cards with:
   - Large win amount (prominent display)
   - Platform name & logo
@@ -279,7 +316,9 @@ Use `AuthLayout` - centered, minimal design
 ### 🤖 Automation Pages
 
 #### `/flows`
+
 **Automation Flows Dashboard**
+
 - Header with "New Flow" CTA button
 - Filter tabs: All | Active | Draft | Paused
 - Flows list/grid showing:
@@ -294,7 +333,9 @@ Use `AuthLayout` - centered, minimal design
 - Empty state message when no flows exist
 
 #### `/flows/new`
+
 **Flow Chat Interface (Create)**
+
 - Chat-based conversation UI
 - Messages from assistant explaining flow creation
 - Message input field at bottom
@@ -303,7 +344,9 @@ Use `AuthLayout` - centered, minimal design
 - Variables/configuration sidebar
 
 #### `/flows/:flowId`
+
 **Flow Detail & Execution View**
+
 - Flow name header with controls
 - Visual flow diagram showing steps
 - Step-by-step breakdown:
@@ -324,9 +367,11 @@ Use `AuthLayout` - centered, minimal design
 ### ⚙️ Settings Page
 
 #### `/settings`
+
 **User Account & Preferences**
 
 **Sections:**
+
 1. **Profile**
    - Display name
    - Email address
@@ -368,6 +413,7 @@ Use `AuthLayout` - centered, minimal design
 ## 🎨 Design System
 
 ### Color Palette
+
 - **Dark Theme**: Zinc & Slate colors
   - Background: `zinc-950`, `zinc-900`
   - Borders: `zinc-800`
@@ -379,18 +425,21 @@ Use `AuthLayout` - centered, minimal design
   - Jackpot: `text-jackpot` (gold-like)
 
 ### Typography
+
 - Headers: Font weight 600-700 (`font-bold`)
 - Labels: Font weight 500 (`font-medium`)
 - Body: Regular weight
 - Small text: Font size `text-xs` or `text-sm`
 
 ### Spacing & Layout
+
 - Standard padding: `p-4`, `p-5`, `p-6`
 - Standard gaps: `gap-2`, `gap-3`, `gap-4`
 - Cards: Rounded corners `rounded-lg` or `rounded-xl`, border `border-zinc-800`
 - Max content width: `max-w-7xl`
 
 ### Interactive Elements
+
 - **Buttons**: Hover states with `hover:text-white`, `hover:bg-zinc-800`
 - **Links**: Brand color with hover variant
 - **Tables**: Hover rows with `hover:bg-zinc-800/30`
@@ -398,11 +447,13 @@ Use `AuthLayout` - centered, minimal design
 - **Tooltips**: Recharts-integrated or Radix UI
 
 ### Icons
+
 - Lucide React icons (4x4 default, `w-4 h-4`)
 - Flex-shrink applied to prevent layout shifts
 - Color: White for primary, `text-zinc-400` for muted
 
 ### Responsive Design
+
 - Mobile-first approach
 - Sidebar: Hidden on mobile, toggle with hamburger
 - Grids: `grid-cols-2` (mobile) → `lg:grid-cols-4` (desktop)
@@ -414,17 +465,20 @@ Use `AuthLayout` - centered, minimal design
 ## 🔄 Data Flow & State Management
 
 ### React Query
+
 - Query keys follow pattern: `['resource', 'action']` or `['resource', { filters }]`
 - Stale time: 30 seconds default
 - Retry: 1 attempt on failure
 - Refetch on window focus: disabled
 
 ### Zustand Auth Store
+
 - Manages: User session, authentication state, tier information
 - Methods: `refreshSession()`, `signOut()`
 - Automatically checked on app load (beforeLoad in router)
 
 ### React Router
+
 - TanStack React Router v1.56+
 - Route-based code splitting
 - Context provided at root (QueryClient, auth)
@@ -435,22 +489,26 @@ Use `AuthLayout` - centered, minimal design
 ## 📱 Key Features
 
 ### Real-time Updates
+
 - Notifications panel for live alerts
 - Auto-refresh of jackpot data
 - WebSocket support (if implemented)
 
 ### Data Export
+
 - CSV downloads from tables
 - PDF report generation
 - Screenshot capabilities for wins
 
 ### Mobile Experience
+
 - Responsive sidebar (collapses to overlay)
 - Touch-optimized buttons
 - Simplified tables with scroll
 - Mobile-first touch gestures
 
 ### Performance
+
 - Code splitting by route
 - Image optimization (logos, avatars)
 - Virtual scrolling for large tables
@@ -461,6 +519,7 @@ Use `AuthLayout` - centered, minimal design
 ## 🚀 Getting Started Notes
 
 ### Install & Run
+
 ```bash
 cd apps/web
 npm run dev    # Start Vite dev server (port 5173)
@@ -469,6 +528,7 @@ npm run preview # Preview build locally
 ```
 
 ### Key Dependencies
+
 - `react@18.3.1`
 - `@tanstack/react-router@1.56.0`
 - `@tanstack/react-query@5.56.0`

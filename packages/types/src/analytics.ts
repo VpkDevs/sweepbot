@@ -60,7 +60,7 @@ export type RTPQueryParams = z.infer<typeof RTPQueryParamsSchema>
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const TrendDataPointSchema = z.object({
-  date: z.string(),        // ISO date string
+  date: z.string(), // ISO date string
   value: z.number(),
   label: z.string().optional(),
 })

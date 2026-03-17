@@ -35,16 +35,14 @@ export function VoiceNotePlayback({ sessionId }: Props) {
     return (
       <div className="space-y-2">
         {[1, 2].map((i) => (
-          <div key={i} className="h-12 rounded-xl shimmer" />
+          <div key={i} className="shimmer h-12 rounded-xl" />
         ))}
       </div>
     )
   }
 
   if (notes.length === 0) {
-    return (
-      <p className="text-xs text-zinc-600 italic py-2">No notes for this session</p>
-    )
+    return <p className="py-2 text-xs italic text-zinc-600">No notes for this session</p>
   }
 
   return (
@@ -57,27 +55,27 @@ export function VoiceNotePlayback({ sessionId }: Props) {
             className={cn(
               'flex items-start gap-3 rounded-xl px-3 py-2.5 text-sm',
               'bg-white/[0.03] ring-1 ring-white/[0.05]',
-              'animate-fade-in',
+              'animate-fade-in'
             )}
           >
             {/* Type badge */}
             <span
               className={cn(
-                'mt-0.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-md flex-shrink-0',
+                'mt-0.5 flex flex-shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
                 isVoice
-                  ? 'bg-brand-500/15 text-brand-400 ring-1 ring-brand-500/20'
-                  : 'bg-zinc-700/50 text-zinc-400 ring-1 ring-zinc-600/20',
+                  ? 'bg-brand-500/15 text-brand-400 ring-brand-500/20 ring-1'
+                  : 'bg-zinc-700/50 text-zinc-400 ring-1 ring-zinc-600/20'
               )}
             >
-              {isVoice ? <Mic className="w-2.5 h-2.5" /> : <PenLine className="w-2.5 h-2.5" />}
+              {isVoice ? <Mic className="h-2.5 w-2.5" /> : <PenLine className="h-2.5 w-2.5" />}
               {isVoice ? 'voice' : 'text'}
             </span>
 
             {/* Content */}
-            <span className="flex-1 text-zinc-300 leading-relaxed">{note.content}</span>
+            <span className="flex-1 leading-relaxed text-zinc-300">{note.content}</span>
 
             {/* Time */}
-            <span className="text-[10px] text-zinc-600 flex-shrink-0 mt-0.5">
+            <span className="mt-0.5 flex-shrink-0 text-[10px] text-zinc-600">
               {formatTime(note.createdAt)}
             </span>
           </li>

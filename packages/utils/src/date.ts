@@ -54,10 +54,7 @@ export function formatDateISO(date: Date = new Date()): string {
 /**
  * Format date and time for display
  */
-export function formatDateTime(
-  date: Date | string | number,
-  includeTime = true,
-): string {
+export function formatDateTime(date: Date | string | number, includeTime = true): string {
   const d = typeof date === 'string' || typeof date === 'number' ? new Date(date) : date
 
   const dateStr = d.toLocaleDateString('en-US', {

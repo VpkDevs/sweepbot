@@ -14,7 +14,7 @@ export class ApiError extends Error {
     public code: string,
     message: string,
     public status?: number,
-    public data?: unknown,
+    public data?: unknown
   ) {
     super(message)
     this.name = 'ApiError'
@@ -144,7 +144,12 @@ async function request<T>(path: string, config: RequestConfig = {}): Promise<T> 
         const isRetryable =
           attempt < retries &&
           !(err instanceof UnauthorizedError) &&
-          !(err instanceof ApiError && err.status !== undefined && err.status >= 400 && err.status < 500)
+          !(
+            err instanceof ApiError &&
+            err.status !== undefined &&
+            err.status >= 400 &&
+            err.status < 500
+          )
 
         if (!isRetryable) throw err
 
@@ -202,8 +207,7 @@ export const api = {
     platforms: () => request<Record<string, unknown>[]>('/user/platforms'),
     addPlatform: (data: Record<string, unknown>) =>
       request('/user/platforms', { method: 'POST', body: JSON.stringify(data) }),
-    removePlatform: (id: string) =>
-      request(`/user/platforms/${id}`, { method: 'DELETE' }),
+    removePlatform: (id: string) => request(`/user/platforms/${id}`, { method: 'DELETE' }),
 
     // Subscription & billing
     subscription: () => request<Record<string, unknown>>('/user/subscription'),
@@ -285,8 +289,7 @@ export const api = {
       const qs = params ? '?' + new URLSearchParams(params).toString() : ''
       return request<Record<string, unknown>[]>(`/jackpots${qs}`)
     },
-    history: (gameId: string) =>
-      request<Record<string, unknown>[]>(`/jackpots/${gameId}/history`),
+    history: (gameId: string) => request<Record<string, unknown>[]>(`/jackpots/${gameId}/history`),
     stats: () => request<Record<string, unknown>>('/jackpots/stats'),
   },
 
@@ -301,7 +304,8 @@ export const api = {
     update: (id: string, data: Record<string, unknown>) =>
       request(`/redemptions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     stats: () => request<Record<string, unknown>>('/redemptions/stats'),
-    communityBenchmarks: () => request<Record<string, unknown>[]>('/redemptions/community-benchmarks'),
+    communityBenchmarks: () =>
+      request<Record<string, unknown>[]>('/redemptions/community-benchmarks'),
   },
 
   // Trust Index
@@ -310,8 +314,7 @@ export const api = {
       const qs = params ? '?' + new URLSearchParams(params).toString() : ''
       return request<Record<string, unknown>[]>(`/trust-index${qs}`)
     },
-    get: (platformId: string) =>
-      request<Record<string, unknown>>(`/trust-index/${platformId}`),
+    get: (platformId: string) => request<Record<string, unknown>>(`/trust-index/${platformId}`),
   },
 
   // Phase 2 Features
@@ -321,24 +324,33 @@ export const api = {
       return request<Record<string, unknown>[]>(`/features/achievements${qs}`)
     },
     myAchievements: () => request<Record<string, unknown>[]>('/features/achievements/mine'),
-    achievementLeaderboard: () => request<Record<string, unknown>[]>('/features/achievements/leaderboard'),
-    checkAchievements: () => request<Record<string, unknown>>('/features/achievements/check', { method: 'POST' }),
+    achievementLeaderboard: () =>
+      request<Record<string, unknown>[]>('/features/achievements/leaderboard'),
+    checkAchievements: () =>
+      request<Record<string, unknown>>('/features/achievements/check', { method: 'POST' }),
     heatmap: (params?: Record<string, string>) => {
       const qs = params ? '?' + new URLSearchParams(params).toString() : ''
       return request<Record<string, unknown>[]>(`/features/heatmap${qs}`)
     },
     streaks: () => request<Record<string, unknown>>('/features/streaks'),
     records: () => request<Record<string, unknown>>('/features/records'),
-    refreshRecords: () => request<Record<string, unknown>>('/features/records/refresh', { method: 'POST' }),
+    refreshRecords: () =>
+      request<Record<string, unknown>>('/features/records/refresh', { method: 'POST' }),
     bigWins: (params?: Record<string, string>) => {
       const qs = params ? '?' + new URLSearchParams(params).toString() : ''
       return request<Record<string, unknown>[]>(`/features/big-wins${qs}`)
     },
     submitBigWin: (data: Record<string, unknown>) =>
-      request<Record<string, unknown>>('/features/big-wins', { method: 'POST', body: JSON.stringify(data) }),
+      request<Record<string, unknown>>('/features/big-wins', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
     myBigWins: () => request<Record<string, unknown>[]>('/features/big-wins/mine'),
     updateBigWin: (id: string, data: Record<string, unknown>) =>
-      request<Record<string, unknown>>(`/features/big-wins/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+      request<Record<string, unknown>>(`/features/big-wins/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
     stats: () => request<Record<string, unknown>>('/features/stats'),
   },
 
@@ -350,7 +362,10 @@ export const api = {
     create: (data: Record<string, unknown>) =>
       request<Record<string, unknown>>('/flows', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: Record<string, unknown>) =>
-      request<Record<string, unknown>>(`/flows/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+      request<Record<string, unknown>>(`/flows/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
     interpret: (rawInput: string) =>
       request<Record<string, unknown>>('/flows/interpret', {
         method: 'POST',
@@ -376,23 +391,24 @@ export const api = {
   // Notifications
   notifications: {
     list: (params?: { limit?: number; unread_only?: boolean }) =>
-      request<Array<{
-        id: string
-        type: string
-        title: string
-        body: string
-        icon: string | null
-        href: string | null
-        is_read: boolean
-        read_at: string | null
-        data: unknown
-        created_at: string
-      }>>(`/notifications${toQS(params)}`),
+      request<
+        Array<{
+          id: string
+          type: string
+          title: string
+          body: string
+          icon: string | null
+          href: string | null
+          is_read: boolean
+          read_at: string | null
+          data: unknown
+          created_at: string
+        }>
+      >(`/notifications${toQS(params)}`),
     count: () => request<{ unread: number }>('/notifications/count'),
     markRead: (id: string) =>
       request<{ id: string }>(`/notifications/${id}/read`, { method: 'PATCH' }),
-    markAllRead: () =>
-      request<{ marked: boolean }>('/notifications/read-all', { method: 'POST' }),
+    markAllRead: () => request<{ marked: boolean }>('/notifications/read-all', { method: 'POST' }),
     delete: (id: string) =>
       request<{ deleted: boolean }>(`/notifications/${id}`, { method: 'DELETE' }),
     preferences: () => request<Record<string, boolean>>('/notifications/preferences'),
@@ -434,12 +450,14 @@ export const api = {
         method: 'POST',
       }),
     leaderboard: (limit?: number) =>
-      request<Array<{
-        user_id: string
-        current_streak: number
-        longest_streak: number
-        display_name: string | null
-      }>>(`/streaks/leaderboard${limit ? `?limit=${limit}` : ''}`),
+      request<
+        Array<{
+          user_id: string
+          current_streak: number
+          longest_streak: number
+          display_name: string | null
+        }>
+      >(`/streaks/leaderboard${limit ? `?limit=${limit}` : ''}`),
   },
 
   // Session notes
@@ -449,7 +467,6 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(data),
       }),
-    list: (sessionId: string) =>
-      request<Record<string, unknown>[]>(`/sessions/${sessionId}/notes`),
+    list: (sessionId: string) => request<Record<string, unknown>[]>(`/sessions/${sessionId}/notes`),
   },
 }

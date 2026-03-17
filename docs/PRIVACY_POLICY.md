@@ -16,7 +16,7 @@ SweepBot is **not a gambling product** and does not facilitate gambling of any k
 
 ## 2. Who We Are
 
-**APPYness** — *"Developing Joy"*
+**APPYness** — _"Developing Joy"_
 Operated by Vincent Kinney.
 Contact: vincekinney1991@gmail.com
 
@@ -36,7 +36,9 @@ We comply with the **Children's Online Privacy Protection Act (COPPA)**.
 ## 4. What Data We Collect
 
 ### 4.1 Account Information
+
 When you create a SweepBot account:
+
 - Email address
 - Display name (you choose this)
 - Password (stored as a salted hash via Supabase Auth — we never see your plaintext password)
@@ -44,7 +46,9 @@ When you create a SweepBot account:
 - Timezone and locale preferences
 
 ### 4.2 Gambling Session Data (Extension)
+
 When you play sweepstakes casino games with the SweepBot browser extension installed and active:
+
 - **Bet amounts and win amounts** per spin/round (intercepted from the casino platform's own API responses)
 - **Running balance** (sweep coins and gold coins)
 - **Game name** and **platform name**
@@ -52,13 +56,16 @@ When you play sweepstakes casino games with the SweepBot browser extension insta
 - **RTP (return to player)** calculated locally from the above
 
 We **do not** collect:
+
 - Your casino account username or password
 - Your real name as registered with the casino
 - Payment card data or bank account information
 - Your physical location or IP address for tracking purposes
 
 ### 4.3 Redemption Data (User-Submitted)
+
 If you log a redemption request in SweepBot:
+
 - Platform name
 - Amount (in sweep coins and estimated USD)
 - Payment method type (e.g., PayPal, check — not account details)
@@ -67,20 +74,26 @@ If you log a redemption request in SweepBot:
 This data is user-submitted. We do not automatically see your redemption status from the casino.
 
 ### 4.4 Automation Configuration (Flows)
+
 If you create automation flows:
+
 - Natural language descriptions of automations
 - Platform names and game names referenced
 - Schedule configurations (e.g., "run daily at 3 PM")
 - Execution logs (what actions ran, outcomes, timestamps)
 
 ### 4.5 Affiliate Tracking
+
 When the browser extension detects that you navigate to a sweepstakes platform registration page via a SweepBot referral link:
+
 - Platform name
 - Whether a signup occurred (not personal details of the signup)
 - Your SweepBot user ID (to credit your referral earnings)
 
 ### 4.6 Usage Data
+
 We collect standard web analytics via PostHog:
+
 - Pages visited within the SweepBot dashboard
 - Features used
 - Session duration
@@ -89,6 +102,7 @@ We collect standard web analytics via PostHog:
 We do **not** use Google Analytics or any advertising-linked analytics platform.
 
 ### 4.7 Technical Data
+
 - Access logs (IP address, timestamp, endpoint, response code) — retained 30 days for security purposes
 - Error reports via Sentry — these may include stack traces but are not linked to identifiable user data
 
@@ -109,6 +123,7 @@ We do **not** use Google Analytics or any advertising-linked analytics platform.
 ## 6. Credential Vault (Desktop App)
 
 The SweepBot desktop automation app includes a **zero-knowledge credential vault**:
+
 - Casino platform credentials (username + password) are encrypted locally using AES-256-GCM with a key derived from your master password via Argon2id
 - **This data never leaves your device.** It is not transmitted to SweepBot servers.
 - We cannot access, recover, or reset your credential vault. If you forget your master password, the vault contents cannot be recovered.
@@ -117,17 +132,18 @@ The SweepBot desktop automation app includes a **zero-knowledge credential vault
 
 ## 7. How We Use Your Data
 
-| Data Type | Purpose |
-|-----------|---------|
-| Account information | Provide account access, customer support, send service notifications |
-| Session / transaction data | Calculate RTP analytics, portfolio overview, platform statistics |
-| Aggregated anonymous session data | Compute community RTP averages, Trust Index scores |
-| Redemption data | Generate redemption processing time statistics for community Intelligence |
-| Automation flows | Execute and schedule automations on your behalf |
-| Affiliate data | Credit referral earnings, calculate commissions |
-| Usage data | Improve product functionality, identify bugs |
+| Data Type                         | Purpose                                                                   |
+| --------------------------------- | ------------------------------------------------------------------------- |
+| Account information               | Provide account access, customer support, send service notifications      |
+| Session / transaction data        | Calculate RTP analytics, portfolio overview, platform statistics          |
+| Aggregated anonymous session data | Compute community RTP averages, Trust Index scores                        |
+| Redemption data                   | Generate redemption processing time statistics for community Intelligence |
+| Automation flows                  | Execute and schedule automations on your behalf                           |
+| Affiliate data                    | Credit referral earnings, calculate commissions                           |
+| Usage data                        | Improve product functionality, identify bugs                              |
 
 We do **not** use your data to:
+
 - Target you with advertising
 - Profile you for sale to third parties
 - Train external AI models
@@ -137,10 +153,13 @@ We do **not** use your data to:
 ## 8. Data Sharing
 
 ### 8.1 We Do Not Sell Your Data
+
 We do not sell, rent, or trade individual user data to any third party.
 
 ### 8.2 Aggregated Community Data
+
 We may publish or share **anonymized, aggregated** statistics derived from user data, such as:
+
 - "The community average RTP on Platform X is 84%"
 - "Average redemption processing time on Platform Y is 3.2 days"
 - "Platform Z's Trust Index score is 78/100"
@@ -148,44 +167,47 @@ We may publish or share **anonymized, aggregated** statistics derived from user 
 Individual users cannot be identified from this data.
 
 ### 8.3 Service Providers
+
 We share data with third-party service providers strictly to operate SweepBot:
 
-| Provider | Purpose | Data Shared |
-|----------|---------|------------|
-| Supabase | Database and authentication | All stored account + session data |
-| Stripe | Payment processing | Name, email, payment method for billing |
-| Upstash | Redis caching | Temporary cached API responses (no PII) |
-| Resend | Transactional email | Email address, email content |
-| Sentry | Error monitoring | Error stack traces (anonymized) |
-| PostHog | Product analytics | Anonymized usage events |
-| Vercel | Web hosting | Request logs (30-day retention) |
-| Railway | API hosting | Request logs (30-day retention) |
+| Provider | Purpose                     | Data Shared                             |
+| -------- | --------------------------- | --------------------------------------- |
+| Supabase | Database and authentication | All stored account + session data       |
+| Stripe   | Payment processing          | Name, email, payment method for billing |
+| Upstash  | Redis caching               | Temporary cached API responses (no PII) |
+| Resend   | Transactional email         | Email address, email content            |
+| Sentry   | Error monitoring            | Error stack traces (anonymized)         |
+| PostHog  | Product analytics           | Anonymized usage events                 |
+| Vercel   | Web hosting                 | Request logs (30-day retention)         |
+| Railway  | API hosting                 | Request logs (30-day retention)         |
 
 All providers are bound by data processing agreements. None are authorized to use your data for their own marketing or analytics.
 
 ### 8.4 Legal Disclosure
+
 We may disclose your data if required by law, court order, or to prevent imminent harm. We will notify you before doing so unless legally prohibited.
 
 ---
 
 ## 9. Data Retention
 
-| Data Type | Retention Period |
-|-----------|-----------------|
-| Account data | Duration of account + 30 days after deletion request |
-| Session and transaction history | Up to 3 years, or until account deletion |
-| Redemption logs | Up to 3 years, or until account deletion |
-| Automation flow definitions | Until deleted by user |
-| Execution logs | 12 months rolling |
-| Access/request logs | 30 days |
-| Billing records | 7 years (tax/legal requirement) |
-| Aggregated anonymous data | Indefinitely (cannot be re-identified) |
+| Data Type                       | Retention Period                                     |
+| ------------------------------- | ---------------------------------------------------- |
+| Account data                    | Duration of account + 30 days after deletion request |
+| Session and transaction history | Up to 3 years, or until account deletion             |
+| Redemption logs                 | Up to 3 years, or until account deletion             |
+| Automation flow definitions     | Until deleted by user                                |
+| Execution logs                  | 12 months rolling                                    |
+| Access/request logs             | 30 days                                              |
+| Billing records                 | 7 years (tax/legal requirement)                      |
+| Aggregated anonymous data       | Indefinitely (cannot be re-identified)               |
 
 ---
 
 ## 10. Your Rights
 
 ### For All Users
+
 - **Access:** Request a copy of all personal data we hold about you
 - **Correction:** Request correction of inaccurate data
 - **Deletion:** Request deletion of your account and all associated data
@@ -193,17 +215,21 @@ We may disclose your data if required by law, court order, or to prevent imminen
 - **Objection:** Object to any processing you did not explicitly consent to
 
 ### For EU/EEA Users (GDPR)
+
 All of the above rights apply, plus:
+
 - **Right to restrict processing** — request that we stop processing your data while a dispute is resolved
 - **Right to lodge a complaint** with your national supervisory authority
 
 ### For California Users (CCPA)
+
 - **Right to know** what categories of personal information we collect
 - **Right to delete** personal information we hold about you
 - **Right to opt-out** of sale of personal information (we do not sell data; this right is satisfied by default)
 - **Right to non-discrimination** for exercising your privacy rights
 
 ### How to Exercise Your Rights
+
 Email: vincekinney1991@gmail.com
 Subject line: "Privacy Rights Request"
 We will respond within **30 days**. Account deletion is completed within **24 hours** for all live data; anonymized derivatives may be retained per the retention schedule above.
@@ -225,6 +251,7 @@ We will respond within **30 days**. Account deletion is completed within **24 ho
 ## 12. Browser Extension — Chrome Web Store Compliance
 
 The SweepBot Chrome extension:
+
 - Requests only the permissions necessary to function (storage, alarms, notifications, scripting, tabs, webRequest on listed casino domains)
 - Contains no obfuscated code
 - Does not perform any network requests to domains not listed in the manifest host permissions
@@ -233,24 +260,26 @@ The SweepBot Chrome extension:
 
 Extension permissions and why they are needed:
 
-| Permission | Reason |
-|-----------|--------|
-| `storage` | Save session data and user settings locally |
-| `alarms` | Schedule background sync at regular intervals |
+| Permission      | Reason                                                              |
+| --------------- | ------------------------------------------------------------------- |
+| `storage`       | Save session data and user settings locally                         |
+| `alarms`        | Schedule background sync at regular intervals                       |
 | `notifications` | Alert user to session events (jackpot, bonus available, time limit) |
-| `scripting` | Inject the RTP HUD overlay into casino pages |
-| `tabs` | Detect when user navigates to/from a casino page |
-| `webRequest` | Intercept and read casino API responses to extract spin/bet data |
+| `scripting`     | Inject the RTP HUD overlay into casino pages                        |
+| `tabs`          | Detect when user navigates to/from a casino page                    |
+| `webRequest`    | Intercept and read casino API responses to extract spin/bet data    |
 
 ---
 
 ## 13. Cookies
 
 SweepBot uses:
+
 - **Authentication cookies** (httpOnly, Secure, SameSite=Strict) — strictly necessary
 - **Session cookies** — strictly necessary
 
 We do not use:
+
 - Advertising or tracking cookies
 - Third-party analytics cookies
 - Cookie-based retargeting
@@ -260,6 +289,7 @@ We do not use:
 ## 14. Changes to This Policy
 
 We will notify you of material changes to this Privacy Policy via:
+
 1. Email to your registered address (at least 14 days before changes take effect)
 2. In-app notification banner
 
@@ -273,4 +303,4 @@ Continued use of SweepBot after the effective date of changes constitutes accept
 Email: vincekinney1991@gmail.com
 Website: https://sweepbot.app
 
-*SweepBot is a transparency and productivity tool for sweepstakes casino players. It is not a gambling product.*
+_SweepBot is a transparency and productivity tool for sweepstakes casino players. It is not a gambling product._

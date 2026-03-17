@@ -9,7 +9,12 @@ import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { sql } from 'drizzle-orm'
 import { requireAuth } from '../middleware/auth.js'
 import { randomUUID } from 'node:crypto'
-import { FlowInterpreter, FlowExecutor, ResponsiblePlayValidator, ConversationManager } from '@sweepbot/flows'
+import {
+  FlowInterpreter,
+  FlowExecutor,
+  ResponsiblePlayValidator,
+  ConversationManager,
+} from '@sweepbot/flows'
 import type { ConversationState } from '@sweepbot/flows'
 
 // Initialize services
@@ -37,8 +42,8 @@ const conversationManager = new ConversationManager({
         state.sessionId,
         state.userId,
         // flowId might be undefined while building
-        (state.currentFlow && typeof state.currentFlow === 'object' && 'id' in state.currentFlow) 
-          ? (state.currentFlow as { id: string }).id 
+        state.currentFlow && typeof state.currentFlow === 'object' && 'id' in state.currentFlow
+          ? (state.currentFlow as { id: string }).id
           : null,
         JSON.stringify(state.turns),
         state.status,
@@ -58,15 +63,22 @@ const FlowInterpretRequestSchema = z.object({
 const FlowCreateSchema = z.object({
   name: z.string().min(1).max(255).trim(),
   description: z.string().min(1).max(1000).trim(),
-  definition: z.record(z.unknown()).refine((obj) => Object.keys(obj).length > 0, 'definition cannot be empty'),
-  trigger: z.record(z.unknown()).refine((obj) => Object.keys(obj).length > 0, 'trigger cannot be empty'),
+  definition: z
+    .record(z.unknown())
+    .refine((obj) => Object.keys(obj).length > 0, 'definition cannot be empty'),
+  trigger: z
+    .record(z.unknown())
+    .refine((obj) => Object.keys(obj).length > 0, 'trigger cannot be empty'),
   guardrails: z.array(z.record(z.unknown())).min(0).max(10),
 })
 
 const FlowUpdateSchema = z.object({
   status: z.enum(['draft', 'active', 'paused', 'archived']).optional(),
   name: z.string().min(1).max(255).trim().optional(),
-  definition: z.record(z.unknown()).refine((obj) => Object.keys(obj).length > 0, 'definition cannot be empty').optional(),
+  definition: z
+    .record(z.unknown())
+    .refine((obj) => Object.keys(obj).length > 0, 'definition cannot be empty')
+    .optional(),
 })
 
 const PaginationSchema = z.object({
@@ -201,7 +213,6 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
           },
         },
       },
-
     },
     async (request, reply) => {
       try {
@@ -250,7 +261,6 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
           required: ['name', 'description', 'definition', 'trigger', 'guardrails'],
         },
       },
-
     },
     async (request, reply) => {
       try {
@@ -262,9 +272,16 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
           `INSERT INTO flows (id, user_id, name, description, definition, trigger, status, guardrails)
            VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, $8::jsonb)
            RETURNING *`,
-          [flowId, request.user!.id, validated.name, validated.description,
-           JSON.stringify(validated.definition), JSON.stringify(validated.trigger),
-           'draft', JSON.stringify(validated.guardrails)]
+          [
+            flowId,
+            request.user!.id,
+            validated.name,
+            validated.description,
+            JSON.stringify(validated.definition),
+            JSON.stringify(validated.trigger),
+            'draft',
+            JSON.stringify(validated.guardrails),
+          ]
         )
 
         return reply.code(201).send({
@@ -302,7 +319,6 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
           },
         },
       },
-
     },
     async (request, reply) => {
       const validated = PaginationSchema.parse(request.query)
@@ -356,7 +372,6 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
           properties: { id: { type: 'string', format: 'uuid' } },
         },
       },
-
     },
     async (request, reply) => {
       try {
@@ -401,7 +416,6 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
           properties: { id: { type: 'string', format: 'uuid' } },
         },
       },
-
     },
     async (request, reply) => {
       const validated = FlowUpdateSchema.parse(request.body)
@@ -468,7 +482,6 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
           properties: { id: { type: 'string', format: 'uuid' } },
         },
       },
-
     },
     async (request, reply) => {
       try {
@@ -503,13 +516,18 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
           .execute(flow.definition as Parameters<typeof flowExecutor.execute>[0], userId)
           .then(() => {
             // Mark as completed (background)
-            return dbQuery(sql`UPDATE flow_executions SET status = 'completed' WHERE id = ${executionId}`)
+            return dbQuery(
+              sql`UPDATE flow_executions SET status = 'completed' WHERE id = ${executionId}`
+            )
           })
           .catch((error) => {
             app.log.error({ error }, 'Flow execution failed')
             // Mark as failed (background)
-            dbQuery(sql`UPDATE flow_executions SET status = 'failed', error_message = ${String(error)} WHERE id = ${executionId}`)
-              .catch((dbErr) => { app.log.error({ dbErr }, 'Failed to mark execution as failed') })
+            dbQuery(
+              sql`UPDATE flow_executions SET status = 'failed', error_message = ${String(error)} WHERE id = ${executionId}`
+            ).catch((dbErr) => {
+              app.log.error({ dbErr }, 'Failed to mark execution as failed')
+            })
           })
 
         return reply.code(202).send({
@@ -542,7 +560,6 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
           properties: { id: { type: 'string', format: 'uuid' } },
         },
       },
-
     },
     async (request, reply) => {
       const validated = PaginationSchema.parse(request.query)

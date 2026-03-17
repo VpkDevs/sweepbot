@@ -43,7 +43,7 @@ describe('Stripe Webhook Routes', () => {
   })
 
   it('handles invoice.payment_failed by updating subs and sending email', async () => {
-    (dbQuery as any).mockResolvedValue({ rows: [] })
+    ;(dbQuery as any).mockResolvedValue({ rows: [] })
 
     const invoice = { customer: 'cus_test', customer_email: 'foo@example.com' }
     const event = { type: 'invoice.payment_failed', data: { object: invoice } }
@@ -60,7 +60,10 @@ describe('Stripe Webhook Routes', () => {
   })
 
   it('handles supabase user.created event by sending welcome email', async () => {
-    const event = { type: 'user.created', record: { email: 'new@user.com', user_metadata: { display_name: 'Newbie' } } }
+    const event = {
+      type: 'user.created',
+      record: { email: 'new@user.com', user_metadata: { display_name: 'Newbie' } },
+    }
 
     const res = await app.inject({
       method: 'POST',
@@ -69,9 +72,11 @@ describe('Stripe Webhook Routes', () => {
     })
 
     expect(res.statusCode).toBe(200)
-    expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({
-      to: 'new@user.com',
-      subject: expect.stringContaining('Welcome'),
-    }))
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'new@user.com',
+        subject: expect.stringContaining('Welcome'),
+      })
+    )
   })
 })

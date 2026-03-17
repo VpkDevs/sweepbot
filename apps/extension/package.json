@@ -8,7 +8,7 @@
     "dev": "wxt dev",
     "dev:firefox": "wxt dev --browser firefox",
     "build": "wxt build",
-    "build:extension": "pnpm run build", 
+    "build:extension": "pnpm run build",
     "build:firefox": "wxt build --browser firefox",
     "build:zip": "wxt zip",
     "build:zip:firefox": "wxt zip --browser firefox",

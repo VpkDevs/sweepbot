@@ -120,7 +120,12 @@ const TIER_CONFIG = {
 function TierBadge({ tier }: { tier: keyof typeof TIER_CONFIG }) {
   const cfg = TIER_CONFIG[tier]
   return (
-    <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded border tracking-wider', cfg.className)}>
+    <span
+      className={cn(
+        'rounded border px-1.5 py-0.5 text-[10px] font-bold tracking-wider',
+        cfg.className
+      )}
+    >
       {cfg.label}
     </span>
   )
@@ -129,10 +134,15 @@ function TierBadge({ tier }: { tier: keyof typeof TIER_CONFIG }) {
 // ─── Growth indicator ─────────────────────────────────────────────────────────
 
 function GrowthRate({ rate }: { rate: number }) {
-  if (rate === 0) return <span className="text-zinc-500 text-xs">—</span>
+  if (rate === 0) return <span className="text-xs text-zinc-500">—</span>
   return (
-    <span className={cn('text-xs font-medium flex items-center gap-0.5', rate > 0 ? 'text-green-400' : 'text-red-400')}>
-      <TrendingUp className={cn('w-3 h-3', rate < 0 && 'rotate-180')} />
+    <span
+      className={cn(
+        'flex items-center gap-0.5 text-xs font-medium',
+        rate > 0 ? 'text-green-400' : 'text-red-400'
+      )}
+    >
+      <TrendingUp className={cn('h-3 w-3', rate < 0 && 'rotate-180')} />
       {formatSC(Math.abs(rate))}/hr
     </span>
   )
@@ -158,46 +168,51 @@ function JackpotCard({
   const growthRate = live?.growth_rate_per_hour ?? (jackpot['growth_rate_per_hour'] as number) ?? 0
   const historicalHigh = (jackpot['historical_high'] as number) ?? 0
   const pctOfHigh = historicalHigh > 0 ? Math.min(100, (current / historicalHigh) * 100) : 0
-  const estHours = live?.estimated_hit_in_hours ?? (jackpot['estimated_hit_in_hours'] as number | null)
+  const estHours =
+    live?.estimated_hit_in_hours ?? (jackpot['estimated_hit_in_hours'] as number | null)
 
   return (
     <button
       onClick={onSelect}
       className={cn(
-        'w-full text-left bg-zinc-900 rounded-xl border p-4 transition-all hover:border-zinc-600',
-        selected ? 'border-brand-500 ring-1 ring-brand-500/30' : 'border-zinc-800'
+        'w-full rounded-xl border bg-zinc-900 p-4 text-left transition-all hover:border-zinc-600',
+        selected ? 'border-brand-500 ring-brand-500/30 ring-1' : 'border-zinc-800'
       )}
     >
-      <div className="flex items-start justify-between gap-2 mb-3">
+      <div className="mb-3 flex items-start justify-between gap-2">
         <div>
-          <p className="text-sm font-semibold text-white leading-tight">
+          <p className="text-sm font-semibold leading-tight text-white">
             {jackpot['game_name'] as string}
           </p>
-          <p className="text-xs text-zinc-500 mt-0.5">{jackpot['platform_name'] as string}</p>
+          <p className="mt-0.5 text-xs text-zinc-500">{jackpot['platform_name'] as string}</p>
         </div>
         <TierBadge tier={tier} />
       </div>
 
       {/* Amount */}
-      <div className="flex items-baseline gap-1.5 mb-1">
-        <span className="text-2xl font-black tabular-nums text-jackpot">
-          {formatSC(current)}
-        </span>
+      <div className="mb-1 flex items-baseline gap-1.5">
+        <span className="text-jackpot text-2xl font-black tabular-nums">{formatSC(current)}</span>
         <span className="text-xs text-zinc-500">{jackpot['currency'] as string}</span>
         {delta !== 0 && (
-          <span className={cn('text-xs font-medium ml-1', delta > 0 ? 'text-green-400' : 'text-red-400')}>
-            {delta > 0 ? '+' : ''}{formatSC(delta)}
+          <span
+            className={cn(
+              'ml-1 text-xs font-medium',
+              delta > 0 ? 'text-green-400' : 'text-red-400'
+            )}
+          >
+            {delta > 0 ? '+' : ''}
+            {formatSC(delta)}
           </span>
         )}
       </div>
 
       {/* Progress bar vs historical high */}
-      <div className="space-y-1 mb-3">
+      <div className="mb-3 space-y-1">
         <div className="flex justify-between text-[10px] text-zinc-600">
           <span>vs all-time high</span>
           <span>{pctOfHigh.toFixed(0)}%</span>
         </div>
-        <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+        <div className="h-1.5 overflow-hidden rounded-full bg-zinc-800">
           <div
             className={cn(
               'h-full rounded-full transition-all duration-500',
@@ -212,8 +227,10 @@ function JackpotCard({
         <GrowthRate rate={growthRate} />
         {estHours != null && (
           <div className="flex items-center gap-1 text-xs text-zinc-500">
-            <Clock className="w-3 h-3" />
-            <span>~{estHours < 1 ? `${Math.round(estHours * 60)}m` : `${estHours.toFixed(0)}h`}</span>
+            <Clock className="h-3 w-3" />
+            <span>
+              ~{estHours < 1 ? `${Math.round(estHours * 60)}m` : `${estHours.toFixed(0)}h`}
+            </span>
           </div>
         )}
       </div>
@@ -226,45 +243,44 @@ function JackpotCard({
 function EventFeed({ events }: { events: LiveEvent[] }) {
   if (events.length === 0) {
     return (
-      <div className="flex items-center justify-center h-24 text-sm text-zinc-600">
+      <div className="flex h-24 items-center justify-center text-sm text-zinc-600">
         Waiting for live events…
       </div>
     )
   }
 
   return (
-    <div className="space-y-1 max-h-60 overflow-y-auto">
+    <div className="max-h-60 space-y-1 overflow-y-auto">
       {events.map((ev, i) => (
         <div
           key={`${ev.jackpot_id}-${ev.ts}-${i}`}
           className={cn(
-            'flex items-center gap-2 px-3 py-2 rounded-lg text-xs',
-            ev.type === 'hit' ? 'bg-amber-900/20 border border-amber-800/50' : 'bg-zinc-900'
+            'flex items-center gap-2 rounded-lg px-3 py-2 text-xs',
+            ev.type === 'hit' ? 'border border-amber-800/50 bg-amber-900/20' : 'bg-zinc-900'
           )}
         >
           {ev.type === 'hit' ? (
-            <Trophy className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <Trophy className="h-3.5 w-3.5 shrink-0 text-amber-400" />
           ) : (
-            <TrendingUp className="w-3.5 h-3.5 text-green-400 shrink-0" />
+            <TrendingUp className="h-3.5 w-3.5 shrink-0 text-green-400" />
           )}
-          <span className="text-zinc-300 flex-1">
+          <span className="flex-1 text-zinc-300">
             {ev.type === 'hit' ? (
               <>
-                <span className="font-semibold text-amber-300">{ev.game_name}</span>
-                {' '}on{' '}
-                <span className="text-white">{ev.platform_name}</span>
-                {' '}hit for{' '}
-                <span className="font-semibold text-amber-300">{formatSC(ev.hit_amount ?? 0)} SC</span>
+                <span className="font-semibold text-amber-300">{ev.game_name}</span> on{' '}
+                <span className="text-white">{ev.platform_name}</span> hit for{' '}
+                <span className="font-semibold text-amber-300">
+                  {formatSC(ev.hit_amount ?? 0)} SC
+                </span>
               </>
             ) : (
               <>
-                <span className="font-semibold text-green-300">{ev.game_name}</span>
-                {' '}surging fast —{' '}
+                <span className="font-semibold text-green-300">{ev.game_name}</span> surging fast —{' '}
                 <span className="text-white">{formatSC(ev.amount ?? 0)} SC</span>
               </>
             )}
           </span>
-          <span className="text-zinc-600 shrink-0">
+          <span className="shrink-0 text-zinc-600">
             {new Date(ev.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>
@@ -287,7 +303,7 @@ function JackpotHistoryChart({ jackpotId }: { jackpotId: string }) {
 
   if (history.length === 0) {
     return (
-      <div className="flex items-center justify-center h-40 text-sm text-zinc-600">
+      <div className="flex h-40 items-center justify-center text-sm text-zinc-600">
         No history data yet.
       </div>
     )
@@ -357,8 +373,8 @@ export function JackpotsPage() {
     staleTime: 60_000,
   })
 
-  const jackpots = ((jackpotsData as { data?: Record<string, unknown>[] })?.data ?? [])
-  const leaderboard = ((leaderboardData as { data?: Record<string, unknown>[] })?.data ?? [])
+  const jackpots = (jackpotsData as { data?: Record<string, unknown>[] })?.data ?? []
+  const leaderboard = (leaderboardData as { data?: Record<string, unknown>[] })?.data ?? []
 
   // Merge live WS data into static query data
   const merged = jackpots.map((j) => ({
@@ -386,73 +402,80 @@ export function JackpotsPage() {
   const selectedJackpot = selectedId ? jackpots.find((j) => j['jackpot_id'] === selectedId) : null
 
   // Track total value across all jackpots
-  const totalValue = merged.reduce((sum, j) => sum + (j['current_amount'] as number ?? 0), 0)
+  const totalValue = merged.reduce((sum, j) => sum + ((j['current_amount'] as number) ?? 0), 0)
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="mx-auto max-w-7xl space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Jackpot Intelligence</h1>
-          <p className="text-zinc-400 text-sm mt-1">
+          <p className="mt-1 text-sm text-zinc-400">
             Real-time progressive jackpot tracking across all platforms.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className={cn('flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium',
-            connected ? 'bg-green-900/30 text-green-400 border border-green-800' : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
-          )}>
-            {connected ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+          <div
+            className={cn(
+              'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium',
+              connected
+                ? 'border border-green-800 bg-green-900/30 text-green-400'
+                : 'border border-zinc-700 bg-zinc-800 text-zinc-500'
+            )}
+          >
+            {connected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
             {connected ? 'Live' : 'Polling'}
           </div>
         </div>
       </div>
 
       {/* Summary stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4">
-          <p className="text-xs text-zinc-500 uppercase tracking-wide">Total Pool Value</p>
-          <p className="text-2xl font-black tabular-nums text-jackpot mt-1">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+          <p className="text-xs uppercase tracking-wide text-zinc-500">Total Pool Value</p>
+          <p className="text-jackpot mt-1 text-2xl font-black tabular-nums">
             {formatSC(totalValue)}
           </p>
-          <p className="text-xs text-zinc-600 mt-0.5">SC across {merged.length} jackpots</p>
+          <p className="mt-0.5 text-xs text-zinc-600">SC across {merged.length} jackpots</p>
         </div>
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4">
-          <p className="text-xs text-zinc-500 uppercase tracking-wide">Surging Now</p>
-          <p className="text-2xl font-black tabular-nums text-green-400 mt-1">
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+          <p className="text-xs uppercase tracking-wide text-zinc-500">Surging Now</p>
+          <p className="mt-1 text-2xl font-black tabular-nums text-green-400">
             {merged.filter((j) => (j['growth_rate_per_hour'] as number) > 100).length}
           </p>
-          <p className="text-xs text-zinc-600 mt-0.5">growing &gt;100 SC/hr</p>
+          <p className="mt-0.5 text-xs text-zinc-600">growing &gt;100 SC/hr</p>
         </div>
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4">
-          <p className="text-xs text-zinc-500 uppercase tracking-wide">Mega Jackpots</p>
-          <p className="text-2xl font-black tabular-nums text-amber-400 mt-1">
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+          <p className="text-xs uppercase tracking-wide text-zinc-500">Mega Jackpots</p>
+          <p className="mt-1 text-2xl font-black tabular-nums text-amber-400">
             {merged.filter((j) => j['tier'] === 'mega').length}
           </p>
-          <p className="text-xs text-zinc-600 mt-0.5">tracked live</p>
+          <p className="mt-0.5 text-xs text-zinc-600">tracked live</p>
         </div>
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4">
-          <p className="text-xs text-zinc-500 uppercase tracking-wide">Hits Today</p>
-          <p className="text-2xl font-black tabular-nums text-brand-400 mt-1">
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+          <p className="text-xs uppercase tracking-wide text-zinc-500">Hits Today</p>
+          <p className="text-brand-400 mt-1 text-2xl font-black tabular-nums">
             {events.filter((e) => e.type === 'hit').length}
           </p>
-          <p className="text-xs text-zinc-600 mt-0.5">in this session</p>
+          <p className="mt-0.5 text-xs text-zinc-600">in this session</p>
         </div>
       </div>
 
       {/* All-time leaderboard banner */}
       {leaderboard.length > 0 && (
-        <div className="bg-gradient-to-r from-amber-950/40 to-zinc-900 rounded-xl border border-amber-800/40 p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Trophy className="w-4 h-4 text-amber-400" />
+        <div className="rounded-xl border border-amber-800/40 bg-gradient-to-r from-amber-950/40 to-zinc-900 p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <Trophy className="h-4 w-4 text-amber-400" />
             <h2 className="text-sm font-semibold text-amber-300">All-Time Jackpot Leaders</h2>
           </div>
           <div className="flex gap-6 overflow-x-auto pb-1">
             {leaderboard.slice(0, 5).map((j, i) => (
-              <div key={j['jackpot_id'] as string} className="flex items-center gap-3 shrink-0">
+              <div key={j['jackpot_id'] as string} className="flex shrink-0 items-center gap-3">
                 <span className="text-2xl font-black text-amber-800/60">#{i + 1}</span>
                 <div>
-                  <p className="text-sm font-semibold text-white">{formatSC(j['max_amount'] as number)} SC</p>
+                  <p className="text-sm font-semibold text-white">
+                    {formatSC(j['max_amount'] as number)} SC
+                  </p>
                   <p className="text-xs text-zinc-500">{j['game_name'] as string}</p>
                   <p className="text-[10px] text-zinc-600">{j['platform_name'] as string}</p>
                 </div>
@@ -463,22 +486,26 @@ export function JackpotsPage() {
       )}
 
       {/* Filters */}
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-400 hover:text-white text-xs transition-colors"
+          className="flex items-center gap-1.5 rounded-lg bg-zinc-800 px-3 py-1.5 text-xs text-zinc-400 transition-colors hover:text-white"
         >
-          <Filter className="w-3 h-3" />
+          <Filter className="h-3 w-3" />
           Filters
-          <ChevronDown className={cn('w-3 h-3 transition-transform', showFilters && 'rotate-180')} />
+          <ChevronDown
+            className={cn('h-3 w-3 transition-transform', showFilters && 'rotate-180')}
+          />
         </button>
         {(['all', 'mega', 'major', 'minor', 'mini'] as TierFilter[]).map((t) => (
           <button
             key={t}
             onClick={() => setTierFilter(t)}
             className={cn(
-              'px-2.5 py-1 text-xs rounded-md transition-colors capitalize',
-              tierFilter === t ? 'bg-brand-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:text-white'
+              'rounded-md px-2.5 py-1 text-xs capitalize transition-colors',
+              tierFilter === t
+                ? 'bg-brand-600 text-white'
+                : 'bg-zinc-800 text-zinc-400 hover:text-white'
             )}
           >
             {t}
@@ -487,33 +514,35 @@ export function JackpotsPage() {
       </div>
 
       {showFilters && (
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4">
-          <label className="text-xs text-zinc-400 mb-1.5 block">Platform</label>
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+          <label className="mb-1.5 block text-xs text-zinc-400">Platform</label>
           <select
             aria-label="Filter jackpots by platform"
             title="Filter jackpots by platform"
             value={platformFilter}
             onChange={(e) => setPlatformFilter(e.target.value)}
-            className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="focus:ring-brand-500 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2"
           >
             <option value="all">All Platforms</option>
             {platforms.map(([id, name]) => (
-              <option key={id as string} value={id as string}>{name as string}</option>
+              <option key={id as string} value={id as string}>
+                {name as string}
+              </option>
             ))}
           </select>
         </div>
       )}
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid gap-6 lg:grid-cols-3">
         {/* Jackpot grid */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="space-y-4 lg:col-span-2">
           {sorted.length === 0 ? (
-            <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-12 text-center">
-              <AlertCircle className="w-8 h-8 text-zinc-600 mx-auto mb-3" />
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-12 text-center">
+              <AlertCircle className="mx-auto mb-3 h-8 w-8 text-zinc-600" />
               <p className="text-sm text-zinc-500">No jackpots match your filters.</p>
             </div>
           ) : (
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               {sorted.map((j) => (
                 <JackpotCard
                   key={j['jackpot_id'] as string}
@@ -535,7 +564,7 @@ export function JackpotsPage() {
         <div className="space-y-4">
           {/* Selected jackpot detail */}
           {selectedJackpot && (
-            <div className="bg-zinc-900 rounded-xl border border-brand-500/30 p-4 space-y-3">
+            <div className="border-brand-500/30 space-y-3 rounded-xl border bg-zinc-900 p-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-white">
                   {selectedJackpot['game_name'] as string}
@@ -546,37 +575,50 @@ export function JackpotsPage() {
                   rel="noopener noreferrer"
                   title="Open platform"
                   aria-label="Open platform"
-                  className="text-zinc-500 hover:text-brand-400 transition-colors"
+                  className="hover:text-brand-400 text-zinc-500 transition-colors"
                 >
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-xs">
                 {[
                   ['Historical Avg', formatSC(selectedJackpot['historical_avg'] as number) + ' SC'],
-                  ['Historical High', formatSC(selectedJackpot['historical_high'] as number) + ' SC'],
-                  ['Avg Hit Interval', selectedJackpot['avg_hit_interval_days'] != null ? (selectedJackpot['avg_hit_interval_days'] as number).toFixed(1) + 'd' : '—'],
+                  [
+                    'Historical High',
+                    formatSC(selectedJackpot['historical_high'] as number) + ' SC',
+                  ],
+                  [
+                    'Avg Hit Interval',
+                    selectedJackpot['avg_hit_interval_days'] != null
+                      ? (selectedJackpot['avg_hit_interval_days'] as number).toFixed(1) + 'd'
+                      : '—',
+                  ],
                   ['Hit Count', String(selectedJackpot['hit_count'] ?? '—')],
                 ].map(([label, value]) => (
-                  <div key={label} className="bg-zinc-800/60 rounded-lg p-2">
+                  <div key={label} className="rounded-lg bg-zinc-800/60 p-2">
                     <p className="text-zinc-500">{label}</p>
-                    <p className="text-white font-semibold mt-0.5">{value}</p>
+                    <p className="mt-0.5 font-semibold text-white">{value}</p>
                   </div>
                 ))}
               </div>
 
               <div>
-                <p className="text-xs text-zinc-500 mb-2">Growth History</p>
+                <p className="mb-2 text-xs text-zinc-500">Growth History</p>
                 <JackpotHistoryChart jackpotId={selectedJackpot['jackpot_id'] as string} />
               </div>
             </div>
           )}
 
           {/* Live event feed */}
-          <div className="bg-zinc-900 rounded-xl border border-zinc-800">
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-800">
-              <div className={cn('w-2 h-2 rounded-full', connected ? 'bg-green-400 animate-pulse' : 'bg-zinc-600')} />
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900">
+            <div className="flex items-center gap-2 border-b border-zinc-800 px-4 py-3">
+              <div
+                className={cn(
+                  'h-2 w-2 rounded-full',
+                  connected ? 'animate-pulse bg-green-400' : 'bg-zinc-600'
+                )}
+              />
               <h3 className="text-sm font-semibold text-zinc-300">Live Events</h3>
             </div>
             <div className="p-3">
@@ -585,17 +627,20 @@ export function JackpotsPage() {
           </div>
 
           {/* Data moat promo box (free-tier upgrade prompt) */}
-          <div className="bg-gradient-to-br from-brand-950/60 to-zinc-900 rounded-xl border border-brand-800/40 p-4">
+          <div className="from-brand-950/60 border-brand-800/40 rounded-xl border bg-gradient-to-br to-zinc-900 p-4">
             <div className="flex items-start gap-2">
-              <Zap className="w-4 h-4 text-brand-400 shrink-0 mt-0.5" />
+              <Zap className="text-brand-400 mt-0.5 h-4 w-4 shrink-0" />
               <div>
-                <p className="text-xs font-semibold text-brand-300">Every day of data widens the moat</p>
-                <p className="text-xs text-zinc-500 mt-1">
-                  Upgrade to Pro for full jackpot history, probability curves, and must-hit-by ceiling alerts.
+                <p className="text-brand-300 text-xs font-semibold">
+                  Every day of data widens the moat
+                </p>
+                <p className="mt-1 text-xs text-zinc-500">
+                  Upgrade to Pro for full jackpot history, probability curves, and must-hit-by
+                  ceiling alerts.
                 </p>
                 <a
                   href="/pricing"
-                  className="inline-block mt-2 text-xs font-medium text-brand-400 hover:text-brand-300 transition-colors"
+                  className="text-brand-400 hover:text-brand-300 mt-2 inline-block text-xs font-medium transition-colors"
                 >
                   View plans →
                 </a>

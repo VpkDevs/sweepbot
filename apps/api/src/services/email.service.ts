@@ -78,7 +78,11 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
   })
 }
 
-export async function sendAchievementEmail(to: string, achievementName: string, description: string) {
+export async function sendAchievementEmail(
+  to: string,
+  achievementName: string,
+  description: string
+) {
   await sendEmail({
     to,
     subject: `Achievement unlocked: ${achievementName}`,
@@ -93,7 +97,11 @@ export async function sendAchievementEmail(to: string, achievementName: string, 
 }
 
 export async function sendTrialStartEmail(to: string, trialEndsAt: Date, username?: string) {
-  const endDateStr = trialEndsAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+  const endDateStr = trialEndsAt.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  })
   await sendEmail({
     to,
     subject: 'Your SweepBot Pro trial has started — 14 days free',
@@ -145,8 +153,16 @@ export async function sendRedemptionStatusEmail(
   notes?: string
 ) {
   const statusMessages = {
-    approved: { emoji: '✅', label: 'Approved', text: 'Your redemption has been approved and is being processed.' },
-    declined: { emoji: '❌', label: 'Declined', text: 'Unfortunately your redemption was declined.' },
+    approved: {
+      emoji: '✅',
+      label: 'Approved',
+      text: 'Your redemption has been approved and is being processed.',
+    },
+    declined: {
+      emoji: '❌',
+      label: 'Declined',
+      text: 'Unfortunately your redemption was declined.',
+    },
     paid: { emoji: '💰', label: 'Paid', text: 'Your redemption has been paid!' },
   }
 

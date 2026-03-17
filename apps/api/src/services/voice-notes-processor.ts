@@ -32,8 +32,15 @@ const POSITIVE_WORDS = ['big win', 'jackpot', 'amazing', 'great', 'love', 'nice'
 const NEGATIVE_WORDS = ['lost', 'terrible', 'frustrating', 'bad', 'hate', 'tilt'] as const
 
 const GAME_TYPES = [
-  'slots', 'poker', 'blackjack', 'roulette', 'baccarat',
-  'keno', 'bingo', 'craps', 'video poker',
+  'slots',
+  'poker',
+  'blackjack',
+  'roulette',
+  'baccarat',
+  'keno',
+  'bingo',
+  'craps',
+  'video poker',
 ] as const
 
 export class VoiceNotesProcessor {
@@ -78,7 +85,7 @@ export class VoiceNotesProcessor {
     content: string,
     noteType: 'text' | 'voice',
     audioUrl?: string,
-    audioDuration?: number,
+    audioDuration?: number
   ): Promise<SessionNote> {
     const { rows } = await query<SessionNote>(sql`
       INSERT INTO session_notes (session_id, user_id, content, note_type, audio_url, audio_duration)
