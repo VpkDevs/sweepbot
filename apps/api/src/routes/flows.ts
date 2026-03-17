@@ -255,7 +255,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         )
 
         if (rows.length === 0) {
-          return reply.code(404).send({ error: 'NOT_FOUND', message: 'Conversation not found', status: 404 })
+          return reply.code(404).send({ success: false, error: 'NOT_FOUND', message: 'Conversation not found', status: 404 })
         }
 
         // Delegate business logic to ConversationManager which will

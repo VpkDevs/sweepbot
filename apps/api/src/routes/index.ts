@@ -44,7 +44,7 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
   await app.register(achievementRoutes, { prefix: '/achievements' })
   await app.register(streaksRoutes, { prefix: '/streaks' })
   await app.register(sessionNotesRoutes, { prefix: '/session-notes' })
-  await app.register(webhookRoutes, { prefix: '/webhooks' })
+  await app.register(webhookRoutes)
   await app.register(gameIntelligenceRoutes, { prefix: '/intelligence' })
   await app.register(paymentMethodRoutes, { prefix: '/payment-methods' })
   await app.register(taxRoutes, { prefix: '/tax' })
