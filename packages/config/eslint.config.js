@@ -22,10 +22,10 @@ export default [
       'no-empty': ['error', { allowEmptyCatch: true }],
 
       // Code style
-      'quotes': ['error', 'single', { avoidEscape: true }],
-      'semi': ['error', 'never'],
+      quotes: ['error', 'single', { avoidEscape: true }],
+      semi: ['error', 'never'],
       'comma-dangle': ['error', 'always-multiline'],
-      'indent': ['error', 2, { SwitchCase: 1 }],
+      indent: ['error', 2, { SwitchCase: 1 }],
       'arrow-spacing': 'error',
       'keyword-spacing': 'error',
       'space-before-function-paren': ['error', 'never'],

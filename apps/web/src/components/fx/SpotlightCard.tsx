@@ -56,7 +56,7 @@ export function SpotlightCard({
       onMouseLeave={handleMouseLeave}
       className={cn(
         'relative overflow-hidden rounded-2xl transition-transform duration-300 ease-out',
-        className,
+        className
       )}
       style={{
         transform: isHovered

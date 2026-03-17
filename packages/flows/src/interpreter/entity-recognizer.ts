@@ -119,7 +119,11 @@ export class EntityRecognizer {
       { keywords: ['play', 'open game'], action: 'open_game', confidence: 0.85 },
       { keywords: ['spin', 'pull'], action: 'spin', confidence: 0.9 },
       { keywords: ['bet', 'wager', 'throw'], action: 'bet', confidence: 0.85 },
-      { keywords: ['balance', 'check balance', 'my balance'], action: 'check_balance', confidence: 0.9 },
+      {
+        keywords: ['balance', 'check balance', 'my balance'],
+        action: 'check_balance',
+        confidence: 0.9,
+      },
       { keywords: ['cash out', 'withdraw', 'redeem'], action: 'cash_out', confidence: 0.9 },
       { keywords: ['close', 'exit', 'quit'], action: 'close_platform', confidence: 0.85 },
     ]
@@ -149,7 +153,10 @@ export class EntityRecognizer {
 
     // Simple condition patterns: "if win > 5x bonus", "when balance drops", etc.
     // We'll handle a few extra English forms like "if more than $50" or "if less than 100 spins".
-    const conditionPatterns: { regex: RegExp; handler: (match: RegExpExecArray) => ConditionEntity }[] = [
+    const conditionPatterns: {
+      regex: RegExp
+      handler: (match: RegExpExecArray) => ConditionEntity
+    }[] = [
       {
         regex: /if\s+(?:i\s+)?(win|lose|hit)\s*([<>]=?)\s*([^\s]+)/gi,
         handler: (match) => ({
@@ -282,9 +289,19 @@ export class EntityRecognizer {
     }
 
     // Weekly patterns
-    const weeklyMatch = text.match(/every\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i)
+    const weeklyMatch = text.match(
+      /every\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i
+    )
     if (weeklyMatch) {
-      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+      const dayNames = [
+        'sunday',
+        'monday',
+        'tuesday',
+        'wednesday',
+        'thursday',
+        'friday',
+        'saturday',
+      ]
       const day = dayNames.indexOf((weeklyMatch[1] ?? '').toLowerCase())
       schedules.push({
         text: weeklyMatch[0],
@@ -367,7 +384,11 @@ export class EntityRecognizer {
     // Spin/session durations
     const spinMatches = text.matchAll(/(\d+)\s+(spins?|sessions?)/gi)
     for (const match of spinMatches) {
-      const unit = (match[2] ?? 'sessions').toLowerCase().startsWith('s') && (match[2] ?? 'sessions').length < 8 ? 'spins' : 'sessions'
+      const unit =
+        (match[2] ?? 'sessions').toLowerCase().startsWith('s') &&
+        (match[2] ?? 'sessions').length < 8
+          ? 'spins'
+          : 'sessions'
       durations.push({
         text: match[0],
         type: 'iteration',

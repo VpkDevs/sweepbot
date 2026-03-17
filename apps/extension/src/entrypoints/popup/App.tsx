@@ -77,7 +77,7 @@ export default function PopupApp() {
 
   if (loading) {
     return (
-      <div className="popup-container flex items-center justify-center h-40">
+      <div className="popup-container flex h-40 items-center justify-center">
         <div className="text-sm text-gray-500">Loading...</div>
       </div>
     )
@@ -89,24 +89,24 @@ export default function PopupApp() {
     return (
       <div className="popup-container">
         <div className="p-6">
-          <h1 className="text-xl font-bold mb-2 flex items-center gap-2">
-            <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded" />
+          <h1 className="mb-2 flex items-center gap-2 text-xl font-bold">
+            <div className="h-6 w-6 rounded bg-gradient-to-br from-blue-500 to-purple-600" />
             SweepBot
           </h1>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="mb-4 text-sm text-gray-600">
             Real-time analytics for sweepstakes casino players
           </p>
 
           <button
             onClick={() => chrome.tabs.create({ url: 'https://app.sweepbot.app/sign-in' })}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition"
+            className="w-full rounded-lg bg-blue-600 py-2 font-semibold text-white transition hover:bg-blue-700"
           >
             Sign In
           </button>
 
           <button
             onClick={() => chrome.tabs.create({ url: 'https://app.sweepbot.app/sign-up' })}
-            className="w-full mt-2 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold py-2 rounded-lg transition"
+            className="mt-2 w-full rounded-lg bg-gray-200 py-2 font-semibold text-gray-900 transition hover:bg-gray-300"
           >
             Create Account
           </button>
@@ -124,54 +124,46 @@ export default function PopupApp() {
   return (
     <div className="popup-container">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4">
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 text-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Zap className="w-5 h-5" />
+            <Zap className="h-5 w-5" />
             <h1 className="font-bold">SweepBot</h1>
           </div>
-          <button
-            onClick={handleLogout}
-            className="hover:opacity-80 transition"
-            title="Sign out"
-          >
-            <LogOut className="w-4 h-4" />
+          <button onClick={handleLogout} className="transition hover:opacity-80" title="Sign out">
+            <LogOut className="h-4 w-4" />
           </button>
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-1 mt-3">
+        <div className="mt-3 flex gap-1">
           <button
             onClick={() => setActiveTab('hud')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-semibold transition ${
-              activeTab === 'hud'
-                ? 'bg-white/20 text-white'
-                : 'text-white/60 hover:text-white/80'
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded py-1.5 text-xs font-semibold transition ${
+              activeTab === 'hud' ? 'bg-white/20 text-white' : 'text-white/60 hover:text-white/80'
             }`}
           >
-            <BarChart3 className="w-3.5 h-3.5" />
+            <BarChart3 className="h-3.5 w-3.5" />
             HUD
           </button>
           <button
             onClick={() => setActiveTab('flows')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-semibold transition ${
-              activeTab === 'flows'
-                ? 'bg-white/20 text-white'
-                : 'text-white/60 hover:text-white/80'
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded py-1.5 text-xs font-semibold transition ${
+              activeTab === 'flows' ? 'bg-white/20 text-white' : 'text-white/60 hover:text-white/80'
             }`}
           >
-            <Cpu className="w-3.5 h-3.5" />
+            <Cpu className="h-3.5 w-3.5" />
             Flows
           </button>
           <button
             onClick={() => setActiveTab('capture')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-semibold transition ${
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded py-1.5 text-xs font-semibold transition ${
               activeTab === 'capture'
                 ? 'bg-white/20 text-white'
                 : 'text-white/60 hover:text-white/80'
             }`}
           >
-            <Search className="w-3.5 h-3.5" />
+            <Search className="h-3.5 w-3.5" />
             Capture
           </button>
         </div>
@@ -181,14 +173,14 @@ export default function PopupApp() {
       {activeTab === 'hud' && (
         <>
           {sessionStats ? (
-            <div className="p-4 border-b border-gray-200">
-              <h2 className="text-sm font-semibold text-gray-900 mb-3">Current Session</h2>
+            <div className="border-b border-gray-200 p-4">
+              <h2 className="mb-3 text-sm font-semibold text-gray-900">Current Session</h2>
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-gray-50 p-2 rounded">
+                <div className="rounded bg-gray-50 p-2">
                   <div className="text-xs text-gray-600">Spins</div>
                   <div className="text-lg font-bold text-gray-900">{sessionStats.spinCount}</div>
                 </div>
-                <div className="bg-gray-50 p-2 rounded">
+                <div className="rounded bg-gray-50 p-2">
                   <div className="text-xs text-gray-600">RTP</div>
                   <div
                     className="text-lg font-bold"
@@ -204,50 +196,50 @@ export default function PopupApp() {
                     {sessionStats.rtp.toFixed(2)}%
                   </div>
                 </div>
-                <div className="bg-gray-50 p-2 rounded">
+                <div className="rounded bg-gray-50 p-2">
                   <div className="text-xs text-gray-600">Wagered</div>
                   <div className="text-lg font-bold text-gray-900">
                     {(sessionStats.totalWagered || 0).toFixed(0)}
                   </div>
                 </div>
-                <div className="bg-gray-50 p-2 rounded">
+                <div className="rounded bg-gray-50 p-2">
                   <div className="text-xs text-gray-600">Volatility</div>
-                  <div className="text-lg font-bold text-gray-900 capitalize">
+                  <div className="text-lg font-bold capitalize text-gray-900">
                     {sessionStats.volatility}
                   </div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="p-4 border-b border-gray-200 text-center text-sm text-gray-500">
+            <div className="border-b border-gray-200 p-4 text-center text-sm text-gray-500">
               No active session detected
             </div>
           )}
 
-          <div className="p-4 space-y-3">
-            <label className="flex items-center gap-3 cursor-pointer">
+          <div className="space-y-3 p-4">
+            <label className="flex cursor-pointer items-center gap-3">
               <input
                 type="checkbox"
                 checked={hudEnabled}
                 onChange={handleHudToggle}
-                className="w-4 h-4 rounded border-gray-300"
+                className="h-4 w-4 rounded border-gray-300"
               />
               <span className="text-sm font-medium text-gray-900">Show HUD Overlay</span>
             </label>
 
             <button
               onClick={() => chrome.tabs.create({ url: 'https://app.sweepbot.app/dashboard' })}
-              className="w-full flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-2 rounded-lg transition"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-50 py-2 font-semibold text-blue-700 transition hover:bg-blue-100"
             >
-              <BarChart3 className="w-4 h-4" />
+              <BarChart3 className="h-4 w-4" />
               Open Dashboard
             </button>
 
             <button
               onClick={() => chrome.runtime.openOptionsPage()}
-              className="w-full flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 rounded-lg transition"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-100 py-2 font-semibold text-gray-700 transition hover:bg-gray-200"
             >
-              <Settings className="w-4 h-4" />
+              <Settings className="h-4 w-4" />
               Settings
             </button>
           </div>
@@ -261,9 +253,15 @@ export default function PopupApp() {
       {activeTab === 'capture' && <PlatformCaptureTab />}
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-gray-200 text-xs text-gray-500 text-center">
-        <p>Version 0.1.0 &middot;{' '}
-          <a href="https://sweepbot.app" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+      <div className="border-t border-gray-200 px-4 py-3 text-center text-xs text-gray-500">
+        <p>
+          Version 0.1.0 &middot;{' '}
+          <a
+            href="https://sweepbot.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline"
+          >
             sweepbot.app
           </a>
         </p>

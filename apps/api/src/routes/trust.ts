@@ -7,7 +7,9 @@ import { constantTimeCompare } from '@sweepbot/utils'
 
 const TrustQuerySchema = z.object({
   minScore: z.coerce.number().min(0).max(100).optional(),
-  sortBy: z.enum(['overall_score', 'redemption_speed', 'tos_stability', 'calculated_at']).default('overall_score'),
+  sortBy: z
+    .enum(['overall_score', 'redemption_speed', 'tos_stability', 'calculated_at'])
+    .default('overall_score'),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 })
@@ -17,13 +19,13 @@ const TrustQuerySchema = z.object({
  * These sum to 1.0 and can be tweaked as the product matures.
  */
 const TRUST_WEIGHTS = {
-  redemption_speed: 0.20,
-  redemption_rejection_rate: 0.20,
+  redemption_speed: 0.2,
+  redemption_rejection_rate: 0.2,
   tos_stability: 0.15,
-  bonus_generosity: 0.10,
+  bonus_generosity: 0.1,
   community_satisfaction: 0.15,
-  support_responsiveness: 0.10,
-  regulatory_standing: 0.10,
+  support_responsiveness: 0.1,
+  regulatory_standing: 0.1,
 } as const
 
 export async function trustRoutes(app: FastifyInstance): Promise<void> {
@@ -52,9 +54,8 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
       const query = TrustQuerySchema.parse(request.query)
       const offset = (query.page - 1) * query.pageSize
 
-      const minFilter = query.minScore !== undefined
-        ? sql`AND ti.overall_score >= ${query.minScore}`
-        : sql``
+      const minFilter =
+        query.minScore !== undefined ? sql`AND ti.overall_score >= ${query.minScore}` : sql``
 
       const orderMap: Record<string, ReturnType<typeof sql>> = {
         overall_score: sql`ti.overall_score DESC`,
@@ -362,9 +363,10 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
 
       const overall =
         (scores['redemption_speed_score'] ?? 50) * TRUST_WEIGHTS.redemption_speed +
-        (scores['redemption_rejection_rate_score'] ?? 50) * TRUST_WEIGHTS.redemption_rejection_rate +
+        (scores['redemption_rejection_rate_score'] ?? 50) *
+          TRUST_WEIGHTS.redemption_rejection_rate +
         (scores['tos_stability_score'] ?? 50) * TRUST_WEIGHTS.tos_stability +
-        50 * TRUST_WEIGHTS.bonus_generosity +  // placeholder until bonus data pipeline
+        50 * TRUST_WEIGHTS.bonus_generosity + // placeholder until bonus data pipeline
         (scores['community_satisfaction_score'] ?? 50) * TRUST_WEIGHTS.community_satisfaction +
         50 * TRUST_WEIGHTS.support_responsiveness + // placeholder
         75 * TRUST_WEIGHTS.regulatory_standing // default assumption for licensed platforms

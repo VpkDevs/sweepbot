@@ -48,7 +48,7 @@ export function TextReveal({
           setIsVisible(false)
         }
       },
-      { threshold },
+      { threshold }
     )
 
     observer.observe(el)
@@ -57,11 +57,8 @@ export function TextReveal({
 
   // Split text into tokens
   const text = typeof children === 'string' ? children : ''
-  const tokens = mode === 'char'
-    ? text.split('')
-    : mode === 'line'
-      ? text.split('\n')
-      : text.split(/(\s+)/)
+  const tokens =
+    mode === 'char' ? text.split('') : mode === 'line' ? text.split('\n') : text.split(/(\s+)/)
 
   if (typeof children !== 'string') {
     // For non-string children, wrap the whole thing
@@ -70,11 +67,9 @@ export function TextReveal({
         ref={containerRef}
         className={cn(
           'transition-all duration-700',
-          isVisible
-            ? 'opacity-100 translate-y-0 blur-0'
-            : 'opacity-0 translate-y-6 blur-[4px]',
+          isVisible ? 'translate-y-0 opacity-100 blur-0' : 'translate-y-6 opacity-0 blur-[4px]',
           getRevealDelayClass(delay),
-          className,
+          className
         )}
       >
         {children}
@@ -87,7 +82,11 @@ export function TextReveal({
       {tokens.map((token, i) => {
         const isSpace = /^\s+$/.test(token)
         if (isSpace) {
-          return <span key={`s-${i}`} className="whitespace-pre">{token}</span>
+          return (
+            <span key={`s-${i}`} className="whitespace-pre">
+              {token}
+            </span>
+          )
         }
 
         const tokenDelay = delay + i * stagger
@@ -98,9 +97,9 @@ export function TextReveal({
             className={cn(
               'inline-block transition-all duration-700 ease-out',
               isVisible
-                ? 'opacity-100 translate-y-0 blur-0'
-                : 'opacity-0 translate-y-[0.5em] blur-[2px]',
-              getRevealDelayClass(tokenDelay),
+                ? 'translate-y-0 opacity-100 blur-0'
+                : 'translate-y-[0.5em] opacity-0 blur-[2px]',
+              getRevealDelayClass(tokenDelay)
             )}
             aria-hidden
           >

@@ -66,42 +66,45 @@ export function PlatformsPage() {
   }
 
   function SortIcon({ col }: { col: SortKey }) {
-    if (sortBy !== col) return <ChevronUp className="w-3 h-3 opacity-20" />
+    if (sortBy !== col) return <ChevronUp className="h-3 w-3 opacity-20" />
     return sortDir === 'asc' ? (
-      <ChevronUp className="w-3 h-3 text-brand-400" />
+      <ChevronUp className="text-brand-400 h-3 w-3" />
     ) : (
-      <ChevronDown className="w-3 h-3 text-brand-400" />
+      <ChevronDown className="text-brand-400 h-3 w-3" />
     )
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="mx-auto max-w-7xl space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Platforms</h1>
-          <p className="text-zinc-400 text-sm mt-1">
+          <p className="mt-1 text-sm text-zinc-400">
             {meta?.total ?? '—'} sweepstakes platforms tracked. Ranked by Trust Index.
           </p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium rounded-lg transition-colors"
+          className="bg-brand-600 hover:bg-brand-500 flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="h-4 w-4" />
           Add Platform
         </button>
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+        <div className="relative min-w-[200px] max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
           <input
             type="text"
             placeholder="Search platforms…"
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-            className="w-full pl-9 pr-3 py-2 bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            onChange={(e) => {
+              setSearch(e.target.value)
+              setPage(1)
+            }}
+            className="focus:ring-brand-500 w-full rounded-lg border border-zinc-800 bg-zinc-900 py-2 pl-9 pr-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:ring-2"
           />
           {search && (
             <button
@@ -111,7 +114,7 @@ export function PlatformsPage() {
               aria-label="Clear platform search"
               className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
@@ -120,12 +123,15 @@ export function PlatformsPage() {
           {(['all', 'active', 'inactive', 'watchlist', 'suspended', 'closed'] as const).map((s) => (
             <button
               key={s}
-              onClick={() => { setStatus(s === 'all' ? undefined : s); setPage(1) }}
+              onClick={() => {
+                setStatus(s === 'all' ? undefined : s)
+                setPage(1)
+              }}
               className={cn(
-                'px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors capitalize',
+                'rounded-lg border px-3 py-1.5 text-xs font-medium capitalize transition-colors',
                 (s === 'all' ? !status : status === s)
                   ? 'bg-brand-600 border-brand-500 text-white'
-                  : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
+                  : 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white'
               )}
             >
               {s}
@@ -135,14 +141,14 @@ export function PlatformsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+      <div className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
         {isLoading ? (
-          <div className="flex items-center justify-center h-48">
-            <Loader2 className="w-6 h-6 animate-spin text-zinc-500" />
+          <div className="flex h-48 items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
           </div>
         ) : platforms.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-zinc-500 gap-2">
-            <Gamepad2 className="w-8 h-8" />
+          <div className="flex h-48 flex-col items-center justify-center gap-2 text-zinc-500">
+            <Gamepad2 className="h-8 w-8" />
             <p className="text-sm">No platforms found</p>
           </div>
         ) : (
@@ -150,51 +156,57 @@ export function PlatformsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-zinc-800">
-                  <th className="text-left px-5 py-3 text-zinc-500 font-medium">
+                  <th className="px-5 py-3 text-left font-medium text-zinc-500">
                     <button
                       onClick={() => toggleSort('name')}
-                      className="flex items-center gap-1 hover:text-zinc-300 transition-colors"
+                      className="flex items-center gap-1 transition-colors hover:text-zinc-300"
                     >
                       Platform <SortIcon col="name" />
                     </button>
                   </th>
-                  <th className="text-center px-5 py-3 text-zinc-500 font-medium">Status</th>
-                  <th className="text-right px-5 py-3 text-zinc-500 font-medium">
+                  <th className="px-5 py-3 text-center font-medium text-zinc-500">Status</th>
+                  <th className="px-5 py-3 text-right font-medium text-zinc-500">
                     <button
                       onClick={() => toggleSort('trust_score')}
-                      className="flex items-center gap-1 ml-auto hover:text-zinc-300 transition-colors"
+                      className="ml-auto flex items-center gap-1 transition-colors hover:text-zinc-300"
                     >
                       Trust Index <SortIcon col="trust_score" />
                     </button>
                   </th>
-                  <th className="text-right px-5 py-3 text-zinc-500 font-medium">Redemption</th>
-                  <th className="text-right px-5 py-3 text-zinc-500 font-medium">Bonus</th>
-                  <th className="text-right px-5 py-3 text-zinc-500 font-medium">Actions</th>
+                  <th className="px-5 py-3 text-right font-medium text-zinc-500">Redemption</th>
+                  <th className="px-5 py-3 text-right font-medium text-zinc-500">Bonus</th>
+                  <th className="px-5 py-3 text-right font-medium text-zinc-500">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {platforms.map((platform) => {
-                  const score = (platform as Record<string, unknown>)['trust_score'] as number | null
+                  const score = (platform as Record<string, unknown>)['trust_score'] as
+                    | number
+                    | null
                   const isConnected = connectedIds.has(platform.id)
                   return (
                     <tr
                       key={platform.id}
-                      className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors"
+                      className="border-b border-zinc-800/50 transition-colors hover:bg-zinc-800/30"
                     >
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
                           {platform.logoUrl ? (
-                            <img src={platform.logoUrl} alt={`${platform.name} logo`} className="w-7 h-7 rounded-md" />
+                            <img
+                              src={platform.logoUrl}
+                              alt={`${platform.name} logo`}
+                              className="h-7 w-7 rounded-md"
+                            />
                           ) : (
-                            <div className="w-7 h-7 rounded-md bg-zinc-800 flex items-center justify-center">
-                              <Gamepad2 className="w-3.5 h-3.5 text-zinc-600" />
+                            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-zinc-800">
+                              <Gamepad2 className="h-3.5 w-3.5 text-zinc-600" />
                             </div>
                           )}
                           <div>
                             <Link
                               to="/platforms/$platformId"
                               params={{ platformId: platform.id }}
-                              className="text-white font-medium hover:text-brand-300 transition-colors"
+                              className="hover:text-brand-300 font-medium text-white transition-colors"
                             >
                               {platform.name}
                             </Link>
@@ -207,10 +219,10 @@ export function PlatformsPage() {
                       <td className="px-5 py-3 text-center">
                         <span
                           className={cn(
-                            'inline-flex px-2 py-0.5 rounded-full text-xs font-medium',
+                            'inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
                             platform.status === 'active'
-                              ? 'bg-green-900/40 text-green-400 border border-green-800'
-                              : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
+                              ? 'border border-green-800 bg-green-900/40 text-green-400'
+                              : 'border border-zinc-700 bg-zinc-800 text-zinc-500'
                           )}
                         >
                           {platform.status}
@@ -219,51 +231,79 @@ export function PlatformsPage() {
                       <td className="px-5 py-3 text-right">
                         {score !== null && score !== undefined ? (
                           <div className="flex items-center justify-end gap-2">
-                            <span className={cn('text-sm font-bold tabular-nums', trustScoreColor(score))}>
-                              {score.toFixed(0)}
-                            </span>
                             <span
                               className={cn(
-                                'text-xs font-medium',
+                                'text-sm font-bold tabular-nums',
                                 trustScoreColor(score)
                               )}
                             >
+                              {score.toFixed(0)}
+                            </span>
+                            <span className={cn('text-xs font-medium', trustScoreColor(score))}>
                               {trustScoreLabel(score)}
                             </span>
                           </div>
                         ) : (
-                          <span className="text-zinc-600 text-xs">Pending</span>
+                          <span className="text-xs text-zinc-600">Pending</span>
                         )}
                       </td>
                       <td className="px-5 py-3 text-right">
-                        {(platform as Record<string, unknown>)['redemption_speed_score'] !== undefined ? (
-                          <span className={cn('text-sm tabular-nums', trustScoreColor(((platform as Record<string, unknown>)['redemption_speed_score'] as number) ?? 0))}>
-                            {((platform as Record<string, unknown>)['redemption_speed_score'] as number)?.toFixed(0) ?? '—'}
+                        {(platform as Record<string, unknown>)['redemption_speed_score'] !==
+                        undefined ? (
+                          <span
+                            className={cn(
+                              'text-sm tabular-nums',
+                              trustScoreColor(
+                                ((platform as Record<string, unknown>)[
+                                  'redemption_speed_score'
+                                ] as number) ?? 0
+                              )
+                            )}
+                          >
+                            {(
+                              (platform as Record<string, unknown>)[
+                                'redemption_speed_score'
+                              ] as number
+                            )?.toFixed(0) ?? '—'}
                           </span>
                         ) : (
-                          <span className="text-zinc-600 text-xs">—</span>
+                          <span className="text-xs text-zinc-600">—</span>
                         )}
                       </td>
                       <td className="px-5 py-3 text-right">
-                        {(platform as Record<string, unknown>)['bonus_generosity_score'] !== undefined ? (
-                          <span className={cn('text-sm tabular-nums', trustScoreColor(((platform as Record<string, unknown>)['bonus_generosity_score'] as number) ?? 0))}>
-                            {((platform as Record<string, unknown>)['bonus_generosity_score'] as number)?.toFixed(0) ?? '—'}
+                        {(platform as Record<string, unknown>)['bonus_generosity_score'] !==
+                        undefined ? (
+                          <span
+                            className={cn(
+                              'text-sm tabular-nums',
+                              trustScoreColor(
+                                ((platform as Record<string, unknown>)[
+                                  'bonus_generosity_score'
+                                ] as number) ?? 0
+                              )
+                            )}
+                          >
+                            {(
+                              (platform as Record<string, unknown>)[
+                                'bonus_generosity_score'
+                              ] as number
+                            )?.toFixed(0) ?? '—'}
                           </span>
                         ) : (
-                          <span className="text-zinc-600 text-xs">—</span>
+                          <span className="text-xs text-zinc-600">—</span>
                         )}
                       </td>
                       <td className="px-5 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
                           {isConnected ? (
                             <span className="flex items-center gap-1 text-xs text-green-400">
-                              <Shield className="w-3 h-3" />
+                              <Shield className="h-3 w-3" />
                               Connected
                             </span>
                           ) : (
                             <button
                               onClick={() => setShowAddModal(true)}
-                              className="text-xs text-brand-400 hover:text-brand-300 transition-colors"
+                              className="text-brand-400 hover:text-brand-300 text-xs transition-colors"
                             >
                               + Connect
                             </button>
@@ -272,10 +312,10 @@ export function PlatformsPage() {
                             href={platform.affiliateUrl ?? platform.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-zinc-500 hover:text-zinc-300 transition-colors"
+                            className="text-zinc-500 transition-colors hover:text-zinc-300"
                             title="Visit platform"
                           >
-                            <ExternalLink className="w-3.5 h-3.5" />
+                            <ExternalLink className="h-3.5 w-3.5" />
                           </a>
                         </div>
                       </td>
@@ -288,8 +328,8 @@ export function PlatformsPage() {
         )}
 
         {/* Pagination */}
-        {meta && (meta.total > 20) && (
-          <div className="flex items-center justify-between px-5 py-3 border-t border-zinc-800">
+        {meta && meta.total > 20 && (
+          <div className="flex items-center justify-between border-t border-zinc-800 px-5 py-3">
             <p className="text-xs text-zinc-500">
               Showing {(page - 1) * 20 + 1}–{Math.min(page * 20, meta.total)} of {meta.total}
             </p>
@@ -297,14 +337,14 @@ export function PlatformsPage() {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-3 py-1 text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="rounded-lg bg-zinc-800 px-3 py-1 text-xs text-zinc-300 transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Prev
               </button>
               <button
                 onClick={() => setPage((p) => p + 1)}
                 disabled={!meta.hasMore}
-                className="px-3 py-1 text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="rounded-lg bg-zinc-800 px-3 py-1 text-xs text-zinc-300 transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Next
               </button>
@@ -361,7 +401,7 @@ function AddPlatformModal({
       onClick={onClose}
     >
       <div
-        className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4"
+        className="w-full max-w-md space-y-4 rounded-xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -371,26 +411,26 @@ function AddPlatformModal({
             onClick={onClose}
             title="Close modal"
             aria-label="Close modal"
-            className="text-zinc-500 hover:text-white transition-colors"
+            className="text-zinc-500 transition-colors hover:text-white"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
         {error && (
-          <div className="px-3 py-2 rounded-lg bg-red-950/50 border border-red-800 text-red-300 text-sm">
+          <div className="rounded-lg border border-red-800 bg-red-950/50 px-3 py-2 text-sm text-red-300">
             {error}
           </div>
         )}
 
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Platform</label>
+            <label className="mb-1.5 block text-xs font-medium text-zinc-400">Platform</label>
             <select
               aria-label="Platform"
               value={selectedId}
               onChange={(e) => setSelectedId(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="focus:ring-brand-500 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2"
             >
               <option value="">Select a platform…</option>
               {available.map((p) => (
@@ -402,7 +442,7 @@ function AddPlatformModal({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+            <label className="mb-1.5 block text-xs font-medium text-zinc-400">
               Your username on this platform
             </label>
             <input
@@ -410,7 +450,7 @@ function AddPlatformModal({
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="username123"
-              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="focus:ring-brand-500 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:ring-2"
             />
           </div>
         </div>
@@ -418,16 +458,16 @@ function AddPlatformModal({
         <div className="flex justify-end gap-3 pt-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-zinc-400 hover:text-white transition-colors"
+            className="px-4 py-2 text-sm text-zinc-400 transition-colors hover:text-white"
           >
             Cancel
           </button>
           <button
             onClick={() => addMutation.mutate({ platformId: selectedId, username })}
             disabled={!selectedId || !username || addMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="bg-brand-600 hover:bg-brand-500 flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {addMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+            {addMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             Connect
           </button>
         </div>

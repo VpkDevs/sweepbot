@@ -83,9 +83,10 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
     await api.notifications.delete(id)
     set((state) => ({
       notifications: state.notifications.filter((n) => n.id !== id),
-      unreadCount: notification && !notification.isRead
-        ? Math.max(0, state.unreadCount - 1)
-        : state.unreadCount,
+      unreadCount:
+        notification && !notification.isRead
+          ? Math.max(0, state.unreadCount - 1)
+          : state.unreadCount,
     }))
   },
 }))

@@ -7,16 +7,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import {
-  Bell,
-  Trophy,
-  Flame,
-  Star,
-  Zap,
-  Info,
-  X,
-  CheckCheck,
-} from 'lucide-react'
+import { Bell, Trophy, Flame, Star, Zap, Info, X, CheckCheck } from 'lucide-react'
 import { api } from '../../lib/api'
 import { timeAgo, cn } from '../../lib/utils'
 
@@ -41,18 +32,18 @@ type Notification = {
 
 const TYPE_ICON: Record<NotificationType, React.ElementType> = {
   achievement: Trophy,
-  streak:      Flame,
-  milestone:   Star,
-  big_win:     Zap,
-  system:      Info,
+  streak: Flame,
+  milestone: Star,
+  big_win: Zap,
+  system: Info,
 }
 
 const TYPE_CONFIG: Record<NotificationType, { color: string; bg: string; ring: string }> = {
-  achievement: { color: 'text-yellow-400',  bg: 'bg-yellow-500/10', ring: 'ring-yellow-500/15' },
-  streak:      { color: 'text-orange-400',  bg: 'bg-orange-500/10', ring: 'ring-orange-500/15' },
-  milestone:   { color: 'text-brand-400',   bg: 'bg-brand-500/10',  ring: 'ring-brand-500/15' },
-  big_win:     { color: 'text-jackpot',     bg: 'bg-yellow-500/10', ring: 'ring-yellow-500/15' },
-  system:      { color: 'text-zinc-400',    bg: 'bg-zinc-500/10',   ring: 'ring-zinc-500/10' },
+  achievement: { color: 'text-yellow-400', bg: 'bg-yellow-500/10', ring: 'ring-yellow-500/15' },
+  streak: { color: 'text-orange-400', bg: 'bg-orange-500/10', ring: 'ring-orange-500/15' },
+  milestone: { color: 'text-brand-400', bg: 'bg-brand-500/10', ring: 'ring-brand-500/15' },
+  big_win: { color: 'text-jackpot', bg: 'bg-yellow-500/10', ring: 'ring-yellow-500/15' },
+  system: { color: 'text-zinc-400', bg: 'bg-zinc-500/10', ring: 'ring-zinc-500/10' },
 }
 
 /**
@@ -147,12 +138,12 @@ export function NotificationPanel() {
       {/* Bell trigger */}
       <button
         onClick={() => setOpen((o) => !o)}
-        className="relative p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.04] transition-all press-scale"
+        className="press-scale relative rounded-xl p-2 text-zinc-400 transition-all hover:bg-white/[0.04] hover:text-white"
         aria-label="Notifications"
       >
-        <Bell className="w-5 h-5" />
+        <Bell className="h-5 w-5" />
         {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-4.5 min-w-[1.125rem] items-center justify-center rounded-full bg-gradient-to-r from-brand-600 to-brand-400 px-1 text-[10px] font-bold text-white tabular-nums leading-none shadow-lg shadow-brand-500/30 pulse-ring">
+          <span className="h-4.5 from-brand-600 to-brand-400 shadow-brand-500/30 pulse-ring absolute -right-0.5 -top-0.5 flex min-w-[1.125rem] items-center justify-center rounded-full bg-gradient-to-r px-1 text-[10px] font-bold tabular-nums leading-none text-white shadow-lg">
             {unread > 99 ? '99+' : unread}
           </span>
         )}
@@ -160,13 +151,13 @@ export function NotificationPanel() {
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute right-0 top-11 z-50 w-[360px] glass-panel rounded-2xl shadow-2xl shadow-black/50 overflow-hidden animate-spring-in origin-top-right border border-white/[0.06]">
+        <div className="glass-panel animate-spring-in absolute right-0 top-11 z-50 w-[360px] origin-top-right overflow-hidden rounded-2xl border border-white/[0.06] shadow-2xl shadow-black/50">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/[0.04]">
+          <div className="flex items-center justify-between border-b border-white/[0.04] px-4 py-3.5">
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-white tracking-tight">Notifications</h3>
+              <h3 className="text-sm font-bold tracking-tight text-white">Notifications</h3>
               {unread > 0 && (
-                <span className="flex items-center justify-center h-5 min-w-[1.25rem] rounded-md bg-brand-500/15 px-1.5 text-[10px] font-bold text-brand-400 tabular-nums ring-1 ring-brand-500/20">
+                <span className="bg-brand-500/15 text-brand-400 ring-brand-500/20 flex h-5 min-w-[1.25rem] items-center justify-center rounded-md px-1.5 text-[10px] font-bold tabular-nums ring-1">
                   {unread}
                 </span>
               )}
@@ -175,10 +166,10 @@ export function NotificationPanel() {
               <button
                 onClick={() => markAll.mutate()}
                 disabled={markAll.isPending}
-                className="flex items-center gap-1.5 text-xs text-brand-400 hover:text-brand-300 font-medium disabled:opacity-50 transition-colors press-scale"
+                className="text-brand-400 hover:text-brand-300 press-scale flex items-center gap-1.5 text-xs font-medium transition-colors disabled:opacity-50"
                 title="Mark all as read"
               >
-                <CheckCheck className="w-3.5 h-3.5" />
+                <CheckCheck className="h-3.5 w-3.5" />
                 Mark all read
               </button>
             )}
@@ -190,21 +181,21 @@ export function NotificationPanel() {
               <div className="divide-y divide-white/[0.03]">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <div key={i} className="flex gap-3 px-4 py-3.5">
-                    <div className="w-9 h-9 rounded-xl bg-zinc-800/60 flex-shrink-0 shimmer" />
+                    <div className="shimmer h-9 w-9 flex-shrink-0 rounded-xl bg-zinc-800/60" />
                     <div className="flex-1 space-y-2 py-0.5">
-                      <div className="h-3 w-3/4 skeleton-text rounded-md" />
-                      <div className="h-2.5 w-full bg-zinc-800/40 rounded-md shimmer" />
+                      <div className="skeleton-text h-3 w-3/4 rounded-md" />
+                      <div className="shimmer h-2.5 w-full rounded-md bg-zinc-800/40" />
                     </div>
                   </div>
                 ))}
               </div>
             ) : (notifications as Notification[]).length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center px-6 animate-fade-in">
-                <div className="empty-icon-wrapper w-14 h-14 rounded-2xl bg-zinc-800/50 flex items-center justify-center mb-3">
-                  <Bell className="w-6 h-6 text-zinc-600" />
+              <div className="animate-fade-in flex flex-col items-center justify-center px-6 py-16 text-center">
+                <div className="empty-icon-wrapper mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-800/50">
+                  <Bell className="h-6 w-6 text-zinc-600" />
                 </div>
                 <p className="text-sm font-semibold text-zinc-400">No notifications yet</p>
-                <p className="text-xs text-zinc-600 mt-1 max-w-[200px] leading-relaxed text-pretty">
+                <p className="mt-1 max-w-[200px] text-pretty text-xs leading-relaxed text-zinc-600">
                   Achievements, streaks, and milestones will appear here.
                 </p>
               </div>
@@ -217,42 +208,46 @@ export function NotificationPanel() {
                     <div
                       key={n.id}
                       className={cn(
-                        'group relative flex gap-3 px-4 py-3.5 transition-all animate-slide-up-fade',
+                        'animate-slide-up-fade group relative flex gap-3 px-4 py-3.5 transition-all',
                         `message-delay-${i % 5}`,
                         n.href ? 'cursor-pointer hover:bg-white/[0.03]' : 'hover:bg-white/[0.02]',
-                        !n.is_read && 'bg-brand-500/[0.03]',
+                        !n.is_read && 'bg-brand-500/[0.03]'
                       )}
                       onClick={() => handleNotificationClick(n)}
                     >
                       {/* Unread indicator */}
                       {!n.is_read && (
-                        <span className="absolute left-1.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-brand-400 shadow-sm shadow-brand-400/50 animate-glow-pulse" />
+                        <span className="bg-brand-400 shadow-brand-400/50 animate-glow-pulse absolute left-1.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full shadow-sm" />
                       )}
 
                       {/* Icon */}
                       <div
                         className={cn(
-                          'flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center ring-1 transition-all',
+                          'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl ring-1 transition-all',
                           config.bg,
                           config.color,
-                          config.ring,
+                          config.ring
                         )}
                       >
-                        <TypeIcon className="w-4 h-4" />
+                        <TypeIcon className="h-4 w-4" />
                       </div>
 
                       {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <p className={cn(
-                          'text-sm leading-snug truncate',
-                          n.is_read ? 'text-zinc-300 font-medium' : 'text-white font-semibold',
-                        )}>
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className={cn(
+                            'truncate text-sm leading-snug',
+                            n.is_read ? 'font-medium text-zinc-300' : 'font-semibold text-white'
+                          )}
+                        >
                           {n.title}
                         </p>
-                        <p className="text-xs text-zinc-500 mt-0.5 line-clamp-2 leading-relaxed">
+                        <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-zinc-500">
                           {n.body}
                         </p>
-                        <p className="text-[10px] text-zinc-600 mt-1.5 tabular-nums font-medium">{timeAgo(n.created_at)}</p>
+                        <p className="mt-1.5 text-[10px] font-medium tabular-nums text-zinc-600">
+                          {timeAgo(n.created_at)}
+                        </p>
                       </div>
 
                       {/* Delete button */}
@@ -261,10 +256,10 @@ export function NotificationPanel() {
                           e.stopPropagation()
                           deleteNote.mutate(n.id)
                         }}
-                        className="flex-shrink-0 opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-zinc-600 hover:text-zinc-300 hover:bg-white/[0.05] transition-all press-scale"
+                        className="press-scale flex-shrink-0 rounded-lg p-1.5 text-zinc-600 opacity-0 transition-all hover:bg-white/[0.05] hover:text-zinc-300 group-hover:opacity-100"
                         title="Dismiss"
                       >
-                        <X className="w-3.5 h-3.5" />
+                        <X className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   )
@@ -276,7 +271,7 @@ export function NotificationPanel() {
           {/* Footer */}
           {(notifications as Notification[]).length > 0 && (
             <div className="border-t border-white/[0.04] px-4 py-2.5 text-center">
-              <span className="text-[10px] text-zinc-600 uppercase tracking-[0.15em] font-bold">
+              <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-600">
                 Showing last {(notifications as Notification[]).length} notifications
               </span>
             </div>

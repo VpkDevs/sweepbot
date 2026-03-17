@@ -60,7 +60,7 @@ export async function sessionNotesRoutes(app: FastifyInstance): Promise<void> {
           body.content,
           body.noteType,
           body.audioUrl,
-          body.audioDuration,
+          body.audioDuration
         )
 
         // For voice notes, include the transcript analysis in the response
@@ -80,7 +80,7 @@ export async function sessionNotesRoutes(app: FastifyInstance): Promise<void> {
           error: { code: 'INTERNAL_ERROR', message: 'Failed to save note' },
         })
       }
-    },
+    }
   )
 
   // ─── GET /sessions/:sessionId/notes ───────────────────────────────────────
@@ -113,6 +113,6 @@ export async function sessionNotesRoutes(app: FastifyInstance): Promise<void> {
           error: { code: 'INTERNAL_ERROR', message: 'Failed to retrieve notes' },
         })
       }
-    },
+    }
   )
 }

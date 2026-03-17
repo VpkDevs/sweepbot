@@ -1,72 +1,78 @@
-import { z } from 'zod';
-export declare const VolatilityClass: z.ZodEnum<["low", "medium", "high", "very_high"]>;
-export type VolatilityClass = z.infer<typeof VolatilityClass>;
-export declare const GameSchema: z.ZodObject<{
-    id: z.ZodString;
-    providerId: z.ZodNullable<z.ZodString>;
-    providerName: z.ZodNullable<z.ZodString>;
-    platformId: z.ZodNullable<z.ZodString>;
-    externalGameId: z.ZodNullable<z.ZodString>;
-    slug: z.ZodString;
-    name: z.ZodString;
-    thumbnailUrl: z.ZodNullable<z.ZodString>;
-    theoreticalRtp: z.ZodNullable<z.ZodNumber>;
-    volatilityClass: z.ZodNullable<z.ZodEnum<["low", "medium", "high", "very_high"]>>;
-    minBet: z.ZodNullable<z.ZodNumber>;
-    maxBet: z.ZodNullable<z.ZodNumber>;
-    maxWinMultiplier: z.ZodNullable<z.ZodNumber>;
-    hasBonusRound: z.ZodBoolean;
-    hasFreeSpins: z.ZodBoolean;
-    hasJackpot: z.ZodBoolean;
-    isActive: z.ZodBoolean;
-    communityRtpPct: z.ZodNullable<z.ZodNumber>;
-    communitySessionCount: z.ZodNullable<z.ZodNumber>;
-    createdAt: z.ZodString;
-    updatedAt: z.ZodString;
-}, "strip", z.ZodTypeAny, {
-    id: string;
-    name: string;
-    providerId: string | null;
-    platformId: string | null;
-    slug: string;
-    createdAt: string;
-    updatedAt: string;
-    isActive: boolean;
-    providerName: string | null;
-    externalGameId: string | null;
-    thumbnailUrl: string | null;
-    theoreticalRtp: number | null;
-    volatilityClass: "low" | "medium" | "high" | "very_high" | null;
-    minBet: number | null;
-    maxBet: number | null;
-    maxWinMultiplier: number | null;
-    hasBonusRound: boolean;
-    hasFreeSpins: boolean;
-    hasJackpot: boolean;
-    communityRtpPct: number | null;
-    communitySessionCount: number | null;
-}, {
-    id: string;
-    name: string;
-    providerId: string | null;
-    platformId: string | null;
-    slug: string;
-    createdAt: string;
-    updatedAt: string;
-    isActive: boolean;
-    providerName: string | null;
-    externalGameId: string | null;
-    thumbnailUrl: string | null;
-    theoreticalRtp: number | null;
-    volatilityClass: "low" | "medium" | "high" | "very_high" | null;
-    minBet: number | null;
-    maxBet: number | null;
-    maxWinMultiplier: number | null;
-    hasBonusRound: boolean;
-    hasFreeSpins: boolean;
-    hasJackpot: boolean;
-    communityRtpPct: number | null;
-    communitySessionCount: number | null;
-}>;
-export type Game = z.infer<typeof GameSchema>;
+import { z } from 'zod'
+export declare const VolatilityClass: z.ZodEnum<['low', 'medium', 'high', 'very_high']>
+export type VolatilityClass = z.infer<typeof VolatilityClass>
+export declare const GameSchema: z.ZodObject<
+  {
+    id: z.ZodString
+    providerId: z.ZodNullable<z.ZodString>
+    providerName: z.ZodNullable<z.ZodString>
+    platformId: z.ZodNullable<z.ZodString>
+    externalGameId: z.ZodNullable<z.ZodString>
+    slug: z.ZodString
+    name: z.ZodString
+    thumbnailUrl: z.ZodNullable<z.ZodString>
+    theoreticalRtp: z.ZodNullable<z.ZodNumber>
+    volatilityClass: z.ZodNullable<z.ZodEnum<['low', 'medium', 'high', 'very_high']>>
+    minBet: z.ZodNullable<z.ZodNumber>
+    maxBet: z.ZodNullable<z.ZodNumber>
+    maxWinMultiplier: z.ZodNullable<z.ZodNumber>
+    hasBonusRound: z.ZodBoolean
+    hasFreeSpins: z.ZodBoolean
+    hasJackpot: z.ZodBoolean
+    isActive: z.ZodBoolean
+    communityRtpPct: z.ZodNullable<z.ZodNumber>
+    communitySessionCount: z.ZodNullable<z.ZodNumber>
+    createdAt: z.ZodString
+    updatedAt: z.ZodString
+  },
+  'strip',
+  z.ZodTypeAny,
+  {
+    id: string
+    name: string
+    providerId: string | null
+    platformId: string | null
+    slug: string
+    createdAt: string
+    updatedAt: string
+    isActive: boolean
+    providerName: string | null
+    externalGameId: string | null
+    thumbnailUrl: string | null
+    theoreticalRtp: number | null
+    volatilityClass: 'low' | 'medium' | 'high' | 'very_high' | null
+    minBet: number | null
+    maxBet: number | null
+    maxWinMultiplier: number | null
+    hasBonusRound: boolean
+    hasFreeSpins: boolean
+    hasJackpot: boolean
+    communityRtpPct: number | null
+    communitySessionCount: number | null
+  },
+  {
+    id: string
+    name: string
+    providerId: string | null
+    platformId: string | null
+    slug: string
+    createdAt: string
+    updatedAt: string
+    isActive: boolean
+    providerName: string | null
+    externalGameId: string | null
+    thumbnailUrl: string | null
+    theoreticalRtp: number | null
+    volatilityClass: 'low' | 'medium' | 'high' | 'very_high' | null
+    minBet: number | null
+    maxBet: number | null
+    maxWinMultiplier: number | null
+    hasBonusRound: boolean
+    hasFreeSpins: boolean
+    hasJackpot: boolean
+    communityRtpPct: number | null
+    communitySessionCount: number | null
+  }
+>
+export type Game = z.infer<typeof GameSchema>
 //# sourceMappingURL=game.d.ts.map

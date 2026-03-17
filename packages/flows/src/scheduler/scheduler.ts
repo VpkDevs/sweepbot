@@ -41,7 +41,10 @@ export class FlowScheduler {
    * convenient metadata for testing and introspection (cron string,
    * timezone, userId, etc.).
    */
-  private jobs = new Map<string, { job: ScheduledTask; cron?: string; timezone?: string; userId?: string }>()
+  private jobs = new Map<
+    string,
+    { job: ScheduledTask; cron?: string; timezone?: string; userId?: string }
+  >()
   private options: FlowSchedulerOptions
   private logger: { info: (msg: string) => void; error: (msg: string, err: unknown) => void }
 
@@ -78,26 +81,32 @@ export class FlowScheduler {
         jobOptions.timezone = timezone
       }
       if (!CronJob) throw new Error('node-cron failed to load')
-      const job = scheduleCronJob(cron, async () => {
-        try {
-          this.logger.info(`Executing scheduled flow ${flow.id} for user ${userId}`)
-          if (this.options.onFlowExecute) {
-            await this.options.onFlowExecute(flow.id, userId)
+      const job = scheduleCronJob(
+        cron,
+        async () => {
+          try {
+            this.logger.info(`Executing scheduled flow ${flow.id} for user ${userId}`)
+            if (this.options.onFlowExecute) {
+              await this.options.onFlowExecute(flow.id, userId)
+            }
+          } catch (error) {
+            this.logger.error(`Flow ${flow.id} execution failed`, error)
+            if (this.options.onFlowError) {
+              await this.options.onFlowError(flow.id, userId, error as Error)
+            }
           }
-        } catch (error) {
-          this.logger.error(`Flow ${flow.id} execution failed`, error)
-          if (this.options.onFlowError) {
-            await this.options.onFlowError(flow.id, userId, error as Error)
-          }
-        }
-      }, jobOptions)
+        },
+        jobOptions
+      )
 
       // Start the job
       job.start()
       // store metadata so tests / introspection can inspect timezone/cron
       this.jobs.set(jobKey, { job, cron, timezone, userId })
 
-      this.logger.info(`Flow ${flow.id} scheduled: cron="${cron}" timezone="${timezone}" for user ${userId}`)
+      this.logger.info(
+        `Flow ${flow.id} scheduled: cron="${cron}" timezone="${timezone}" for user ${userId}`
+      )
     } catch (error) {
       this.logger.error(`Failed to schedule flow ${flow.id}`, error)
       throw new Error(`Failed to schedule flow: ${(error as Error).message}`)
@@ -196,7 +205,10 @@ export class FlowScheduler {
   /**
    * Inspect metadata for a specific job (used in tests / debugging)
    */
-  getJobInfo(flowId: string, userId: string): { job: ScheduledTask; cron?: string; timezone?: string; userId?: string } | undefined {
+  getJobInfo(
+    flowId: string,
+    userId: string
+  ): { job: ScheduledTask; cron?: string; timezone?: string; userId?: string } | undefined {
     const key = `${userId}:${flowId}`
     return this.jobs.get(key)
   }

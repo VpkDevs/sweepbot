@@ -69,14 +69,16 @@ function ScoreGauge({ score }: { score: number }) {
   const offset = circumference * (1 - pct)
 
   return (
-    <div className="relative flex items-center justify-center w-28 h-28">
+    <div className="relative flex h-28 w-28 items-center justify-center">
       <svg className="absolute inset-0 -rotate-90" viewBox="0 0 100 100">
         <circle cx="50" cy="50" r={radius} stroke="#27272a" strokeWidth="8" fill="none" />
         <circle
           cx="50"
           cy="50"
           r={radius}
-          stroke={score >= 80 ? '#22c55e' : score >= 60 ? '#eab308' : score >= 40 ? '#f97316' : '#ef4444'}
+          stroke={
+            score >= 80 ? '#22c55e' : score >= 60 ? '#eab308' : score >= 40 ? '#f97316' : '#ef4444'
+          }
           strokeWidth="8"
           fill="none"
           strokeDasharray={circumference}
@@ -85,9 +87,9 @@ function ScoreGauge({ score }: { score: number }) {
           className="transition-all duration-700"
         />
       </svg>
-      <div className="text-center z-10">
+      <div className="z-10 text-center">
         <p className={cn('text-2xl font-black tabular-nums', scoreColor(score))}>{score}</p>
-        <p className="text-[10px] text-zinc-500 -mt-0.5">{scoreLabel(score)}</p>
+        <p className="-mt-0.5 text-[10px] text-zinc-500">{scoreLabel(score)}</p>
       </div>
     </div>
   )
@@ -96,11 +98,11 @@ function ScoreGauge({ score }: { score: number }) {
 // ─── Trend badge ──────────────────────────────────────────────────────────────
 
 function TrendBadge({ trend }: { trend: 'up' | 'down' | 'stable' }) {
-  if (trend === 'stable') return <Minus className="w-4 h-4 text-zinc-500" />
+  if (trend === 'stable') return <Minus className="h-4 w-4 text-zinc-500" />
   return trend === 'up' ? (
-    <TrendingUp className="w-4 h-4 text-green-400" />
+    <TrendingUp className="h-4 w-4 text-green-400" />
   ) : (
-    <TrendingDown className="w-4 h-4 text-red-400" />
+    <TrendingDown className="h-4 w-4 text-red-400" />
   )
 }
 
@@ -152,26 +154,31 @@ function PlatformTrustCard({
     <button
       onClick={onSelect}
       className={cn(
-        'w-full text-left bg-zinc-900 rounded-xl border p-4 transition-all hover:border-zinc-600',
-        selected ? 'border-brand-500 ring-1 ring-brand-500/20' : 'border-zinc-800'
+        'w-full rounded-xl border bg-zinc-900 p-4 text-left transition-all hover:border-zinc-600',
+        selected ? 'border-brand-500 ring-brand-500/20 ring-1' : 'border-zinc-800'
       )}
     >
-      <div className="flex items-center gap-3 mb-3">
+      <div className="mb-3 flex items-center gap-3">
         <ScoreGauge score={entry.score} />
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold text-white truncate">{entry.platform_name}</p>
+            <p className="truncate text-sm font-semibold text-white">{entry.platform_name}</p>
             <TrendBadge trend={entry.trend} />
           </div>
-          <div className="flex items-center gap-1 mt-1">
+          <div className="mt-1 flex items-center gap-1">
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
-                className={cn('w-3 h-3', i < Math.round(entry.score / 20) ? 'text-amber-400 fill-amber-400' : 'text-zinc-700')}
+                className={cn(
+                  'h-3 w-3',
+                  i < Math.round(entry.score / 20)
+                    ? 'fill-amber-400 text-amber-400'
+                    : 'text-zinc-700'
+                )}
               />
             ))}
           </div>
-          <p className="text-xs text-zinc-500 mt-1">
+          <p className="mt-1 text-xs text-zinc-500">
             {entry.sample_count.toLocaleString()} data points
           </p>
         </div>
@@ -181,10 +188,10 @@ function PlatformTrustCard({
       <div className="space-y-1">
         {entry.factors.slice(0, 3).map((f) => (
           <div key={f.factor} className="flex items-center gap-2">
-            <span className="text-[10px] text-zinc-600 w-20 shrink-0 truncate capitalize">
+            <span className="w-20 shrink-0 truncate text-[10px] capitalize text-zinc-600">
               {f.factor.replace(/_/g, ' ')}
             </span>
-            <div className="flex-1 h-1 bg-zinc-800 rounded-full overflow-hidden">
+            <div className="h-1 flex-1 overflow-hidden rounded-full bg-zinc-800">
               <div
                 className={cn(
                   'h-full rounded-full',
@@ -193,7 +200,7 @@ function PlatformTrustCard({
                 )}
               />
             </div>
-            <span className={cn('text-[10px] tabular-nums w-5 text-right', scoreColor(f.score))}>
+            <span className={cn('w-5 text-right text-[10px] tabular-nums', scoreColor(f.score))}>
               {f.score}
             </span>
           </div>
@@ -216,17 +223,19 @@ function TrustDetailPanel({ entry }: { entry: TrustScore }) {
   }))
 
   return (
-    <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-5 space-y-5">
+    <div className="space-y-5 rounded-xl border border-zinc-800 bg-zinc-900 p-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-base font-bold text-white">{entry.platform_name}</h2>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <p className="mt-0.5 text-xs text-zinc-500">
             Last updated {new Date(entry.last_calculated_at).toLocaleDateString()}
           </p>
         </div>
-        <div className={cn('px-3 py-1.5 rounded-lg border text-center', scoreBg(entry.score))}>
-          <p className={cn('text-xl font-black tabular-nums', scoreColor(entry.score))}>{entry.score}</p>
+        <div className={cn('rounded-lg border px-3 py-1.5 text-center', scoreBg(entry.score))}>
+          <p className={cn('text-xl font-black tabular-nums', scoreColor(entry.score))}>
+            {entry.score}
+          </p>
           <p className="text-[10px] text-zinc-500">{scoreLabel(entry.score)}</p>
         </div>
       </div>
@@ -236,44 +245,46 @@ function TrustDetailPanel({ entry }: { entry: TrustScore }) {
         <RadarChart data={radarData}>
           <PolarGrid stroke="#3f3f46" />
           <PolarAngleAxis dataKey="subject" tick={{ fill: '#71717a', fontSize: 9 }} />
-          <Radar
-            name="Score"
-            dataKey="value"
-            stroke="#8b5cf6"
-            fill="#8b5cf6"
-            fillOpacity={0.2}
-          />
+          <Radar name="Score" dataKey="value" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.2} />
         </RadarChart>
       </ResponsiveContainer>
 
       {/* Factor breakdown */}
       <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">Factor Breakdown</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+          Factor Breakdown
+        </h3>
         {entry.factors.map((f: TrustFactor) => {
           const meta = FACTOR_META[f.factor]
           return (
             <div key={f.factor} className="space-y-1">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-zinc-300 capitalize">{f.factor.replace(/_/g, ' ')}</span>
+                  <span className="text-xs capitalize text-zinc-300">
+                    {f.factor.replace(/_/g, ' ')}
+                  </span>
                   <span className="text-[10px] text-zinc-600">({meta?.weight ?? 0}%)</span>
                 </div>
                 <span className={cn('text-sm font-bold tabular-nums', scoreColor(f.score))}>
                   {f.score}
                 </span>
               </div>
-              <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+              <div className="h-2 overflow-hidden rounded-full bg-zinc-800">
                 <div
                   className={cn(
                     'h-full rounded-full transition-all duration-500',
                     scoreWidthClass(f.score),
-                    f.score >= 80 ? 'bg-green-500' : f.score >= 60 ? 'bg-yellow-500' : f.score >= 40 ? 'bg-orange-500' : 'bg-red-500'
+                    f.score >= 80
+                      ? 'bg-green-500'
+                      : f.score >= 60
+                        ? 'bg-yellow-500'
+                        : f.score >= 40
+                          ? 'bg-orange-500'
+                          : 'bg-red-500'
                   )}
                 />
               </div>
-              {meta && (
-                <p className="text-[10px] text-zinc-600">{meta.description}</p>
-              )}
+              {meta && <p className="text-[10px] text-zinc-600">{meta.description}</p>}
             </div>
           )
         })}
@@ -282,7 +293,7 @@ function TrustDetailPanel({ entry }: { entry: TrustScore }) {
       {/* Recent TOS changes */}
       {entry.recent_tos_changes && entry.recent_tos_changes.length > 0 && (
         <div>
-          <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">
             Recent TOS Changes
           </h3>
           <div className="space-y-2">
@@ -290,19 +301,21 @@ function TrustDetailPanel({ entry }: { entry: TrustScore }) {
               <div
                 key={i}
                 className={cn(
-                  'flex items-start gap-2 px-3 py-2 rounded-lg text-xs',
-                  change.severity === 'major' ? 'bg-red-900/20 border border-red-800/50' : 'bg-zinc-800'
+                  'flex items-start gap-2 rounded-lg px-3 py-2 text-xs',
+                  change.severity === 'major'
+                    ? 'border border-red-800/50 bg-red-900/20'
+                    : 'bg-zinc-800'
                 )}
               >
                 {change.severity === 'major' ? (
-                  <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
+                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-400" />
                 ) : (
-                  <Info className="w-3.5 h-3.5 text-zinc-500 shrink-0 mt-0.5" />
+                  <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-zinc-500" />
                 )}
                 <div className="flex-1">
                   <p className="text-zinc-300">{change.summary}</p>
                   {'detected_at' in change && typeof change.detected_at === 'string' && (
-                    <p className="text-zinc-600 mt-0.5">
+                    <p className="mt-0.5 text-zinc-600">
                       {new Date(change.detected_at).toLocaleDateString()}
                     </p>
                   )}
@@ -336,15 +349,18 @@ function ScoreDistributionChart({ scores }: { scores: TrustScore[] }) {
         <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
         <XAxis dataKey="range" tick={{ fill: '#71717a', fontSize: 10 }} />
         <YAxis tick={{ fill: '#71717a', fontSize: 10 }} allowDecimals={false} />
-        <Tooltip
-          contentStyle={CHART_TOOLTIP_STYLE}
-          formatter={(v: number) => [v, 'Platforms']}
-        />
+        <Tooltip contentStyle={CHART_TOOLTIP_STYLE} formatter={(v: number) => [v, 'Platforms']} />
         <Bar dataKey="count" radius={[4, 4, 0, 0]}>
           {buckets.map((b, i) => {
             const midpoint = parseInt(b.range.split('-')[0] ?? '0', 10) + 10
             const fill =
-              midpoint >= 80 ? '#22c55e' : midpoint >= 60 ? '#eab308' : midpoint >= 40 ? '#f97316' : '#ef4444'
+              midpoint >= 80
+                ? '#22c55e'
+                : midpoint >= 60
+                  ? '#eab308'
+                  : midpoint >= 40
+                    ? '#f97316'
+                    : '#ef4444'
             return <Cell key={i} fill={fill} />
           })}
         </Bar>
@@ -380,30 +396,30 @@ export function TrustIndexPage() {
 
   const selectedEntry = selectedId ? scores.find((s) => s.platform_id === selectedId) : null
 
-  const avgScore = scores.length > 0
-    ? Math.round(scores.reduce((sum, s) => sum + s.score, 0) / scores.length)
-    : 0
+  const avgScore =
+    scores.length > 0 ? Math.round(scores.reduce((sum, s) => sum + s.score, 0) / scores.length) : 0
 
   const highCount = scores.filter((s) => s.score >= 80).length
   const riskCount = scores.filter((s) => s.score < 40).length
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="mx-auto max-w-7xl space-y-6 p-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white">SweepBot Trust Index™</h1>
-        <p className="text-zinc-400 text-sm mt-1">
-          Proprietary 0–100 platform trust scores built from real community data. The industry standard.
+        <p className="mt-1 text-sm text-zinc-400">
+          Proprietary 0–100 platform trust scores built from real community data. The industry
+          standard.
         </p>
       </div>
 
       {/* Methodology callout */}
-      <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4">
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
         <div className="flex items-start gap-3">
-          <Shield className="w-5 h-5 text-brand-400 shrink-0 mt-0.5" />
+          <Shield className="text-brand-400 mt-0.5 h-5 w-5 shrink-0" />
           <div>
             <h2 className="text-sm font-semibold text-white">How the Trust Index is calculated</h2>
-            <p className="text-xs text-zinc-400 mt-1">
+            <p className="mt-1 text-xs text-zinc-400">
               Each score is a weighted composite of 7 factors:{' '}
               <span className="text-zinc-300">Redemption Speed (20%)</span>,{' '}
               <span className="text-zinc-300">Rejection Rate (20%)</span>,{' '}
@@ -411,50 +427,70 @@ export function TrustIndexPage() {
               <span className="text-zinc-300">Community Satisfaction (15%)</span>,{' '}
               <span className="text-zinc-300">Bonus Generosity (10%)</span>,{' '}
               <span className="text-zinc-300">Support Responsiveness (10%)</span>, and{' '}
-              <span className="text-zinc-300">Regulatory Standing (10%)</span>.
-              Scores update daily as new crowdsourced data arrives.
+              <span className="text-zinc-300">Regulatory Standing (10%)</span>. Scores update daily
+              as new crowdsourced data arrives.
             </p>
           </div>
         </div>
       </div>
 
       {/* Summary stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {[
-          { label: 'Platforms Rated', value: scores.length, color: 'text-white', sub: 'and growing' },
-          { label: 'Industry Average', value: avgScore, color: scoreColor(avgScore), sub: 'across all platforms' },
-          { label: 'Trusted (80+)', value: highCount, color: 'text-green-400', sub: 'recommended platforms' },
-          { label: 'High Risk (<40)', value: riskCount, color: 'text-red-400', sub: 'exercise caution' },
+          {
+            label: 'Platforms Rated',
+            value: scores.length,
+            color: 'text-white',
+            sub: 'and growing',
+          },
+          {
+            label: 'Industry Average',
+            value: avgScore,
+            color: scoreColor(avgScore),
+            sub: 'across all platforms',
+          },
+          {
+            label: 'Trusted (80+)',
+            value: highCount,
+            color: 'text-green-400',
+            sub: 'recommended platforms',
+          },
+          {
+            label: 'High Risk (<40)',
+            value: riskCount,
+            color: 'text-red-400',
+            sub: 'exercise caution',
+          },
         ].map(({ label, value, color, sub }) => (
-          <div key={label} className="bg-zinc-900 rounded-xl border border-zinc-800 p-4">
-            <p className="text-xs text-zinc-500 uppercase tracking-wide">{label}</p>
-            <p className={cn('text-3xl font-black tabular-nums mt-1', color)}>{value}</p>
-            <p className="text-xs text-zinc-600 mt-0.5">{sub}</p>
+          <div key={label} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+            <p className="text-xs uppercase tracking-wide text-zinc-500">{label}</p>
+            <p className={cn('mt-1 text-3xl font-black tabular-nums', color)}>{value}</p>
+            <p className="mt-0.5 text-xs text-zinc-600">{sub}</p>
           </div>
         ))}
       </div>
 
       {/* Score distribution */}
       {scores.length > 0 && (
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-5">
-          <h2 className="text-sm font-semibold text-zinc-300 mb-4">Score Distribution</h2>
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+          <h2 className="mb-4 text-sm font-semibold text-zinc-300">Score Distribution</h2>
           <ScoreDistributionChart scores={scores} />
         </div>
       )}
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid gap-6 lg:grid-cols-3">
         {/* Platform list */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="space-y-4 lg:col-span-2">
           {/* Search + sort */}
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
               <input
                 type="text"
                 placeholder="Search platforms…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="focus:ring-brand-500 w-full rounded-lg border border-zinc-700 bg-zinc-900 py-2 pl-9 pr-4 text-sm text-white placeholder-zinc-600 focus:outline-none focus:ring-2"
               />
             </div>
             <select
@@ -462,7 +498,7 @@ export function TrustIndexPage() {
               title="Sort trust index platforms"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="bg-zinc-900 border border-zinc-700 text-zinc-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="focus:ring-brand-500 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-300 focus:outline-none focus:ring-2"
             >
               <option value="score">Sort: Score</option>
               <option value="name">Sort: Name</option>
@@ -471,18 +507,21 @@ export function TrustIndexPage() {
           </div>
 
           {isLoading ? (
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="bg-zinc-900 rounded-xl border border-zinc-800 p-4 h-40 animate-pulse" />
+                <div
+                  key={i}
+                  className="h-40 animate-pulse rounded-xl border border-zinc-800 bg-zinc-900 p-4"
+                />
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-12 text-center">
-              <Search className="w-8 h-8 text-zinc-600 mx-auto mb-3" />
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-12 text-center">
+              <Search className="mx-auto mb-3 h-8 w-8 text-zinc-600" />
               <p className="text-sm text-zinc-500">No platforms match "{search}"</p>
             </div>
           ) : (
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               {filtered.map((entry) => (
                 <PlatformTrustCard
                   key={entry.platform_id}
@@ -502,15 +541,19 @@ export function TrustIndexPage() {
           {selectedEntry ? (
             <TrustDetailPanel entry={selectedEntry} />
           ) : (
-            <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6 text-center space-y-3">
-              <Shield className="w-8 h-8 text-zinc-600 mx-auto" />
-              <p className="text-sm text-zinc-500">Select a platform to see its full Trust Index breakdown.</p>
+            <div className="space-y-3 rounded-xl border border-zinc-800 bg-zinc-900 p-6 text-center">
+              <Shield className="mx-auto h-8 w-8 text-zinc-600" />
+              <p className="text-sm text-zinc-500">
+                Select a platform to see its full Trust Index breakdown.
+              </p>
             </div>
           )}
 
           {/* Legend */}
-          <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4 space-y-2">
-            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">Score Guide</h3>
+          <div className="space-y-2 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+              Score Guide
+            </h3>
             {[
               { range: '90–100', label: 'Excellent', color: 'text-green-400', icon: CheckCircle2 },
               { range: '80–89', label: 'Good', color: 'text-green-400', icon: CheckCircle2 },
@@ -519,7 +562,7 @@ export function TrustIndexPage() {
               { range: '0–39', label: 'High Risk', color: 'text-red-400', icon: AlertTriangle },
             ].map(({ range, label, color, icon: Icon }) => (
               <div key={range} className="flex items-center gap-2">
-                <Icon className={cn('w-3.5 h-3.5', color)} />
+                <Icon className={cn('h-3.5 w-3.5', color)} />
                 <span className={cn('text-xs font-medium tabular-nums', color)}>{range}</span>
                 <span className="text-xs text-zinc-500">{label}</span>
               </div>
@@ -527,18 +570,18 @@ export function TrustIndexPage() {
           </div>
 
           {/* Data moat CTA */}
-          <div className="bg-gradient-to-br from-brand-950/60 to-zinc-900 rounded-xl border border-brand-800/40 p-4">
+          <div className="from-brand-950/60 border-brand-800/40 rounded-xl border bg-gradient-to-br to-zinc-900 p-4">
             <div className="flex items-start gap-2">
-              <Shield className="w-4 h-4 text-brand-400 shrink-0 mt-0.5" />
+              <Shield className="text-brand-400 mt-0.5 h-4 w-4 shrink-0" />
               <div>
-                <p className="text-xs font-semibold text-brand-300">Become a certified platform</p>
-                <p className="text-xs text-zinc-500 mt-1">
-                  Platforms with 80+ Trust Index scores can earn the SweepBot Certified badge.
-                  This signal drives player acquisition.
+                <p className="text-brand-300 text-xs font-semibold">Become a certified platform</p>
+                <p className="mt-1 text-xs text-zinc-500">
+                  Platforms with 80+ Trust Index scores can earn the SweepBot Certified badge. This
+                  signal drives player acquisition.
                 </p>
                 <a
                   href="mailto:partnerships@sweepbot.io"
-                  className="inline-block mt-2 text-xs font-medium text-brand-400 hover:text-brand-300 transition-colors"
+                  className="text-brand-400 hover:text-brand-300 mt-2 inline-block text-xs font-medium transition-colors"
                 >
                   Partner with us →
                 </a>

@@ -121,9 +121,7 @@ export class StorageManager {
   /**
    * Get multiple values
    */
-  async getMultiple<K extends keyof StorageSchema>(
-    keys: K[],
-  ): Promise<Pick<StorageSchema, K>> {
+  async getMultiple<K extends keyof StorageSchema>(keys: K[]): Promise<Pick<StorageSchema, K>> {
     await this.init()
     const result = {} as Pick<StorageSchema, K>
     for (const key of keys) {

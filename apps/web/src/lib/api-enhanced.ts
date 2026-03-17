@@ -66,11 +66,11 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   const {
     data: { session },
   } = await supabase.auth.getSession()
-  
+
   if (!session?.access_token) {
     return { 'Content-Type': 'application/json' }
   }
-  
+
   return {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${session.access_token}`,
@@ -124,20 +124,11 @@ async function fetchWithTimeout(
 /**
  * Enhanced request function with retry logic
  */
-async function request<T>(
-  path: string,
-  config: RequestConfig = {}
-): Promise<T> {
-  const {
-    timeout = 30000,
-    retries = 3,
-    retryDelay = 1000,
-    skipCache = false,
-    ...options
-  } = config
+async function request<T>(path: string, config: RequestConfig = {}): Promise<T> {
+  const { timeout = 30000, retries = 3, retryDelay = 1000, skipCache = false, ...options } = config
 
   const cacheKey = `${options.method || 'GET'}:${path}:${JSON.stringify(options.body)}`
-  
+
   // Check for in-flight duplicate request
   if (!skipCache && (!options.method || options.method === 'GET')) {
     const pending = pendingRequests.get(cacheKey)
@@ -152,10 +143,10 @@ async function request<T>(
       const headers = await getAuthHeaders()
       const url = `${API_BASE}${path}`
 
-      logger.debug('API request', { 
-        method: options.method || 'GET', 
-        path, 
-        attempt: attempt + 1 
+      logger.debug('API request', {
+        method: options.method || 'GET',
+        path,
+        attempt: attempt + 1,
       })
 
       const response = await fetchWithTimeout(
@@ -181,20 +172,19 @@ async function request<T>(
           response.status,
           json.error.details
         )
-        
+
         logger.error('API error response', {
           path,
           code: json.error.code,
           message: json.error.message,
           status: response.status,
         })
-        
+
         throw error
       }
 
       logger.debug('API request successful', { path })
       return json.data
-      
     } catch (error) {
       // Don't retry on client errors (4xx) or specific error types
       const shouldRetry =
@@ -211,7 +201,7 @@ async function request<T>(
           delayMs: delay,
           error: error instanceof Error ? error.message : 'Unknown error',
         })
-        
+
         await sleep(delay)
         return executeRequest(attempt + 1)
       }
@@ -220,11 +210,11 @@ async function request<T>(
       if (error instanceof ApiError) {
         throw error
       }
-      
+
       if (error instanceof TypeError) {
         throw new NetworkError('Network request failed. Check your connection.')
       }
-      
+
       if (error instanceof SyntaxError) {
         throw new ApiError('PARSE_ERROR', 'Failed to parse server response', 500)
       }
@@ -234,7 +224,7 @@ async function request<T>(
         path,
         error: error instanceof Error ? error.message : 'Unknown error',
       })
-      
+
       throw new ApiError(
         'UNKNOWN_ERROR',
         error instanceof Error ? error.message : 'An unexpected error occurred',
@@ -245,7 +235,7 @@ async function request<T>(
 
   // Create promise and cache it for GET requests
   const requestPromise = executeRequest()
-  
+
   if (!skipCache && (!options.method || options.method === 'GET')) {
     pendingRequests.set(cacheKey, requestPromise)
     requestPromise.finally(() => {
@@ -274,8 +264,7 @@ export const api = {
     platforms: () => request<unknown[]>('/user/platforms'),
     addPlatform: (data: Record<string, unknown>) =>
       request('/user/platforms', { method: 'POST', body: JSON.stringify(data) }),
-    removePlatform: (id: string) =>
-      request(`/user/platforms/${id}`, { method: 'DELETE' }),
+    removePlatform: (id: string) => request(`/user/platforms/${id}`, { method: 'DELETE' }),
 
     // Subscription & billing
     subscription: () => request<Record<string, unknown>>('/user/subscription'),
@@ -297,10 +286,13 @@ export const api = {
   // Auth
   auth: {
     signIn: (email: string, password: string) =>
-      request<{ user: Record<string, unknown>; session: Record<string, unknown> }>('/auth/sign-in', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-      }),
+      request<{ user: Record<string, unknown>; session: Record<string, unknown> }>(
+        '/auth/sign-in',
+        {
+          method: 'POST',
+          body: JSON.stringify({ email, password }),
+        }
+      ),
     signUp: (email: string, password: string) =>
       request<{ user: Record<string, unknown> }>('/auth/sign-up', {
         method: 'POST',
@@ -323,7 +315,10 @@ export const api = {
     create: (data: Record<string, unknown>) =>
       request<Record<string, unknown>>('/sessions', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: Record<string, unknown>) =>
-      request<Record<string, unknown>>(`/sessions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+      request<Record<string, unknown>>(`/sessions/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
     end: (id: string) =>
       request<Record<string, unknown>>(`/sessions/${id}/end`, { method: 'POST' }),
     delete: (id: string) => request(`/sessions/${id}`, { method: 'DELETE' }),
@@ -367,9 +362,15 @@ export const api = {
     },
     get: (id: string) => request<Record<string, unknown>>(`/redemptions/${id}`),
     create: (data: Record<string, unknown>) =>
-      request<Record<string, unknown>>('/redemptions', { method: 'POST', body: JSON.stringify(data) }),
+      request<Record<string, unknown>>('/redemptions', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
     update: (id: string, data: Record<string, unknown>) =>
-      request<Record<string, unknown>>(`/redemptions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+      request<Record<string, unknown>>(`/redemptions/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
     delete: (id: string) => request(`/redemptions/${id}`, { method: 'DELETE' }),
   },
 
@@ -378,7 +379,10 @@ export const api = {
     list: () => request<unknown[]>('/trust-index'),
     get: (platform: string) => request<Record<string, unknown>>(`/trust-index/${platform}`),
     vote: (platform: string, rating: number, comment?: string) =>
-      request('/trust-index/vote', { method: 'POST', body: JSON.stringify({ platform, rating, comment }) }),
+      request('/trust-index/vote', {
+        method: 'POST',
+        body: JSON.stringify({ platform, rating, comment }),
+      }),
   },
 
   // Flows
@@ -388,7 +392,10 @@ export const api = {
     create: (data: Record<string, unknown>) =>
       request<Record<string, unknown>>('/flows', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: Record<string, unknown>) =>
-      request<Record<string, unknown>>(`/flows/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+      request<Record<string, unknown>>(`/flows/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
     delete: (id: string) => request(`/flows/${id}`, { method: 'DELETE' }),
     execute: (id: string) =>
       request<Record<string, unknown>>(`/flows/${id}/execute`, { method: 'POST' }),
@@ -418,12 +425,9 @@ export const api = {
       const qs = new URLSearchParams(params as Record<string, string>).toString()
       return request<unknown[]>(`/notifications${qs ? `?${qs}` : ''}`)
     },
-    markRead: (id: string) =>
-      request(`/notifications/${id}/read`, { method: 'POST' }),
-    markAllRead: () =>
-      request('/notifications/read-all', { method: 'POST' }),
-    delete: (id: string) =>
-      request(`/notifications/${id}`, { method: 'DELETE' }),
+    markRead: (id: string) => request(`/notifications/${id}/read`, { method: 'POST' }),
+    markAllRead: () => request('/notifications/read-all', { method: 'POST' }),
+    delete: (id: string) => request(`/notifications/${id}`, { method: 'DELETE' }),
   },
 
   // Export error classes for usage in components

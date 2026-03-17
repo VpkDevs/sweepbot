@@ -3,51 +3,57 @@ import { Zap } from 'lucide-react'
 
 export function AuthLayout() {
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col noise relative overflow-hidden">
+    <div className="noise relative flex min-h-screen flex-col overflow-hidden bg-zinc-950">
       {/* Ambient backgrounds */}
-      <div className="fixed inset-0 mesh-gradient-auth pointer-events-none" />
-      <div className="fixed inset-0 dot-grid opacity-20 pointer-events-none" />
+      <div className="mesh-gradient-auth pointer-events-none fixed inset-0" />
+      <div className="dot-grid pointer-events-none fixed inset-0 opacity-20" />
 
       {/* Morphing blobs */}
-      <div className="fixed pointer-events-none inset-0">
-        <div className="blob blob-brand w-[500px] h-[500px] top-[-10%] left-[20%] opacity-25" />
-        <div className="blob blob-accent w-[400px] h-[400px] bottom-[5%] right-[15%] opacity-15" />
-        <div className="blob blob-warm w-[300px] h-[300px] top-[40%] left-[-5%] opacity-10" />
+      <div className="pointer-events-none fixed inset-0">
+        <div className="blob blob-brand left-[20%] top-[-10%] h-[500px] w-[500px] opacity-25" />
+        <div className="blob blob-accent bottom-[5%] right-[15%] h-[400px] w-[400px] opacity-15" />
+        <div className="blob blob-warm left-[-5%] top-[40%] h-[300px] w-[300px] opacity-10" />
       </div>
 
       {/* Header */}
-      <header className="relative flex items-center justify-between px-6 lg:px-8 py-5 animate-fade-in-down z-10">
-        <Link to="/sign-in" className="flex items-center gap-2.5 group">
-          <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 shadow-xl shadow-brand-500/25">
-            <Zap className="w-5 h-5 text-white" />
-            <div className="absolute inset-0 rounded-xl bg-brand-400/20 animate-glow-pulse" />
+      <header className="animate-fade-in-down relative z-10 flex items-center justify-between px-6 py-5 lg:px-8">
+        <Link to="/sign-in" className="group flex items-center gap-2.5">
+          <div className="from-brand-500 to-brand-700 shadow-brand-500/25 relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br shadow-xl">
+            <Zap className="h-5 w-5 text-white" />
+            <div className="bg-brand-400/20 animate-glow-pulse absolute inset-0 rounded-xl" />
           </div>
-          <span className="text-lg font-bold text-white tracking-tight">SweepBot</span>
+          <span className="text-lg font-bold tracking-tight text-white">SweepBot</span>
         </Link>
         <Link
           to="/pricing"
-          className="text-sm text-zinc-400 hover:text-white transition-colors font-medium gradient-underline"
+          className="gradient-underline text-sm font-medium text-zinc-400 transition-colors hover:text-white"
         >
           Pricing
         </Link>
       </header>
 
       {/* Content */}
-      <div className="relative flex-1 flex items-center justify-center px-4 py-12 z-10">
-        <div className="w-full max-w-sm animate-reveal-up [animation-delay:100ms]">
+      <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-12">
+        <div className="animate-reveal-up w-full max-w-sm [animation-delay:100ms]">
           <Outlet />
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="relative px-6 py-4 text-center z-10 animate-fade-in [animation-delay:400ms]">
+      <footer className="animate-fade-in relative z-10 px-6 py-4 text-center [animation-delay:400ms]">
         <p className="text-xs text-zinc-600">
           SweepBot is a transparency and productivity tool. Not a gambling product.{' '}
-          <a href="#" className="hover:text-zinc-400 underline underline-offset-2 transition-colors">
+          <a
+            href="#"
+            className="underline underline-offset-2 transition-colors hover:text-zinc-400"
+          >
             Terms
           </a>{' '}
           ·{' '}
-          <a href="#" className="hover:text-zinc-400 underline underline-offset-2 transition-colors">
+          <a
+            href="#"
+            className="underline underline-offset-2 transition-colors hover:text-zinc-400"
+          >
             Privacy
           </a>
         </p>

@@ -25,27 +25,30 @@ export function MagneticButton({
   const [transform, setTransform] = useState({ x: 0, y: 0 })
   const [isNear, setIsNear] = useState(false)
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!ref.current) return
-    const rect = ref.current.getBoundingClientRect()
-    const centerX = rect.left + rect.width / 2
-    const centerY = rect.top + rect.height / 2
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (!ref.current) return
+      const rect = ref.current.getBoundingClientRect()
+      const centerX = rect.left + rect.width / 2
+      const centerY = rect.top + rect.height / 2
 
-    const distX = e.clientX - centerX
-    const distY = e.clientY - centerY
-    const distance = Math.sqrt(distX * distX + distY * distY)
+      const distX = e.clientX - centerX
+      const distY = e.clientY - centerY
+      const distance = Math.sqrt(distX * distX + distY * distY)
 
-    if (distance < radius) {
-      setIsNear(true)
-      setTransform({
-        x: distX * strength,
-        y: distY * strength,
-      })
-    } else {
-      setIsNear(false)
-      setTransform({ x: 0, y: 0 })
-    }
-  }, [strength, radius])
+      if (distance < radius) {
+        setIsNear(true)
+        setTransform({
+          x: distX * strength,
+          y: distY * strength,
+        })
+      } else {
+        setIsNear(false)
+        setTransform({ x: 0, y: 0 })
+      }
+    },
+    [strength, radius]
+  )
 
   const handleMouseLeave = useCallback(() => {
     setIsNear(false)

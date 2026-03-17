@@ -1,7 +1,7 @@
 # SweepBot Extension — Chrome Web Store Submission Checklist
 
-*Use this before every submission or resubmission. Chrome reviews take 1–5 business days.*
-*A rejection resets the clock. Check everything here first.*
+_Use this before every submission or resubmission. Chrome reviews take 1–5 business days._
+_A rejection resets the clock. Check everything here first._
 
 ---
 
@@ -29,14 +29,14 @@
 
 ### Permission Justifications (Required in Store Listing)
 
-| Permission | Justification |
-|-----------|--------------|
-| `storage` | Saves session tracking data and user preferences locally |
-| `alarms` | Schedules periodic data sync without persistent background process |
-| `notifications` | Alerts user to session events (time limits, bonus available) |
-| `scripting` | Injects the RTP HUD overlay and affiliate banners on casino pages |
-| `tabs` | Detects when user navigates to/from a tracked casino page |
-| `webRequest` | Reads casino API responses to capture spin/bet data for RTP calculation |
+| Permission      | Justification                                                           |
+| --------------- | ----------------------------------------------------------------------- |
+| `storage`       | Saves session tracking data and user preferences locally                |
+| `alarms`        | Schedules periodic data sync without persistent background process      |
+| `notifications` | Alerts user to session events (time limits, bonus available)            |
+| `scripting`     | Injects the RTP HUD overlay and affiliate banners on casino pages       |
+| `tabs`          | Detects when user navigates to/from a tracked casino page               |
+| `webRequest`    | Reads casino API responses to capture spin/bet data for RTP calculation |
 
 ---
 
@@ -67,6 +67,7 @@
 Test each of these manually in a fresh Chrome profile before submitting:
 
 ### Platform Detection
+
 - [ ] Navigate to chumbacasino.com/play — extension icon shows "active" state
 - [ ] Navigate to luckylandslots.com — detected
 - [ ] Navigate to stake.us — detected
@@ -74,12 +75,14 @@ Test each of these manually in a fresh Chrome profile before submitting:
 - [ ] Navigate to a non-casino site (google.com) — extension shows "inactive" / neutral state
 
 ### Session Tracking
+
 - [ ] Open a casino game in supported platform → session starts (visible in popup)
 - [ ] Play several rounds → spin count increments in popup HUD
 - [ ] RTP updates in real-time as spins are captured
 - [ ] Close casino tab → session ends and is stored
 
 ### HUD Overlay
+
 - [ ] HUD appears on game pages (not the lobby — just game pages)
 - [ ] HUD shows: current RTP, spins counted, wagered, won
 - [ ] HUD can be collapsed/hidden via toggle
@@ -87,23 +90,27 @@ Test each of these manually in a fresh Chrome profile before submitting:
 - [ ] HUD does not appear on non-casino sites
 
 ### Popup
+
 - [ ] Popup opens on extension icon click
 - [ ] Popup shows current session stats if session is active
 - [ ] Popup shows "No active session" if not on a casino game page
 - [ ] "Open Dashboard" link in popup opens sweepbot.app correctly
 
 ### Affiliate Banners
+
 - [ ] Navigate to a casino signup/registration page → banner appears
 - [ ] Banner is clearly labeled as a SweepBot referral
 - [ ] Banner has a dismiss/close button
 - [ ] Banner click correctly redirects to platform with SweepBot affiliate code
 
 ### Settings / Options Page
+
 - [ ] Options page loads without errors
 - [ ] Toggling HUD visibility persists across browser restart
 - [ ] Disconnect from SweepBot account works
 
 ### Notifications
+
 - [ ] Session time limit notification fires when enabled and limit is reached
 - [ ] Notification can be clicked to open popup
 
@@ -112,12 +119,15 @@ Test each of these manually in a fresh Chrome profile before submitting:
 ## Store Listing Content
 
 ### Short Description (≤ 132 characters)
+
 ```
 Track RTP, automate bonus claims, and analyze performance across 20+ sweepstakes casino platforms.
 ```
+
 (Adjust as needed; must be ≤132 characters)
 
 ### Detailed Description — Required Elements
+
 - [ ] Clear explanation of what the extension does
 - [ ] What data is collected and why
 - [ ] What permissions are needed and why
@@ -127,6 +137,7 @@ Track RTP, automate bonus claims, and analyze performance across 20+ sweepstakes
 - [ ] Responsible play statement
 
 ### Screenshots — Required
+
 - [ ] At least 3 screenshots (1280×800 OR 640×400, PNG)
 - [ ] Screenshot 1: HUD overlay on a casino game page
 - [ ] Screenshot 2: Extension popup with session stats
@@ -134,6 +145,7 @@ Track RTP, automate bonus claims, and analyze performance across 20+ sweepstakes
 - [ ] Screenshots must not contain real winnings or any misleading claims
 
 ### Category
+
 - [ ] Category: **Productivity** (not "Shopping" or "News")
 - [ ] Language: English (United States)
 
@@ -141,16 +153,16 @@ Track RTP, automate bonus claims, and analyze performance across 20+ sweepstakes
 
 ## Common Rejection Reasons (Avoid These)
 
-| Reason | Prevention |
-|--------|-----------|
+| Reason                                   | Prevention                                                 |
+| ---------------------------------------- | ---------------------------------------------------------- |
 | Privacy policy doesn't match permissions | Match every permission to a clear privacy policy statement |
-| Requesting unnecessary permissions | Audit manifest — only keep what you actually use |
-| Remote code execution | Double-check no eval(), no dynamic script loading |
-| Misleading store listing | Don't claim the extension can help users "win" at casinos |
-| UI clutters or breaks casino pages | Test HUD on all supported platforms before submission |
-| Affiliate links not disclosed | Always label referral links clearly |
-| Obfuscated code | Confirm build output is readable (source maps are fine) |
-| Missing 128px icon | Verify icons array in manifest |
+| Requesting unnecessary permissions       | Audit manifest — only keep what you actually use           |
+| Remote code execution                    | Double-check no eval(), no dynamic script loading          |
+| Misleading store listing                 | Don't claim the extension can help users "win" at casinos  |
+| UI clutters or breaks casino pages       | Test HUD on all supported platforms before submission      |
+| Affiliate links not disclosed            | Always label referral links clearly                        |
+| Obfuscated code                          | Confirm build output is readable (source maps are fine)    |
+| Missing 128px icon                       | Verify icons array in manifest                             |
 
 ---
 
@@ -173,5 +185,5 @@ Track RTP, automate bonus claims, and analyze performance across 20+ sweepstakes
 
 ---
 
-*Owner: Vincent Kinney / APPYness*
-*Document version: 1.0 | 2026-03-05*
+_Owner: Vincent Kinney / APPYness_
+_Document version: 1.0 | 2026-03-05_

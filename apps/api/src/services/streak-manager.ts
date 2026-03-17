@@ -43,7 +43,7 @@ export class StreakManagerService {
    * - Checks and awards milestones.
    */
   async recordActivity(
-    userId: string,
+    userId: string
   ): Promise<{ currentStreak: number; milestoneReached?: number }> {
     const today = new Date()
     const todayStr = today.toISOString().split('T')[0]!
@@ -132,7 +132,9 @@ export class StreakManagerService {
             title: `🔥 ${days}-Day Streak!`,
             body: `You've maintained a ${days}-day activity streak. Keep it up!`,
             data: { milestone: days, streak: newStreak },
-          }).catch((err: unknown) => logger.warn({ err, userId, days }, 'Failed to create streak notification'))
+          }).catch((err: unknown) =>
+            logger.warn({ err, userId, days }, 'Failed to create streak notification')
+          )
         }
       }
     }

@@ -1,9 +1,25 @@
 import { z } from 'zod'
 
-export const RedemptionStatus = z.enum(['pending', 'processing', 'approved', 'rejected', 'received', 'cancelled'])
+export const RedemptionStatus = z.enum([
+  'pending',
+  'processing',
+  'approved',
+  'rejected',
+  'received',
+  'cancelled',
+])
 export type RedemptionStatus = z.infer<typeof RedemptionStatus>
 
-export const PaymentMethod = z.enum(['paypal', 'check', 'ach', 'venmo', 'cashapp', 'giftcard', 'crypto', 'other'])
+export const PaymentMethod = z.enum([
+  'paypal',
+  'check',
+  'ach',
+  'venmo',
+  'cashapp',
+  'giftcard',
+  'crypto',
+  'other',
+])
 export type PaymentMethod = z.infer<typeof PaymentMethod>
 
 export const RedemptionSchema = z.object({

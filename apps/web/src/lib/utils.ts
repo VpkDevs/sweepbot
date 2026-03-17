@@ -27,7 +27,13 @@ export function formatUSD(amount: number): string {
 export function formatRTP(rtp: number): { text: string; className: string } {
   const text = `${rtp.toFixed(2)}%`
   const className =
-    rtp >= 100 ? 'text-win' : rtp >= 95 ? 'text-green-400' : rtp >= 90 ? 'text-yellow-400' : 'text-loss'
+    rtp >= 100
+      ? 'text-win'
+      : rtp >= 95
+        ? 'text-green-400'
+        : rtp >= 90
+          ? 'text-yellow-400'
+          : 'text-loss'
   return { text, className }
 }
 
@@ -67,10 +73,14 @@ export function trustScoreLabel(score: number): string {
 /** Confidence level badge color */
 export function confidenceColor(level: string): string {
   switch (level) {
-    case 'high': return 'text-green-400 bg-green-400/10'
-    case 'medium': return 'text-yellow-400 bg-yellow-400/10'
-    case 'low': return 'text-orange-400 bg-orange-400/10'
-    default: return 'text-zinc-500 bg-zinc-500/10'
+    case 'high':
+      return 'text-green-400 bg-green-400/10'
+    case 'medium':
+      return 'text-yellow-400 bg-yellow-400/10'
+    case 'low':
+      return 'text-orange-400 bg-orange-400/10'
+    default:
+      return 'text-zinc-500 bg-zinc-500/10'
   }
 }
 

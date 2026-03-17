@@ -5,7 +5,17 @@ interface SentimentResult {
   tags: string[]
 }
 
-const POSITIVE_KEYWORDS = ['big win', 'jackpot', 'amazing', 'great', 'love', 'nice', 'bonus', 'won', 'winning']
+const POSITIVE_KEYWORDS = [
+  'big win',
+  'jackpot',
+  'amazing',
+  'great',
+  'love',
+  'nice',
+  'bonus',
+  'won',
+  'winning',
+]
 const NEGATIVE_KEYWORDS = ['lost', 'terrible', 'bad', 'hate', 'boring']
 const FRUSTRATED_KEYWORDS = ['frustrating', 'frustrated', 'ugh', 'tilt', "can't"]
 const EXCITED_KEYWORDS = ['incredible', 'unbelievable', 'wow', 'insane', 'omg', 'legendary']

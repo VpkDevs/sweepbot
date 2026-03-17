@@ -1,9 +1,4 @@
-import {
-  createRootRouteWithContext,
-  createRoute,
-  Outlet,
-  redirect,
-} from '@tanstack/react-router'
+import { createRootRouteWithContext, createRoute, Outlet, redirect } from '@tanstack/react-router'
 import type { QueryClient } from '@tanstack/react-query'
 import type { AuthState } from './stores/auth'
 
@@ -92,8 +87,8 @@ const appRoute = createRoute({
   beforeLoad: async ({ context }) => {
     await context.auth.refreshSession()
     // In dev with stub Supabase creds, skip auth so the UI is previewable
-    const isDevStub = import.meta.env.DEV &&
-      import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')
+    const isDevStub =
+      import.meta.env.DEV && import.meta.env.VITE_SUPABASE_URL?.includes('placeholder')
     if (!context.auth.user && !isDevStub) {
       throw redirect({ to: '/sign-in' })
     }

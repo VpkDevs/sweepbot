@@ -39,8 +39,8 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
         `analytics:portfolio:${userId}:${currency}`,
         async () => {
           const [totals, platformBreakdown, recentActivity, streaks] = await Promise.all([
-        // All-time totals
-        dbQuery(sql`
+            // All-time totals
+            dbQuery(sql`
           SELECT
             COUNT(DISTINCT s.platform_id) AS active_platforms,
             COUNT(*) AS total_sessions,
@@ -59,8 +59,8 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
             AND s.ended_at IS NOT NULL
         `),
 
-        // Per-platform breakdown
-        dbQuery(sql`
+            // Per-platform breakdown
+            dbQuery(sql`
           SELECT
             p.id AS platform_id,
             p.name AS platform_name,
@@ -84,8 +84,8 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
           LIMIT 20
         `),
 
-        // Last 7 days activity summary
-        dbQuery(sql`
+            // Last 7 days activity summary
+            dbQuery(sql`
           SELECT
             DATE(s.started_at) AS play_date,
             COUNT(*) AS session_count,
@@ -100,8 +100,8 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
           ORDER BY play_date ASC
         `),
 
-        // Win/loss streak data
-        dbQuery(sql`
+            // Win/loss streak data
+            dbQuery(sql`
           WITH session_results AS (
             SELECT
               id,
@@ -143,7 +143,7 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
             GROUP BY result, grp
           ) streaks
         `),
-      ])
+          ])
 
           return {
             totals: totals.rows[0] ?? null,
@@ -152,7 +152,7 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
             streaks: streaks.rows[0] ?? { longest_win_streak: 0, longest_loss_streak: 0 },
           }
         },
-        { ttl: 60, prefix: 'sweepbot' }, // 60-second TTL — portfolio is expensive but needs to feel fresh
+        { ttl: 60, prefix: 'sweepbot' } // 60-second TTL — portfolio is expensive but needs to feel fresh
       )
 
       return reply.send({
@@ -177,16 +177,12 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
       const userId = request.user!.id
       const query = RTPQuerySchema.parse(request.query)
 
-      const platformFilter = query.platformId
-        ? sql`AND s.platform_id = ${query.platformId}`
-        : sql``
+      const platformFilter = query.platformId ? sql`AND s.platform_id = ${query.platformId}` : sql``
       const gameFilter = query.gameId ? sql`AND s.game_id = ${query.gameId}` : sql``
       const startFilter = query.startDate
         ? sql`AND s.started_at >= ${new Date(query.startDate)}`
         : sql``
-      const endFilter = query.endDate
-        ? sql`AND s.started_at <= ${new Date(query.endDate)}`
-        : sql``
+      const endFilter = query.endDate ? sql`AND s.started_at <= ${new Date(query.endDate)}` : sql``
 
       const truncExpr =
         query.granularity === 'month'
@@ -224,7 +220,8 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
         `),
 
         // RTP over time
-        unsafeQuery(`
+        unsafeQuery(
+          `
           SELECT
             ${truncExpr} AS period,
             COUNT(*) AS session_count,
@@ -238,7 +235,9 @@ export async function analyticsRoutes(app: FastifyInstance): Promise<void> {
             AND s.total_wagered > 0
           GROUP BY ${truncExpr}
           ORDER BY period ASC
-        `, [userId]),
+        `,
+          [userId]
+        ),
 
         // RTP by game (top 10 by wagered)
         dbQuery(sql`

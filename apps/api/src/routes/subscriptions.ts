@@ -37,11 +37,7 @@ export async function subscriptionRoutes(app: FastifyInstance): Promise<void> {
         const body = StartTrialBody.parse(request.body)
         const user = request.user!
 
-        const result = await trialManager.startTrial(
-          user.id,
-          user.email ?? '',
-          body.displayName,
-        )
+        const result = await trialManager.startTrial(user.id, user.email ?? '', body.displayName)
 
         return reply.code(201).send({
           success: true,
@@ -54,7 +50,10 @@ export async function subscriptionRoutes(app: FastifyInstance): Promise<void> {
         if (err instanceof Error && err.message === 'TRIAL_ALREADY_USED') {
           return reply.code(409).send({
             success: false,
-            error: { code: 'TRIAL_ALREADY_USED', message: 'You have already used your free trial.' },
+            error: {
+              code: 'TRIAL_ALREADY_USED',
+              message: 'You have already used your free trial.',
+            },
           })
         }
         app.log.error({ err }, 'start-trial error')
@@ -63,7 +62,7 @@ export async function subscriptionRoutes(app: FastifyInstance): Promise<void> {
           error: { code: 'INTERNAL_ERROR', message: 'Failed to start trial' },
         })
       }
-    },
+    }
   )
 
   // ─── GET /subscriptions/trial-status ──────────────────────────────────────
@@ -96,7 +95,7 @@ export async function subscriptionRoutes(app: FastifyInstance): Promise<void> {
           error: { code: 'INTERNAL_ERROR', message: 'Failed to retrieve trial status' },
         })
       }
-    },
+    }
   )
 
   // ─── POST /subscriptions/expire-trials ────────────────────────────────────
@@ -123,6 +122,6 @@ export async function subscriptionRoutes(app: FastifyInstance): Promise<void> {
           error: { code: 'INTERNAL_ERROR', message: 'Failed to expire trials' },
         })
       }
-    },
+    }
   )
 }

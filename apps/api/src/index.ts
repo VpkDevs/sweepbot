@@ -17,10 +17,7 @@ const start = async (): Promise<void> => {
       port: env.API_PORT,
       host: env.API_HOST,
     })
-    logger.info(
-      { port: env.API_PORT, env: env.NODE_ENV },
-      '🚀 SweepBot API is running'
-    )
+    logger.info({ port: env.API_PORT, env: env.NODE_ENV }, '🚀 SweepBot API is running')
   } catch (err) {
     logger.fatal({ err }, 'Failed to start server')
     process.exit(1)

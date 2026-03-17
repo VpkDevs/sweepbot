@@ -29,12 +29,12 @@ const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
  */
 function getCellColor(net: number | undefined): string {
   if (net === undefined) return 'bg-zinc-800/40'
-  if (net > 500)  return 'bg-emerald-500 shadow-sm shadow-emerald-500/30'
-  if (net > 100)  return 'bg-emerald-500/70'
-  if (net > 0)    return 'bg-emerald-600/40'
+  if (net > 500) return 'bg-emerald-500 shadow-sm shadow-emerald-500/30'
+  if (net > 100) return 'bg-emerald-500/70'
+  if (net > 0) return 'bg-emerald-600/40'
   if (net < -500) return 'bg-red-500 shadow-sm shadow-red-500/30'
   if (net < -100) return 'bg-red-500/70'
-  if (net < 0)    return 'bg-red-600/40'
+  if (net < 0) return 'bg-red-600/40'
   return 'bg-zinc-600/50'
 }
 
@@ -97,60 +97,66 @@ export function HeatmapPage() {
   })
   const weekIndexToMonth = new Map([...monthLabels.entries()].map(([wi, m]) => [wi, m]))
 
-  const winDays  = heatmapData.filter((d) => d.net > 0).length
+  const winDays = heatmapData.filter((d) => d.net > 0).length
   const lossDays = heatmapData.filter((d) => d.net < 0).length
   const totalNet = heatmapData.reduce((sum, d) => sum + d.net, 0)
   const totalSessions = heatmapData.reduce((sum, d) => sum + d.sessions, 0)
   const today = new Date()
 
   return (
-    <div className="p-6 lg:p-8 space-y-8 max-w-6xl mx-auto">
+    <div className="mx-auto max-w-6xl space-y-8 p-6 lg:p-8">
       {/* Header */}
       <ScrollReveal>
-      <div className="flex items-center justify-between">
-        <div>
-          <TextReveal as="h1" className="heading-display text-white text-shimmer" stagger={50}>Activity Heatmap</TextReveal>
-          <p className="text-zinc-500 text-sm mt-1.5">Daily P&amp;L across the year</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <TextReveal as="h1" className="heading-display text-shimmer text-white" stagger={50}>
+              Activity Heatmap
+            </TextReveal>
+            <p className="mt-1.5 text-sm text-zinc-500">Daily P&amp;L across the year</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setYear((y) => y - 1)}
+              className="glass-card press-scale rounded-xl p-2 text-zinc-400 transition-all hover:bg-white/[0.06]"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <span className="w-14 text-center text-lg font-bold tabular-nums text-white">
+              {year}
+            </span>
+            <button
+              onClick={() => setYear((y) => y + 1)}
+              disabled={year >= currentYear}
+              className="glass-card press-scale rounded-xl p-2 text-zinc-400 transition-all hover:bg-white/[0.06] disabled:opacity-30"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setYear((y) => y - 1)}
-            className="p-2 rounded-xl glass-card hover:bg-white/[0.06] transition-all text-zinc-400 press-scale"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <span className="text-white font-bold w-14 text-center tabular-nums text-lg">{year}</span>
-          <button
-            onClick={() => setYear((y) => y + 1)}
-            disabled={year >= currentYear}
-            className="p-2 rounded-xl glass-card hover:bg-white/[0.06] transition-all text-zinc-400 disabled:opacity-30 press-scale"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
       </ScrollReveal>
 
       {/* Stat pills */}
       <ScrollReveal delay={60}>
-      <div className="flex flex-wrap gap-3">
-        <StatPill label="Sessions" value={String(totalSessions)} />
-        <StatPill label="Win Days" value={String(winDays)} color="text-emerald-400" />
-        <StatPill label="Loss Days" value={String(lossDays)} color="text-red-400" />
-        <StatPill
-          label="Net P&L"
-          value={`${totalNet >= 0 ? '+' : ''}${formatSC(totalNet)} SC`}
-          color={totalNet >= 0 ? 'text-emerald-400' : 'text-red-400'}
-        />
-      </div>
+        <div className="flex flex-wrap gap-3">
+          <StatPill label="Sessions" value={String(totalSessions)} />
+          <StatPill label="Win Days" value={String(winDays)} color="text-emerald-400" />
+          <StatPill label="Loss Days" value={String(lossDays)} color="text-red-400" />
+          <StatPill
+            label="Net P&L"
+            value={`${totalNet >= 0 ? '+' : ''}${formatSC(totalNet)} SC`}
+            color={totalNet >= 0 ? 'text-emerald-400' : 'text-red-400'}
+          />
+        </div>
       </ScrollReveal>
 
       {/* Hovered day detail */}
       {hoveredDay && (
-        <div className="glass-card-elevated rounded-2xl p-4 flex flex-wrap items-center gap-6 animate-spring-in">
+        <div className="glass-card-elevated animate-spring-in flex flex-wrap items-center gap-6 rounded-2xl p-4">
           <div>
-            <p className="text-[10px] text-zinc-600 uppercase tracking-[0.15em] font-semibold mb-1">Date</p>
-            <p className="text-white font-bold text-sm">
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-zinc-600">
+              Date
+            </p>
+            <p className="text-sm font-bold text-white">
               {new Date(hoveredDay.day + 'T00:00:00').toLocaleDateString('en', {
                 weekday: 'long',
                 month: 'long',
@@ -158,98 +164,115 @@ export function HeatmapPage() {
               })}
             </p>
           </div>
-          <div className="h-10 w-px bg-white/[0.06] hidden sm:block" />
+          <div className="hidden h-10 w-px bg-white/[0.06] sm:block" />
           <div>
-            <p className="text-[10px] text-zinc-600 uppercase tracking-[0.15em] font-semibold mb-1">Net</p>
-            <p className={cn('font-bold tabular-nums', hoveredDay.net >= 0 ? 'text-emerald-400' : 'text-red-400')}>
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-zinc-600">
+              Net
+            </p>
+            <p
+              className={cn(
+                'font-bold tabular-nums',
+                hoveredDay.net >= 0 ? 'text-emerald-400' : 'text-red-400'
+              )}
+            >
               {hoveredDay.net >= 0 ? '+' : ''}
               {formatSC(hoveredDay.net)} SC
             </p>
           </div>
           <div>
-            <p className="text-[10px] text-zinc-600 uppercase tracking-[0.15em] font-semibold mb-1">Sessions</p>
-            <p className="text-white font-bold tabular-nums">{hoveredDay.sessions}</p>
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-zinc-600">
+              Sessions
+            </p>
+            <p className="font-bold tabular-nums text-white">{hoveredDay.sessions}</p>
           </div>
           <div>
-            <p className="text-[10px] text-zinc-600 uppercase tracking-[0.15em] font-semibold mb-1">Wagered</p>
-            <p className="text-zinc-300 tabular-nums font-medium">{formatSC(hoveredDay.wagered)} SC</p>
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-zinc-600">
+              Wagered
+            </p>
+            <p className="font-medium tabular-nums text-zinc-300">
+              {formatSC(hoveredDay.wagered)} SC
+            </p>
           </div>
         </div>
       )}
 
       {/* Calendar */}
       {isLoading ? (
-        <div className="glass-card rounded-2xl h-52 shimmer" />
+        <div className="glass-card shimmer h-52 rounded-2xl" />
       ) : (
         <ScrollReveal delay={120}>
-        <div className="glass-card rounded-2xl p-5 overflow-x-auto">
-          <div className="flex gap-[3px] min-w-max">
-            {/* Weekday column labels */}
-            <div className="flex flex-col gap-[3px] mr-2 mt-5">
-              {WEEKDAYS.map((d, i) => (
-                <div
-                  key={d}
-                  className={cn('h-[13px] flex items-center', i % 2 !== 0 ? 'opacity-0' : '')}
-                >
-                  <span className="text-[9px] text-zinc-600 w-6 font-medium">{d}</span>
+          <div className="glass-card overflow-x-auto rounded-2xl p-5">
+            <div className="flex min-w-max gap-[3px]">
+              {/* Weekday column labels */}
+              <div className="mr-2 mt-5 flex flex-col gap-[3px]">
+                {WEEKDAYS.map((d, i) => (
+                  <div
+                    key={d}
+                    className={cn('flex h-[13px] items-center', i % 2 !== 0 ? 'opacity-0' : '')}
+                  >
+                    <span className="w-6 text-[9px] font-medium text-zinc-600">{d}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Week columns */}
+              {weeks.map((week, wi) => (
+                <div key={wi} className="flex flex-col gap-[3px]">
+                  <div className="flex h-4 items-end pb-0.5">
+                    {weekIndexToMonth.has(wi) && (
+                      <span className="whitespace-nowrap text-[9px] font-medium leading-none text-zinc-500">
+                        {MONTHS[weekIndexToMonth.get(wi)!]}
+                      </span>
+                    )}
+                  </div>
+
+                  {week.map((date, di) => {
+                    const dateStr = date.toISOString().split('T')[0]
+                    const dayData = dayMap.get(dateStr)
+                    const isCurrentYear = date.getFullYear() === year
+                    const isFuture = date > today
+
+                    return (
+                      <div
+                        key={di}
+                        title={
+                          dayData
+                            ? `${dateStr}: ${dayData.net >= 0 ? '+' : ''}${formatSC(dayData.net)} SC`
+                            : dateStr
+                        }
+                        className={cn(
+                          'h-[13px] w-[13px] cursor-pointer rounded-[3px] transition-all',
+                          !isCurrentYear || isFuture ? 'pointer-events-none opacity-0' : '',
+                          getCellColor(dayData?.net),
+                          dayData && 'hover:z-10 hover:scale-150 hover:ring-2 hover:ring-white/30'
+                        )}
+                        onMouseEnter={() => dayData && setHoveredDay(dayData)}
+                        onMouseLeave={() => setHoveredDay(null)}
+                      />
+                    )
+                  })}
                 </div>
               ))}
             </div>
 
-            {/* Week columns */}
-            {weeks.map((week, wi) => (
-              <div key={wi} className="flex flex-col gap-[3px]">
-                <div className="h-4 flex items-end pb-0.5">
-                  {weekIndexToMonth.has(wi) && (
-                    <span className="text-[9px] text-zinc-500 whitespace-nowrap leading-none font-medium">
-                      {MONTHS[weekIndexToMonth.get(wi)!]}
-                    </span>
-                  )}
-                </div>
-
-                {week.map((date, di) => {
-                  const dateStr = date.toISOString().split('T')[0]
-                  const dayData = dayMap.get(dateStr)
-                  const isCurrentYear = date.getFullYear() === year
-                  const isFuture = date > today
-
-                  return (
-                    <div
-                      key={di}
-                      title={dayData ? `${dateStr}: ${dayData.net >= 0 ? '+' : ''}${formatSC(dayData.net)} SC` : dateStr}
-                      className={cn(
-                        'w-[13px] h-[13px] rounded-[3px] transition-all cursor-pointer',
-                        !isCurrentYear || isFuture ? 'opacity-0 pointer-events-none' : '',
-                        getCellColor(dayData?.net),
-                        dayData && 'hover:ring-2 hover:ring-white/30 hover:scale-150 hover:z-10',
-                      )}
-                      onMouseEnter={() => dayData && setHoveredDay(dayData)}
-                      onMouseLeave={() => setHoveredDay(null)}
-                    />
-                  )
-                })}
-              </div>
-            ))}
+            {/* Legend */}
+            <div className="mt-5 flex items-center gap-2 border-t border-white/[0.04] pt-4">
+              <span className="mr-1 text-[10px] font-medium text-zinc-600">Less</span>
+              <div className="h-[13px] w-[13px] rounded-[3px] bg-zinc-800/40" />
+              <div className="h-[13px] w-[13px] rounded-[3px] bg-red-600/40" />
+              <div className="h-[13px] w-[13px] rounded-[3px] bg-red-500/70" />
+              <div className="h-[13px] w-[13px] rounded-[3px] bg-red-500" />
+              <span className="mx-1 text-[10px] text-zinc-700">|</span>
+              <div className="h-[13px] w-[13px] rounded-[3px] bg-emerald-600/40" />
+              <div className="h-[13px] w-[13px] rounded-[3px] bg-emerald-500/70" />
+              <div className="h-[13px] w-[13px] rounded-[3px] bg-emerald-500" />
+              <span className="ml-1 text-[10px] font-medium text-zinc-600">More</span>
+              <span className="ml-4 text-[10px] font-medium text-zinc-600">
+                <span className="text-red-400">Red</span> = loss ·{' '}
+                <span className="text-emerald-400">Green</span> = win
+              </span>
+            </div>
           </div>
-
-          {/* Legend */}
-          <div className="flex items-center gap-2 mt-5 pt-4 border-t border-white/[0.04]">
-            <span className="text-[10px] text-zinc-600 mr-1 font-medium">Less</span>
-            <div className="w-[13px] h-[13px] rounded-[3px] bg-zinc-800/40" />
-            <div className="w-[13px] h-[13px] rounded-[3px] bg-red-600/40" />
-            <div className="w-[13px] h-[13px] rounded-[3px] bg-red-500/70" />
-            <div className="w-[13px] h-[13px] rounded-[3px] bg-red-500" />
-            <span className="text-[10px] text-zinc-700 mx-1">|</span>
-            <div className="w-[13px] h-[13px] rounded-[3px] bg-emerald-600/40" />
-            <div className="w-[13px] h-[13px] rounded-[3px] bg-emerald-500/70" />
-            <div className="w-[13px] h-[13px] rounded-[3px] bg-emerald-500" />
-            <span className="text-[10px] text-zinc-600 ml-1 font-medium">More</span>
-            <span className="ml-4 text-[10px] text-zinc-600 font-medium">
-              <span className="text-red-400">Red</span> = loss ·{' '}
-              <span className="text-emerald-400">Green</span> = win
-            </span>
-          </div>
-        </div>
         </ScrollReveal>
       )}
     </div>
@@ -275,8 +298,10 @@ function StatPill({
   color?: string
 }) {
   return (
-    <div className="glass-card rounded-xl px-4 py-2.5 flex items-center gap-2.5 shine-on-hover">
-      <span className="text-[10px] text-zinc-500 uppercase tracking-[0.15em] font-bold">{label}</span>
+    <div className="glass-card shine-on-hover flex items-center gap-2.5 rounded-xl px-4 py-2.5">
+      <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-500">
+        {label}
+      </span>
       <span className={cn('text-sm font-bold tabular-nums', color)}>{value}</span>
     </div>
   )

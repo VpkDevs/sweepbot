@@ -7,12 +7,14 @@ SQL migration scripts for all data collection services and quick wins features.
 Run migrations in numerical order. Each migration is idempotent (safe to run multiple times).
 
 ### Data Collection Services (001-004)
+
 1. `001_jackpot_snapshots.sql` - Progressive jackpot tracking (partitioned)
 2. `002_tos_snapshots.sql` - Terms of Service monitoring
 3. `003_platform_health_checks.sql` - Uptime and response time tracking
 4. `004_platform_alerts.sql` - User-facing alert system
 
 ### Quick Wins Features (005-008)
+
 5. `005_user_streaks.sql` - Daily activity streak gamification
 6. `006_trial_system.sql` - 14-day free trial tracking
 7. `007_push_notifications.sql` - Web Push subscriptions and preferences
@@ -56,9 +58,9 @@ After running migrations, verify tables exist:
 
 ```sql
 -- Check all tables created
-SELECT table_name 
-FROM information_schema.tables 
-WHERE table_schema = 'public' 
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'public'
   AND table_name IN (
     'jackpot_snapshots',
     'tos_snapshots',
@@ -74,7 +76,7 @@ WHERE table_schema = 'public'
 ORDER BY table_name;
 
 -- Check partitions created
-SELECT 
+SELECT
   parent.relname AS parent_table,
   child.relname AS partition_name
 FROM pg_inherits
@@ -84,7 +86,7 @@ WHERE parent.relname = 'jackpot_snapshots'
 ORDER BY child.relname;
 
 -- Check indexes
-SELECT 
+SELECT
   schemaname,
   tablename,
   indexname
@@ -93,7 +95,7 @@ WHERE tablename IN ('jackpot_snapshots', 'tos_snapshots', 'platform_health_check
 ORDER BY tablename, indexname;
 
 -- Check RLS enabled
-SELECT 
+SELECT
   tablename,
   rowsecurity AS rls_enabled
 FROM pg_tables
@@ -106,16 +108,16 @@ ORDER BY tablename;
 
 Expected database growth after 1 year:
 
-| Table | Daily Growth | Monthly | Yearly | Notes |
-|-------|--------------|---------|--------|-------|
-| jackpot_snapshots | 21 MB | 630 MB | 7.6 GB | 30 platforms × 1440 checks/day |
-| tos_snapshots | 1.5 MB | 45 MB | 540 MB | Daily checks, full text storage |
-| platform_health_checks | 4.3 MB | 130 MB | 1.6 GB | 288 checks/day/platform |
-| platform_alerts | ~1 MB | 30 MB | 360 MB | Estimated 100 alerts/day |
-| user_streaks | < 1 MB | < 1 MB | < 1 MB | One row per user |
-| push_subscriptions | < 1 MB | < 1 MB | < 1 MB | ~2 devices per user |
-| session_notes | Variable | Variable | Variable | Depends on voice note usage |
-| **Total** | **28 MB** | **836 MB** | **10 GB** | **Well within free tier limits** |
+| Table                  | Daily Growth | Monthly    | Yearly    | Notes                            |
+| ---------------------- | ------------ | ---------- | --------- | -------------------------------- |
+| jackpot_snapshots      | 21 MB        | 630 MB     | 7.6 GB    | 30 platforms × 1440 checks/day   |
+| tos_snapshots          | 1.5 MB       | 45 MB      | 540 MB    | Daily checks, full text storage  |
+| platform_health_checks | 4.3 MB       | 130 MB     | 1.6 GB    | 288 checks/day/platform          |
+| platform_alerts        | ~1 MB        | 30 MB      | 360 MB    | Estimated 100 alerts/day         |
+| user_streaks           | < 1 MB       | < 1 MB     | < 1 MB    | One row per user                 |
+| push_subscriptions     | < 1 MB       | < 1 MB     | < 1 MB    | ~2 devices per user              |
+| session_notes          | Variable     | Variable   | Variable  | Depends on voice note usage      |
+| **Total**              | **28 MB**    | **836 MB** | **10 GB** | **Well within free tier limits** |
 
 Supabase free tier: 500 MB database + 1 GB file storage.  
 Upgrade to Pro ($25/month) when approaching limits (~18 months).
@@ -131,6 +133,7 @@ CREATE TABLE jackpot_snapshots_2027_q1 PARTITION OF jackpot_snapshots
 ```
 
 Add this to calendar reminders:
+
 - March 15 → Create Q2 partition
 - June 15 → Create Q3 partition
 - September 15 → Create Q4 partition
@@ -142,7 +145,7 @@ After 12-18 months, consider archiving old data to cold storage:
 
 ```sql
 -- Export old partitions to CSV (backup first!)
-COPY (SELECT * FROM jackpot_snapshots_2025_q1) 
+COPY (SELECT * FROM jackpot_snapshots_2025_q1)
 TO '/tmp/jackpot_snapshots_2025_q1.csv' CSV HEADER;
 
 -- Drop old partition (after backup verified)
@@ -170,18 +173,22 @@ DROP TABLE IF EXISTS jackpot_snapshots CASCADE;
 ## Troubleshooting
 
 ### "relation already exists"
+
 Migration is idempotent. This warning is safe to ignore.
 
 ### "must be owner of table"
+
 Use service role key, not anon key. Check Supabase dashboard → Settings → API.
 
 ### "permission denied for schema public"
+
 ```sql
 GRANT ALL ON SCHEMA public TO postgres;
 GRANT ALL ON SCHEMA public TO authenticated;
 ```
 
 ### Partition errors
+
 Ensure `captured_at` or `checked_at` values fall within partition range. Check logs for timestamp issues.
 
 ---

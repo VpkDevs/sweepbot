@@ -24,7 +24,7 @@ export class TrialManagerService {
   async startTrial(
     userId: string,
     email: string,
-    displayName?: string,
+    displayName?: string
   ): Promise<{ trialEndsAt: Date }> {
     const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
 

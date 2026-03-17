@@ -65,8 +65,7 @@ const SCHEDULE_PATTERNS: Array<{
 }> = [
   {
     // "every day at 3 pm" / "daily at 3:30 pm"
-    pattern:
-      /(?:every\s+day|daily)\s+at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i,
+    pattern: /(?:every\s+day|daily)\s+at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i,
     toCron: (m) => {
       let h = parseInt(m[1])
       const min = m[2] ? parseInt(m[2]) : 0
@@ -143,8 +142,7 @@ const CONDITION_PATTERNS: Array<{
   },
   {
     // "if my winnings equal or exceed 5x" / "5x or more"
-    pattern:
-      /(\d+(?:\.\d+)?)\s*[x×]\s*(?:or\s+more|the\s+bonus|bonus amount)/i,
+    pattern: /(\d+(?:\.\d+)?)\s*[x×]\s*(?:or\s+more|the\s+bonus|bonus amount)/i,
     extract: (m, raw) => ({
       type: 'multiplier_win',
       multiplier: parseFloat(m[1]),
@@ -225,7 +223,10 @@ export class EntityRecognizer {
     // Generic "slot X" pattern
     const slotMatch = lower.match(/slot\s+([a-z0-9\s\-]+)(?:\s|$)/i)
     if (slotMatch && !found.length) {
-      found.push({ canonical: (slotMatch[1] ?? '').trim().replace(/\s+/g, '-'), raw: slotMatch[0].trim() })
+      found.push({
+        canonical: (slotMatch[1] ?? '').trim().replace(/\s+/g, '-'),
+        raw: slotMatch[0].trim(),
+      })
     }
     return found
   }
@@ -288,7 +289,7 @@ export class EntityRecognizer {
 
   private hasStopOnLoss(lower: string) {
     return (
-      lower.includes("if not, stop") ||
+      lower.includes('if not, stop') ||
       lower.includes('otherwise stop') ||
       lower.includes('if i lose') ||
       lower.includes("if it doesn't") ||

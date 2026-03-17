@@ -11,5 +11,10 @@
       "@sweepbot/flows": ["../../packages/flows/src/index.ts"]
     }
   },
-  "include": ["src", "../../packages/types/src", "../../packages/utils/src", "../../packages/flows/src"]
+  "include": [
+    "src",
+    "../../packages/types/src",
+    "../../packages/utils/src",
+    "../../packages/flows/src"
+  ]
 }

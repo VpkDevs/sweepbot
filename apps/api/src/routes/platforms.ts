@@ -36,7 +36,10 @@ export async function platformRoutes(app: FastifyInstance): Promise<void> {
           type: 'object',
           properties: {
             search: { type: 'string' },
-            status: { type: 'string', enum: ['active', 'inactive', 'watchlist', 'suspended', 'closed'] },
+            status: {
+              type: 'string',
+              enum: ['active', 'inactive', 'watchlist', 'suspended', 'closed'],
+            },
             sortBy: { type: 'string', enum: ['name', 'trust_score', 'created_at'] },
             sortDir: { type: 'string', enum: ['asc', 'desc'] },
             page: { type: 'number' },
@@ -214,9 +217,7 @@ export async function platformRoutes(app: FastifyInstance): Promise<void> {
       const query = GamesQuerySchema.parse(request.query)
       const offset = (query.page - 1) * query.pageSize
 
-      const providerClause = query.providerId
-        ? sql`AND g.provider_id = ${query.providerId}`
-        : sql``
+      const providerClause = query.providerId ? sql`AND g.provider_id = ${query.providerId}` : sql``
       const volatilityClause = query.volatility
         ? sql`AND g.volatility = ${query.volatility}`
         : sql``

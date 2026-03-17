@@ -16,10 +16,16 @@ export type ContentScriptMessage =
   | { type: 'GET_SESSION_STATS'; payload?: undefined }
   | { type: 'START_SESSION'; payload: { platformSlug: string; gameId: string } }
   | { type: 'END_SESSION'; payload?: undefined }
-  | { type: 'TRANSACTION_DETECTED'; payload: { gameId: string; bet: number; win: number; result: 'win' | 'loss' | 'push' } }
+  | {
+      type: 'TRANSACTION_DETECTED'
+      payload: { gameId: string; bet: number; win: number; result: 'win' | 'loss' | 'push' }
+    }
   | { type: 'BALANCE_UPDATED'; payload: { scBalance: number; gcBalance: number } }
   | { type: 'HUD_TOGGLE'; payload: { enabled: boolean } }
-  | { type: 'HUD_POSITION_CHANGE'; payload: { position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' } }
+  | {
+      type: 'HUD_POSITION_CHANGE'
+      payload: { position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' }
+    }
   // Flows automation
   | { type: 'EXECUTE_FLOW'; payload: { flow: FlowDefinition } }
   | { type: 'FLOW_CANCEL'; payload: { flowId: string } }

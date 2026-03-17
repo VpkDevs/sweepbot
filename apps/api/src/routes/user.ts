@@ -489,7 +489,10 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     if (!priceId) {
       return reply.code(400).send({
         success: false,
-        error: { code: 'PRICE_NOT_CONFIGURED', message: `Price for ${tier}/${cycle} not configured.` },
+        error: {
+          code: 'PRICE_NOT_CONFIGURED',
+          message: `Price for ${tier}/${cycle} not configured.`,
+        },
       })
     }
 
@@ -504,9 +507,11 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       cancel_url: `${appUrl}/pricing`,
       metadata: { userId },
       allow_promotion_codes: true,
-      ...(isLifetime ? {} : {
-        subscription_data: { metadata: { userId } },
-      }),
+      ...(isLifetime
+        ? {}
+        : {
+            subscription_data: { metadata: { userId } },
+          }),
     })
 
     return reply.send({ success: true, data: { url: session.url } })
@@ -522,7 +527,9 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     const result = await dbQuery(sql`
       SELECT stripe_customer_id FROM profiles WHERE id = ${userId} LIMIT 1
     `)
-    const customerId = (result.rows[0] as Record<string, string | null> | undefined)?.['stripe_customer_id']
+    const customerId = (result.rows[0] as Record<string, string | null> | undefined)?.[
+      'stripe_customer_id'
+    ]
 
     if (!customerId) {
       return reply.redirect(`${appUrl}/pricing`)
@@ -674,7 +681,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       success: true,
       data: {
         year: targetYear,
-        ...(totals.rows[0] as Record<string, unknown> ?? {}),
+        ...((totals.rows[0] as Record<string, unknown>) ?? {}),
         by_platform: byPlatform.rows,
       },
     })
@@ -702,7 +709,9 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     const existing = await dbQuery(sql`
       SELECT self_exclusion_until FROM user_settings WHERE user_id = ${userId}
     `)
-    const existingUntil = (existing.rows[0] as Record<string, string | null> | undefined)?.['self_exclusion_until']
+    const existingUntil = (existing.rows[0] as Record<string, string | null> | undefined)?.[
+      'self_exclusion_until'
+    ]
     if (existingUntil && new Date(existingUntil) >= newExclusionUntil) {
       return reply.send({
         success: true,

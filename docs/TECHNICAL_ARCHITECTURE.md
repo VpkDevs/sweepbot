@@ -77,89 +77,89 @@ sweepbot/                        ← pnpm workspace root
 
 ### 3.1 Frontend — Web Dashboard
 
-| Layer | Technology | Rationale |
-| ---- | ---- | ---- |
-| Framework | React 18 + TypeScript | Industry standard, excellent AI training data coverage |
-| Build tool | Vite 5 | Fast HMR, excellent DX, Rollup-based bundling |
-| Styling | Tailwind CSS v4 | Utility-first, no runtime overhead |
-| Components | shadcn/ui | Accessible, unopinionated, full ownership of components |
-| Routing | React Router v7 | Most mature React routing solution |
-| State management | Zustand | Lightweight, TypeScript-native, no boilerplate |
-| Server state | TanStack Query v5 | Best-in-class data fetching, caching, optimistic updates |
-| Forms | React Hook Form + Zod | Type-safe forms with schema validation |
-| Charts | Recharts | React-native, composable, customizable |
-| Auth | Supabase Auth (SDK) | Seamless integration with Supabase backend |
-| Payments | Stripe.js + React Stripe | PCI-compliant payment flows |
-| Animation | Framer Motion | Polished micro-animations |
-| Icons | Lucide React | Consistent icon system, tree-shakeable |
-| Testing | Vitest + Testing Library | Fast, Vite-native test runner |
+| Layer            | Technology               | Rationale                                                |
+| ---------------- | ------------------------ | -------------------------------------------------------- |
+| Framework        | React 18 + TypeScript    | Industry standard, excellent AI training data coverage   |
+| Build tool       | Vite 5                   | Fast HMR, excellent DX, Rollup-based bundling            |
+| Styling          | Tailwind CSS v4          | Utility-first, no runtime overhead                       |
+| Components       | shadcn/ui                | Accessible, unopinionated, full ownership of components  |
+| Routing          | React Router v7          | Most mature React routing solution                       |
+| State management | Zustand                  | Lightweight, TypeScript-native, no boilerplate           |
+| Server state     | TanStack Query v5        | Best-in-class data fetching, caching, optimistic updates |
+| Forms            | React Hook Form + Zod    | Type-safe forms with schema validation                   |
+| Charts           | Recharts                 | React-native, composable, customizable                   |
+| Auth             | Supabase Auth (SDK)      | Seamless integration with Supabase backend               |
+| Payments         | Stripe.js + React Stripe | PCI-compliant payment flows                              |
+| Animation        | Framer Motion            | Polished micro-animations                                |
+| Icons            | Lucide React             | Consistent icon system, tree-shakeable                   |
+| Testing          | Vitest + Testing Library | Fast, Vite-native test runner                            |
 
 ### 3.2 Backend — API
 
-| Layer | Technology | Rationale |
-| ---- | ---- | ---- |
-| Runtime | Node.js 22 LTS | Current LTS, native TypeScript via --experimental-strip-types |
-| Framework | Fastify 5 | 2-3x faster than Express, TypeScript-native, schema validation |
-| Language | TypeScript 5.5+ | Type safety across the full stack |
-| ORM | Drizzle ORM | Type-safe, lightweight, migration-first approach |
-| Database | PostgreSQL 16 (Supabase) | Managed, PGVECTOR for future ML features, realtime subscriptions |
-| Cache | Redis 7 (Upstash) | Serverless Redis, generous free tier, global distribution |
-| Auth | Supabase Auth | JWT-based, multiple OAuth providers, RLS policies |
-| Queues | BullMQ (Redis-backed) | Background job processing for automation tasks |
-| WebSocket | Fastify WebSocket | Native WebSocket support, efficient pub/sub |
-| Email | Resend | Developer-friendly transactional email |
-| Storage | Supabase Storage | S3-compatible object storage for avatars, exports |
-| Logging | Pino | Fastest Node.js JSON logger, structured logging |
-| Testing | Vitest | Unified test runner across monorepo |
-| API docs | Scalar | Auto-generated from Fastify JSON Schema |
+| Layer     | Technology               | Rationale                                                        |
+| --------- | ------------------------ | ---------------------------------------------------------------- |
+| Runtime   | Node.js 22 LTS           | Current LTS, native TypeScript via --experimental-strip-types    |
+| Framework | Fastify 5                | 2-3x faster than Express, TypeScript-native, schema validation   |
+| Language  | TypeScript 5.5+          | Type safety across the full stack                                |
+| ORM       | Drizzle ORM              | Type-safe, lightweight, migration-first approach                 |
+| Database  | PostgreSQL 16 (Supabase) | Managed, PGVECTOR for future ML features, realtime subscriptions |
+| Cache     | Redis 7 (Upstash)        | Serverless Redis, generous free tier, global distribution        |
+| Auth      | Supabase Auth            | JWT-based, multiple OAuth providers, RLS policies                |
+| Queues    | BullMQ (Redis-backed)    | Background job processing for automation tasks                   |
+| WebSocket | Fastify WebSocket        | Native WebSocket support, efficient pub/sub                      |
+| Email     | Resend                   | Developer-friendly transactional email                           |
+| Storage   | Supabase Storage         | S3-compatible object storage for avatars, exports                |
+| Logging   | Pino                     | Fastest Node.js JSON logger, structured logging                  |
+| Testing   | Vitest                   | Unified test runner across monorepo                              |
+| API docs  | Scalar                   | Auto-generated from Fastify JSON Schema                          |
 
 ### 3.3 Browser Extension
 
-| Layer | Technology | Rationale |
-| ---- | ---- | ---- |
-| Framework | WXT (Web Extension Tools) | Best DX for modern MV3 extensions, React support |
-| Language | TypeScript | Type safety for extension APIs |
-| UI | React + Tailwind | Shared patterns with web dashboard |
-| State | Zustand (persisted) | Works seamlessly with extension storage APIs |
-| Communication | WXT messaging | Type-safe cross-context messaging |
-| Data capture | Content script interceptors | XHR/fetch monkey-patching for transaction capture |
-| Bundler | Vite (via WXT) | Fast rebuilds during development |
+| Layer         | Technology                  | Rationale                                         |
+| ------------- | --------------------------- | ------------------------------------------------- |
+| Framework     | WXT (Web Extension Tools)   | Best DX for modern MV3 extensions, React support  |
+| Language      | TypeScript                  | Type safety for extension APIs                    |
+| UI            | React + Tailwind            | Shared patterns with web dashboard                |
+| State         | Zustand (persisted)         | Works seamlessly with extension storage APIs      |
+| Communication | WXT messaging               | Type-safe cross-context messaging                 |
+| Data capture  | Content script interceptors | XHR/fetch monkey-patching for transaction capture |
+| Bundler       | Vite (via WXT)              | Fast rebuilds during development                  |
 
 ### 3.4 Desktop App — Automation Engine
 
-| Layer | Technology | Rationale |
-| ---- | ---- | ---- |
-| Framework | Tauri v2 | Rust backend (smaller, faster, more secure than Electron) |
-| UI | React + Tailwind | Reuse web dashboard components |
-| Automation | Playwright | Most reliable headless browser automation |
-| Encryption | AES-256-GCM | Credential vault encryption (via Rust backend) |
-| Local DB | SQLite (via Tauri) | Local audit trail and credential metadata |
+| Layer      | Technology         | Rationale                                                 |
+| ---------- | ------------------ | --------------------------------------------------------- |
+| Framework  | Tauri v2           | Rust backend (smaller, faster, more secure than Electron) |
+| UI         | React + Tailwind   | Reuse web dashboard components                            |
+| Automation | Playwright         | Most reliable headless browser automation                 |
+| Encryption | AES-256-GCM        | Credential vault encryption (via Rust backend)            |
+| Local DB   | SQLite (via Tauri) | Local audit trail and credential metadata                 |
 
 ### 3.5 Monorepo Tooling
 
-| Tool | Purpose |
-| ---- | ---- |
-| pnpm 9 | Fast, disk-efficient package manager with workspace support |
-| Turborepo | Build cache, task orchestration across packages |
-| TypeScript 5.5+ | Strict type checking across all packages |
-| ESLint 9 + flat config | Unified linting rules |
-| Prettier | Code formatting |
-| Husky + lint-staged | Pre-commit hooks |
-| Changesets | Version management and changelog generation |
+| Tool                   | Purpose                                                     |
+| ---------------------- | ----------------------------------------------------------- |
+| pnpm 9                 | Fast, disk-efficient package manager with workspace support |
+| Turborepo              | Build cache, task orchestration across packages             |
+| TypeScript 5.5+        | Strict type checking across all packages                    |
+| ESLint 9 + flat config | Unified linting rules                                       |
+| Prettier               | Code formatting                                             |
+| Husky + lint-staged    | Pre-commit hooks                                            |
+| Changesets             | Version management and changelog generation                 |
 
 ### 3.6 Infrastructure & Deployment
 
-| Service | Purpose | Cost Model |
-| ---- | ---- | ---- |
-| Vercel | Web dashboard hosting | Free tier → Pro (~$20/mo) |
-| Railway | API hosting | Usage-based (~$5–50/mo) |
-| Supabase | PostgreSQL + Auth + Storage | Free → Pro ($25/mo) |
-| Upstash Redis | Redis cache and queues | Free → Pay per request |
-| Cloudflare | CDN, DDoS protection, DNS | Free tier sufficient initially |
-| GitHub Actions | CI/CD pipelines | Free for public repos |
-| Sentry | Error monitoring | Free tier initially |
-| PostHog | Product analytics | Free tier |
-| Resend | Transactional email | Free tier (100/day) |
+| Service        | Purpose                     | Cost Model                     |
+| -------------- | --------------------------- | ------------------------------ |
+| Vercel         | Web dashboard hosting       | Free tier → Pro (~$20/mo)      |
+| Railway        | API hosting                 | Usage-based (~$5–50/mo)        |
+| Supabase       | PostgreSQL + Auth + Storage | Free → Pro ($25/mo)            |
+| Upstash Redis  | Redis cache and queues      | Free → Pay per request         |
+| Cloudflare     | CDN, DDoS protection, DNS   | Free tier sufficient initially |
+| GitHub Actions | CI/CD pipelines             | Free for public repos          |
+| Sentry         | Error monitoring            | Free tier initially            |
+| PostHog        | Product analytics           | Free tier                      |
+| Resend         | Transactional email         | Free tier (100/day)            |
 
 ---
 
@@ -376,8 +376,7 @@ Content script → background (via chrome.runtime.sendMessage)
 ### 8.1 CI/CD Pipeline (GitHub Actions)
 
 ```yaml
-On Push to main:
-  1. Install dependencies (pnpm)
+On Push to main: 1. Install dependencies (pnpm)
   2. Type check (tsc --noEmit)
   3. Lint (ESLint)
   4. Test (Vitest)
@@ -389,11 +388,11 @@ On Push to main:
 
 ### 8.2 Environment Strategy
 
-| Environment | Purpose | Infrastructure |
-| ---- | ---- | ---- |
-| Local dev | Development | Local services via Docker Compose |
-| Preview | PR testing | Vercel preview + Railway staging |
-| Production | Live app | Vercel + Railway + Supabase prod |
+| Environment | Purpose     | Infrastructure                    |
+| ----------- | ----------- | --------------------------------- |
+| Local dev   | Development | Local services via Docker Compose |
+| Preview     | PR testing  | Vercel preview + Railway staging  |
+| Production  | Live app    | Vercel + Railway + Supabase prod  |
 
 ---
 
@@ -401,14 +400,14 @@ On Push to main:
 
 The following data categories are irreplaceable once collection begins — starting collection is the single highest-priority action:
 
-| Dataset | Collection Method | Moat Strength |
-| ---- | ---- | ---- |
-| Jackpot time series | API poller (every 60s) | **Critical** — ephemeral, gone if not captured |
-| User RTP data | Extension + sessions | **High** — requires millions of spins |
-| Redemption timing | User self-report | **High** — requires thousands of data points |
-| TOS change history | Automated scraper (daily) | **High** — requires continuous monitoring |
-| Game RTP | Extension + transactions | **Medium-High** — crowdsourced, takes time |
-| Platform uptime | Health checker (every 5m) | **Medium** — requires sustained monitoring |
+| Dataset             | Collection Method         | Moat Strength                                  |
+| ------------------- | ------------------------- | ---------------------------------------------- |
+| Jackpot time series | API poller (every 60s)    | **Critical** — ephemeral, gone if not captured |
+| User RTP data       | Extension + sessions      | **High** — requires millions of spins          |
+| Redemption timing   | User self-report          | **High** — requires thousands of data points   |
+| TOS change history  | Automated scraper (daily) | **High** — requires continuous monitoring      |
+| Game RTP            | Extension + transactions  | **Medium-High** — crowdsourced, takes time     |
+| Platform uptime     | Health checker (every 5m) | **Medium** — requires sustained monitoring     |
 
 **Recommendation:** Deploy the Replit-hosted poller for jackpots, TOS monitoring, and platform health checks BEFORE the product launches. Every day of early data collection is a permanent competitive advantage.
 
@@ -439,5 +438,4 @@ The following data categories are irreplaceable once collection begins — start
 
 ---
 
-*Architecture maintained by APPYness. Last updated 2026-02-26.*
-
+_Architecture maintained by APPYness. Last updated 2026-02-26._

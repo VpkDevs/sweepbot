@@ -95,15 +95,16 @@ export class FlowInterpreter {
     // ── Build steps ───────────────────────────────────────────────────────────
 
     const steps: FlowStep[] = []
-    const platform =
-      entities.platforms[0]?.canonical ?? null
+    const platform = entities.platforms[0]?.canonical ?? null
     const platformUrl = entities.platforms[0]?.url ?? null
     const game = entities.games[0]?.canonical ?? null
     // 1. Navigate to platform
     if (platformUrl) {
       steps.push({ type: 'navigate', url: platformUrl, waitForLoad: true })
     } else if (platform) {
-      ambiguities.push(`Unknown URL for platform "${platform}" — you may need to set it in Settings.`)
+      ambiguities.push(
+        `Unknown URL for platform "${platform}" — you may need to set it in Settings.`
+      )
     }
 
     // 2. Login (if mentioned)
@@ -227,7 +228,7 @@ export class FlowInterpreter {
 
   private generateName(
     entities: ReturnType<EntityRecognizer['recognize']>,
-    rawInput: string,
+    rawInput: string
   ): string {
     const parts: string[] = []
     if (entities.schedule) parts.push(entities.schedule.humanReadable)
@@ -244,7 +245,7 @@ export class FlowInterpreter {
     entities: ReturnType<EntityRecognizer['recognize']>,
     platform: string | null,
     game: string | null,
-    trigger: FlowTrigger,
+    trigger: FlowTrigger
   ): string {
     const parts: string[] = []
 
@@ -261,7 +262,7 @@ export class FlowInterpreter {
 
     if (entities.hasSpin && entities.multiplierThreshold !== null && entities.hasContinueOnWin) {
       parts.push(
-        `🔄 Spins once, then loops while win ≥ ${entities.multiplierThreshold}× bonusAmount`,
+        `🔄 Spins once, then loops while win ≥ ${entities.multiplierThreshold}× bonusAmount`
       )
       if (entities.hasStopOnLoss) parts.push('🛑 Stops if win < threshold')
     } else if (entities.hasSpin) {

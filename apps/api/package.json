@@ -28,7 +28,6 @@
     "@fastify/sensible": "^6.0.0",
     "@fastify/swagger": "^9.0.0",
     "@fastify/swagger-ui": "^5.0.0",
-
     "@supabase/supabase-js": "^2.45.0",
     "@sweepbot/types": "workspace:*",
     "@sweepbot/flows": "workspace:*",

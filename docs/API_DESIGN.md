@@ -28,9 +28,11 @@ curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
 ### Auth
 
 #### `POST /auth/sign-in`
+
 Authenticate user with email and password.
 
 **Request:**
+
 ```json
 {
   "email": "user@example.com",
@@ -39,6 +41,7 @@ Authenticate user with email and password.
 ```
 
 **Response:**
+
 ```json
 {
   "access_token": "eyJhbGc...",
@@ -52,9 +55,11 @@ Authenticate user with email and password.
 ```
 
 #### `POST /auth/sign-up`
+
 Create a new user account.
 
 **Request:**
+
 ```json
 {
   "email": "user@example.com",
@@ -64,9 +69,11 @@ Create a new user account.
 ```
 
 #### `POST /auth/refresh`
+
 Refresh an expired JWT using a refresh token.
 
 **Request:**
+
 ```json
 {
   "refresh_token": "..."
@@ -78,9 +85,11 @@ Refresh an expired JWT using a refresh token.
 ### Users
 
 #### `GET /api/users/me`
+
 Get current authenticated user profile.
 
 **Response:**
+
 ```json
 {
   "user_id": "uuid",
@@ -94,9 +103,11 @@ Get current authenticated user profile.
 ```
 
 #### `PATCH /api/users/me`
+
 Update user profile.
 
 **Request:**
+
 ```json
 {
   "display_name": "Jane Doe",
@@ -108,9 +119,11 @@ Update user profile.
 ```
 
 #### `DELETE /api/users/me`
+
 Delete user account and all associated data.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -123,9 +136,11 @@ Delete user account and all associated data.
 ### Sessions
 
 #### `POST /api/sessions`
+
 Start a new gaming session.
 
 **Request:**
+
 ```json
 {
   "platform_slug": "chumba",
@@ -134,6 +149,7 @@ Start a new gaming session.
 ```
 
 **Response:**
+
 ```json
 {
   "session_id": "uuid",
@@ -143,17 +159,19 @@ Start a new gaming session.
 ```
 
 #### `GET /api/sessions/:session_id`
+
 Get session details.
 
 **Response:**
+
 ```json
 {
   "session_id": "uuid",
   "platform_slug": "chumba",
   "started_at": "2024-12-01T14:30:00Z",
   "ended_at": "2024-12-01T15:45:00Z",
-  "total_wagered": 1500.00,
-  "total_won": 1200.00,
+  "total_wagered": 1500.0,
+  "total_won": 1200.0,
   "rtp": 80.0,
   "transaction_count": 150,
   "confidence_level": "medium"
@@ -161,9 +179,11 @@ Get session details.
 ```
 
 #### `PATCH /api/sessions/:session_id/balance`
+
 Update session balance (called from extension when balance changes).
 
 **Request:**
+
 ```json
 {
   "sc_balance": 5000,
@@ -172,22 +192,26 @@ Update session balance (called from extension when balance changes).
 ```
 
 #### `POST /api/sessions/:session_id/transactions`
+
 Log a transaction (spin result).
 
 **Request:**
+
 ```json
 {
   "game_id": "sweet-bonanza-100",
-  "bet_amount": 10.00,
-  "win_amount": 15.50,
+  "bet_amount": 10.0,
+  "win_amount": 15.5,
   "result": "win"
 }
 ```
 
 #### `POST /api/sessions/:session_id/end`
+
 End the session and calculate final RTP.
 
 **Response:**
+
 ```json
 {
   "session_id": "uuid",
@@ -203,9 +227,11 @@ End the session and calculate final RTP.
 ### Analytics
 
 #### `GET /api/analytics/sessions`
+
 Get user's session history.
 
 **Query Parameters:**
+
 - `platform_slug` (optional) — Filter by platform
 - `limit` (default: 20) — Number of sessions to return
 - `offset` (default: 0) — Pagination offset
@@ -213,6 +239,7 @@ Get user's session history.
 - `to_date` (ISO 8601) — End date filter
 
 **Response:**
+
 ```json
 [
   {
@@ -221,23 +248,25 @@ Get user's session history.
     "started_at": "2024-12-01T14:30:00Z",
     "ended_at": "2024-12-01T15:45:00Z",
     "rtp": 80.0,
-    "total_wagered": 1500.00,
-    "total_won": 1200.00,
+    "total_wagered": 1500.0,
+    "total_won": 1200.0,
     "transaction_count": 150
   }
 ]
 ```
 
 #### `GET /api/analytics/platform/:slug`
+
 Get aggregate stats for a platform.
 
 **Response:**
+
 ```json
 {
   "platform_slug": "chumba",
   "total_sessions": 150,
-  "total_wagered": 50000.00,
-  "total_won": 42000.00,
+  "total_wagered": 50000.0,
+  "total_won": 42000.0,
   "overall_rtp": 84.0,
   "avg_session_duration": 45,
   "win_rate": 68.5,
@@ -246,19 +275,21 @@ Get aggregate stats for a platform.
 ```
 
 #### `GET /api/analytics/dashboard`
+
 Get comprehensive dashboard overview.
 
 **Response:**
+
 ```json
 {
-  "total_wagered_all_time": 500000.00,
-  "total_won_all_time": 420000.00,
+  "total_wagered_all_time": 500000.0,
+  "total_won_all_time": 420000.0,
   "rtp_all_time": 84.0,
   "platform_count": 8,
   "total_sessions": 500,
   "this_month": {
-    "wagered": 45000.00,
-    "won": 38000.00,
+    "wagered": 45000.0,
+    "won": 38000.0,
     "rtp": 84.4
   },
   "top_platforms": [
@@ -273,23 +304,26 @@ Get comprehensive dashboard overview.
 ### Jackpots
 
 #### `GET /api/jackpots`
+
 Get active jackpots.
 
 **Query Parameters:**
+
 - `platform_slug` (optional) — Filter by platform
 - `tier` (optional) — Filter by tier (mega/major/minor/mini)
 - `sort_by` (default: "growth_rate") — Sort by current_amount, growth_rate, or hit_time
 
 **Response:**
+
 ```json
 [
   {
     "jackpot_id": "uuid",
     "game_id": "sweet-bonanza-100",
     "platform_slug": "chumba",
-    "current_amount": 125000.50,
-    "historical_high": 250000.00,
-    "growth_rate": 1500.00,
+    "current_amount": 125000.5,
+    "historical_high": 250000.0,
+    "growth_rate": 1500.0,
     "tier": "major",
     "last_hit_at": "2024-11-28T08:15:00Z",
     "days_since_hit": 3,
@@ -299,27 +333,32 @@ Get active jackpots.
 ```
 
 #### `GET /api/jackpots/:jackpot_id/history`
+
 Get historical data for a jackpot.
 
 **Query Parameters:**
+
 - `days` (default: 30) — Number of days of history
 - `granularity` (default: "hourly") — hourly, daily, or weekly
 
 **Response:**
+
 ```json
 {
   "jackpot_id": "uuid",
   "data_points": [
-    { "timestamp": "2024-12-01T00:00:00Z", "amount": 100000.00 },
-    { "timestamp": "2024-12-01T01:00:00Z", "amount": 101500.00 }
+    { "timestamp": "2024-12-01T00:00:00Z", "amount": 100000.0 },
+    { "timestamp": "2024-12-01T01:00:00Z", "amount": 101500.0 }
   ]
 }
 ```
 
 #### `GET /api/jackpots/leaderboard`
+
 Get top growing jackpots across all platforms.
 
 **Response:**
+
 ```json
 [
   {
@@ -327,8 +366,8 @@ Get top growing jackpots across all platforms.
     "jackpot_id": "uuid",
     "game_id": "sweet-bonanza-100",
     "platform_slug": "chumba",
-    "current_amount": 250000.00,
-    "growth_rate_daily": 5000.00,
+    "current_amount": 250000.0,
+    "growth_rate_daily": 5000.0,
     "progress_to_high": 95.2
   }
 ]
@@ -339,9 +378,11 @@ Get top growing jackpots across all platforms.
 ### Redemptions
 
 #### `POST /api/redemptions`
+
 Log a redemption request.
 
 **Request:**
+
 ```json
 {
   "platform_slug": "chumba",
@@ -353,6 +394,7 @@ Log a redemption request.
 ```
 
 **Response:**
+
 ```json
 {
   "redemption_id": "uuid",
@@ -364,13 +406,16 @@ Log a redemption request.
 ```
 
 #### `GET /api/redemptions`
+
 Get user's redemption history.
 
 **Query Parameters:**
+
 - `status` (optional) — pending, processing, completed, rejected
 - `platform_slug` (optional) — Filter by platform
 
 **Response:**
+
 ```json
 [
   {
@@ -387,9 +432,11 @@ Get user's redemption history.
 ```
 
 #### `PATCH /api/redemptions/:redemption_id`
+
 Update redemption status (mark as complete, rejected, etc.).
 
 **Request:**
+
 ```json
 {
   "status": "completed",
@@ -404,9 +451,11 @@ Update redemption status (mark as complete, rejected, etc.).
 The Flows endpoints allow users to create, refine and manage automated sweepstakes actions.
 
 #### `POST /api/flows/interpret`
+
 Convert natural language text into a Flow definition. This is typically the first step when the user types what they want the automation to do.
 
 **Request:**
+
 ```json
 { "rawInput": "Every day at 3 PM, open Chumba and claim bonus" }
 ```
@@ -414,22 +463,27 @@ Convert natural language text into a Flow definition. This is typically the firs
 **Response:** common interpret result containing parsed AST and confidence score.
 
 #### `POST /api/flows/conversations`
+
 Start a new multi‑turn conversation for building a Flow. Returns the initial conversation state.
 
 **Request:**
+
 ```json
 { "initialMessage": "Every day open Chumba and play" }
 ```
 
 **Response:**
+
 ```json
 { "success": true, "data": { "sessionId": "uuid", "turns": [...] } }
 ```
 
 #### `POST /api/flows/converse`
+
 Continue an existing conversation using its `conversationId` and a new message from the user.
 
 **Request:**
+
 ```json
 { "conversationId": "uuid", "userMessage": "Actually at 3:30 PM" }
 ```
@@ -438,6 +492,7 @@ Continue an existing conversation using its `conversationId` and a new message f
 Updated conversation state including assistant replies.
 
 #### CRUD & execution
+
 (Other `/api/flows` endpoints for create, list, get, update, execute are documented elsewhere or assumed - see Flow UI spec.)
 
 ---
@@ -445,9 +500,11 @@ Updated conversation state including assistant replies.
 ### Trust Index
 
 #### `GET /api/trust-index/platforms`
+
 Get Trust Index scores for all platforms.
 
 **Response:**
+
 ```json
 [
   {
@@ -476,9 +533,11 @@ Get Trust Index scores for all platforms.
 ```
 
 #### `GET /api/trust-index/platforms/:slug`
+
 Get detailed Trust Index for a specific platform.
 
 #### `GET /api/trust-index/history`
+
 Get historical Trust Index changes.
 
 ---
@@ -486,9 +545,11 @@ Get historical Trust Index changes.
 ### Affiliate
 
 #### `POST /api/affiliate/click`
+
 Track affiliate link click (called from extension).
 
 **Request:**
+
 ```json
 {
   "platform_slug": "chumba"
@@ -496,9 +557,11 @@ Track affiliate link click (called from extension).
 ```
 
 #### `POST /api/affiliate/signup`
+
 Track affiliate signup (called from extension when user registers).
 
 **Request:**
+
 ```json
 {
   "platform_slug": "chumba",
@@ -507,17 +570,17 @@ Track affiliate signup (called from extension when user registers).
 ```
 
 #### `GET /api/affiliate/earnings`
+
 Get affiliate earnings summary.
 
 **Response:**
+
 ```json
 {
-  "total_earnings": 5250.00,
-  "pending_payout": 1200.00,
-  "paid_out": 4050.00,
-  "by_platform": [
-    { "platform_slug": "chumba", "referrals": 12, "earnings": 1800.00 }
-  ],
+  "total_earnings": 5250.0,
+  "pending_payout": 1200.0,
+  "paid_out": 4050.0,
+  "by_platform": [{ "platform_slug": "chumba", "referrals": 12, "earnings": 1800.0 }],
   "next_payout_date": "2024-12-15T00:00:00Z"
 }
 ```
@@ -539,7 +602,7 @@ Get affiliate earnings summary.
   "type": "snapshot",
   "data": {
     "jackpot_id": "uuid",
-    "current_amount": 125000.50,
+    "current_amount": 125000.5,
     "updated_at": "2024-12-01T14:35:00Z"
   }
 }
@@ -550,7 +613,7 @@ Get affiliate earnings summary.
   "type": "hit",
   "data": {
     "jackpot_id": "uuid",
-    "amount": 125000.50,
+    "amount": 125000.5,
     "winner_platform": "chumba",
     "hit_at": "2024-12-01T14:35:00Z"
   }
@@ -562,7 +625,7 @@ Get affiliate earnings summary.
   "type": "surge",
   "data": {
     "jackpot_id": "uuid",
-    "growth_rate": 2500.00,
+    "growth_rate": 2500.0,
     "surge_at": "2024-12-01T14:35:00Z"
   }
 }
@@ -581,8 +644,8 @@ Get affiliate earnings summary.
   "type": "transaction",
   "data": {
     "game_id": "sweet-bonanza-100",
-    "bet": 10.00,
-    "win": 15.50,
+    "bet": 10.0,
+    "win": 15.5,
     "rtp": 80.0,
     "timestamp": "2024-12-01T14:35:00Z"
   }
@@ -615,6 +678,7 @@ All errors follow a consistent format:
 ```
 
 **Common Status Codes:**
+
 - `200` — Success
 - `201` — Created
 - `400` — Bad Request
@@ -667,6 +731,7 @@ Current stable version: **v1**
 ## Changelog
 
 ### v1.0.0 (2024-12-01)
+
 - Initial API release
 - Core endpoints: auth, users, sessions, analytics, jackpots, redemptions, trust-index, affiliate
 - WebSocket support for live jackpots and session data
