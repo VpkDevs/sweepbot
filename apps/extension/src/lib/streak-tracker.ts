@@ -24,7 +24,7 @@ export interface StreakUpdate {
 }
 
 class StreakTracker {
-  private readonly STORAGE_KEY: 'sessionStreak' = 'sessionStreak'
+  private readonly STORAGE_KEY = 'sessionStreak' as const
 
   async recordSession(platformSlug: string): Promise<StreakUpdate> {
     const today = this.getTodayDateString()
