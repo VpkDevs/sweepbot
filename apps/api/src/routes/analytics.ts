@@ -124,6 +124,7 @@ function detectOutlierSlot(
     direction === 'best' ? b.avg_rtp - a.avg_rtp : a.avg_rtp - b.avg_rtp
   )
   const candidate = sorted[0]
+  if (!candidate) return null
   if (Math.abs(candidate.avg_rtp - mean) < minDeltaPct) return null
   return candidate.slot
 }
@@ -147,10 +148,10 @@ function computeStreaks(rows: StreakSession[]): StreakResult {
   let longestWin = 0
   let longestLoss = 0
   let runLen = 1
-  let runType: 'win' | 'loss' = rows[0].net_result >= 0 ? 'win' : 'loss'
+  let runType: 'win' | 'loss' = rows[0]!.net_result >= 0 ? 'win' : 'loss'
 
   for (let i = 1; i < rows.length; i++) {
-    const t: 'win' | 'loss' = rows[i].net_result >= 0 ? 'win' : 'loss'
+    const t: 'win' | 'loss' = rows[i]!.net_result >= 0 ? 'win' : 'loss'
     if (t === runType) {
       runLen++
     } else {
@@ -164,10 +165,10 @@ function computeStreaks(rows: StreakSession[]): StreakResult {
   if (runType === 'win') longestWin = Math.max(longestWin, runLen)
   else longestLoss = Math.max(longestLoss, runLen)
 
-  const lastType: 'win' | 'loss' = rows[rows.length - 1].net_result >= 0 ? 'win' : 'loss'
+  const lastType: 'win' | 'loss' = rows[rows.length - 1]!.net_result >= 0 ? 'win' : 'loss'
   let currentLen = 0
   for (let i = rows.length - 1; i >= 0; i--) {
-    const t: 'win' | 'loss' = rows[i].net_result >= 0 ? 'win' : 'loss'
+    const t: 'win' | 'loss' = rows[i]!.net_result >= 0 ? 'win' : 'loss'
     if (t === lastType) currentLen++
     else break
   }

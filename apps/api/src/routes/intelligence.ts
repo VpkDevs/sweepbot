@@ -53,38 +53,21 @@ export const gameIntelligenceRoutes: FastifyPluginAsync = async (fastify) => {
     return { success: true, data: gameRtpData }
   })
 
-  // Hot/Cold game analysis - NEW FEATURE
-  fastify.get('/games/temperature', async (request, reply) => {
-    const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000)
+  // Game activity summary — historical play frequency per game (last 7 days)
+  // NOTE: Returns neutral historical stats only. No HOT/COLD classification,
+  // no outcome prediction, no betting recommendations.
+  fastify.get('/games/activity', async (request, reply) => {
     const last7Days = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000)
 
-    const gameTemperature = await db
+    const gameActivity = await db
       .select({
         game_id: transactions.gameId,
         platform_name: platforms.displayName,
-        recent_rtp: sql<number>`
-          CASE WHEN SUM(CASE WHEN ${sessions.startedAt} >= ${last24Hours} THEN ${transactions.betAmount} END) > 0 
-          THEN (SUM(CASE WHEN ${sessions.startedAt} >= ${last24Hours} THEN ${transactions.winAmount} END) / 
-                SUM(CASE WHEN ${sessions.startedAt} >= ${last24Hours} THEN ${transactions.betAmount} END)) * 100
-          ELSE NULL END`,
-        historical_rtp: sql<number>`
-          CASE WHEN SUM(CASE WHEN ${sessions.startedAt} >= ${last7Days} THEN ${transactions.betAmount} END) > 0 
-          THEN (SUM(CASE WHEN ${sessions.startedAt} >= ${last7Days} THEN ${transactions.winAmount} END) / 
-                SUM(CASE WHEN ${sessions.startedAt} >= ${last7Days} THEN ${transactions.betAmount} END)) * 100
-          ELSE NULL END`,
-        recent_spins: sql<number>`COUNT(CASE WHEN ${sessions.startedAt} >= ${last24Hours} THEN 1 END)`,
-        temperature: sql<string>`
-          CASE 
-            WHEN SUM(CASE WHEN ${sessions.startedAt} >= ${last24Hours} THEN ${transactions.betAmount} END) > 0 
-            AND (SUM(CASE WHEN ${sessions.startedAt} >= ${last24Hours} THEN ${transactions.winAmount} END) / 
-                 SUM(CASE WHEN ${sessions.startedAt} >= ${last24Hours} THEN ${transactions.betAmount} END)) > 1.05
-            THEN 'HOT'
-            WHEN SUM(CASE WHEN ${sessions.startedAt} >= ${last24Hours} THEN ${transactions.betAmount} END) > 0 
-            AND (SUM(CASE WHEN ${sessions.startedAt} >= ${last24Hours} THEN ${transactions.winAmount} END) / 
-                 SUM(CASE WHEN ${sessions.startedAt} >= ${last24Hours} THEN ${transactions.betAmount} END)) < 0.85
-            THEN 'COLD'
-            ELSE 'NEUTRAL'
-          END`
+        spins_last_24h: sql<number>`COUNT(CASE WHEN ${sessions.startedAt} >= ${last24Hours} THEN 1 END)`,
+        spins_last_7d: sql<number>`COUNT(CASE WHEN ${sessions.startedAt} >= ${last7Days} THEN 1 END)`,
+        avg_win_last_7d: sql<number>`AVG(CASE WHEN ${sessions.startedAt} >= ${last7Days} THEN ${transactions.winAmount} END)`,
+        unique_players_last_7d: sql<number>`COUNT(DISTINCT CASE WHEN ${sessions.startedAt} >= ${last7Days} THEN ${sessions.userId} END)`
       })
       .from(transactions)
       .innerJoin(sessions, eq(transactions.sessionId, sessions.id))
@@ -94,11 +77,13 @@ export const gameIntelligenceRoutes: FastifyPluginAsync = async (fastify) => {
       .having(sql`COUNT(CASE WHEN ${sessions.startedAt} >= ${last24Hours} THEN 1 END) >= 50`)
       .orderBy(desc(sql`COUNT(CASE WHEN ${sessions.startedAt} >= ${last24Hours} THEN 1 END)`))
 
-    return { success: true, data: gameTemperature }
+    return { success: true, data: gameActivity }
   })
 
-  // Optimal bet sizing analysis - NEW FEATURE
-  fastify.get('/betting/optimal-size', {
+  // Bet size distribution — historical breakdown of play volume by bet range.
+  // Shows how often each bet range was used and observed outcomes.
+  // This is descriptive data only — not a recommendation to bet any particular amount.
+  fastify.get('/betting/distribution', {
     schema: {
       querystring: z.object({
         game_id: z.string().optional(),
@@ -108,14 +93,14 @@ export const gameIntelligenceRoutes: FastifyPluginAsync = async (fastify) => {
   }, async (request, reply) => {
     const { game_id, platform_id } = request.query as { game_id?: string; platform_id?: string }
 
-    let whereConditions = []
+    const whereConditions = []
     if (game_id) whereConditions.push(eq(transactions.gameId, game_id))
     if (platform_id) whereConditions.push(eq(sessions.platformId, platform_id))
 
-    const betSizeAnalysis = await db
+    const betDistribution = await db
       .select({
         bet_range: sql<string>`
-          CASE 
+          CASE
             WHEN ${transactions.betAmount} <= 1 THEN '0.01-1.00'
             WHEN ${transactions.betAmount} <= 5 THEN '1.01-5.00'
             WHEN ${transactions.betAmount} <= 10 THEN '5.01-10.00'
@@ -124,7 +109,6 @@ export const gameIntelligenceRoutes: FastifyPluginAsync = async (fastify) => {
           END`,
         total_spins: count(transactions.id),
         avg_rtp: sql<number>`(SUM(${transactions.winAmount}) / SUM(${transactions.betAmount})) * 100`,
-        win_rate: sql<number>`(COUNT(CASE WHEN ${transactions.winAmount} > ${transactions.betAmount} THEN 1 END) * 100.0) / COUNT(*)`,
         avg_win: sql<number>`AVG(CASE WHEN ${transactions.winAmount} > ${transactions.betAmount} THEN ${transactions.winAmount} END)`,
         max_win: sql<number>`MAX(${transactions.winAmount})`,
         bonus_frequency: sql<number>`(COUNT(CASE WHEN ${transactions.bonusTriggered} = true THEN 1 END) * 100.0) / COUNT(*)`
@@ -133,7 +117,7 @@ export const gameIntelligenceRoutes: FastifyPluginAsync = async (fastify) => {
       .innerJoin(sessions, eq(transactions.sessionId, sessions.id))
       .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
       .groupBy(sql`
-        CASE 
+        CASE
           WHEN ${transactions.betAmount} <= 1 THEN '0.01-1.00'
           WHEN ${transactions.betAmount} <= 5 THEN '1.01-5.00'
           WHEN ${transactions.betAmount} <= 10 THEN '5.01-10.00'
@@ -142,22 +126,22 @@ export const gameIntelligenceRoutes: FastifyPluginAsync = async (fastify) => {
         END`)
       .orderBy(sql`AVG(${transactions.betAmount})`)
 
-    return { success: true, data: betSizeAnalysis }
+    return { success: true, data: betDistribution }
   })
 
-  // Session timing analysis - when to play
-  fastify.get('/timing/optimal-hours', async (request, reply) => {
+  // Session timing history — historical distribution of when the user played.
+  // Shows personal play patterns by hour/day for self-awareness only.
+  // No "best time to play" framing — just descriptive personal history.
+  fastify.get('/timing/history', async (request, reply) => {
     const userId = request.user?.id
 
-    const timingAnalysis = await db
+    const timingHistory = await db
       .select({
         hour: sql<number>`EXTRACT(HOUR FROM ${sessions.startedAt})`,
         day_of_week: sql<number>`EXTRACT(DOW FROM ${sessions.startedAt})`,
         avg_rtp: sql<number>`AVG(${sessions.rtp})`,
-        avg_session_profit: sql<number>`AVG(${sessions.netResult})`,
-        session_count: count(sessions.id),
-        win_rate: sql<number>`(COUNT(CASE WHEN ${sessions.netResult} > 0 THEN 1 END) * 100.0) / COUNT(*)`,
-        avg_duration_minutes: sql<number>`AVG(EXTRACT(EPOCH FROM (${sessions.endedAt} - ${sessions.startedAt}))) / 60`
+        avg_session_duration_minutes: sql<number>`AVG(EXTRACT(EPOCH FROM (${sessions.endedAt} - ${sessions.startedAt}))) / 60`,
+        session_count: count(sessions.id)
       })
       .from(sessions)
       .where(userId ? eq(sessions.userId, userId) : undefined)
@@ -166,52 +150,9 @@ export const gameIntelligenceRoutes: FastifyPluginAsync = async (fastify) => {
         sql`EXTRACT(DOW FROM ${sessions.startedAt})`
       )
       .having(sql`COUNT(${sessions.id}) >= 10`)
-      .orderBy(desc(sql`AVG(${sessions.rtp})`))
+      .orderBy(sql`EXTRACT(DOW FROM ${sessions.startedAt})`, sql`EXTRACT(HOUR FROM ${sessions.startedAt})`)
 
-    return { success: true, data: timingAnalysis }
-  })
-
-  // Bonus prediction model - NEW FEATURE
-  fastify.get('/bonus/prediction', {
-    schema: {
-      querystring: z.object({
-        game_id: z.string(),
-        spins_since_bonus: z.coerce.number().min(0)
-      })
-    }
-  }, async (request, reply) => {
-    const { game_id, spins_since_bonus } = request.query as { game_id: string; spins_since_bonus: number }
-
-    // Analyze historical bonus patterns
-    const bonusPatterns = await db
-      .select({
-        avg_spins_between_bonus: sql<number>`AVG(spins_between)`,
-        median_spins_between_bonus: sql<number>`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY spins_between)`,
-        bonus_probability_next_10: sql<number>`
-          COUNT(CASE WHEN spins_between <= ${spins_since_bonus + 10} THEN 1 END) * 100.0 / COUNT(*)`,
-        bonus_probability_next_50: sql<number>`
-          COUNT(CASE WHEN spins_between <= ${spins_since_bonus + 50} THEN 1 END) * 100.0 / COUNT(*)`,
-        total_bonus_samples: count()
-      })
-      .from(sql`(
-        SELECT 
-          ROW_NUMBER() OVER (PARTITION BY session_id ORDER BY timestamp) - 
-          ROW_NUMBER() OVER (PARTITION BY session_id, bonus_triggered ORDER BY timestamp) as spins_between
-        FROM ${transactions}
-        WHERE game_id = ${game_id} AND bonus_triggered = true
-      ) as bonus_gaps`)
-
-    const totalBonusSamples = bonusPatterns[0]?.total_bonus_samples ?? 0
-    const prediction = {
-      current_drought: spins_since_bonus,
-      probability_next_10_spins: bonusPatterns[0]?.bonus_probability_next_10 || 0,
-      probability_next_50_spins: bonusPatterns[0]?.bonus_probability_next_50 || 0,
-      average_gap: bonusPatterns[0]?.avg_spins_between_bonus || 0,
-      confidence: totalBonusSamples > 100 ? 'HIGH' :
-                  totalBonusSamples > 50 ? 'MEDIUM' : 'LOW'
-    }
-
-    return { success: true, data: prediction }
+    return { success: true, data: timingHistory }
   })
 
   // Platform comparison intelligence

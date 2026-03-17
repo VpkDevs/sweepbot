@@ -340,7 +340,7 @@ export function FlowsPage() {
     staleTime: 30_000,
   })
 
-  const flows = rawFlows as Flow[]
+  const flows = rawFlows as unknown as Flow[]
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
@@ -357,12 +357,12 @@ export function FlowsPage() {
     mutationFn: (data: Record<string, unknown>) => api.flows.create(data),
     onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: ['flows'] })
-      navigate({ to: `/app/flows/${(result as Record<string, unknown>)['id'] as string}` })
+      navigate({ to: `/flows/${(result as Record<string, unknown>)['id'] as string}` })
     },
   })
 
   const handleUseTemplate = (template: FlowTemplate) => {
-    navigate({ to: '/app/flows/new' })
+    navigate({ to: '/flows/new' })
   }
 
   const stats = useMemo(() => ({
@@ -408,7 +408,7 @@ export function FlowsPage() {
               Templates
             </button>
             <button
-              onClick={() => navigate({ to: '/app/flows/new' })}
+              onClick={() => navigate({ to: '/flows/new' })}
               className="group flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-bold rounded-xl shadow-xl shadow-brand-500/20 transition-all press-scale"
             >
               <Plus className="w-4 h-4" />
@@ -509,7 +509,7 @@ export function FlowsPage() {
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-300 text-sm font-medium hover:bg-zinc-700 transition-all">
                 <Sparkles className="w-4 h-4 text-brand-400" /> Browse Templates
               </button>
-              <button onClick={() => navigate({ to: '/app/flows/new' })}
+              <button onClick={() => navigate({ to: '/flows/new' })}
                 className="group flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-bold rounded-xl shadow-xl shadow-brand-500/20 transition-all press-scale">
                 <Zap className="w-4 h-4" /> Build from Scratch
                 <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -539,7 +539,7 @@ export function FlowsPage() {
             <ScrollReveal key={flow.id} delay={i * 50}>
               <FlowCard
                 flow={flow}
-                onView={() => navigate({ to: `/app/flows/${flow.id}` })}
+                onView={() => navigate({ to: `/flows/${flow.id}` })}
                 onActivate={() => updateMutation.mutate({ id: flow.id, data: { status: 'active' } })}
                 onPause={() => updateMutation.mutate({ id: flow.id, data: { status: 'paused' } })}
                 onDuplicate={() => createMutation.mutate({ name: `${flow.name} (Copy)`, description: flow.description, trigger: flow.trigger, guardrails: flow.guardrails, status: 'draft' })}

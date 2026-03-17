@@ -65,15 +65,19 @@ async function init(): Promise<void> {
 
   networkInterceptor.onTransactionDetected(async (tx) => {
     rtpCalculator.recordSpin(tx.betAmount, tx.winAmount)
-    const apiResult = tx.result === 'push' ? 'loss' : tx.result
 
-    if (currentSessionId) {
+    // The API only accepts 'win' | 'loss' | 'bonus'. A 'push' (tie) is neutral —
+    // it does not affect balance and should not be counted as a loss. Skip sending
+    // it to avoid distorting RTP calculations.
+    if (tx.result === 'push') {
+      log.debug('Push outcome detected — skipping transaction record (neutral result)')
+    } else if (currentSessionId) {
       try {
         await extensionApi.recordTransaction(currentSessionId, {
           game_id: tx.gameId,
           bet_amount: tx.betAmount,
           win_amount: tx.winAmount,
-          result: apiResult,
+          result: tx.result,
         })
       } catch (error) {
         log.error('Failed to record transaction:', error)

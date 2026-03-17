@@ -1,8 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { useRouter } from '@tanstack/react-router'
+import { useAuthStore } from '../../stores/auth'
 
-const STORAGE_KEY = 'sweepbot_onboarding_v1_complete'
+// Per-user key so onboarding is independent across different accounts on the same browser.
+function storageKey(userId: string | undefined): string {
+  return `sweepbot_onboarding_v1_complete_${userId ?? 'guest'}`
+}
 
 interface Step {
   title: string
@@ -58,11 +62,12 @@ const steps: Step[] = [
 
 export function OnboardingTour() {
   const router = useRouter()
+  const userId = useAuthStore((s) => s.user?.id)
   const [step, setStep] = useState(0)
   const [visible, setVisible] = useState(false)
   const [animating, setAnimating] = useState(false)
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const goToTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const goToTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Only show tour on dashboard route
   const isDashboard = router.state.location.pathname === '/'
@@ -73,9 +78,10 @@ export function OnboardingTour() {
       return
     }
 
-    // Try to read from localStorage with error handling
+    // Try to read from localStorage with error handling.
+    // Key is per-user so onboarding is independent across different accounts.
     try {
-      const done = localStorage.getItem(STORAGE_KEY)
+      const done = localStorage.getItem(storageKey(userId))
       if (!done) {
         // Small delay so the dashboard renders first
         timeoutRef.current = setTimeout(() => setVisible(true), 600)
@@ -91,11 +97,11 @@ export function OnboardingTour() {
         timeoutRef.current = null
       }
     }
-  }, [isDashboard])
+  }, [isDashboard, userId])
 
   const dismiss = () => {
     try {
-      localStorage.setItem(STORAGE_KEY, '1')
+      localStorage.setItem(storageKey(userId), '1')
     } catch (err) {
       console.warn('Could not save onboarding state', err)
     }
@@ -105,6 +111,7 @@ export function OnboardingTour() {
   const goTo = (nextStep: number) => {
     if (animating) return
     setAnimating(true)
+    if (goToTimeoutRef.current) clearTimeout(goToTimeoutRef.current)
     goToTimeoutRef.current = setTimeout(() => {
       setStep(nextStep)
       setAnimating(false)

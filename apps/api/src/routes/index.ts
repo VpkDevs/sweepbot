@@ -17,9 +17,12 @@ import { flowRoutes } from './flows.js'
 import { featuresRoutes } from './features.js'
 import { notificationsRoutes } from './notifications.js'
 import { achievementRoutes } from './achievements.js'
+import { streaksRoutes } from './streaks.js'
+import { sessionNotesRoutes } from './session-notes.js'
 import { gameIntelligenceRoutes } from './intelligence.js'
 import { paymentMethodRoutes } from './payment-methods.js'
 import { taxRoutes } from './tax.js'
+import { subscriptionRoutes } from './subscriptions.js'
 
 /**
  * Registers all API route modules on the given Fastify instance so they become available under their configured prefixes.
@@ -39,8 +42,11 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
   await app.register(featuresRoutes, { prefix: '/features' })
   await app.register(notificationsRoutes, { prefix: '/notifications' })
   await app.register(achievementRoutes, { prefix: '/achievements' })
+  await app.register(streaksRoutes, { prefix: '/streaks' })
+  await app.register(sessionNotesRoutes, { prefix: '/session-notes' })
   await app.register(webhookRoutes, { prefix: '/webhooks' })
   await app.register(gameIntelligenceRoutes, { prefix: '/intelligence' })
   await app.register(paymentMethodRoutes, { prefix: '/payment-methods' })
   await app.register(taxRoutes, { prefix: '/tax' })
+  await app.register(subscriptionRoutes, { prefix: '/subscriptions' })
 }

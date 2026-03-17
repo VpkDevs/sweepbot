@@ -77,7 +77,7 @@ export function FlowDetailPage() {
 
   const handleArchive = async () => {
     await api.flows.update(flowId, { status: 'archived' })
-    navigate({ to: '/app/flows' })
+    navigate({ to: '/flows' })
   }
 
   if (flowLoading) {
@@ -124,7 +124,7 @@ export function FlowDetailPage() {
       {/* Breadcrumb */}
       <ScrollReveal>
         <button
-          onClick={() => navigate({ to: '/app/flows' })}
+          onClick={() => navigate({ to: '/flows' })}
           className="flex items-center gap-2 text-sm text-zinc-400 hover:text-zinc-300 transition-colors mb-2"
         >
           <ChevronLeft className="w-4 h-4" />
@@ -296,8 +296,7 @@ export function FlowDetailPage() {
             </div>
 
             <div className="space-y-4">
-              {/* Trigger Step */}
-              {definition['trigger'] && (
+              {Boolean(definition['trigger']) && (
                 <div className="flex items-center gap-3">
                   <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-500/15 border border-blue-500/30">
                     <Clock className="w-5 h-5 text-blue-400" />
@@ -306,15 +305,14 @@ export function FlowDetailPage() {
                     <p className="text-sm font-semibold text-white">Trigger</p>
                     <p className="text-xs text-zinc-500">
                       {typeof definition['trigger'] === 'object'
-                        ? (definition['trigger'] as Record<string, unknown>)['type'] || 'Schedule-based'
+                        ? String((definition['trigger'] as Record<string, unknown>)['type'] ?? 'Schedule-based')
                         : 'Event trigger'}
                     </p>
                   </div>
                 </div>
               )}
 
-              {/* Actions Step */}
-              {definition['actions'] && Array.isArray(definition['actions']) && (
+              {Boolean(definition['actions']) && Array.isArray(definition['actions']) && (
                 <div className="flex items-center gap-3">
                   <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-brand-500/15 border border-brand-500/30">
                     <Zap className="w-5 h-5 text-brand-400" />
@@ -328,8 +326,7 @@ export function FlowDetailPage() {
                 </div>
               )}
 
-              {/* Guardrails Step */}
-              {definition['guardrails'] && Array.isArray(definition['guardrails']) && (
+              {Boolean(definition['guardrails']) && Array.isArray(definition['guardrails']) && (
                 <div className="flex items-center gap-3">
                   <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-500/15 border border-emerald-500/30">
                     <Shield className="w-5 h-5 text-emerald-400" />
@@ -393,7 +390,7 @@ export function FlowDetailPage() {
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
                   <span className="font-semibold text-emerald-300">{(guard['type'] as string) || `Guard ${idx + 1}`}:</span>
                   <span className="tabular-nums text-zinc-400">{String(guard['value'])}</span>
-                  {guard['source'] && (
+                  {Boolean(guard['source']) && (
                     <span className="text-xs text-zinc-600 ml-auto">({guard['source'] as string})</span>
                   )}
                 </div>
@@ -466,7 +463,7 @@ export function FlowDetailPage() {
 
                     {expandedExecution === exec['id'] && (
                       <div className="px-4 pb-4 space-y-3 border-t border-white/[0.04] pt-3 animate-slide-up-fade">
-                        {exec['metrics'] && (
+                        {Boolean(exec['metrics']) && (
                           <div className="grid grid-cols-3 gap-2">
                             {(() => {
                               const m = exec['metrics'] as Record<string, unknown>

@@ -8,7 +8,7 @@ import { z } from 'zod'
 
 const webEnvSchema = z.object({
   // API Configuration
-  VITE_API_URL: z.string().url().optional().default('/api/v1'),
+  VITE_API_URL: z.string().min(1).default('/api/v1'),
   
   // Supabase Configuration
   VITE_SUPABASE_URL: z.string().url(),

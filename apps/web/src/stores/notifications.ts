@@ -41,7 +41,7 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
     set({ isLoading: true })
 
     try {
-      const data = (await api.notifications.list({ limit: 20 })) as Notification[]
+      const data = (await api.notifications.list({ limit: 20 })) as unknown as Notification[]
       const unread = data.filter((n) => !n.is_read).length
 
       set((state) => ({

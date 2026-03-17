@@ -418,7 +418,7 @@ function TrustDetailPanel({
 }) {
   const { data: detailData, isLoading: detailLoading } = useQuery({
     queryKey: ['trust', 'detail', platformId],
-    queryFn:  () => api.trust.detail(platformId),
+    queryFn:  () => api.trust.get(platformId),
     staleTime: 180_000,
   })
 
@@ -437,7 +437,7 @@ function TrustDetailPanel({
   const historyPoints = (detail?.history ?? []) as HistoryPoint[]
   const userCtx       = detail?.user_context ?? null
   const tosChanges    = (detail?.tos_changes ?? []).slice(0, 8)
-  const percentile    = (detail?.platform as (typeof detail)['platform'] & { percentile?: number })?.percentile
+  const percentile    = (detail?.platform as (TrustEntry & { percentile?: number; rank: number; total_platforms: number }) | undefined)?.percentile
 
   return (
     <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
@@ -840,7 +840,13 @@ export function TrustIndexPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['trust', 'list', sortBy, tierFilter, myPlatforms],
-    queryFn:  () => api.trust.list({ sortBy, tier: tierFilter ?? undefined, myPlatforms }),
+    queryFn:  () => {
+      const p: Record<string, string> = {}
+      if (sortBy) p.sortBy = sortBy
+      if (tierFilter) p.tier = tierFilter
+      if (myPlatforms) p.myPlatforms = 'true'
+      return api.trust.list(Object.keys(p).length ? p : undefined)
+    },
     staleTime: 300_000,
   })
 

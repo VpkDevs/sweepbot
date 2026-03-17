@@ -7,6 +7,7 @@
  */
 
 import type { SessionStorageData, SpinEvent } from '../lib/storage'
+import type { FlowDefinition } from '../lib/flows/types'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Content script → Background
@@ -54,7 +55,7 @@ export type ContentScriptMessage =
   | { type: 'GET_SESSION_STATE' }
   | { type: 'GET_SESSION_STATS' }
   | { type: 'HUD_TOGGLE'; payload?: { enabled: boolean } }
-  | { type: 'EXECUTE_FLOW'; payload: { flow: unknown } }
+  | { type: 'EXECUTE_FLOW'; payload: { flow: FlowDefinition } }
   | { type: 'FLOW_CANCEL'; payload: { flowId: string } }
   | { type: 'ADD_ANNOTATION'; payload: { text: string; spinNumber?: number } }
 

@@ -103,7 +103,7 @@ export async function paymentMethodRoutes(app: FastifyInstance): Promise<void> {
         if (err instanceof StripeServiceError) {
           logger.warn({ err, userId }, 'listPaymentMethods failed')
           return reply
-            .code(stripeErrorStatus(err.code))
+            .code(stripeErrorStatus(err.code) as unknown as 200)
             .send({ success: false, error: { code: err.code, message: err.message } })
         }
         throw err
@@ -144,7 +144,7 @@ export async function paymentMethodRoutes(app: FastifyInstance): Promise<void> {
 
       const parseResult = paymentMethodParamSchema.safeParse(request.params)
       if (!parseResult.success) {
-        return reply.code(400).send({
+        return reply.code(400 as unknown as 200).send({
           success: false,
           error: {
             code: 'INVALID_PAYMENT_METHOD_ID',
@@ -162,7 +162,7 @@ export async function paymentMethodRoutes(app: FastifyInstance): Promise<void> {
         if (err instanceof StripeServiceError) {
           logger.warn({ err, userId, paymentMethodId }, 'setDefaultPaymentMethod failed')
           return reply
-            .code(stripeErrorStatus(err.code))
+            .code(stripeErrorStatus(err.code) as unknown as 200)
             .send({ success: false, error: { code: err.code, message: err.message } })
         }
         throw err
@@ -204,7 +204,7 @@ export async function paymentMethodRoutes(app: FastifyInstance): Promise<void> {
 
       const parseResult = paymentMethodParamSchema.safeParse(request.params)
       if (!parseResult.success) {
-        return reply.code(400).send({
+        return reply.code(400 as unknown as 200).send({
           success: false,
           error: {
             code: 'INVALID_PAYMENT_METHOD_ID',
@@ -222,7 +222,7 @@ export async function paymentMethodRoutes(app: FastifyInstance): Promise<void> {
         if (err instanceof StripeServiceError) {
           logger.warn({ err, userId, paymentMethodId }, 'removePaymentMethod failed')
           return reply
-            .code(stripeErrorStatus(err.code))
+            .code(stripeErrorStatus(err.code) as unknown as 200)
             .send({ success: false, error: { code: err.code, message: err.message } })
         }
         throw err
@@ -262,7 +262,7 @@ export async function paymentMethodRoutes(app: FastifyInstance): Promise<void> {
       } catch (err) {
         if (err instanceof StripeServiceError) {
           return reply
-            .code(stripeErrorStatus(err.code))
+            .code(stripeErrorStatus(err.code) as unknown as 200)
             .send({ success: false, error: { code: err.code, message: err.message } })
         }
         throw err

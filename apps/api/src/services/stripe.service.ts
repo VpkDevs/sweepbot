@@ -98,7 +98,7 @@ export type StripeServiceErrorCode =
 export class StripeServiceError extends Error {
   readonly code: StripeServiceErrorCode
   readonly retryable: boolean
-  readonly cause?: unknown
+  override readonly cause?: unknown
 
   constructor(
     code: StripeServiceErrorCode,
@@ -187,7 +187,7 @@ export async function getOrCreateCustomer(
   const customer = await withRetry(
     () =>
       stripe.customers.create(
-        { email, name: displayName, metadata: { userId } },
+        { email, ...(displayName ? { name: displayName } : {}), metadata: { userId } },
         { idempotencyKey: idempotencyKey('create-customer', userId, email) },
       ),
     'customers.create',
@@ -345,12 +345,17 @@ export async function previewSubscriptionChange(
     'subscriptions.retrieve(preview)',
   )
 
+  const itemId = sub.items.data[0]?.id
+  if (!itemId) {
+    throw new StripeServiceError('SUBSCRIPTION_NOT_FOUND', 'Subscription has no line items')
+  }
+
   return withRetry(
     () =>
       stripe.invoices.retrieveUpcoming({
         customer: row.stripe_customer_id!,
         subscription: row.stripe_subscription_id!,
-        subscription_items: [{ id: sub.items.data[0]?.id, price: newPriceId }],
+        subscription_items: [{ id: itemId, price: newPriceId }],
       }),
     'invoices.retrieveUpcoming',
   )

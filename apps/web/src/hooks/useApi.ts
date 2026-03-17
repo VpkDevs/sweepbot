@@ -90,7 +90,13 @@ export function useUpdateSettings() {
 export function useSessions(params?: { page?: number; limit?: number; platformId?: string }) {
   return useQuery({
     queryKey: queryKeys.sessions.list(params),
-    queryFn: () => api.sessions.list(params),
+    queryFn: () => {
+      const p: Record<string, string> = {}
+      if (params?.page != null) p.page = String(params.page)
+      if (params?.limit != null) p.limit = String(params.limit)
+      if (params?.platformId) p.platformId = params.platformId
+      return api.sessions.list(Object.keys(p).length ? p : undefined)
+    },
   })
 }
 
@@ -113,7 +119,8 @@ export function useCreateSession() {
 export function useEndSession() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.sessions.end(id),
+    mutationFn: ({ id, data }: { id: string; data: { ended_at: string; sc_balance_close?: number; gc_balance_close?: number; notes?: string } }) =>
+      api.sessions.end(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['sessions'] }),
   })
 }
@@ -123,18 +130,11 @@ export function usePortfolio() {
 }
 
 export function useDashboard() {
-  return useQuery({ queryKey: queryKeys.analytics.dashboard, queryFn: api.analytics.dashboard })
-}
-
-export function useHeatmap(year?: number) {
-  return useQuery({
-    queryKey: queryKeys.analytics.heatmap(year),
-    queryFn: () => api.analytics.heatmap({ year }),
-  })
+  return useQuery({ queryKey: queryKeys.analytics.dashboard, queryFn: () => api.analytics.portfolio() })
 }
 
 export function usePlatforms() {
-  return useQuery({ queryKey: queryKeys.platforms.list, queryFn: api.platforms.list })
+  return useQuery({ queryKey: queryKeys.platforms.list, queryFn: () => api.platforms.list() })
 }
 
 export function usePlatform(id: string) {
@@ -148,7 +148,7 @@ export function usePlatform(id: string) {
 export function usePlatformStats(id: string) {
   return useQuery({
     queryKey: queryKeys.platforms.stats(id),
-    queryFn: () => api.platforms.stats(id),
+    queryFn: () => api.platforms.get(id),
     enabled: !!id,
   })
 }
@@ -156,21 +156,33 @@ export function usePlatformStats(id: string) {
 export function useJackpots(params?: { page?: number; limit?: number; platform?: string }) {
   return useQuery({
     queryKey: queryKeys.jackpots.list(params),
-    queryFn: () => api.jackpots.list(params),
+    queryFn: () => {
+      const p: Record<string, string> = {}
+      if (params?.page != null) p.page = String(params.page)
+      if (params?.limit != null) p.limit = String(params.limit)
+      if (params?.platform) p.platform = params.platform
+      return api.jackpots.leaderboard(Object.keys(p).length ? p : undefined)
+    },
   })
 }
 
 export function useJackpotLeaderboard() {
   return useQuery({
     queryKey: queryKeys.jackpots.leaderboard,
-    queryFn: api.jackpots.leaderboard,
+    queryFn: () => api.jackpots.leaderboard(),
   })
 }
 
 export function useRedemptions(params?: { page?: number; limit?: number; status?: string }) {
   return useQuery({
     queryKey: queryKeys.redemptions.list(params),
-    queryFn: () => api.redemptions.list(params),
+    queryFn: () => {
+      const p: Record<string, string> = {}
+      if (params?.page != null) p.page = String(params.page)
+      if (params?.limit != null) p.limit = String(params.limit)
+      if (params?.status) p.status = params.status
+      return api.redemptions.list(Object.keys(p).length ? p : undefined)
+    },
   })
 }
 
@@ -183,7 +195,7 @@ export function useCreateRedemption() {
 }
 
 export function useTrustIndex() {
-  return useQuery({ queryKey: queryKeys.trust.list, queryFn: api.trust.list })
+  return useQuery({ queryKey: queryKeys.trust.list, queryFn: () => api.trust.list() })
 }
 
 export function useTrustScore(platform: string) {
@@ -195,7 +207,7 @@ export function useTrustScore(platform: string) {
 }
 
 export function useFlows() {
-  return useQuery({ queryKey: queryKeys.flows.list, queryFn: api.flows.list })
+  return useQuery({ queryKey: queryKeys.flows.list, queryFn: () => api.flows.list() })
 }
 
 export function useFlow(id: string) {
@@ -229,7 +241,7 @@ export function useInterpretFlow() {
 }
 
 export function useAchievements() {
-  return useQuery({ queryKey: queryKeys.features.achievements, queryFn: api.features.achievements })
+  return useQuery({ queryKey: queryKeys.features.achievements, queryFn: () => api.features.achievements() })
 }
 
 export function useStreaks() {
@@ -243,14 +255,19 @@ export function useRecords() {
 export function useBigWins(params?: { page?: number; limit?: number }) {
   return useQuery({
     queryKey: queryKeys.features.bigWins(params),
-    queryFn: () => api.features.bigWins(params),
+    queryFn: () => {
+      const p: Record<string, string> = {}
+      if (params?.page != null) p.page = String(params.page)
+      if (params?.limit != null) p.limit = String(params.limit)
+      return api.features.bigWins(Object.keys(p).length ? p : undefined)
+    },
   })
 }
 
-export function useNotifications(params?: { page?: number; limit?: number; unreadOnly?: boolean }) {
+export function useNotifications(params?: { limit?: number; unreadOnly?: boolean }) {
   return useQuery({
     queryKey: queryKeys.notifications.list(params),
-    queryFn: () => api.notifications.list(params),
+    queryFn: () => api.notifications.list(params ? { limit: params.limit, unread_only: params.unreadOnly } : undefined),
     refetchInterval: 30_000,
   })
 }

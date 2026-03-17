@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Flame, Trophy, TrendingUp, Clock, Target, Zap } from 'lucide-react'
+import { api } from '../lib/api'
 
 interface AchievementSummary {
   streak: {
@@ -18,21 +19,14 @@ interface AchievementSummary {
 }
 
 export function AchievementsDashboard() {
-  const { data, isLoading } = useQuery<{ data: AchievementSummary }>({
+  const { data: achievements, isLoading } = useQuery<AchievementSummary>({
     queryKey: ['achievements', 'summary'],
-    queryFn: async () => {
-      const res = await fetch('/api/v1/achievements/summary', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` },
-      })
-      return res.json()
-    },
+    queryFn: () => api.achievements.summary() as unknown as Promise<AchievementSummary>,
   })
 
   if (isLoading) {
     return <div className="text-muted-foreground">Loading achievements...</div>
   }
-
-  const achievements = data?.data
 
   return (
     <div className="space-y-6">

@@ -316,7 +316,15 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
 
       // Handle lifetime purchase (one-time payment mode)
       if (session.mode === 'payment') {
-        const lifetimeTier = session.metadata?.['tier'] ?? 'pro'
+        // Derive the tier from the purchased price ID so it maps correctly via
+        // TIER_PRICE_MAP (lifetime price → 'elite').  Fall back to 'elite' for
+        // one-time payments because a missing/mismatched tier metadata field
+        // previously defaulted to 'pro', under-granting access to lifetime buyers.
+        const priceId = (session as unknown as { line_items?: { data?: Array<{ price?: { id?: string } }> } })
+          .line_items?.data?.[0]?.price?.id ?? ''
+        const lifetimeTier = (priceId ? getTierFromPriceId(priceId) : null)
+          || session.metadata?.['tier']
+          || 'elite'
         await dbQuery(sql`
           UPDATE subscriptions
           SET

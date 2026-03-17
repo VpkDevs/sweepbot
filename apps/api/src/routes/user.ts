@@ -97,10 +97,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       `)
 
       if (!result.rows.length) {
-        return reply.code(404).send({
-          success: false,
-          error: { code: 'NOT_FOUND', message: 'Profile not found', status: 404 },
-        })
+        return reply.code(404).send({ error: 'NOT_FOUND', message: 'Profile not found', status: 404 })
       }
 
       return reply.send({ success: true, data: result.rows[0] })
@@ -346,14 +343,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       const count = Number((currentCount.rows[0] as { count: string } | undefined)?.count ?? '0')
 
       if (count >= limit) {
-        return reply.code(403).send({
-          success: false,
-          error: {
-            code: 'FEATURE_GATED',
-            message: `Your ${tier} plan supports up to ${limit} platforms. Upgrade to add more.`,
-            status: 403,
-          },
-        })
+        return reply.code(403).send({ error: 'FEATURE_GATED', message: `Your ${tier} plan supports up to ${limit} platforms. Upgrade to add more.`, status: 403 })
       }
 
       const result = await dbQuery(sql`
@@ -473,10 +463,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
     const priceId = priceMap[`${tier}-${cycle}`]
     if (!priceId) {
-      return reply.code(400).send({
-        success: false,
-        error: { code: 'PRICE_NOT_CONFIGURED', message: `Price for ${tier}/${cycle} not configured.`, status: 400 },
-      })
+      return reply.code(400).send({ error: 'PRICE_NOT_CONFIGURED', message: `Price for ${tier}/${cycle} not configured.`, status: 400 })
     }
 
     // Resolve user email for customer creation
@@ -486,10 +473,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     const profile = profileResult.rows[0] as Record<string, string | null> | undefined
     const email = profile?.['email'] as string | undefined
     if (!email) {
-      return reply.code(400).send({
-        success: false,
-        error: { code: 'PROFILE_NOT_FOUND', message: 'User profile email not found.', status: 400 },
-      })
+      return reply.code(400).send({ error: 'PROFILE_NOT_FOUND', message: 'User profile email not found.', status: 400 })
     }
 
     const appUrl = (env.CORS_ORIGINS.split(',')[0] ?? 'https://sweepbot.app').trim()
@@ -508,10 +492,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       return reply.send({ success: true, data: { url: session.url } })
     } catch (err) {
       if (err instanceof StripeServiceError) {
-        return reply.code(500).send({
-          success: false,
-          error: { code: err.code, message: err.message, status: 500 },
-        })
+        return reply.code(500).send({ error: err.code, message: err.message, status: 500 })
       }
       throw err
     }
@@ -565,10 +546,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
           err.code === 'SUBSCRIPTION_NOT_FOUND' ? 404
           : err.code === 'SUBSCRIPTION_NOT_ACTIVE' ? 409
           : 500
-        return reply.code(status).send({
-          success: false,
-          error: { code: err.code, message: err.message, status },
-        })
+        return reply.code(status).send({ error: err.code, message: err.message, status })
       }
       throw err
     }
@@ -590,10 +568,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     } catch (err) {
       if (err instanceof StripeServiceError) {
         const status = err.code === 'SUBSCRIPTION_NOT_FOUND' ? 404 : 500
-        return reply.code(status).send({
-          success: false,
-          error: { code: err.code, message: err.message, status },
-        })
+        return reply.code(status).send({ error: err.code, message: err.message, status })
       }
       throw err
     }
@@ -612,10 +587,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
         const status = err.code === 'SUBSCRIPTION_NOT_FOUND' ? 404
           : err.code === 'PLAN_ALREADY_ACTIVE' ? 409
           : 500
-        return reply.code(status).send({
-          success: false,
-          error: { code: err.code, message: err.message, status },
-        })
+        return reply.code(status).send({ error: err.code, message: err.message, status })
       }
       throw err
     }
@@ -640,10 +612,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     } catch (err) {
       if (err instanceof StripeServiceError) {
         const status = err.code === 'SUBSCRIPTION_NOT_FOUND' ? 404 : 500
-        return reply.code(status).send({
-          success: false,
-          error: { code: err.code, message: err.message, status },
-        })
+        return reply.code(status).send({ error: err.code, message: err.message, status })
       }
       throw err
     }
@@ -872,10 +841,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     const { error } = await supabaseAdmin.auth.admin.deleteUser(userId)
 
     if (error) {
-      return reply.code(500).send({
-        success: false,
-        error: { code: 'DELETE_FAILED', message: error.message, status: 500 },
-      })
+      return reply.code(500).send({ error: 'DELETE_FAILED', message: error.message, status: 500 })
     }
 
     return reply.send({ success: true, data: { deleted: true } })

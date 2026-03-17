@@ -122,7 +122,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     })
     } catch (error) {
       app.log.error({ error }, 'GET /features/achievements error')
-      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to load achievements' } })
+      return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to load achievements', status: 500 })
     }
   })
 
@@ -146,7 +146,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     return reply.send({ success: true, data: rows.rows })
     } catch (error) {
       app.log.error({ error }, 'GET /features/achievements/mine error')
-      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to load achievements' } })
+      return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to load achievements', status: 500 })
     }
   })
 
@@ -170,7 +170,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     return reply.send({ success: true, data: rows.rows })
     } catch (error) {
       app.log.error({ error }, 'GET /features/achievements/leaderboard error')
-      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to load leaderboard' } })
+      return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to load leaderboard', status: 500 })
     }
   })
 
@@ -183,7 +183,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     return reply.send({ success: true, data: { newlyEarned } })
     } catch (error) {
       app.log.error({ error }, 'POST /features/achievements/check error')
-      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to check achievements' } })
+      return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to check achievements', status: 500 })
     }
   })
 
@@ -253,7 +253,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     })
     } catch (error) {
       app.log.error({ error }, 'GET /features/heatmap error')
-      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to load heatmap' } })
+      return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to load heatmap', status: 500 })
     }
   })
 
@@ -334,7 +334,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     })
     } catch (error) {
       app.log.error({ error }, 'GET /features/streaks error')
-      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to load streaks' } })
+      return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to load streaks', status: 500 })
     }
   })
 
@@ -380,7 +380,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     })
     } catch (error) {
       app.log.error({ error }, 'GET /features/records error')
-      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to load records' } })
+      return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to load records', status: 500 })
     }
   })
 
@@ -396,7 +396,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     return reply.send({ success: true, data: record.rows[0] ?? null })
     } catch (error) {
       app.log.error({ error }, 'POST /features/records/refresh error')
-      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to refresh records' } })
+      return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to refresh records', status: 500 })
     }
   })
 
@@ -483,7 +483,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     })
     } catch (error) {
       app.log.error({ error }, 'GET /features/big-wins error')
-      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to load big wins' } })
+      return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to load big wins', status: 500 })
     }
   })
 
@@ -522,7 +522,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     return reply.code(201).send({ success: true, data: { id: bigWinId, verificationStatus } })
     } catch (error) {
       app.log.error({ error }, 'POST /features/big-wins error')
-      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to submit big win' } })
+      return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to submit big win', status: 500 })
     }
   })
 
@@ -542,7 +542,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     return reply.send({ success: true, data: rows.rows })
     } catch (error) {
       app.log.error({ error }, 'GET /features/big-wins/mine error')
-      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to load your big wins' } })
+      return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to load your big wins', status: 500 })
     }
   })
 
@@ -566,16 +566,13 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     `)
 
     if (!updatedRows.length) {
-      return reply.code(404).send({
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'Big win not found or unauthorized' },
-      })
+      return reply.code(404).send({ error: 'NOT_FOUND', message: 'Big win not found or unauthorized', status: 404 })
     }
 
     return reply.send({ success: true, data: { id: updatedRows[0]!.id } })
     } catch (error) {
       app.log.error({ error }, 'PATCH /features/big-wins/:id error')
-      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to update big win' } })
+      return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to update big win', status: 500 })
     }
   })
 
@@ -615,7 +612,7 @@ export async function featuresRoutes(app: FastifyInstance): Promise<void> {
     })
     } catch (error) {
       app.log.error({ error }, 'GET /features/stats error')
-      return reply.code(500).send({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to load stats' } })
+      return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to load stats', status: 500 })
     }
   })
 }

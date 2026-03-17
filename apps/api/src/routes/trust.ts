@@ -174,9 +174,7 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
 
       // Resolve authenticated user if present (auth is optional on this endpoint)
       await optionalAuth(request, reply)
-      const userId: string | null = request.user?.id ?? null catch {
-        userId = null
-      }
+      const userId: string | null = request.user?.id ?? null
 
       // Tier filter maps to score range
       const tierRanges: Record<string, [number, number]> = {
@@ -456,9 +454,7 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
 
       // Optional auth — user context enrichment if logged in
       await optionalAuth(request, reply)
-      const userId: string | null = request.user?.id ?? null catch {
-        userId = null
-      }
+      const userId: string | null = request.user?.id ?? null
 
       const [current, history, dataBreakdown, recentRedemptions, tosChanges] = await Promise.all([
         // Full current score with component breakdown, rank, and certification

@@ -261,8 +261,8 @@ export const api = {
       request('/sessions', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: Record<string, unknown>) =>
       request(`/sessions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-    end: (id: string) =>
-      request(`/sessions/${id}/end`, { method: 'POST' }),
+    end: (id: string, data: { ended_at: string; sc_balance_close?: number; gc_balance_close?: number; notes?: string }) =>
+      request(`/sessions/${id}/end`, { method: 'PATCH', body: JSON.stringify(data) }),
     batchTransactions: (data: Record<string, unknown>) =>
       request('/sessions/transactions/batch', {
         method: 'POST',

@@ -166,13 +166,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         })
       } catch (error) {
         app.log.error({ error }, 'Flow interpretation failed')
-        return reply.code(400).send({
-          success: false,
-          error: {
-            code: 'INTERPRETATION_ERROR',
-            message: 'Failed to interpret natural language input',
-          },
-        })
+        return reply.code(400).send({ error: 'INTERPRETATION_ERROR', message: 'Failed to interpret natural language input', status: 400 })
       }
     }
   )
@@ -209,10 +203,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
       try {
         validated = ConversationStartSchema.parse(request.body)
       } catch (err) {
-        return reply.code(400).send({
-          success: false,
-          error: { code: 'VALIDATION_ERROR', message: 'Invalid request body', details: err },
-        })
+        return reply.code(400).send({ error: 'VALIDATION_ERROR', message: 'initialMessage is required', status: 400 })
       }
       const { initialMessage } = validated
       const conversationId = randomUUID()
@@ -225,10 +216,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         return reply.code(201).send({ success: true, data: state })
       } catch (error) {
         app.log.error({ error }, 'Failed to start conversation')
-        return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Could not start conversation' },
-        })
+        return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Could not start conversation', status: 500 })
       }
     }
   )
@@ -258,10 +246,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
       try {
         validated = ConversationContinueSchema.parse(request.body)
       } catch (err) {
-        return reply.code(400).send({
-          success: false,
-          error: { code: 'VALIDATION_ERROR', message: 'Invalid request body', details: err },
-        })
+        return reply.code(400).send({ error: 'VALIDATION_ERROR', message: 'conversationId and userMessage are required', status: 400 })
       }
       try {
         // Ensure the conversation belongs to the authenticated user
@@ -270,10 +255,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         )
 
         if (rows.length === 0) {
-          return reply.code(404).send({
-            success: false,
-            error: { code: 'NOT_FOUND', message: 'Conversation not found' },
-          })
+          return reply.code(404).send({ error: 'NOT_FOUND', message: 'Conversation not found', status: 404 })
         }
 
         // Delegate business logic to ConversationManager which will
@@ -286,10 +268,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         return reply.send({ success: true, data: updatedState })
       } catch (error) {
         app.log.error({ error }, 'Conversation error')
-        return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to continue conversation' },
-        })
+        return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to continue conversation', status: 500 })
       }
     }
   )
@@ -332,13 +311,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         })
       } catch (error) {
         app.log.error({ error }, 'Flow creation error')
-        return reply.code(400).send({
-          success: false,
-          error: {
-            code: 'CREATION_ERROR',
-            message: 'Failed to create Flow',
-          },
-        })
+        return reply.code(400).send({ error: 'CREATION_ERROR', message: 'Failed to create Flow', status: 400 })
       }
     }
   )
@@ -391,10 +364,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         })
       } catch (error) {
         app.log.error({ error }, 'List flows error')
-        return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to list Flows' },
-        })
+        return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to list Flows', status: 500 })
       }
     }
   )
@@ -424,10 +394,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         )
 
         if (rows.length === 0) {
-          return reply.code(404).send({
-            success: false,
-            error: { code: 'NOT_FOUND', message: 'Flow not found' },
-          })
+          return reply.code(404).send({ error: 'NOT_FOUND', message: 'Flow not found', status: 404 })
         }
 
         return reply.send({
@@ -436,10 +403,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         })
       } catch (error) {
         app.log.error({ error }, 'Get flow error')
-        return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to get Flow' },
-        })
+        return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to get Flow', status: 500 })
       }
     }
   )
@@ -491,10 +455,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         )
 
         if (rows.length === 0) {
-          return reply.code(404).send({
-            success: false,
-            error: { code: 'NOT_FOUND', message: 'Flow not found' },
-          })
+          return reply.code(404).send({ error: 'NOT_FOUND', message: 'Flow not found', status: 404 })
         }
 
         return reply.send({
@@ -503,10 +464,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         })
       } catch (error) {
         app.log.error({ error }, 'Flow update error')
-        return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to update Flow' },
-        })
+        return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to update Flow', status: 500 })
       }
     }
   )
@@ -540,10 +498,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         )
 
         if (flowRows.length === 0) {
-          return reply.code(404).send({
-            success: false,
-            error: { code: 'NOT_FOUND', message: 'Flow not found' },
-          })
+          return reply.code(404).send({ error: 'NOT_FOUND', message: 'Flow not found', status: 404 })
         }
 
         const flow = flowRows[0] as { definition: unknown; [key: string]: unknown }
@@ -577,10 +532,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         })
       } catch (error) {
         app.log.error({ error }, 'Flow execution error')
-        return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to execute Flow' },
-        })
+        return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to execute Flow', status: 500 })
       }
     }
   )
@@ -631,10 +583,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         })
       } catch (error) {
         app.log.error({ error }, 'Get executions error')
-        return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to get execution history' },
-        })
+        return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to get execution history', status: 500 })
       }
     }
   )
@@ -663,10 +612,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         )
 
         if (rows.length === 0) {
-          return reply.code(404).send({
-            success: false,
-            error: { code: 'NOT_FOUND', message: 'Flow not found' },
-          })
+          return reply.code(404).send({ error: 'NOT_FOUND', message: 'Flow not found', status: 404 })
         }
 
         return reply.send({
@@ -675,10 +621,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         })
       } catch (error) {
         app.log.error({ error }, 'Delete flow error')
-        return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to delete Flow' },
-        })
+        return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to delete Flow', status: 500 })
       }
     }
   )
@@ -712,10 +655,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         })
       } catch (error) {
         app.log.error({ error }, 'Get current execution error')
-        return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to get current execution' },
-        })
+        return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to get current execution', status: 500 })
       }
     }
   )
@@ -744,10 +684,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         )
 
         if (rows.length === 0) {
-          return reply.code(404).send({
-            success: false,
-            error: { code: 'NOT_FOUND', message: 'No running execution found' },
-          })
+          return reply.code(404).send({ error: 'NOT_FOUND', message: 'No running execution found', status: 404 })
         }
 
         return reply.send({
@@ -756,10 +693,7 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         })
       } catch (error) {
         app.log.error({ error }, 'Cancel execution error')
-        return reply.code(500).send({
-          success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to cancel execution' },
-        })
+        return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to cancel execution', status: 500 })
       }
     }
   )

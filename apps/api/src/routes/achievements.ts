@@ -33,22 +33,31 @@ export async function achievementRoutes(app: FastifyInstance): Promise<void> {
           data: {
             currentStreak: 0,
             longestStreak: 0,
-            lastSessionDate: null,
-            totalSessions: 0,
+            lastActivityDate: null,
+            freezeCredits: 0,
           },
         })
       }
 
+      const row = rows[0] as {
+        current_streak: number
+        longest_streak: number
+        last_activity_date: string | null
+        freeze_credits: number
+      }
+
       return reply.send({
         success: true,
-        data: rows[0],
+        data: {
+          currentStreak: row.current_streak,
+          longestStreak: row.longest_streak,
+          lastActivityDate: row.last_activity_date,
+          freezeCredits: row.freeze_credits,
+        },
       })
     } catch (error) {
       app.log.error({ error }, 'Get streaks error')
-      return reply.code(500).send({
-        success: false,
-        error: { code: 'INTERNAL_ERROR', message: 'Failed to get streak data' },
-      })
+      return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to get streak data', status: 500 })
     }
   })
 
@@ -87,10 +96,7 @@ export async function achievementRoutes(app: FastifyInstance): Promise<void> {
       })
     } catch (error) {
       app.log.error({ error }, 'Get records error')
-      return reply.code(500).send({
-        success: false,
-        error: { code: 'INTERNAL_ERROR', message: 'Failed to get personal records' },
-      })
+      return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to get personal records', status: 500 })
     }
   })
 
@@ -111,23 +117,30 @@ export async function achievementRoutes(app: FastifyInstance): Promise<void> {
         dbQuery(sql`SELECT COUNT(*) as total FROM sessions WHERE user_id = ${request.user!.id}`),
       ])
 
-      const streak = streakResult.rows[0] || { currentStreak: 0, longestStreak: 0 }
-      const records = recordsResult.rows[0] || {}
-      const totalSessions = (sessionsResult.rows[0] as { total: number }).total
+      const streakRow = streakResult.rows[0] as {
+        current_streak: number
+        longest_streak: number
+      } | undefined
+      const records = recordsResult.rows[0] as {
+        biggest_single_win: string | null
+        best_rtp_session: string | null
+        [key: string]: unknown
+      } | undefined
+      const totalSessions = Number((sessionsResult.rows[0] as { total: string | number } | undefined)?.total ?? 0)
 
-      const recordCount = Object.values(records).filter(v => v !== null).length
+      const recordCount = records ? Object.values(records).filter(v => v !== null).length : 0
 
       return reply.send({
         success: true,
         data: {
           streak: {
-            current: streak['currentStreak'],
-            longest: streak['longestStreak'],
+            current: streakRow?.current_streak ?? 0,
+            longest: streakRow?.longest_streak ?? 0,
           },
           records: {
             total: recordCount,
-            biggestWin: records['biggestWin'],
-            highestRTP: records['highestRTP'],
+            biggestWin: records?.biggest_single_win ?? null,
+            highestRTP: records?.best_rtp_session ?? null,
           },
           stats: {
             totalSessions,
@@ -136,10 +149,7 @@ export async function achievementRoutes(app: FastifyInstance): Promise<void> {
       })
     } catch (error) {
       app.log.error({ error }, 'Get achievement summary error')
-      return reply.code(500).send({
-        success: false,
-        error: { code: 'INTERNAL_ERROR', message: 'Failed to get achievement summary' },
-      })
+      return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to get achievement summary', status: 500 })
     }
   })
 
@@ -228,10 +238,7 @@ export async function achievementRoutes(app: FastifyInstance): Promise<void> {
       })
     } catch (error) {
       app.log.error({ error }, 'Record streak error')
-      return reply.code(500).send({
-        success: false,
-        error: { code: 'INTERNAL_ERROR', message: 'Failed to record streak' },
-      })
+      return reply.code(500).send({ error: 'INTERNAL_ERROR', message: 'Failed to record streak', status: 500 })
     }
   })
 }

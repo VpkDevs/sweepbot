@@ -76,7 +76,7 @@ const auditPlugin: FastifyPluginAsync = async (app) => {
       // If logging fails, we don't fail the user's request
       void (async () => {
         try {
-          await db.execute<void>(sql`
+          await db.execute<Record<string, unknown>>(sql`
             INSERT INTO audit_logs (user_id, action, client_ip, user_agent, status_code, timestamp)
             VALUES (${userId}, ${action}, ${clientIp}, ${userAgent}, ${statusCode}, NOW())
           `)

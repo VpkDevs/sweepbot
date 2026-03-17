@@ -437,7 +437,7 @@ export function AnalyticsPage() {
                 <div className="flex items-start gap-3">
                   <div className="mt-0.5 w-2 h-2 rounded-full bg-brand-500 flex-shrink-0" />
                   <div>
-                    {insight['title'] && (
+                    {Boolean(insight['title']) && (
                       <p className="text-sm font-medium text-white mb-0.5">{insight['title'] as string}</p>
                     )}
                     <p className="text-sm text-zinc-400">{(insight['message'] ?? insight['text'] ?? insight['description']) as string}</p>
