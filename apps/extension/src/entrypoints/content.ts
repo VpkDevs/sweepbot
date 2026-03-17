@@ -26,7 +26,7 @@ export default defineContentScript({
 
 let currentPlatform = detectPlatform(window.location.href)
 let currentSessionId: string | null = null
-let hudContainerId = 'sweepbot-hud-container'
+const hudContainerId = 'sweepbot-hud-container'
 let activeFlowId: string | null = null
 
 /**

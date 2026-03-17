@@ -99,7 +99,7 @@ export class NetworkInterceptor {
     const originalSend = this.originalXhrSend
 
     XMLHttpRequest.prototype.open = function (method: string, url: string, ...args: unknown[]) {
-      ;(this as AugmentedXMLHttpRequest)._sweepbot_url = url
+      (this as AugmentedXMLHttpRequest)._sweepbot_url = url
       ;(this as AugmentedXMLHttpRequest)._sweepbot_method = method
       return originalOpen.apply(this, [method, url, ...args] as Parameters<typeof originalOpen>)
     }

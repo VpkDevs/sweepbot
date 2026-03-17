@@ -168,7 +168,7 @@ export class StorageManager {
         // Update cache
         for (const [key, change] of Object.entries(changes)) {
           if ('newValue' in change) {
-            ;(this.cache as Record<string, unknown>)[key] = change.newValue
+            (this.cache as Record<string, unknown>)[key] = change.newValue
           } else {
             delete (this.cache as Record<string, unknown>)[key]
           }

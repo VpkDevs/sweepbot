@@ -126,7 +126,7 @@ export function installPlatformCapture(): { installed: boolean; startedAt: numbe
   const originalXhrSend = XMLHttpRequest.prototype.send
 
   XMLHttpRequest.prototype.open = function (method: string, url: string | URL) {
-    ;(this as XMLHttpRequest & { __sweepbotCaptureMeta__?: { method: string; url: string } }).__sweepbotCaptureMeta__ = {
+    (this as XMLHttpRequest & { __sweepbotCaptureMeta__?: { method: string; url: string } }).__sweepbotCaptureMeta__ = {
       method,
       url: String(url),
     }

@@ -4,7 +4,7 @@ import type { FlowDefinition } from '../lib/flows/types'
 describe('flow automation executor (extension)', () => {
   beforeAll(() => {
     // stub chrome.runtime.sendMessage for tests
-    ;(global as any).chrome = {
+    (global as any).chrome = {
       runtime: {
         sendMessage: vi.fn(() => Promise.resolve({})),
       },
