@@ -37,6 +37,10 @@ module.exports = {
     '@typescript-eslint/no-unsafe-function-type': 'off',
     // Allow empty catch blocks in DB retry logic
     'no-empty': ['error', { allowEmptyCatch: true }],
+    // Project uses "semi: false" — leading semicolons like ;(expr) are intentional
+    // ASI guards. Prettier manages all semicolon decisions. Must be off since this
+    // script uses --max-warnings 0 and the rule would produce warnings.
+    'no-extra-semi': 'off',
   },
   ignorePatterns: ['dist/', 'node_modules/'],
 }
