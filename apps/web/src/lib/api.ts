@@ -184,6 +184,28 @@ function toQS(params?: Record<string, string | number | boolean | undefined>): s
   return qs ? `?${qs}` : ''
 }
 
+// ─── Shared public types ──────────────────────────────────────────────────────
+
+export interface NotificationItem {
+  id: string
+  type: string
+  title: string
+  body: string
+  is_read: boolean
+  read_at: string | null
+  icon: string | null
+  href: string | null
+  data: unknown
+  created_at: string
+}
+
+export interface StreakLeaderboardEntry {
+  user_id: string
+  display_name: string | null
+  current_streak: number
+  longest_streak: number
+}
+
 // ─── Typed API client ─────────────────────────────────────────────────────────
 export const api = {
   // Health
@@ -466,7 +488,7 @@ export const api = {
   // Notifications
   notifications: {
     list: (params?: { limit?: number; unread_only?: boolean }) =>
-      request<Record<string, unknown>[]>(`/notifications${toQS(params)}`),
+      request<NotificationItem[]>(`/notifications${toQS(params)}`),
     count: () => request<{ unread: number }>('/notifications/count'),
     markRead: (id: string) =>
       request<{ id: string }>(`/notifications/${id}/read`, { method: 'PATCH' }),
@@ -474,5 +496,53 @@ export const api = {
       request<{ marked: boolean }>('/notifications/read-all', { method: 'POST' }),
     delete: (id: string) =>
       request<{ deleted: boolean }>(`/notifications/${id}`, { method: 'DELETE' }),
+    preferences: () => request<Record<string, boolean>>('/notifications/preferences'),
+    updatePreferences: (data: Record<string, boolean>) =>
+      request<{ updated: boolean }>('/notifications/preferences', {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+    subscribePush: (subscription: Record<string, unknown>) =>
+      request<{ subscribed: boolean }>('/notifications/subscribe', {
+        method: 'POST',
+        body: JSON.stringify(subscription),
+      }),
+  },
+
+  // Subscriptions
+  subscriptions: {
+    /** Returns the current user's trial status and subscription tier. */
+    trialStatus: () => request<Record<string, unknown>>('/user/subscription'),
+    /** Activates a 14-day Pro trial for the current user. */
+    startTrial: () =>
+      request<Record<string, unknown>>('/user/start-trial', { method: 'POST' }),
+  },
+
+  // Session Notes
+  sessionNotes: {
+    /** List all notes for a session. */
+    list: (sessionId: string) =>
+      request<Record<string, unknown>[]>(`/session-notes/by-session/${sessionId}`),
+    /** Create a new note for a session. */
+    create: (sessionId: string, data: { content: string; noteType: string; audioUrl?: string; audioDuration?: number }) =>
+      request<Record<string, unknown>>('/session-notes', {
+        method: 'POST',
+        body: JSON.stringify({ sessionId, ...data }),
+      }),
+    /** Delete a session note by id. */
+    delete: (id: string) =>
+      request<{ deleted: boolean }>(`/session-notes/${id}`, { method: 'DELETE' }),
+  },
+
+  // Streaks
+  streaks: {
+    /** Get the current user's streak data. */
+    get: () => request<Record<string, unknown>>('/streaks'),
+    /** Record activity for today (increments streak). */
+    recordActivity: () =>
+      request<Record<string, unknown>>('/streaks/record', { method: 'POST' }),
+    /** Opt-in leaderboard — top N users by current streak. */
+    leaderboard: (limit = 50) =>
+      request<StreakLeaderboardEntry[]>(`/streaks/leaderboard${toQS({ limit })}`),
   },
 }

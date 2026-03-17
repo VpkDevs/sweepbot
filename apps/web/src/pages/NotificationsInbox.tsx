@@ -1,23 +1,10 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Bell, Check, Loader2, Award, Flame, Trophy, Star } from 'lucide-react'
-import { api } from '../lib/api'
+import { api, type NotificationItem } from '../lib/api'
 import { cn } from '../lib/utils'
 import { ScrollReveal } from '../components/fx/ScrollReveal'
 import { TextReveal } from '../components/fx/TextReveal'
-
-interface NotificationItem {
-  id: string
-  type: string
-  title: string
-  body: string
-  is_read: boolean
-  read_at: string | null
-  icon: string | null
-  href: string | null
-  data: unknown
-  created_at: string
-}
 
 type FilterKey = 'all' | 'unread' | 'achievements' | 'streaks' | 'milestones'
 
