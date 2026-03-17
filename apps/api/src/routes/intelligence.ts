@@ -20,7 +20,7 @@ export const gameIntelligenceRoutes: FastifyPluginAsync = async (fastify) => {
   }, async (request, reply) => {
     const { platform_id, min_spins } = request.query as { platform_id?: string; min_spins: number }
 
-    let whereConditions = [
+    const whereConditions = [
       sql`COUNT(${transactions.id}) >= ${min_spins}`
     ]
 
