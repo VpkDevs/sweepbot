@@ -35,7 +35,11 @@ export class FlowInterpreter {
     const flowNode = this.buildFlowAST(entities, intent, request.rawInput)
 
     // Pass 4: Responsible Play Validation
-    const guardrails = this.responsiblePlayValidator.validate(flowNode, request.userId, request.rawInput)
+    const guardrails = this.responsiblePlayValidator.validate(
+      flowNode,
+      request.userId,
+      request.rawInput
+    )
 
     // Calculate confidence
     let confidence = this.calculateConfidence(entities, intent)
@@ -185,8 +189,14 @@ export class FlowInterpreter {
       const leftValue = this.makeLiteralValue(cond.left)
       const rightValue = this.makeLiteralValue(cond.right)
       // pick representative actions for true/false branches
-      const trueActionType: FlowActionType = /spin/i.test(rawText) ? 'spin' : /play/i.test(rawText) ? 'open_game' : 'spin'
-      const falseActionType: FlowActionType | undefined = /close/i.test(rawText) ? 'close_platform' : undefined
+      const trueActionType: FlowActionType = /spin/i.test(rawText)
+        ? 'spin'
+        : /play/i.test(rawText)
+          ? 'open_game'
+          : 'spin'
+      const falseActionType: FlowActionType | undefined = /close/i.test(rawText)
+        ? 'close_platform'
+        : undefined
 
       const conditionNode: FlowConditionNode = {
         type: 'condition',
@@ -202,14 +212,18 @@ export class FlowInterpreter {
           timeout: 10000,
           onFailure: 'stop',
         },
-        ...(falseActionType ? { onFalse: {
-          type: 'action' as const,
-          id: this.generateId(),
-          action: falseActionType,
-          parameters: {},
-          timeout: 5000,
-          onFailure: 'skip' as const,
-        } } : {}),
+        ...(falseActionType
+          ? {
+              onFalse: {
+                type: 'action' as const,
+                id: this.generateId(),
+                action: falseActionType,
+                parameters: {},
+                timeout: 5000,
+                onFailure: 'skip' as const,
+              },
+            }
+          : {}),
       }
       rootSteps.push(conditionNode)
     }
@@ -259,8 +273,13 @@ export class FlowInterpreter {
   /**
    * Extract loop condition from text like "if win > 5x bonus, keep going"
    */
-  private extractLoopCondition(text: string, entities: EntityMap): { operator: FlowConditionNode['operator']; right: string } | null {
-    const conditionMatches = text.matchAll(/if\s+(?:win|balance|profit)\s+([<>]=?)\s+(.+?)(?:,|then|\.|$)/gi)
+  private extractLoopCondition(
+    text: string,
+    entities: EntityMap
+  ): { operator: FlowConditionNode['operator']; right: string } | null {
+    const conditionMatches = text.matchAll(
+      /if\s+(?:win|balance|profit)\s+([<>]=?)\s+(.+?)(?:,|then|\.|$)/gi
+    )
 
     for (const match of conditionMatches) {
       return {
@@ -283,7 +302,10 @@ export class FlowInterpreter {
   /**
    * Build a spin loop node with condition
    */
-  private buildSpinLoopNode(condition: { operator: FlowConditionNode['operator']; right: string }, entities: EntityMap): FlowNode {
+  private buildSpinLoopNode(
+    condition: { operator: FlowConditionNode['operator']; right: string },
+    entities: EntityMap
+  ): FlowNode {
     const betAmount = this.extractBetAmount(entities)
 
     return {
@@ -446,7 +468,13 @@ export class FlowInterpreter {
 
       case 'condition': {
         const fmtVal = (v: FlowValue) =>
-          v.type === 'literal' ? String(v.value) : v.type === 'variable' ? `$${v.name}` : v.type === 'expression' ? v.expression : v.query
+          v.type === 'literal'
+            ? String(v.value)
+            : v.type === 'variable'
+              ? `$${v.name}`
+              : v.type === 'expression'
+                ? v.expression
+                : v.query
         return `${prefix}❓ If condition: ${fmtVal(node.left)} ${node.operator} ${fmtVal(node.right)}\n`
       }
 
@@ -475,7 +503,11 @@ export class FlowInterpreter {
 
     // Check for long sessions
     const maxDuration = flow.responsiblePlayGuardrails.find((g) => g.type === 'max_duration')
-    if (maxDuration && typeof maxDuration.value === 'number' && maxDuration.value > 4 * 60 * 60 * 1000) {
+    if (
+      maxDuration &&
+      typeof maxDuration.value === 'number' &&
+      maxDuration.value > 4 * 60 * 60 * 1000
+    ) {
       warnings.push({
         type: 'responsible_play',
         severity: 'warning',

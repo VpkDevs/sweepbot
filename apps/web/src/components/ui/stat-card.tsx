@@ -33,23 +33,22 @@ export function StatCard({
     <Card className={cn('relative overflow-hidden', className)}>
       <CardContent className="pt-6">
         <div className="flex items-start justify-between">
-          {icon && <div className={cn('p-2 rounded-lg', color)}>{icon}</div>}
+          {icon && <div className={cn('rounded-lg p-2', color)}>{icon}</div>}
           {trend && (
             <div
               className={cn(
-                'text-xs font-bold px-2 py-1 rounded',
-                trend.direction === 'up' && 'text-emerald-400 bg-emerald-500/10',
-                trend.direction === 'down' && 'text-red-400 bg-red-500/10',
-                trend.direction === 'neutral' && 'text-zinc-400 bg-zinc-500/10',
+                'rounded px-2 py-1 text-xs font-bold',
+                trend.direction === 'up' && 'bg-emerald-500/10 text-emerald-400',
+                trend.direction === 'down' && 'bg-red-500/10 text-red-400',
+                trend.direction === 'neutral' && 'bg-zinc-500/10 text-zinc-400'
               )}
             >
-              {trend.direction === 'up' ? '↑' : trend.direction === 'down' ? '↓' : '→'} {Math.abs(
-                trend.value,
-              ).toFixed(1)}%
+              {trend.direction === 'up' ? '↑' : trend.direction === 'down' ? '↓' : '→'}{' '}
+              {Math.abs(trend.value).toFixed(1)}%
             </div>
           )}
         </div>
-        <p className="mt-4 text-xs font-semibold text-zinc-400 uppercase tracking-widest">
+        <p className="mt-4 text-xs font-semibold uppercase tracking-widest text-zinc-400">
           {label}
         </p>
         <p className="mt-2 text-2xl font-bold text-white">{value}</p>

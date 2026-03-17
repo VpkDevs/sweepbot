@@ -111,9 +111,7 @@ export function formatRelativeTime(date: Date | string | null | undefined): stri
  * Format RTP (Return To Player) percentage
  * Returns { text: "94.5%", className: "text-green-500" } based on value
  */
-export function formatRTP(
-  value: number,
-): { text: string; className: string } {
+export function formatRTP(value: number): { text: string; className: string } {
   const percentage = value * 100
   const text = `${percentage.toFixed(1)}%`
 

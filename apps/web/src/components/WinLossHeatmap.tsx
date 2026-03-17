@@ -30,16 +30,26 @@ const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 
 const METRICS = [
-  { key: 'netResult', label: 'Net P&L', icon: TrendingUp, format: (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(2)} SC` },
+  {
+    key: 'netResult',
+    label: 'Net P&L',
+    icon: TrendingUp,
+    format: (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(2)} SC`,
+  },
   { key: 'avgRtp', label: 'Avg RTP', icon: BarChart3, format: (v: number) => `${v.toFixed(1)}%` },
-  { key: 'winRate', label: 'Win Rate', icon: TrendingUp, format: (v: number) => `${v.toFixed(1)}%` },
+  {
+    key: 'winRate',
+    label: 'Win Rate',
+    icon: TrendingUp,
+    format: (v: number) => `${v.toFixed(1)}%`,
+  },
   { key: 'sessions', label: 'Sessions', icon: Calendar, format: (v: number) => v.toString() },
 ] as const
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function WinLossHeatmap({ className, timeRange = '30d' }: HeatmapProps) {
-  const [selectedMetric, setSelectedMetric] = useState<typeof METRICS[number]['key']>('netResult')
+  const [selectedMetric, setSelectedMetric] = useState<(typeof METRICS)[number]['key']>('netResult')
   const [selectedRange, setSelectedRange] = useState(timeRange)
 
   const { data: heatmapData, isLoading } = useQuery({
@@ -52,20 +62,22 @@ export function WinLossHeatmap({ className, timeRange = '30d' }: HeatmapProps) {
   }
 
   const data = (heatmapData as HeatmapData[]) || []
-  const metric = METRICS.find(m => m.key === selectedMetric)!
+  const metric = METRICS.find((m) => m.key === selectedMetric)!
 
   // Create 2D grid for heatmap
-  const grid = Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => null as HeatmapData | null))
-  
+  const grid = Array.from({ length: 7 }, () =>
+    Array.from({ length: 24 }, () => null as HeatmapData | null)
+  )
+
   // Populate grid with data
-  data.forEach(item => {
+  data.forEach((item) => {
     if (item.day >= 0 && item.day <= 6 && item.hour >= 0 && item.hour <= 23) {
       grid[item.day]![item.hour] = item
     }
   })
 
   // Calculate min/max for color scaling
-  const values = data.map(d => d[selectedMetric] as number).filter(v => !isNaN(v))
+  const values = data.map((d) => d[selectedMetric] as number).filter((v) => !isNaN(v))
   const minValue = Math.min(...values)
   const maxValue = Math.max(...values)
   const range = maxValue - minValue
@@ -77,10 +89,10 @@ export function WinLossHeatmap({ className, timeRange = '30d' }: HeatmapProps) {
 
   const getCellColor = (cell: HeatmapData | null): string => {
     if (!cell || cell.sessions === 0) return 'bg-zinc-800/20'
-    
+
     const value = cell[selectedMetric] as number
     const intensity = getIntensity(value)
-    
+
     if (selectedMetric === 'netResult') {
       // Green for positive, red for negative
       if (value >= 0) {
@@ -97,10 +109,10 @@ export function WinLossHeatmap({ className, timeRange = '30d' }: HeatmapProps) {
   return (
     <SpotlightCard className={cn('glass-card rounded-2xl p-6', className)}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-brand-500/10 flex items-center justify-center">
-            <BarChart3 className="w-4 h-4 text-brand-400" />
+          <div className="bg-brand-500/10 flex h-8 w-8 items-center justify-center rounded-xl">
+            <BarChart3 className="text-brand-400 h-4 w-4" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-white">Win/Loss Heatmap</h3>
@@ -113,7 +125,7 @@ export function WinLossHeatmap({ className, timeRange = '30d' }: HeatmapProps) {
           <select
             value={selectedRange}
             onChange={(e) => setSelectedRange(e.target.value as typeof selectedRange)}
-            className="px-3 py-1.5 rounded-lg glass-card-static text-zinc-300 text-sm border-0 bg-transparent focus:ring-1 focus:ring-brand-500/50"
+            className="glass-card-static focus:ring-brand-500/50 rounded-lg border-0 bg-transparent px-3 py-1.5 text-sm text-zinc-300 focus:ring-1"
           >
             <option value="7d">7 days</option>
             <option value="30d">30 days</option>
@@ -124,10 +136,12 @@ export function WinLossHeatmap({ className, timeRange = '30d' }: HeatmapProps) {
           <select
             value={selectedMetric}
             onChange={(e) => setSelectedMetric(e.target.value as typeof selectedMetric)}
-            className="px-3 py-1.5 rounded-lg glass-card-static text-zinc-300 text-sm border-0 bg-transparent focus:ring-1 focus:ring-brand-500/50"
+            className="glass-card-static focus:ring-brand-500/50 rounded-lg border-0 bg-transparent px-3 py-1.5 text-sm text-zinc-300 focus:ring-1"
           >
-            {METRICS.map(m => (
-              <option key={m.key} value={m.key}>{m.label}</option>
+            {METRICS.map((m) => (
+              <option key={m.key} value={m.key}>
+                {m.label}
+              </option>
             ))}
           </select>
         </div>
@@ -138,10 +152,10 @@ export function WinLossHeatmap({ className, timeRange = '30d' }: HeatmapProps) {
         {/* Hour labels */}
         <div className="flex">
           <div className="w-12" /> {/* Space for day labels */}
-          <div className="flex-1 grid grid-cols-24 gap-0.5">
-            {HOURS.map(hour => (
+          <div className="grid-cols-24 grid flex-1 gap-0.5">
+            {HOURS.map((hour) => (
               <div key={hour} className="text-center">
-                <span className="text-[10px] text-zinc-600 font-medium">
+                <span className="text-[10px] font-medium text-zinc-600">
                   {hour === 0 ? '12a' : hour <= 12 ? `${hour}a` : `${hour - 12}p`}
                 </span>
               </div>
@@ -154,32 +168,32 @@ export function WinLossHeatmap({ className, timeRange = '30d' }: HeatmapProps) {
           {DAYS.map((day, dayIndex) => (
             <div key={day} className="flex items-center">
               {/* Day label */}
-              <div className="w-12 text-right pr-3">
-                <span className="text-xs text-zinc-500 font-medium">{day}</span>
+              <div className="w-12 pr-3 text-right">
+                <span className="text-xs font-medium text-zinc-500">{day}</span>
               </div>
-              
+
               {/* Hour cells */}
-              <div className="flex-1 grid grid-cols-24 gap-0.5">
-                {HOURS.map(hour => {
+              <div className="grid-cols-24 grid flex-1 gap-0.5">
+                {HOURS.map((hour) => {
                   const cell = grid[dayIndex]![hour]
                   const hasData = cell && cell.sessions > 0
-                  
+
                   return (
                     <div
                       key={hour}
                       className={cn(
-                        'aspect-square rounded-sm transition-all duration-200 cursor-pointer group relative',
+                        'group relative aspect-square cursor-pointer rounded-sm transition-all duration-200',
                         getCellColor(cell),
-                        hasData ? 'hover:scale-110 hover:z-10' : 'opacity-50'
+                        hasData ? 'hover:z-10 hover:scale-110' : 'opacity-50'
                       )}
                       title={
-                        hasData 
+                        hasData
                           ? `${day} ${hour}:00 - ${metric.format(cell[selectedMetric] as number)} (${cell.sessions} sessions)`
                           : `${day} ${hour}:00 - No data`
                       }
                     >
                       {hasData && (
-                        <div className="absolute inset-0 rounded-sm ring-1 ring-white/10 group-hover:ring-white/30 transition-all" />
+                        <div className="absolute inset-0 rounded-sm ring-1 ring-white/10 transition-all group-hover:ring-white/30" />
                       )}
                     </div>
                   )
@@ -190,12 +204,12 @@ export function WinLossHeatmap({ className, timeRange = '30d' }: HeatmapProps) {
         </div>
 
         {/* Legend */}
-        <div className="flex items-center justify-between pt-4 border-t border-white/[0.04]">
+        <div className="flex items-center justify-between border-t border-white/[0.04] pt-4">
           <div className="flex items-center gap-2 text-xs text-zinc-500">
-            <Clock className="w-3 h-3" />
+            <Clock className="h-3 w-3" />
             <span>Hover cells for details</span>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <span className="text-xs text-zinc-500">Less</span>
             <div className="flex gap-1">
@@ -203,9 +217,13 @@ export function WinLossHeatmap({ className, timeRange = '30d' }: HeatmapProps) {
                 <div
                   key={i}
                   className={cn(
-                    'w-3 h-3 rounded-sm',
+                    'h-3 w-3 rounded-sm',
                     selectedMetric === 'netResult'
-                      ? i < 2 ? `bg-red-500/${20 + i * 30}` : i === 2 ? 'bg-zinc-600' : `bg-emerald-500/${20 + (i - 2) * 30}`
+                      ? i < 2
+                        ? `bg-red-500/${20 + i * 30}`
+                        : i === 2
+                          ? 'bg-zinc-600'
+                          : `bg-emerald-500/${20 + (i - 2) * 30}`
                       : `bg-brand-500/${10 + i * 20}`
                   )}
                 />
@@ -217,16 +235,16 @@ export function WinLossHeatmap({ className, timeRange = '30d' }: HeatmapProps) {
 
         {/* Summary Stats */}
         {data.length > 0 && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-4 border-t border-white/[0.04]">
-            {METRICS.map(m => {
+          <div className="grid grid-cols-2 gap-3 border-t border-white/[0.04] pt-4 lg:grid-cols-4">
+            {METRICS.map((m) => {
               const Icon = m.icon
               const total = data.reduce((sum, d) => sum + (d[m.key] as number), 0)
               const avg = total / data.length
-              
+
               return (
                 <div key={m.key} className="glass-card-static rounded-xl p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Icon className="w-3 h-3 text-zinc-500" />
+                  <div className="mb-1 flex items-center gap-2">
+                    <Icon className="h-3 w-3 text-zinc-500" />
                     <span className="text-xs text-zinc-500">{m.label}</span>
                   </div>
                   <p className="text-sm font-semibold text-white">
@@ -241,11 +259,11 @@ export function WinLossHeatmap({ className, timeRange = '30d' }: HeatmapProps) {
 
       {/* Empty State */}
       {data.length === 0 && (
-        <div className="text-center py-12">
-          <div className="w-16 h-16 rounded-2xl bg-zinc-800/50 flex items-center justify-center mx-auto mb-4">
-            <BarChart3 className="w-6 h-6 text-zinc-600" />
+        <div className="py-12 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-800/50">
+            <BarChart3 className="h-6 w-6 text-zinc-600" />
           </div>
-          <p className="text-zinc-500 text-sm">
+          <p className="text-sm text-zinc-500">
             No session data available for the selected time range.
           </p>
         </div>
@@ -259,27 +277,27 @@ export function WinLossHeatmap({ className, timeRange = '30d' }: HeatmapProps) {
 function HeatmapSkeleton({ className }: { className?: string }) {
   return (
     <div className={cn('glass-card rounded-2xl p-6', className)}>
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-zinc-700 rounded-xl shimmer" />
+          <div className="shimmer h-8 w-8 rounded-xl bg-zinc-700" />
           <div>
-            <div className="h-4 w-32 bg-zinc-700 rounded shimmer mb-1" />
-            <div className="h-3 w-48 bg-zinc-800 rounded shimmer" />
+            <div className="shimmer mb-1 h-4 w-32 rounded bg-zinc-700" />
+            <div className="shimmer h-3 w-48 rounded bg-zinc-800" />
           </div>
         </div>
         <div className="flex gap-2">
-          <div className="h-8 w-20 bg-zinc-700 rounded-lg shimmer" />
-          <div className="h-8 w-24 bg-zinc-700 rounded-lg shimmer" />
+          <div className="shimmer h-8 w-20 rounded-lg bg-zinc-700" />
+          <div className="shimmer h-8 w-24 rounded-lg bg-zinc-700" />
         </div>
       </div>
-      
+
       <div className="space-y-1">
         {Array.from({ length: 7 }, (_, i) => (
           <div key={i} className="flex items-center">
-            <div className="w-12 h-4 bg-zinc-800 rounded shimmer mr-3" />
-            <div className="flex-1 grid grid-cols-24 gap-0.5">
+            <div className="shimmer mr-3 h-4 w-12 rounded bg-zinc-800" />
+            <div className="grid-cols-24 grid flex-1 gap-0.5">
               {Array.from({ length: 24 }, (_, j) => (
-                <div key={j} className="aspect-square bg-zinc-800/30 rounded-sm shimmer" />
+                <div key={j} className="shimmer aspect-square rounded-sm bg-zinc-800/30" />
               ))}
             </div>
           </div>

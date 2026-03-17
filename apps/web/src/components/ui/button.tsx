@@ -11,12 +11,10 @@ const buttonVariants = cva(
           'bg-gradient-to-r from-brand-600 to-brand-500 text-white hover:from-brand-700 hover:to-brand-600 shadow-lg shadow-brand-500/20',
         secondary:
           'bg-white/10 text-white hover:bg-white/20 border border-white/20 hover:border-white/30',
-        ghost:
-          'text-white hover:bg-white/10 hover:text-white',
+        ghost: 'text-white hover:bg-white/10 hover:text-white',
         destructive:
           'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40',
-        outline:
-          'border border-white/20 text-white hover:bg-white/5 hover:border-white/40',
+        outline: 'border border-white/20 text-white hover:bg-white/5 hover:border-white/40',
       },
       size: {
         sm: 'h-8 px-3 py-1.5',
@@ -29,28 +27,16 @@ const buttonVariants = cva(
       variant: 'default',
       size: 'md',
     },
-  },
+  }
 )
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   isLoading?: boolean
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    {
-      className,
-      variant,
-      size,
-      isLoading,
-      disabled,
-      children,
-      ...props
-    },
-    ref,
-  ) => (
+  ({ className, variant, size, isLoading, disabled, children, ...props }, ref) => (
     <button
       className={cn(buttonVariants({ variant, size, className }))}
       disabled={isLoading || disabled}
@@ -85,7 +71,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         children
       )}
     </button>
-  ),
+  )
 )
 
 Button.displayName = 'Button'

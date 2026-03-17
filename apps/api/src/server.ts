@@ -34,7 +34,7 @@ export async function buildServer(): Promise<FastifyInstance> {
   // ─── Security ────────────────────────────────────────────────────────────
 
   await server.register(helmet, {
-    contentSecurityPolicy: false,  // Managed at CDN level
+    contentSecurityPolicy: false, // Managed at CDN level
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   })
 

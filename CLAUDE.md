@@ -84,11 +84,13 @@ FlowNode is a discriminated union of 9 types: `ActionNode | ConditionNode | Loop
 ## Key Conventions
 
 ### TypeScript
+
 - **Strict mode everywhere**: no `any` in core logic; use `unknown` and narrow properly
 - All API inputs validated with Zod before processing
 - Shared types live in `packages/types/src/index.ts` — add there, not inline
 
 ### API Response Format (all routes must follow this)
+
 ```typescript
 { success: true, data: T }                           // single item
 { success: true, data: T[], meta: PaginationMeta }   // paginated list
@@ -96,11 +98,13 @@ FlowNode is a discriminated union of 9 types: `ActionNode | ConditionNode | Loop
 ```
 
 ### File Organization
+
 - API routes: `apps/api/src/routes/[resource].ts` → registered in `routes/index.ts` as a Fastify plugin
 - Web pages: `apps/web/src/pages/[PageName].tsx` → added to TanStack Router route tree
 - Documentation: `docs/[TOPIC].md` — **not** the repo root
 
 ### Tech Stack Decisions (closed — do not re-litigate)
+
 React (not Vue/Svelte), Fastify (not Express/Hono), Drizzle (not Prisma), pnpm (not npm/yarn), WXT (not Plasmo), Vitest (not Jest), Tailwind v4 (not styled-components).
 
 ## Database

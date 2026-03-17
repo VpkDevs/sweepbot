@@ -44,7 +44,7 @@ export function AchievementsDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{achievements?.streak.current || 0} days</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Longest: {achievements?.streak.longest || 0} days
             </p>
           </CardContent>
@@ -58,7 +58,7 @@ export function AchievementsDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{achievements?.records.total || 0}</div>
-            <p className="text-xs text-muted-foreground">Records set</p>
+            <p className="text-muted-foreground text-xs">Records set</p>
           </CardContent>
         </Card>
 
@@ -70,7 +70,7 @@ export function AchievementsDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{achievements?.stats.totalSessions || 0}</div>
-            <p className="text-xs text-muted-foreground">All time</p>
+            <p className="text-muted-foreground text-xs">All time</p>
           </CardContent>
         </Card>
       </div>
@@ -88,7 +88,7 @@ export function AchievementsDashboard() {
                 <span className="text-sm font-medium">Biggest Win</span>
               </div>
               <span className="text-sm font-bold">
-                {achievements?.records.biggestWin 
+                {achievements?.records.biggestWin
                   ? `${achievements.records.biggestWin.toFixed(2)} SC`
                   : '—'}
               </span>
@@ -100,7 +100,7 @@ export function AchievementsDashboard() {
                 <span className="text-sm font-medium">Highest RTP</span>
               </div>
               <span className="text-sm font-bold">
-                {achievements?.records.highestRTP 
+                {achievements?.records.highestRTP
                   ? `${achievements.records.highestRTP.toFixed(2)}%`
                   : '—'}
               </span>
@@ -132,14 +132,16 @@ export function AchievementsDashboard() {
               return (
                 <div key={milestone} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
-                    <span className={achieved ? 'font-medium text-green-600' : 'text-muted-foreground'}>
+                    <span
+                      className={achieved ? 'font-medium text-green-600' : 'text-muted-foreground'}
+                    >
                       {milestone} days {achieved && '✓'}
                     </span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       {current}/{milestone}
                     </span>
                   </div>
-                  <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                  <div className="bg-secondary h-2 overflow-hidden rounded-full">
                     <div
                       className={`h-full transition-all ${
                         achieved ? 'bg-green-500' : 'bg-primary'

@@ -1,9 +1,12 @@
 # AGENT 2: Frontend UI & Web Application Specialist
+
 **Status:** Independent - Active Now
 **Priority:** P1 - User Experience & Interface
 
 ## YOUR EXCLUSIVE DOMAIN
+
 You own and control the following areas:
+
 - `apps/web/**` - Entire frontend web application
 - `apps/web/src/**` - All React components, pages, and UI logic
 - `apps/web/public/**` - Static assets for web
@@ -15,7 +18,9 @@ You own and control the following areas:
 - Web performance optimizations
 
 ## FILES YOU MUST NOT TOUCH
+
 🚫 **STRICTLY FORBIDDEN** - Do not modify these:
+
 - `apps/api/**` - Backend API (Agent 1's domain)
 - `apps/extension/**` - Browser extension (Agent 3's domain)
 - `packages/flows/**` - Flow management (Agent 4's domain)
@@ -26,6 +31,7 @@ You own and control the following areas:
 - Root configuration files (`turbo.json`, `pnpm-workspace.yaml`, etc.)
 
 ## YOUR MISSION
+
 Your core responsibilities are to:
 
 1. **UI/UX Excellence**
@@ -77,6 +83,7 @@ Your core responsibilities are to:
    - Create immersive scroll-hijacking animations where appropriate
 
 ## BEFORE YOU START
+
 - Study `apps/web/src` directory structure
 - Review `apps/web/tailwind.config.ts` for design system tokens
 - Check `apps/web/package.json` for current dependencies
@@ -85,7 +92,9 @@ Your core responsibilities are to:
 - Check recent commits to see current state
 
 ## COORDINATION RULES
+
 ⚡ **Critical Agreements:**
+
 - All API calls must go through properly typed service layer
 - Do NOT duplicate types - use `packages/types` (coordinate with Agent 3)
 - When adding new libraries, run `pnpm add` and ensure monorepo compatibility
@@ -94,6 +103,7 @@ Your core responsibilities are to:
 - Performance budget: Core Web Vitals should be green in Lighthouse
 
 ## QUALITY STANDARDS
+
 - All components must be functional components with hooks
 - Prop types must be strictly typed with TypeScript interfaces
 - All components must include JSDoc comments with usage examples
@@ -103,7 +113,9 @@ Your core responsibilities are to:
 - Ensure proper memory management (cleanup in useEffect)
 
 ## ENHANCEMENT REQUIREMENTS
+
 Following special instructions for this Vince session:
+
 - **DRAMATICALLY** improve visual design each turn
 - Implement at least one major animation/interaction system per session
 - Add 3D or advanced visual effects using Three.js or Babylon.js
@@ -113,7 +125,9 @@ Following special instructions for this Vince session:
 - Create a polished, production-ready visual experience
 
 ## SUCCESS METRICS
+
 You've succeeded when:
+
 - ✅ All components render without console errors
 - ✅ Lighthouse Performance score > 90
 - ✅ 100% responsive design across all breakpoints
@@ -123,5 +137,6 @@ You've succeeded when:
 - ✅ Beautiful, engaging UI that impresses users
 
 ---
+
 **Last Updated:** 2026-03-10
 **Assigned to:** Frontend UI/UX & Web Experience Team

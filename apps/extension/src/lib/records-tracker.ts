@@ -173,7 +173,7 @@ class RecordsTracker {
 
   async getRecords(): Promise<PersonalRecords> {
     const stored = await storage.get(this.STORAGE_KEY)
-    
+
     if (stored) {
       return stored as PersonalRecords
     }
@@ -197,7 +197,7 @@ class RecordsTracker {
     recentRecords: RecordUpdate[]
   }> {
     const records = await this.getRecords()
-    const totalRecords = Object.values(records).filter(r => r !== null).length
+    const totalRecords = Object.values(records).filter((r) => r !== null).length
 
     return {
       totalRecords,

@@ -1,4 +1,5 @@
 # 🚀 AGENT QUICK START GUIDE
+
 **For Fast Reference - See Detailed Prompts for Full Context**
 
 ---
@@ -25,12 +26,14 @@
 ## AGENT 1: BACKEND & DATABASE
 
 ### 🎯 Your Mission
+
 - Build powerful APIs and microservices
 - Design robust database schemas
 - Implement security and validation
 - Optimize performance and scalability
 
 ### 📁 You Own
+
 ```
 apps/api/src/**
 services/**
@@ -39,6 +42,7 @@ Database schemas, API logic, business logic
 ```
 
 ### 🚫 Never Touch
+
 ```
 apps/web/**          (Agent 2's frontend)
 apps/extension/**    (Agent 3's extension)
@@ -47,6 +51,7 @@ docs/**              (Agent 4's docs)
 ```
 
 ### 💡 Quick Improvements
+
 1. Add request validation with Zod
 2. Implement database indexes
 3. Add comprehensive error handling
@@ -57,6 +62,7 @@ docs/**              (Agent 4's docs)
 8. Add API documentation
 
 ### ✅ Before Merge
+
 - [ ] All tests pass
 - [ ] No TypeScript errors
 - [ ] API documented
@@ -70,6 +76,7 @@ docs/**              (Agent 4's docs)
 ## AGENT 2: FRONTEND & UI
 
 ### 🎯 Your Mission
+
 - Create beautiful, responsive UIs
 - Implement smooth animations
 - Optimize performance and bundle size
@@ -77,6 +84,7 @@ docs/**              (Agent 4's docs)
 - Delight users with great UX
 
 ### 📁 You Own
+
 ```
 apps/web/src/**
 apps/web/tailwind.config.ts
@@ -85,6 +93,7 @@ Components, pages, styling, animations
 ```
 
 ### 🚫 Never Touch
+
 ```
 apps/api/**          (Agent 1's backend)
 apps/extension/**    (Agent 3's extension)
@@ -93,6 +102,7 @@ docs/**              (Agent 4's docs)
 ```
 
 ### 💡 Quick Improvements
+
 1. Add smooth page transitions
 2. Implement dark mode
 3. Create 3D animations (Three.js)
@@ -103,6 +113,7 @@ docs/**              (Agent 4's docs)
 8. Create beautiful micro-interactions
 
 ### ✅ Before Merge
+
 - [ ] Lighthouse score > 90
 - [ ] No console errors
 - [ ] Responsive on all devices
@@ -116,12 +127,14 @@ docs/**              (Agent 4's docs)
 ## AGENT 3: EXTENSION & SHARED
 
 ### 🎯 Your Mission
+
 - Build powerful browser extension
 - Create type-safe shared interfaces
 - Implement reusable utilities
 - Enable seamless cross-app communication
 
 ### 📁 You Own
+
 ```
 apps/extension/src/**
 apps/extension/public/**
@@ -131,6 +144,7 @@ packages/config/**
 ```
 
 ### 🚫 Never Touch
+
 ```
 apps/api/**          (Agent 1's backend)
 apps/web/**          (Agent 2's frontend)
@@ -139,6 +153,7 @@ docs/**              (Agent 4's docs)
 ```
 
 ### 💡 Quick Improvements
+
 1. Add comprehensive type definitions
 2. Create API client wrapper
 3. Implement offline support
@@ -149,6 +164,7 @@ docs/**              (Agent 4's docs)
 8. Create extension storage layer
 
 ### ✅ Before Merge
+
 - [ ] All types properly exported
 - [ ] Tests pass in both contexts
 - [ ] No TypeScript errors
@@ -162,6 +178,7 @@ docs/**              (Agent 4's docs)
 ## AGENT 4: DEVOPS, TESTING & DOCS
 
 ### 🎯 Your Mission
+
 - Maintain robust CI/CD pipeline
 - Ensure high code quality
 - Create excellent documentation
@@ -169,6 +186,7 @@ docs/**              (Agent 4's docs)
 - Improve developer experience
 
 ### 📁 You Own
+
 ```
 .github/workflows/ci.yml
 packages/flows/**
@@ -179,6 +197,7 @@ Deployment scripts
 ```
 
 ### 🚫 Never Touch
+
 ```
 apps/*/src/**        (Application code)
 services/*.py        (Service logic)
@@ -186,6 +205,7 @@ Do not directly modify code, only tests
 ```
 
 ### 💡 Quick Improvements
+
 1. Add E2E tests with Playwright
 2. Implement performance benchmarks
 3. Create beautiful API docs
@@ -196,6 +216,7 @@ Do not directly modify code, only tests
 8. Improve build times
 
 ### ✅ Before Merge
+
 - [ ] All tests pass
 - [ ] Code coverage > 80%
 - [ ] Documentation updated
@@ -209,18 +230,23 @@ Do not directly modify code, only tests
 ## 🔄 COORDINATION RULES
 
 ### Rule 1: File Ownership is Absolute
+
 👉 Only your agent writes to your domain. Others read-only.
 
 ### Rule 2: Shared Types First
+
 👉 Agent 3 defines types. Other agents use them.
 
 ### Rule 3: Notify on Changes
+
 👉 Breaking changes? Notify relevant agents first.
 
 ### Rule 4: Tests Before Merge
+
 👉 All tests must pass. Agent 4 gates all merges.
 
 ### Rule 5: Documentation Reflects Code
+
 👉 If code changes, documentation must update.
 
 ---
@@ -249,21 +275,22 @@ New Feature → Agent 1 (backend) → Agent 3 (types)
 
 ## ⚡ QUICK REFERENCE TABLE
 
-| Need | Agent | File | Example |
-|------|-------|------|---------|
-| New API? | 1 | `apps/api/src/routes/` | Create endpoint |
-| New Component? | 2 | `apps/web/src/components/` | Create React component |
-| New Type? | 3 | `packages/types/src/` | Define interface |
-| New Utility? | 3 | `packages/utils/src/` | Create helper |
-| New Test? | 4 | `apps/*/tests/` or `e2e/` | Create test |
-| New Doc? | 4 | `docs/` | Create markdown |
-| Fix CI? | 4 | `.github/workflows/` | Update workflow |
+| Need           | Agent | File                       | Example                |
+| -------------- | ----- | -------------------------- | ---------------------- |
+| New API?       | 1     | `apps/api/src/routes/`     | Create endpoint        |
+| New Component? | 2     | `apps/web/src/components/` | Create React component |
+| New Type?      | 3     | `packages/types/src/`      | Define interface       |
+| New Utility?   | 3     | `packages/utils/src/`      | Create helper          |
+| New Test?      | 4     | `apps/*/tests/` or `e2e/`  | Create test            |
+| New Doc?       | 4     | `docs/`                    | Create markdown        |
+| Fix CI?        | 4     | `.github/workflows/`       | Update workflow        |
 
 ---
 
 ## 🎯 SUCCESS CHECKLIST FOR YOUR SESSION
 
 Before starting work:
+
 - [ ] Read your full agent prompt
 - [ ] Review the files you own
 - [ ] Check the conflict prevention rules
@@ -271,6 +298,7 @@ Before starting work:
 - [ ] Understand the monorepo structure
 
 During work:
+
 - [ ] Only modify your assigned files
 - [ ] Follow the quality standards
 - [ ] Test thoroughly before committing
@@ -278,6 +306,7 @@ During work:
 - [ ] Notify other agents of breaking changes
 
 After work:
+
 - [ ] All tests pass (Agent 4 verifies)
 - [ ] No conflicts with other agents
 - [ ] Documentation is updated
@@ -289,6 +318,7 @@ After work:
 ## 📚 FULL DOCUMENTATION
 
 For complete details, see:
+
 - **Agent 1:** `AGENT_1_BACKEND_DATABASE.md`
 - **Agent 2:** `AGENT_2_FRONTEND_UI.md`
 - **Agent 3:** `AGENT_3_EXTENSION_SHARED.md`

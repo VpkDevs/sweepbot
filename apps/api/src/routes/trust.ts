@@ -33,13 +33,13 @@ import { requireAuth, optionalAuth } from '../middleware/auth.js'
 // ============================================================================
 
 const TRUST_WEIGHTS = {
-  redemption_speed:         0.25,  // #1 pain point: payout delay
-  redemption_rejection_rate: 0.20, // #2 pain point: rejected payouts
-  tos_stability:             0.15, // retroactive rule changes = red flag
-  community_satisfaction:    0.15, // aggregate sentiment
-  support_responsiveness:    0.10, // secondary — most users don't need it
-  regulatory_standing:       0.10, // baseline legitimacy
-  bonus_generosity:          0.05, // nice-to-have, not trust-critical
+  redemption_speed: 0.25, // #1 pain point: payout delay
+  redemption_rejection_rate: 0.2, // #2 pain point: rejected payouts
+  tos_stability: 0.15, // retroactive rule changes = red flag
+  community_satisfaction: 0.15, // aggregate sentiment
+  support_responsiveness: 0.1, // secondary — most users don't need it
+  regulatory_standing: 0.1, // baseline legitimacy
+  bonus_generosity: 0.05, // nice-to-have, not trust-critical
 } as const
 
 type WeightKey = keyof typeof TRUST_WEIGHTS
@@ -84,11 +84,12 @@ function scoreBonusGenerosity(avgWrMultiplier: number | null): number {
  * Composite score — weights auto-normalize if a component has insufficient data
  * and is set to null. Weight is redistributed proportionally to data-bearing components.
  */
-function computeCompositeScore(
-  components: Partial<Record<WeightKey, number | null>>
-): { score: number; activatedWeights: Record<string, number> } {
-  let weightedSum  = 0
-  let totalWeight  = 0
+function computeCompositeScore(components: Partial<Record<WeightKey, number | null>>): {
+  score: number
+  activatedWeights: Record<string, number>
+} {
+  let weightedSum = 0
+  let totalWeight = 0
   const activated: Record<string, number> = {}
 
   for (const [key, weight] of Object.entries(TRUST_WEIGHTS) as [WeightKey, number][]) {
@@ -100,9 +101,7 @@ function computeCompositeScore(
     }
   }
 
-  const score = totalWeight > 0
-    ? Math.round((weightedSum / totalWeight) * 100) / 100
-    : 0
+  const score = totalWeight > 0 ? Math.round((weightedSum / totalWeight) * 100) / 100 : 0
 
   return { score, activatedWeights: activated }
 }
@@ -126,19 +125,21 @@ function certificationEligible(score: number, sampleSize: number): boolean {
 // ============================================================================
 
 const TrustQuerySchema = z.object({
-  tier:       z.enum(['excellent', 'good', 'fair', 'concerning', 'poor']).optional(),
-  minScore:   z.coerce.number().min(0).max(100).optional(),
-  maxScore:   z.coerce.number().min(0).max(100).optional(),
-  sortBy:     z.enum(['overall_score', 'redemption_speed', 'tos_stability', 'calculated_at', 'rank']).default('overall_score'),
-  page:       z.coerce.number().int().min(1).default(1),
-  pageSize:   z.coerce.number().int().min(1).max(100).default(20),
+  tier: z.enum(['excellent', 'good', 'fair', 'concerning', 'poor']).optional(),
+  minScore: z.coerce.number().min(0).max(100).optional(),
+  maxScore: z.coerce.number().min(0).max(100).optional(),
+  sortBy: z
+    .enum(['overall_score', 'redemption_speed', 'tos_stability', 'calculated_at', 'rank'])
+    .default('overall_score'),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
   myPlatforms: z.coerce.boolean().default(false), // only show platforms user has played
 })
 
 const AlertSchema = z.object({
-  platform_id:         z.string().uuid(),
+  platform_id: z.string().uuid(),
   threshold_direction: z.enum(['above', 'below', 'any']).default('any'),
-  threshold_score:     z.number().min(0).max(100).optional(),
+  threshold_score: z.number().min(0).max(100).optional(),
 })
 
 // ============================================================================
@@ -146,7 +147,6 @@ const AlertSchema = z.object({
 // ============================================================================
 
 export async function trustRoutes(app: FastifyInstance): Promise<void> {
-
   // ── GET / — Ranked list with optional user context ─────────────────────────
   app.get(
     '/',
@@ -157,19 +157,19 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
         querystring: {
           type: 'object',
           properties: {
-            tier:        { type: 'string' },
-            minScore:    { type: 'number' },
-            maxScore:    { type: 'number' },
-            sortBy:      { type: 'string' },
-            page:        { type: 'number' },
-            pageSize:    { type: 'number' },
+            tier: { type: 'string' },
+            minScore: { type: 'number' },
+            maxScore: { type: 'number' },
+            sortBy: { type: 'string' },
+            page: { type: 'number' },
+            pageSize: { type: 'number' },
             myPlatforms: { type: 'boolean' },
           },
         },
       },
     },
     async (request, reply) => {
-      const q      = TrustQuerySchema.parse(request.query)
+      const q = TrustQuerySchema.parse(request.query)
       const offset = (q.page - 1) * q.pageSize
 
       // Resolve authenticated user if present (auth is optional on this endpoint)
@@ -178,29 +178,23 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
 
       // Tier filter maps to score range
       const tierRanges: Record<string, [number, number]> = {
-        excellent:  [85, 100],
-        good:       [70, 84.99],
-        fair:       [55, 69.99],
+        excellent: [85, 100],
+        good: [70, 84.99],
+        fair: [55, 69.99],
         concerning: [40, 54.99],
-        poor:       [0, 39.99],
+        poor: [0, 39.99],
       }
       const tierRange = q.tier ? tierRanges[q.tier] : null
 
-      const effectiveMin = Math.max(
-        q.minScore ?? 0,
-        tierRange ? tierRange[0] : 0
-      )
-      const effectiveMax = Math.min(
-        q.maxScore ?? 100,
-        tierRange ? tierRange[1] : 100
-      )
+      const effectiveMin = Math.max(q.minScore ?? 0, tierRange ? tierRange[0] : 0)
+      const effectiveMax = Math.min(q.maxScore ?? 100, tierRange ? tierRange[1] : 100)
 
       const orderMap: Record<string, ReturnType<typeof sql>> = {
-        overall_score:    sql`ti.overall_score DESC`,
+        overall_score: sql`ti.overall_score DESC`,
         redemption_speed: sql`ti.redemption_speed_score DESC`,
-        tos_stability:    sql`ti.tos_stability_score DESC`,
-        calculated_at:    sql`ti.calculated_at DESC`,
-        rank:             sql`ti.overall_score DESC`,
+        tos_stability: sql`ti.tos_stability_score DESC`,
+        calculated_at: sql`ti.calculated_at DESC`,
+        rank: sql`ti.overall_score DESC`,
       }
       const orderClause = orderMap[q.sortBy] ?? orderMap['overall_score']!
 
@@ -276,13 +270,17 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
             WHERE p.is_active = true
               AND ti.overall_score >= ${effectiveMin}
               AND ti.overall_score <= ${effectiveMax}
-              ${userId && q.myPlatforms ? sql`
+              ${
+                userId && q.myPlatforms
+                  ? sql`
                 AND EXISTS (
                   SELECT 1 FROM sessions s
                   WHERE s.user_id   = ${userId}
                     AND s.platform_id = p.id
                 )
-              ` : sql``}
+              `
+                  : sql``
+              }
           )
           SELECT
             r.*,
@@ -294,7 +292,9 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
               WHEN r.overall_score >= 40 THEN 'concerning'
               ELSE 'poor'
             END AS score_tier,
-            ${userId ? sql`
+            ${
+              userId
+                ? sql`
               -- User context: has the authenticated user played this platform?
               (
                 SELECT COUNT(*) FROM sessions us
@@ -320,11 +320,13 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
                   AND ta.platform_id  = r.platform_id
                   AND ta.is_active    = true
               ) AS user_has_alert
-            ` : sql`
+            `
+                : sql`
               NULL::integer    AS user_session_count,
               NULL::numeric    AS user_personal_rtp,
               NULL::boolean    AS user_has_alert
-            `}
+            `
+            }
           FROM ranked r
           ORDER BY ${orderClause}
           LIMIT ${q.pageSize} OFFSET ${offset}
@@ -347,14 +349,14 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
 
       return reply.send({
         success: true,
-        data:    rows.rows,
+        data: rows.rows,
         meta: {
-          page:         q.page,
-          pageSize:     q.pageSize,
+          page: q.page,
+          pageSize: q.pageSize,
           total,
-          hasMore:      offset + rows.rows.length < total,
-          filters:      { tier: q.tier, minScore: q.minScore, maxScore: q.maxScore },
-          weights:      TRUST_WEIGHTS,
+          hasMore: offset + rows.rows.length < total,
+          filters: { tier: q.tier, minScore: q.minScore, maxScore: q.maxScore },
+          weights: TRUST_WEIGHTS,
           methodology_url: 'https://sweepbot.app/trust-index/methodology',
         },
       })
@@ -427,9 +429,9 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
       return reply.send({
         success: true,
         data: {
-          top_platforms:       top10.rows,
-          score_distribution:  distribution.rows,
-          global_stats:        globalStats.rows[0] ?? null,
+          top_platforms: top10.rows,
+          score_distribution: distribution.rows,
+          global_stats: globalStats.rows[0] ?? null,
         },
       })
     }
@@ -651,7 +653,7 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
               WHEN SUM(total_wagered::numeric) = 0 THEN NULL
               ELSE ROUND(
                 SUM(total_won::numeric) / SUM(total_wagered::numeric) * 100
-                - ${platformData['overall_score'] as number ?? 80}::numeric,
+                - ${(platformData['overall_score'] as number) ?? 80}::numeric,
                 2
               )
             END AS rtp_vs_platform_avg,
@@ -682,17 +684,19 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
         const uRow = userStats.rows[0] as Record<string, unknown> | undefined
         if (uRow) {
           userContext = {
-            has_played:         Number(uRow['session_count'] ?? 0) > 0,
-            session_count:      Number(uRow['session_count'] ?? 0),
-            total_spins:        Number(uRow['total_spins']   ?? 0),
-            total_wagered:      Number(uRow['total_wagered'] ?? 0),
-            total_won:          Number(uRow['total_won']     ?? 0),
-            personal_rtp:       uRow['personal_rtp'] != null ? Number(uRow['personal_rtp']) : null,
-            rtp_vs_avg:         uRow['rtp_vs_platform_avg'] != null ? Number(uRow['rtp_vs_platform_avg']) : null,
-            best_session_rtp:   uRow['best_session_rtp'] != null ? Number(uRow['best_session_rtp']) : null,
-            first_played_at:    uRow['first_played_at'] ?? null,
-            last_played_at:     uRow['last_played_at']  ?? null,
-            has_alert:          uRow['has_alert'] ?? false,
+            has_played: Number(uRow['session_count'] ?? 0) > 0,
+            session_count: Number(uRow['session_count'] ?? 0),
+            total_spins: Number(uRow['total_spins'] ?? 0),
+            total_wagered: Number(uRow['total_wagered'] ?? 0),
+            total_won: Number(uRow['total_won'] ?? 0),
+            personal_rtp: uRow['personal_rtp'] != null ? Number(uRow['personal_rtp']) : null,
+            rtp_vs_avg:
+              uRow['rtp_vs_platform_avg'] != null ? Number(uRow['rtp_vs_platform_avg']) : null,
+            best_session_rtp:
+              uRow['best_session_rtp'] != null ? Number(uRow['best_session_rtp']) : null,
+            first_played_at: uRow['first_played_at'] ?? null,
+            last_played_at: uRow['last_played_at'] ?? null,
+            has_alert: uRow['has_alert'] ?? false,
           }
         }
       }
@@ -700,23 +704,23 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
       return reply.send({
         success: true,
         data: {
-          platform:        platformData,
-          history:         history.rows,
-          data_breakdown:  dataBreakdown.rows,
+          platform: platformData,
+          history: history.rows,
+          data_breakdown: dataBreakdown.rows,
           redemption_samples: recentRedemptions.rows,
-          tos_changes:     tosChanges.rows,
-          user_context:    userContext,
-          weights:         TRUST_WEIGHTS,
+          tos_changes: tosChanges.rows,
+          user_context: userContext,
+          weights: TRUST_WEIGHTS,
           methodology: {
             version: '1.0',
-            url:     'https://sweepbot.app/trust-index/methodology',
+            url: 'https://sweepbot.app/trust-index/methodology',
             description:
               'The SweepBot Trust Index is a 0-100 composite score derived from 7 independently weighted factors. ' +
               'All data is community-sourced. Scores are informational only — not endorsements or gambling advice.',
             factors: Object.entries(TRUST_WEIGHTS).map(([key, weight]) => ({
               key,
               weight,
-              weight_pct:  `${(weight * 100).toFixed(0)}%`,
+              weight_pct: `${(weight * 100).toFixed(0)}%`,
               description: FACTOR_DESCRIPTIONS[key as WeightKey] ?? '',
             })),
           },
@@ -841,9 +845,9 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
           type: 'object',
           required: ['platform_id'],
           properties: {
-            platform_id:         { type: 'string', format: 'uuid' },
+            platform_id: { type: 'string', format: 'uuid' },
             threshold_direction: { type: 'string', enum: ['above', 'below', 'any'] },
-            threshold_score:     { type: 'number', minimum: 0, maximum: 100 },
+            threshold_score: { type: 'number', minimum: 0, maximum: 100 },
           },
         },
       },
@@ -851,7 +855,7 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       await requireAuth(request, reply)
       const userId = request.user!.id
-      const body   = AlertSchema.parse(request.body)
+      const body = AlertSchema.parse(request.body)
 
       // Upsert alert (idempotent — user can only have one alert per platform)
       await dbQuery(sql`
@@ -890,8 +894,8 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
     },
     async (request, reply) => {
       await requireAuth(request, reply)
-      const userId             = request.user!.id
-      const { platformId }     = request.params as { platformId: string }
+      const userId = request.user!.id
+      const { platformId } = request.params as { platformId: string }
 
       await dbQuery(sql`
         UPDATE trust_index_alerts
@@ -915,18 +919,18 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
           type: 'object',
           required: ['platformId', 'adminSecret'],
           properties: {
-            platformId:   { type: 'string', format: 'uuid' },
-            adminSecret:  { type: 'string' },
+            platformId: { type: 'string', format: 'uuid' },
+            adminSecret: { type: 'string' },
             // Optional manual overrides for factors not yet automated
             override_support_responsiveness: { type: 'number', minimum: 0, maximum: 100 },
-            override_regulatory_standing:    { type: 'number', minimum: 0, maximum: 100 },
+            override_regulatory_standing: { type: 'number', minimum: 0, maximum: 100 },
           },
         },
       },
     },
     async (request, reply) => {
       const body = request.body as {
-        platformId:  string
+        platformId: string
         adminSecret: string
         override_support_responsiveness?: number
         override_regulatory_standing?: number
@@ -942,7 +946,7 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
       const result = await recalculatePlatformScore(
         body.platformId,
         body.override_support_responsiveness,
-        body.override_regulatory_standing,
+        body.override_regulatory_standing
       )
 
       return reply.send({ success: true, data: result })
@@ -980,21 +984,19 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
       `)
 
       const results = await Promise.allSettled(
-        (activePlatforms.rows as { id: string }[]).map((p) =>
-          recalculatePlatformScore(p.id)
-        )
+        (activePlatforms.rows as { id: string }[]).map((p) => recalculatePlatformScore(p.id))
       )
 
       const succeeded = results.filter((r) => r.status === 'fulfilled').length
-      const failed    = results.filter((r) => r.status === 'rejected').length
+      const failed = results.filter((r) => r.status === 'rejected').length
 
       return reply.send({
         success: true,
         data: {
-          total:     activePlatforms.rows.length,
+          total: activePlatforms.rows.length,
           succeeded,
           failed,
-          message:   `Recalculated ${succeeded} platforms (${failed} failed)`,
+          message: `Recalculated ${succeeded} platforms (${failed} failed)`,
         },
       })
     }
@@ -1013,7 +1015,7 @@ export async function trustRoutes(app: FastifyInstance): Promise<void> {
 async function recalculatePlatformScore(
   platformId: string,
   overrideSupportResponsiveness?: number,
-  overrideRegulatoryStanding?: number,
+  overrideRegulatoryStanding?: number
 ): Promise<{
   platform_id: string
   overall_score: number
@@ -1063,29 +1065,30 @@ async function recalculatePlatformScore(
     `),
   ])
 
-  const rd  = (redemptionData.rows[0]  ?? {}) as Record<string, string | null>
-  const td  = (tosData.rows[0]         ?? {}) as Record<string, string | null>
-  const cd  = (communityData.rows[0]   ?? {}) as Record<string, string | null>
-  const bd  = (bonusData.rows[0]       ?? {}) as Record<string, string | null>
+  const rd = (redemptionData.rows[0] ?? {}) as Record<string, string | null>
+  const td = (tosData.rows[0] ?? {}) as Record<string, string | null>
+  const cd = (communityData.rows[0] ?? {}) as Record<string, string | null>
+  const bd = (bonusData.rows[0] ?? {}) as Record<string, string | null>
 
-  const avgDays        = rd['avg_processing_days'] != null ? Number(rd['avg_processing_days'])  : null
-  const rejectionRate  = rd['rejection_rate']      != null ? Number(rd['rejection_rate'])        : null
-  const totalReds      = Number(rd['total_redemptions'] ?? 0)
-  const tosChanges     = td['changes_12mo']        != null ? Number(td['changes_12mo'])          : null
-  const communityRating = cd['weighted_avg_rating'] != null ? Number(cd['weighted_avg_rating'])  : null
-  const ratingCount    = Number(cd['rating_count'] ?? 0)
-  const avgWrMult      = bd['avg_wr_multiplier']   != null ? Number(bd['avg_wr_multiplier'])     : null
+  const avgDays = rd['avg_processing_days'] != null ? Number(rd['avg_processing_days']) : null
+  const rejectionRate = rd['rejection_rate'] != null ? Number(rd['rejection_rate']) : null
+  const totalReds = Number(rd['total_redemptions'] ?? 0)
+  const tosChanges = td['changes_12mo'] != null ? Number(td['changes_12mo']) : null
+  const communityRating =
+    cd['weighted_avg_rating'] != null ? Number(cd['weighted_avg_rating']) : null
+  const ratingCount = Number(cd['rating_count'] ?? 0)
+  const avgWrMult = bd['avg_wr_multiplier'] != null ? Number(bd['avg_wr_multiplier']) : null
 
   // ── Compute individual factor scores ─────────────────────────────────────
   const components: Record<WeightKey, number | null> = {
-    redemption_speed:          totalReds >= 20 ? scoreRedemptionSpeed(avgDays)         : null,
-    redemption_rejection_rate: totalReds >= 30 ? scoreRejectionRate(rejectionRate)     : null,
-    tos_stability:             tosChanges != null ? scoreTosStability(tosChanges)      : null,
-    community_satisfaction:    ratingCount >= 15 ? scoreCommunityRating(communityRating) : null,
-    bonus_generosity:          avgWrMult != null ? scoreBonusGenerosity(avgWrMult)     : null,
+    redemption_speed: totalReds >= 20 ? scoreRedemptionSpeed(avgDays) : null,
+    redemption_rejection_rate: totalReds >= 30 ? scoreRejectionRate(rejectionRate) : null,
+    tos_stability: tosChanges != null ? scoreTosStability(tosChanges) : null,
+    community_satisfaction: ratingCount >= 15 ? scoreCommunityRating(communityRating) : null,
+    bonus_generosity: avgWrMult != null ? scoreBonusGenerosity(avgWrMult) : null,
     // Manual overrides for factors not yet automated; defaults are mid-range
-    support_responsiveness:    overrideSupportResponsiveness ?? 50,
-    regulatory_standing:       overrideRegulatoryStanding    ?? 75,
+    support_responsiveness: overrideSupportResponsiveness ?? 50,
+    regulatory_standing: overrideRegulatoryStanding ?? 75,
   }
 
   const { score: overallScore } = computeCompositeScore(components)
@@ -1107,13 +1110,13 @@ async function recalculatePlatformScore(
     ) VALUES (
       ${platformId},
       ${overallScore},
-      ${components.redemption_speed           ?? 50},
-      ${components.redemption_rejection_rate  ?? 50},
-      ${components.tos_stability              ?? 100},
-      ${components.bonus_generosity           ?? 50},
-      ${components.community_satisfaction     ?? 50},
-      ${components.support_responsiveness     ?? 50},
-      ${components.regulatory_standing        ?? 75},
+      ${components.redemption_speed ?? 50},
+      ${components.redemption_rejection_rate ?? 50},
+      ${components.tos_stability ?? 100},
+      ${components.bonus_generosity ?? 50},
+      ${components.community_satisfaction ?? 50},
+      ${components.support_responsiveness ?? 50},
+      ${components.regulatory_standing ?? 75},
       ${totalReds},
       NOW()
     )
@@ -1124,10 +1127,10 @@ async function recalculatePlatformScore(
   fireScoreAlerts(platformId, overallScore).catch(console.error)
 
   return {
-    platform_id:   platformId,
+    platform_id: platformId,
     overall_score: overallScore,
     components,
-    sample_size:   totalReds,
+    sample_size: totalReds,
   }
 }
 
@@ -1145,7 +1148,8 @@ async function fireScoreAlerts(platformId: string, newScore: number): Promise<vo
     LIMIT 1
   `)
 
-  const prev = (prevScore.rows[0] as { overall_score: number } | undefined)?.overall_score ?? newScore
+  const prev =
+    (prevScore.rows[0] as { overall_score: number } | undefined)?.overall_score ?? newScore
 
   const alerts = await dbQuery(sql`
     SELECT user_id, threshold_direction, threshold_score

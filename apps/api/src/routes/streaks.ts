@@ -41,34 +41,30 @@ const EMPTY_STREAK = {
 export async function streaksRoutes(app: FastifyInstance): Promise<void> {
   // ── GET /streaks ────────────────────────────────────────────────────────────
   // Returns the current user's streak — consistent camelCase shape in both branches.
-  app.get(
-    '/',
-    { preValidation: [requireAuth] },
-    async (request, reply) => {
-      try {
-        const userId = request.user!.id
+  app.get('/', { preValidation: [requireAuth] }, async (request, reply) => {
+    try {
+      const userId = request.user!.id
 
-        const { rows } = await query<StreakRow>(sql`
+      const { rows } = await query<StreakRow>(sql`
           SELECT current_streak, longest_streak, last_activity_date, freeze_credits
           FROM user_streaks
           WHERE user_id = ${userId}
         `)
 
-        if (rows.length === 0) {
-          return reply.send({ success: true, data: EMPTY_STREAK })
-        }
-
-        return reply.send({ success: true, data: mapStreakRow(rows[0]!) })
-      } catch (error) {
-        app.log.error({ error }, 'GET /streaks error')
-        return reply.code(500).send({
-          error: 'INTERNAL_ERROR',
-          message: 'Failed to fetch streak',
-          status: 500,
-        })
+      if (rows.length === 0) {
+        return reply.send({ success: true, data: EMPTY_STREAK })
       }
-    },
-  )
+
+      return reply.send({ success: true, data: mapStreakRow(rows[0]!) })
+    } catch (error) {
+      app.log.error({ error }, 'GET /streaks error')
+      return reply.code(500).send({
+        error: 'INTERNAL_ERROR',
+        message: 'Failed to fetch streak',
+        status: 500,
+      })
+    }
+  })
 
   // ── POST /streaks/nightly-check ─────────────────────────────────────────────
   // Bulk-resets streaks for users who missed yesterday.

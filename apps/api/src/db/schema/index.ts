@@ -4,26 +4,26 @@
  */
 
 // Core user and platform schemas
-export * from './profiles.js';
-export * from './platforms.js';
-export * from './sessions.js';
-export * from './subscriptions.js';
+export * from './profiles.js'
+export * from './platforms.js'
+export * from './sessions.js'
+export * from './subscriptions.js'
 
 // Flow automation engine
-export * from './flows.js';
+export * from './flows.js'
 
 // Feature schemas
-export * from './features.js';
-export * from './notifications.js';
+export * from './features.js'
+export * from './notifications.js'
 
 // Data collection services (jackpots, ToS, health checks)
-export * from './data-collection.js';
+export * from './data-collection.js'
 
 // Quick wins features (trials, streaks, push, voice notes)
-export * from './quick-wins.js';
+export * from './quick-wins.js'
 
 // Trust Index scoring engine + community tables
-export * from './trust.js';
+export * from './trust.js'
 
 // Redemptions (SC cashout tracking)
-export * from './redemptions.js';
+export * from './redemptions.js'

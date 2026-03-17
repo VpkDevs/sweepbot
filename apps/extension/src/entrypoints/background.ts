@@ -62,12 +62,12 @@ const log = createLogger('Background')
 
 const HEARTBEAT_ALARM = 'sweepbot:heartbeat'
 const FLUSH_ALARM = 'sweepbot:flush'
-const HEARTBEAT_INTERVAL_MINUTES = 0.5       // 30 s
-const FLUSH_INTERVAL_MINUTES = 0.25          // 15 s
-const IDLE_THRESHOLD_SECONDS = 120           // 2 min before "idle"
-const ORPHAN_THRESHOLD_MS = 5 * 60_000       // session with no heartbeat >5 min
-const MAX_BATCH_FLUSH_SIZE = 25              // max transactions per API call
-const SESSION_AUTO_END_DELAY_MS = 30_000     // wait 30 s after tab closes before ending
+const HEARTBEAT_INTERVAL_MINUTES = 0.5 // 30 s
+const FLUSH_INTERVAL_MINUTES = 0.25 // 15 s
+const IDLE_THRESHOLD_SECONDS = 120 // 2 min before "idle"
+const ORPHAN_THRESHOLD_MS = 5 * 60_000 // session with no heartbeat >5 min
+const MAX_BATCH_FLUSH_SIZE = 25 // max transactions per API call
+const SESSION_AUTO_END_DELAY_MS = 30_000 // wait 30 s after tab closes before ending
 
 // Badge colour thresholds (RTP %)
 const BADGE_GREEN_THRESHOLD = 95
@@ -82,10 +82,10 @@ const BadgeManager = {
     const label = rtp > 0 ? `${Math.round(rtp)}%` : ''
     const color =
       rtp >= BADGE_GREEN_THRESHOLD
-        ? '#22c55e'  // green-500
+        ? '#22c55e' // green-500
         : rtp >= BADGE_AMBER_THRESHOLD
-        ? '#f59e0b'  // amber-500
-        : '#ef4444'  // red-500
+          ? '#f59e0b' // amber-500
+          : '#ef4444' // red-500
     await chrome.action.setBadgeText({ text: label })
     await chrome.action.setBadgeBackgroundColor({ color })
   },
@@ -121,9 +121,7 @@ const TransactionFlushQueue = {
       if (!session) return
 
       const now = Date.now()
-      const ready = session.transactionBuffer.filter(
-        (tx) => !tx.synced && tx.nextRetryAt <= now,
-      )
+      const ready = session.transactionBuffer.filter((tx) => !tx.synced && tx.nextRetryAt <= now)
       if (ready.length === 0) return
 
       // Group by sessionId (should almost always be a single group)
@@ -150,7 +148,7 @@ const TransactionFlushQueue = {
               jackpot_hit: tx.jackpotHit,
               round_id: tx.roundId,
               timestamp: new Date(tx.timestamp).toISOString(),
-            })),
+            }))
           )
           await storage.markTransactionsSynced(localIds)
           log.info(`Flushed ${batch.length} transactions for session ${sessionId}`)
@@ -591,7 +589,16 @@ const TabMonitor = {
 
 type ExtendedBackgroundMessage =
   | BackgroundMessage
-  | { type: 'SESSION_START'; payload: { platformSlug: string; gameId?: string; tabId?: number; scBalance?: number; gcBalance?: number } }
+  | {
+      type: 'SESSION_START'
+      payload: {
+        platformSlug: string
+        gameId?: string
+        tabId?: number
+        scBalance?: number
+        gcBalance?: number
+      }
+    }
   | { type: 'SESSION_END'; payload: { reason?: 'user' | 'forced' } }
   | { type: 'SESSION_PAUSE' }
   | { type: 'SESSION_RESUME' }
@@ -604,14 +611,16 @@ type ExtendedBackgroundMessage =
 function routeMessage(
   message: ExtendedBackgroundMessage,
   sender: chrome.runtime.MessageSender,
-  sendResponse: (response?: unknown) => void,
+  sendResponse: (response?: unknown) => void
 ): boolean {
   const tabId = sender.tab?.id ?? null
 
   switch (message.type) {
     case 'SHOW_NOTIFICATION':
-      showNotification((message as BackgroundMessage & { type: 'SHOW_NOTIFICATION' }).payload.title,
-                       (message as BackgroundMessage & { type: 'SHOW_NOTIFICATION' }).payload.message)
+      showNotification(
+        (message as BackgroundMessage & { type: 'SHOW_NOTIFICATION' }).payload.title,
+        (message as BackgroundMessage & { type: 'SHOW_NOTIFICATION' }).payload.message
+      )
       return false
 
     case 'FLOW_COMPLETED': {
@@ -625,7 +634,18 @@ function routeMessage(
     }
 
     case 'SESSION_START': {
-      const p = (message as { type: 'SESSION_START'; payload: { platformSlug: string; gameId?: string; tabId?: number; scBalance?: number; gcBalance?: number } }).payload
+      const p = (
+        message as {
+          type: 'SESSION_START'
+          payload: {
+            platformSlug: string
+            gameId?: string
+            tabId?: number
+            scBalance?: number
+            gcBalance?: number
+          }
+        }
+      ).payload
       SessionLifecycleManager.startSession({
         platformSlug: p.platformSlug,
         gameId: p.gameId ?? null,
@@ -633,37 +653,39 @@ function routeMessage(
         scBalance: p.scBalance ?? 0,
         gcBalance: p.gcBalance ?? 0,
       }).then((session) => sendResponse({ success: !!session, sessionId: session?.sessionId }))
-      return true  // async response
+      return true // async response
     }
 
     case 'SESSION_END': {
-      const p = (message as { type: 'SESSION_END'; payload?: { reason?: 'user' | 'forced' } }).payload
-      SessionLifecycleManager.endSession(p?.reason ?? 'user')
-        .then(() => sendResponse({ success: true }))
+      const p = (message as { type: 'SESSION_END'; payload?: { reason?: 'user' | 'forced' } })
+        .payload
+      SessionLifecycleManager.endSession(p?.reason ?? 'user').then(() =>
+        sendResponse({ success: true })
+      )
       return true
     }
 
     case 'SESSION_PAUSE':
-      SessionLifecycleManager.pauseSession('user')
-        .then(() => sendResponse({ success: true }))
+      SessionLifecycleManager.pauseSession('user').then(() => sendResponse({ success: true }))
       return true
 
     case 'SESSION_RESUME':
-      SessionLifecycleManager.resumeSession()
-        .then(() => sendResponse({ success: true }))
+      SessionLifecycleManager.resumeSession().then(() => sendResponse({ success: true }))
       return true
 
     case 'SPIN_RECORDED': {
       const spin = (message as { type: 'SPIN_RECORDED'; payload: SpinEvent }).payload
-      SessionLifecycleManager.recordSpin(spin)
-        .then(() => sendResponse({ success: true }))
+      SessionLifecycleManager.recordSpin(spin).then(() => sendResponse({ success: true }))
       return true
     }
 
     case 'BALANCE_UPDATED': {
-      const { sc, gc } = (message as { type: 'BALANCE_UPDATED'; payload: { sc: number; gc: number } }).payload
-      SessionLifecycleManager.recordBalance(sc, gc, 'intercepted')
-        .then(() => sendResponse({ success: true }))
+      const { sc, gc } = (
+        message as { type: 'BALANCE_UPDATED'; payload: { sc: number; gc: number } }
+      ).payload
+      SessionLifecycleManager.recordBalance(sc, gc, 'intercepted').then(() =>
+        sendResponse({ success: true })
+      )
       return true
     }
 
@@ -672,7 +694,9 @@ function routeMessage(
       return true
 
     case 'ADD_ANNOTATION': {
-      const { text, spinNumber } = (message as { type: 'ADD_ANNOTATION'; payload: { text: string; spinNumber?: number } }).payload
+      const { text, spinNumber } = (
+        message as { type: 'ADD_ANNOTATION'; payload: { text: string; spinNumber?: number } }
+      ).payload
       storage
         .mutateSession((s) => {
           const annotation: SessionAnnotation = {
@@ -688,7 +712,8 @@ function routeMessage(
     }
 
     case 'GAME_SWITCHED': {
-      const { toGameId } = (message as { type: 'GAME_SWITCHED'; payload: { toGameId: string } }).payload
+      const { toGameId } = (message as { type: 'GAME_SWITCHED'; payload: { toGameId: string } })
+        .payload
       storage
         .mutateSession((s) => ({
           ...s,
@@ -770,9 +795,8 @@ export default defineBackground(async () => {
   })
 
   // ── Message routing ────────────────────────────────────────────────────
-  chrome.runtime.onMessage.addListener(
-    (message: ExtendedBackgroundMessage, sender, sendResponse) =>
-      routeMessage(message, sender, sendResponse),
+  chrome.runtime.onMessage.addListener((message: ExtendedBackgroundMessage, sender, sendResponse) =>
+    routeMessage(message, sender, sendResponse)
   )
 
   // ── Storage change watcher: badge reflects any external mutation ───────

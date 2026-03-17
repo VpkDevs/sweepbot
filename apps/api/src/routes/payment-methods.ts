@@ -108,7 +108,7 @@ export async function paymentMethodRoutes(app: FastifyInstance): Promise<void> {
         }
         throw err
       }
-    },
+    }
   )
 
   // ── PUT /payment-methods/:id/default ──────────────────────────────────────
@@ -167,7 +167,7 @@ export async function paymentMethodRoutes(app: FastifyInstance): Promise<void> {
         }
         throw err
       }
-    },
+    }
   )
 
   // ── DELETE /payment-methods/:id ───────────────────────────────────────────
@@ -227,7 +227,7 @@ export async function paymentMethodRoutes(app: FastifyInstance): Promise<void> {
         }
         throw err
       }
-    },
+    }
   )
 
   // ── POST /payment-methods/preview-change ──────────────────────────────────
@@ -251,7 +251,12 @@ export async function paymentMethodRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const userId = request.user!.id
       const { priceId } = z
-        .object({ priceId: z.string().min(1).regex(/^price_[A-Za-z0-9]+$/, 'Invalid Stripe price ID') })
+        .object({
+          priceId: z
+            .string()
+            .min(1)
+            .regex(/^price_[A-Za-z0-9]+$/, 'Invalid Stripe price ID'),
+        })
         .parse(request.body)
 
       const { previewSubscriptionChange } = await import('../services/stripe.service.js')
@@ -267,6 +272,6 @@ export async function paymentMethodRoutes(app: FastifyInstance): Promise<void> {
         }
         throw err
       }
-    },
+    }
   )
 }

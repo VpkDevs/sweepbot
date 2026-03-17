@@ -94,7 +94,7 @@ export async function sessionNotesRoutes(app: FastifyInstance): Promise<void> {
           status: 500,
         })
       }
-    },
+    }
   )
 
   // ── POST /session-notes ───────────────────────────────────────────────────
@@ -137,7 +137,7 @@ export async function sessionNotesRoutes(app: FastifyInstance): Promise<void> {
           status: 500,
         })
       }
-    },
+    }
   )
 
   // ── DELETE /session-notes/:id ─────────────────────────────────────────────
@@ -170,6 +170,6 @@ export async function sessionNotesRoutes(app: FastifyInstance): Promise<void> {
           status: 500,
         })
       }
-    },
+    }
   )
 }

@@ -3,16 +3,16 @@
 **Created:** 2/12/2026 6:51:10  
 **Updated:** 2/12/2026 6:55:03  
 **Exported:** 3/8/2026 23:27:32  
-**Link:** [https://claude.ai/chat/2640ce57-9b82-4280-b9fd-76084b57f3c9](https://claude.ai/chat/2640ce57-9b82-4280-b9fd-76084b57f3c9)  
+**Link:** [https://claude.ai/chat/2640ce57-9b82-4280-b9fd-76084b57f3c9](https://claude.ai/chat/2640ce57-9b82-4280-b9fd-76084b57f3c9)
 
 ## Prompt:
+
 2/12/2026, 6:52:15 AM
 
 I beg to differ. Deep research tools such as Opera Neon, or Manus AI, can fire off 12 different research agents at a time
 
-
-
 ## Response:
+
 2/12/2026, 6:52:36 AM
 
 Got it. You're right — tools like Manus AI and Opera Neon (with its agentic browsing) can parallelize research across multiple agents simultaneously, which is a significant capability upgrade over single-threaded research tools like Perplexity Pro.
@@ -28,6 +28,7 @@ Let me update the mental model of your extended toolchain:
 This actually maps well to SweepBot's needs. A few strategic applications:
 
 **Immediate high-value uses for multi-agent research:**
+
 - Run all 100+ sweepstakes platforms simultaneously to build the initial platform database (name, URL, game providers, payment methods, TOS links, affiliate program details)
 - Parallel legal research across all 50 states on sweepstakes casino regulatory status
 - Competitive landscape mapping — find every existing tool, tracker, or community serving this space
@@ -48,9 +49,6 @@ Do you want me to design a structured research brief you could feed to Manus AI 
 9. **Affiliate network relationship outreach plan** — 60% (some platforms use networks vs. direct programs)
 10. **Research tool workflow documentation** — 55% (systematize which tool handles which research class)
 
-
-
-
-
 ---
+
 Powered by [Claude Exporter](https://www.ai-chat-exporter.net)

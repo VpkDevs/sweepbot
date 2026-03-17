@@ -21,24 +21,25 @@ if (!isDevStub && (!supabaseUrl || !supabaseAnonKey)) {
   }
 }
 
-export const supabase = (!isDevStub && supabaseUrl && supabaseAnonKey)
-  ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        storageKey: 'sweepbot-auth',
-      },
-      // Add timeout to prevent hanging
-      global: {
-        fetch: (url, options) =>
-          fetch(url, {
-            ...options,
-            signal: AbortSignal.timeout(10000), // 10 second timeout
-          }),
-      },
-    })
-  : null
+export const supabase =
+  !isDevStub && supabaseUrl && supabaseAnonKey
+    ? createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          storageKey: 'sweepbot-auth',
+        },
+        // Add timeout to prevent hanging
+        global: {
+          fetch: (url, options) =>
+            fetch(url, {
+              ...options,
+              signal: AbortSignal.timeout(10000), // 10 second timeout
+            }),
+        },
+      })
+    : null
 
 // Stub auth methods when Supabase is not configured
 export const supabaseStub = {

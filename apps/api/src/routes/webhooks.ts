@@ -106,10 +106,7 @@ export async function webhookRoutes(app: FastifyInstance): Promise<void> {
       } else {
         // Bare shared-secret path (some older Supabase versions)
         try {
-          signatureValid = timingSafeEqual(
-            Buffer.from(webhookSecret),
-            Buffer.from(signatureHeader)
-          )
+          signatureValid = timingSafeEqual(Buffer.from(webhookSecret), Buffer.from(signatureHeader))
         } catch {
           signatureValid = false
         }
@@ -316,11 +313,11 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
         // TIER_PRICE_MAP (lifetime price → 'elite').  Fall back to 'elite' for
         // one-time payments because a missing/mismatched tier metadata field
         // previously defaulted to 'pro', under-granting access to lifetime buyers.
-        const priceId = (session as unknown as { line_items?: { data?: Array<{ price?: { id?: string } }> } })
-          .line_items?.data?.[0]?.price?.id ?? ''
-        const lifetimeTier = (priceId ? getTierFromPriceId(priceId) : null)
-          || session.metadata?.['tier']
-          || 'elite'
+        const priceId =
+          (session as unknown as { line_items?: { data?: Array<{ price?: { id?: string } }> } })
+            .line_items?.data?.[0]?.price?.id ?? ''
+        const lifetimeTier =
+          (priceId ? getTierFromPriceId(priceId) : null) || session.metadata?.['tier'] || 'elite'
         await dbQuery(sql`
           UPDATE subscriptions
           SET
@@ -347,5 +344,3 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
     }
   }
 }
-
-

@@ -119,8 +119,18 @@ export function useCreateSession() {
 export function useEndSession() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { ended_at: string; sc_balance_close?: number; gc_balance_close?: number; notes?: string } }) =>
-      api.sessions.end(id, data),
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string
+      data: {
+        ended_at: string
+        sc_balance_close?: number
+        gc_balance_close?: number
+        notes?: string
+      }
+    }) => api.sessions.end(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['sessions'] }),
   })
 }
@@ -130,7 +140,10 @@ export function usePortfolio() {
 }
 
 export function useDashboard() {
-  return useQuery({ queryKey: queryKeys.analytics.dashboard, queryFn: () => api.analytics.portfolio() })
+  return useQuery({
+    queryKey: queryKeys.analytics.dashboard,
+    queryFn: () => api.analytics.portfolio(),
+  })
 }
 
 export function usePlatforms() {
@@ -241,7 +254,10 @@ export function useInterpretFlow() {
 }
 
 export function useAchievements() {
-  return useQuery({ queryKey: queryKeys.features.achievements, queryFn: () => api.features.achievements() })
+  return useQuery({
+    queryKey: queryKeys.features.achievements,
+    queryFn: () => api.features.achievements(),
+  })
 }
 
 export function useStreaks() {
@@ -267,7 +283,10 @@ export function useBigWins(params?: { page?: number; limit?: number }) {
 export function useNotifications(params?: { limit?: number; unreadOnly?: boolean }) {
   return useQuery({
     queryKey: queryKeys.notifications.list(params),
-    queryFn: () => api.notifications.list(params ? { limit: params.limit, unread_only: params.unreadOnly } : undefined),
+    queryFn: () =>
+      api.notifications.list(
+        params ? { limit: params.limit, unread_only: params.unreadOnly } : undefined
+      ),
     refetchInterval: 30_000,
   })
 }

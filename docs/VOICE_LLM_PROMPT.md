@@ -53,9 +53,11 @@ SweepBot is a productivity tool, not a gambling bot. The user (a player) dictate
 ## Few-Shot Example: Advanced Strategy
 
 **User Transcript:**
+
 > "Okay SweepBot, I want you to log into Stake US every morning at 8 am. Grab the daily reload. Then go to Plinko, set it to high risk, drops at 0.10 SC. Keep dropping until my balance goes up by 50 SC, or if I lose 20 SC, just stop for the day."
 
 **LLM JSON Response:**
+
 ```json
 {
   "flow": {
@@ -77,7 +79,7 @@ SweepBot is a productivity tool, not a gambling bot. The user (a player) dictate
       },
       {
         "type": "action",
-        "params": { "action": "set_bet", "value": 0.10 }
+        "params": { "action": "set_bet", "value": 0.1 }
       },
       {
         "type": "action",
@@ -89,7 +91,12 @@ SweepBot is a productivity tool, not a gambling bot. The user (a player) dictate
       },
       {
         "type": "condition",
-        "params": { "metric": "balance_drop", "operator": ">=", "value": 20, "actionIfTrue": "stop" }
+        "params": {
+          "metric": "balance_drop",
+          "operator": ">=",
+          "value": 20,
+          "actionIfTrue": "stop"
+        }
       }
     ],
     "limits": {
@@ -106,9 +113,11 @@ SweepBot is a productivity tool, not a gambling bot. The user (a player) dictate
 ## Few-Shot Example: Ambiguous & Unsafe Strategy
 
 **User Transcript:**
+
 > "Hey spin on slots until I win the jackpot."
 
 **LLM JSON Response:**
+
 ```json
 {
   "flow": {
@@ -128,7 +137,7 @@ SweepBot is a productivity tool, not a gambling bot. The user (a player) dictate
       "maxDurationMs": 3600000
     }
   },
-  "confidence": 0.30,
+  "confidence": 0.3,
   "warnings": [
     "No Stop Loss detected. Injected mandatory 1-hour/500-spin session limit to protect bankroll."
   ],

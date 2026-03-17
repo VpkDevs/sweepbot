@@ -8,12 +8,7 @@ import { db } from '../db/client.js'
 import { notifications } from '../db/schema/notifications.js'
 import { eq, and, desc, count } from 'drizzle-orm'
 
-type NotificationType =
-  | 'achievement'
-  | 'streak'
-  | 'milestone'
-  | 'big_win'
-  | 'system'
+type NotificationType = 'achievement' | 'streak' | 'milestone' | 'big_win' | 'system'
 
 // Helper to create notifications (for use in other services)
 export async function createNotification(
@@ -90,4 +85,10 @@ export async function deleteNotification(notificationId: string, userId: string)
 }
 
 // Zod schema for validation (exported for reuse)
-export const NotificationTypeSchema = z.enum(['achievement', 'streak', 'milestone', 'big_win', 'system'])
+export const NotificationTypeSchema = z.enum([
+  'achievement',
+  'streak',
+  'milestone',
+  'big_win',
+  'system',
+])

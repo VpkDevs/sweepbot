@@ -61,13 +61,15 @@ export function StreakLeaderboard() {
   })
 
   // Add rank index to each entry
-  const entries: LeaderboardEntry[] = (rawEntries ?? []).map((e: StreakLeaderboardEntry, i: number) => ({
-    rank: i + 1,
-    user_id: e.user_id,
-    display_name: e.display_name,
-    current_streak: e.current_streak,
-    longest_streak: e.longest_streak,
-  }))
+  const entries: LeaderboardEntry[] = (rawEntries ?? []).map(
+    (e: StreakLeaderboardEntry, i: number) => ({
+      rank: i + 1,
+      user_id: e.user_id,
+      display_name: e.display_name,
+      current_streak: e.current_streak,
+      longest_streak: e.longest_streak,
+    })
+  )
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 p-6 lg:p-8">

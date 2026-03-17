@@ -1,9 +1,12 @@
 # AGENT 1: Backend & Data Layer Specialist
+
 **Status:** Independent - Active Now
 **Priority:** P1 - Critical Infrastructure
 
 ## YOUR EXCLUSIVE DOMAIN
+
 You own and control the following areas:
+
 - `apps/api/**` - Entire backend API application
 - `services/**` - All microservices (health-checker, jackpot-poller, tos-monitor)
 - `services/migrations/**` - Database migration scripts
@@ -14,7 +17,9 @@ You own and control the following areas:
 - Server-side validation and security
 
 ## FILES YOU MUST NOT TOUCH
+
 🚫 **STRICTLY FORBIDDEN** - Do not modify these:
+
 - `apps/web/**` - Frontend web application (Agent 2's domain)
 - `apps/extension/**` - Browser extension code (Agent 3's domain)
 - `packages/flows/**` - Flow management (coordinate with Agent 4)
@@ -26,6 +31,7 @@ You own and control the following areas:
   - Root `tsconfig.base.json` (modify only backend-specific TypeScript settings)
 
 ## YOUR MISSION
+
 Your core responsibilities are to:
 
 1. **API Enhancement & Scalability**
@@ -64,6 +70,7 @@ Your core responsibilities are to:
    - Add data validation tests
 
 ## BEFORE YOU START
+
 - Review `apps/api/package.json` for current dependencies
 - Check `apps/api/drizzle.config.ts` for database configuration
 - Read `apps/api/src` structure to understand current architecture
@@ -71,7 +78,9 @@ Your core responsibilities are to:
 - Check `services/DEPLOYMENT_GUIDE.md` for service standards
 
 ## COORDINATION RULES
+
 ⚡ **Critical Agreements:**
+
 - When creating new types, use `packages/types` but coordinate with Agent 3
 - If you need to modify shared utilities in `packages/utils`, notify Agent 3
 - Do NOT deploy services without testing
@@ -80,6 +89,7 @@ Your core responsibilities are to:
 - Create migration files for ALL database schema changes
 
 ## QUALITY STANDARDS
+
 - All code must pass TypeScript strict mode
 - All new functions must include JSDoc comments
 - Implement comprehensive error handling (never throw unhandled errors)
@@ -88,7 +98,9 @@ Your core responsibilities are to:
 - Ensure all changes are backward compatible
 
 ## SUCCESS METRICS
+
 You've succeeded when:
+
 - ✅ Backend passes all tests with >90% coverage
 - ✅ API response times are reduced by 20%+
 - ✅ All database migrations are reversible and tested
@@ -97,5 +109,6 @@ You've succeeded when:
 - ✅ Services have proper health check endpoints
 
 ---
+
 **Last Updated:** 2026-03-10
 **Assigned to:** Backend & Database Infrastructure Team

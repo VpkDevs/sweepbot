@@ -97,7 +97,9 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       `)
 
       if (!result.rows.length) {
-        return reply.code(404).send({ error: 'NOT_FOUND', message: 'Profile not found', status: 404 })
+        return reply
+          .code(404)
+          .send({ error: 'NOT_FOUND', message: 'Profile not found', status: 404 })
       }
 
       return reply.send({ success: true, data: result.rows[0] })
@@ -343,7 +345,11 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       const count = Number((currentCount.rows[0] as { count: string } | undefined)?.count ?? '0')
 
       if (count >= limit) {
-        return reply.code(403).send({ error: 'FEATURE_GATED', message: `Your ${tier} plan supports up to ${limit} platforms. Upgrade to add more.`, status: 403 })
+        return reply.code(403).send({
+          error: 'FEATURE_GATED',
+          message: `Your ${tier} plan supports up to ${limit} platforms. Upgrade to add more.`,
+          status: 403,
+        })
       }
 
       const result = await dbQuery(sql`
@@ -449,21 +455,25 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
     // Map tier + cycle → price ID
     const priceMap: Record<string, string | undefined> = {
-      'starter-monthly':  env.STRIPE_PRICE_STARTER_MONTHLY,
-      'starter-annual':   env.STRIPE_PRICE_STARTER_ANNUAL,
-      'pro-monthly':      env.STRIPE_PRICE_PRO_MONTHLY,
-      'pro-annual':       env.STRIPE_PRICE_PRO_ANNUAL,
-      'analyst-monthly':  env.STRIPE_PRICE_ANALYST_MONTHLY,
-      'analyst-annual':   env.STRIPE_PRICE_ANALYST_ANNUAL,
-      'elite-monthly':    env.STRIPE_PRICE_ELITE_MONTHLY,
-      'elite-annual':     env.STRIPE_PRICE_ELITE_ANNUAL,
+      'starter-monthly': env.STRIPE_PRICE_STARTER_MONTHLY,
+      'starter-annual': env.STRIPE_PRICE_STARTER_ANNUAL,
+      'pro-monthly': env.STRIPE_PRICE_PRO_MONTHLY,
+      'pro-annual': env.STRIPE_PRICE_PRO_ANNUAL,
+      'analyst-monthly': env.STRIPE_PRICE_ANALYST_MONTHLY,
+      'analyst-annual': env.STRIPE_PRICE_ANALYST_ANNUAL,
+      'elite-monthly': env.STRIPE_PRICE_ELITE_MONTHLY,
+      'elite-annual': env.STRIPE_PRICE_ELITE_ANNUAL,
       'lifetime-monthly': env.STRIPE_PRICE_LIFETIME,
-      'lifetime-annual':  env.STRIPE_PRICE_LIFETIME,
+      'lifetime-annual': env.STRIPE_PRICE_LIFETIME,
     }
 
     const priceId = priceMap[`${tier}-${cycle}`]
     if (!priceId) {
-      return reply.code(400).send({ error: 'PRICE_NOT_CONFIGURED', message: `Price for ${tier}/${cycle} not configured.`, status: 400 })
+      return reply.code(400).send({
+        error: 'PRICE_NOT_CONFIGURED',
+        message: `Price for ${tier}/${cycle} not configured.`,
+        status: 400,
+      })
     }
 
     // Resolve user email for customer creation
@@ -473,20 +483,22 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     const profile = profileResult.rows[0] as Record<string, string | null> | undefined
     const email = profile?.['email'] as string | undefined
     if (!email) {
-      return reply.code(400).send({ error: 'PROFILE_NOT_FOUND', message: 'User profile email not found.', status: 400 })
+      return reply
+        .code(400)
+        .send({ error: 'PROFILE_NOT_FOUND', message: 'User profile email not found.', status: 400 })
     }
 
     const appUrl = (env.CORS_ORIGINS.split(',')[0] ?? 'https://sweepbot.app').trim()
 
     try {
-      const displayName   = (profile?.['display_name'] as string | undefined)
+      const displayName = profile?.['display_name'] as string | undefined
       const session = await createCheckoutSession({
         userId,
         email,
-        ...(displayName   != null ? { displayName }   : {}),
+        ...(displayName != null ? { displayName } : {}),
         priceId,
         successUrl: `${appUrl}/settings#subscription?upgraded=1`,
-        cancelUrl:  `${appUrl}/pricing`,
+        cancelUrl: `${appUrl}/pricing`,
         ...(promotionCode != null ? { promotionCode } : {}),
       })
       return reply.send({ success: true, data: { url: session.url } })
@@ -506,10 +518,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     const appUrl = (env.CORS_ORIGINS.split(',')[0] ?? 'https://sweepbot.app').trim()
 
     try {
-      const portalSession = await createPortalSession(
-        userId,
-        `${appUrl}/settings#subscription`,
-      )
+      const portalSession = await createPortalSession(userId, `${appUrl}/settings#subscription`)
       return reply.redirect(portalSession.url)
     } catch (err) {
       if (err instanceof StripeServiceError && err.code === 'CUSTOMER_NOT_FOUND') {
@@ -543,9 +552,11 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     } catch (err) {
       if (err instanceof StripeServiceError) {
         const status =
-          err.code === 'SUBSCRIPTION_NOT_FOUND' ? 404
-          : err.code === 'SUBSCRIPTION_NOT_ACTIVE' ? 409
-          : 500
+          err.code === 'SUBSCRIPTION_NOT_FOUND'
+            ? 404
+            : err.code === 'SUBSCRIPTION_NOT_ACTIVE'
+              ? 409
+              : 500
         return reply.code(status).send({ error: err.code, message: err.message, status })
       }
       throw err
@@ -564,7 +575,14 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
     try {
       const sub = await cancelSubscription(userId, immediately)
-      return reply.send({ success: true, data: { canceled: true, status: sub.status, cancel_at_period_end: sub.cancel_at_period_end } })
+      return reply.send({
+        success: true,
+        data: {
+          canceled: true,
+          status: sub.status,
+          cancel_at_period_end: sub.cancel_at_period_end,
+        },
+      })
     } catch (err) {
       if (err instanceof StripeServiceError) {
         const status = err.code === 'SUBSCRIPTION_NOT_FOUND' ? 404 : 500
@@ -584,9 +602,12 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       return reply.send({ success: true, data: { reactivated: true, status: sub.status } })
     } catch (err) {
       if (err instanceof StripeServiceError) {
-        const status = err.code === 'SUBSCRIPTION_NOT_FOUND' ? 404
-          : err.code === 'PLAN_ALREADY_ACTIVE' ? 409
-          : 500
+        const status =
+          err.code === 'SUBSCRIPTION_NOT_FOUND'
+            ? 404
+            : err.code === 'PLAN_ALREADY_ACTIVE'
+              ? 409
+              : 500
         return reply.code(status).send({ error: err.code, message: err.message, status })
       }
       throw err
@@ -754,7 +775,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       success: true,
       data: {
         year: targetYear,
-        ...(totals.rows[0] as Record<string, unknown> ?? {}),
+        ...((totals.rows[0] as Record<string, unknown>) ?? {}),
         by_platform: byPlatform.rows,
       },
     })
@@ -782,7 +803,9 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     const existing = await dbQuery(sql`
       SELECT self_exclusion_until FROM user_settings WHERE user_id = ${userId}
     `)
-    const existingUntil = (existing.rows[0] as Record<string, string | null> | undefined)?.['self_exclusion_until']
+    const existingUntil = (existing.rows[0] as Record<string, string | null> | undefined)?.[
+      'self_exclusion_until'
+    ]
     if (existingUntil && new Date(existingUntil) >= newExclusionUntil) {
       return reply.send({
         success: true,

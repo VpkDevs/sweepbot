@@ -51,7 +51,7 @@ interface TaxTransaction {
 }
 
 interface MonthlyBreakdown {
-  month: string       // "Jan", "Feb" etc.
+  month: string // "Jan", "Feb" etc.
   month_num: number
   redemptions: number
   prizes: number
@@ -86,7 +86,20 @@ interface TaxSummaryData {
 // ─── Stub data ────────────────────────────────────────────────────────────────
 
 function buildMonthlyStub(year: number): MonthlyBreakdown[] {
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ]
   return months.map((m, i) => {
     const base = Math.random() * 800 + 200
     return {
@@ -102,9 +115,9 @@ function buildMonthlyStub(year: number): MonthlyBreakdown[] {
 const STUB_SUMMARIES: Record<number, TaxSummaryData> = {
   2025: {
     year: 2025,
-    total_redemptions_usd: 8_742.50,
-    total_prizes_usd: 1_320.00,
-    total_taxable_usd: 10_062.50,
+    total_redemptions_usd: 8_742.5,
+    total_prizes_usd: 1_320.0,
+    total_taxable_usd: 10_062.5,
     est_federal_liability: 2_213.75,
     est_state_liability: 452.81,
     est_total_liability: 2_666.56,
@@ -122,12 +135,12 @@ const STUB_SUMMARIES: Record<number, TaxSummaryData> = {
   },
   2024: {
     year: 2024,
-    total_redemptions_usd: 6_180.00,
-    total_prizes_usd: 980.00,
-    total_taxable_usd: 7_160.00,
-    est_federal_liability: 1_575.20,
-    est_state_liability: 322.20,
-    est_total_liability: 1_897.40,
+    total_redemptions_usd: 6_180.0,
+    total_prizes_usd: 980.0,
+    total_taxable_usd: 7_160.0,
+    est_federal_liability: 1_575.2,
+    est_state_liability: 322.2,
+    est_total_liability: 1_897.4,
     effective_rate: 26.5,
     transaction_count: 34,
     platforms_count: 6,
@@ -142,20 +155,109 @@ const STUB_SUMMARIES: Record<number, TaxSummaryData> = {
 }
 
 const STUB_TRANSACTIONS: TaxTransaction[] = [
-  { id: 't1', platform_name: 'Chumba Casino', type: 'redemption', amount_usd: 450.00, date: '2025-12-15', status: 'completed', payment_method: 'PayPal' },
-  { id: 't2', platform_name: 'Pulsz Casino', type: 'redemption', amount_usd: 200.00, date: '2025-12-08', status: 'completed', payment_method: 'ACH' },
-  { id: 't3', platform_name: 'WOW Vegas', type: 'prize', amount_usd: 320.00, date: '2025-11-22', status: 'completed', payment_method: 'Prepaid Visa' },
-  { id: 't4', platform_name: 'Stake.us', type: 'redemption', amount_usd: 150.00, date: '2025-11-14', status: 'pending', payment_method: 'ACH' },
-  { id: 't5', platform_name: 'Chumba Casino', type: 'redemption', amount_usd: 800.00, date: '2025-10-30', status: 'completed', payment_method: 'PayPal' },
-  { id: 't6', platform_name: 'Pulsz Casino', type: 'redemption', amount_usd: 275.00, date: '2025-10-11', status: 'completed', payment_method: 'ACH' },
-  { id: 't7', platform_name: 'WOW Vegas', type: 'redemption', amount_usd: 400.00, date: '2025-09-28', status: 'completed', payment_method: 'PayPal' },
-  { id: 't8', platform_name: 'Global Poker', type: 'redemption', amount_usd: 120.00, date: '2025-09-03', status: 'rejected', payment_method: 'ACH', notes: 'Verification required' },
+  {
+    id: 't1',
+    platform_name: 'Chumba Casino',
+    type: 'redemption',
+    amount_usd: 450.0,
+    date: '2025-12-15',
+    status: 'completed',
+    payment_method: 'PayPal',
+  },
+  {
+    id: 't2',
+    platform_name: 'Pulsz Casino',
+    type: 'redemption',
+    amount_usd: 200.0,
+    date: '2025-12-08',
+    status: 'completed',
+    payment_method: 'ACH',
+  },
+  {
+    id: 't3',
+    platform_name: 'WOW Vegas',
+    type: 'prize',
+    amount_usd: 320.0,
+    date: '2025-11-22',
+    status: 'completed',
+    payment_method: 'Prepaid Visa',
+  },
+  {
+    id: 't4',
+    platform_name: 'Stake.us',
+    type: 'redemption',
+    amount_usd: 150.0,
+    date: '2025-11-14',
+    status: 'pending',
+    payment_method: 'ACH',
+  },
+  {
+    id: 't5',
+    platform_name: 'Chumba Casino',
+    type: 'redemption',
+    amount_usd: 800.0,
+    date: '2025-10-30',
+    status: 'completed',
+    payment_method: 'PayPal',
+  },
+  {
+    id: 't6',
+    platform_name: 'Pulsz Casino',
+    type: 'redemption',
+    amount_usd: 275.0,
+    date: '2025-10-11',
+    status: 'completed',
+    payment_method: 'ACH',
+  },
+  {
+    id: 't7',
+    platform_name: 'WOW Vegas',
+    type: 'redemption',
+    amount_usd: 400.0,
+    date: '2025-09-28',
+    status: 'completed',
+    payment_method: 'PayPal',
+  },
+  {
+    id: 't8',
+    platform_name: 'Global Poker',
+    type: 'redemption',
+    amount_usd: 120.0,
+    date: '2025-09-03',
+    status: 'rejected',
+    payment_method: 'ACH',
+    notes: 'Verification required',
+  },
 ]
 
 const STUB_YOY: YearSummary[] = [
-  { year: 2023, total_redemptions_usd: 4200, total_prizes_usd: 600, total_taxable_usd: 4800, est_federal_liability: 1056, est_state_liability: 216, transaction_count: 22 },
-  { year: 2024, total_redemptions_usd: 6180, total_prizes_usd: 980, total_taxable_usd: 7160, est_federal_liability: 1575, est_state_liability: 322, transaction_count: 34 },
-  { year: 2025, total_redemptions_usd: 8742, total_prizes_usd: 1320, total_taxable_usd: 10062, est_federal_liability: 2213, est_state_liability: 453, transaction_count: 47 },
+  {
+    year: 2023,
+    total_redemptions_usd: 4200,
+    total_prizes_usd: 600,
+    total_taxable_usd: 4800,
+    est_federal_liability: 1056,
+    est_state_liability: 216,
+    transaction_count: 22,
+  },
+  {
+    year: 2024,
+    total_redemptions_usd: 6180,
+    total_prizes_usd: 980,
+    total_taxable_usd: 7160,
+    est_federal_liability: 1575,
+    est_state_liability: 322,
+    transaction_count: 34,
+  },
+  {
+    year: 2025,
+    total_redemptions_usd: 8742,
+    total_prizes_usd: 1320,
+    total_taxable_usd: 10062,
+    est_federal_liability: 2213,
+    est_state_liability: 453,
+    transaction_count: 47,
+  },
 ]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -174,12 +276,19 @@ function formatUSD(val: number, decimals = 2) {
 function TaxTooltip({ active, payload, label }: Record<string, unknown>) {
   if (!active || !Array.isArray(payload) || payload.length === 0) return null
   return (
-    <div style={CHART_TOOLTIP_STYLE} className="rounded-xl p-3 shadow-xl border border-zinc-700 min-w-36">
-      <p className="text-xs text-zinc-400 mb-2 font-semibold">{label as string}</p>
+    <div
+      style={CHART_TOOLTIP_STYLE}
+      className="min-w-36 rounded-xl border border-zinc-700 p-3 shadow-xl"
+    >
+      <p className="mb-2 text-xs font-semibold text-zinc-400">{label as string}</p>
       {payload.map((entry: Record<string, unknown>) => (
         <div key={entry.name as string} className="flex items-center justify-between gap-4">
-          <span className="text-xs" style={{ color: entry.color as string }}>{entry.name as string}</span>
-          <span className="text-xs font-bold text-white">{formatUSD(entry.value as number, 0)}</span>
+          <span className="text-xs" style={{ color: entry.color as string }}>
+            {entry.name as string}
+          </span>
+          <span className="text-xs font-bold text-white">
+            {formatUSD(entry.value as number, 0)}
+          </span>
         </div>
       ))}
     </div>
@@ -206,18 +315,18 @@ function TaxStat({
   decimals?: number
 }) {
   return (
-    <SpotlightCard className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+    <SpotlightCard className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
       <div className="flex items-start justify-between">
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-zinc-500 uppercase tracking-wide mb-1">{label}</p>
+        <div className="min-w-0 flex-1">
+          <p className="mb-1 text-xs uppercase tracking-wide text-zinc-500">{label}</p>
           <p className={cn('text-2xl font-black tabular-nums', color)}>
             {prefix}
             <AnimatedCounter value={Math.round(value)} />
           </p>
-          <p className="text-xs text-zinc-600 mt-0.5">{sub}</p>
+          <p className="mt-0.5 text-xs text-zinc-600">{sub}</p>
         </div>
-        <div className="p-2 rounded-lg bg-zinc-800 shrink-0 ml-3">
-          <Icon className={cn('w-4 h-4', color)} />
+        <div className="ml-3 shrink-0 rounded-lg bg-zinc-800 p-2">
+          <Icon className={cn('h-4 w-4', color)} />
         </div>
       </div>
     </SpotlightCard>
@@ -228,8 +337,8 @@ function TaxStat({
 
 const TX_STATUS: Record<string, { cls: string; label: string }> = {
   completed: { cls: 'text-green-400 bg-green-900/20 border-green-800/50', label: 'Completed' },
-  pending:   { cls: 'text-yellow-400 bg-yellow-900/20 border-yellow-800/50', label: 'Pending' },
-  rejected:  { cls: 'text-red-400 bg-red-900/20 border-red-800/50', label: 'Rejected' },
+  pending: { cls: 'text-yellow-400 bg-yellow-900/20 border-yellow-800/50', label: 'Pending' },
+  rejected: { cls: 'text-red-400 bg-red-900/20 border-red-800/50', label: 'Rejected' },
 }
 
 function TransactionTable({ transactions }: { transactions: TaxTransaction[] }) {
@@ -237,10 +346,10 @@ function TransactionTable({ transactions }: { transactions: TaxTransaction[] }) 
   const shown = showAll ? transactions : transactions.slice(0, 6)
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800">
+    <div className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
+      <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-3.5">
         <div className="flex items-center gap-2">
-          <ReceiptText className="w-4 h-4 text-brand-400" />
+          <ReceiptText className="text-brand-400 h-4 w-4" />
           <h3 className="text-sm font-semibold text-white">Taxable Transactions</h3>
         </div>
         <span className="text-xs text-zinc-500">{transactions.length} total</span>
@@ -249,8 +358,11 @@ function TransactionTable({ transactions }: { transactions: TaxTransaction[] }) 
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-zinc-800 text-left">
-              {['Date', 'Platform', 'Type', 'Amount', 'Method', 'Status'].map(col => (
-                <th key={col} className="px-4 py-2.5 text-xs font-semibold text-zinc-500 uppercase tracking-wide whitespace-nowrap">
+              {['Date', 'Platform', 'Type', 'Amount', 'Method', 'Status'].map((col) => (
+                <th
+                  key={col}
+                  className="whitespace-nowrap px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-zinc-500"
+                >
                   {col}
                 </th>
               ))}
@@ -262,24 +374,39 @@ function TransactionTable({ transactions }: { transactions: TaxTransaction[] }) 
               return (
                 <tr
                   key={tx.id}
-                  className="hover:bg-zinc-800/30 transition-colors"
+                  className="transition-colors hover:bg-zinc-800/30"
                   style={{ animationDelay: `${i * 40}ms` }}
                 >
-                  <td className="px-4 py-3 text-xs text-zinc-500 whitespace-nowrap">
-                    {new Date(tx.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  <td className="whitespace-nowrap px-4 py-3 text-xs text-zinc-500">
+                    {new Date(tx.date).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                    })}
                   </td>
-                  <td className="px-4 py-3 text-xs text-zinc-200 font-medium whitespace-nowrap max-w-40 truncate">
+                  <td className="max-w-40 truncate whitespace-nowrap px-4 py-3 text-xs font-medium text-zinc-200">
                     {tx.platform_name}
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-xs text-zinc-400 capitalize">{tx.type}</span>
+                    <span className="text-xs capitalize text-zinc-400">{tx.type}</span>
                   </td>
-                  <td className={cn('px-4 py-3 text-sm font-bold tabular-nums whitespace-nowrap', tx.status === 'rejected' ? 'text-zinc-600 line-through' : 'text-green-400')}>
+                  <td
+                    className={cn(
+                      'whitespace-nowrap px-4 py-3 text-sm font-bold tabular-nums',
+                      tx.status === 'rejected' ? 'text-zinc-600 line-through' : 'text-green-400'
+                    )}
+                  >
                     {formatUSD(tx.amount_usd)}
                   </td>
-                  <td className="px-4 py-3 text-xs text-zinc-500 whitespace-nowrap">{tx.payment_method}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-xs text-zinc-500">
+                    {tx.payment_method}
+                  </td>
                   <td className="px-4 py-3">
-                    <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border', status.cls)}>
+                    <span
+                      className={cn(
+                        'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium',
+                        status.cls
+                      )}
+                    >
                       {status.label}
                     </span>
                   </td>
@@ -290,10 +417,10 @@ function TransactionTable({ transactions }: { transactions: TaxTransaction[] }) 
         </table>
       </div>
       {transactions.length > 6 && (
-        <div className="px-5 py-3 border-t border-zinc-800 text-center">
+        <div className="border-t border-zinc-800 px-5 py-3 text-center">
           <button
-            onClick={() => setShowAll(v => !v)}
-            className="text-xs text-brand-400 hover:text-brand-300 transition-colors font-medium"
+            onClick={() => setShowAll((v) => !v)}
+            className="text-brand-400 hover:text-brand-300 text-xs font-medium transition-colors"
           >
             {showAll ? 'Show less' : `Show all ${transactions.length} transactions`}
           </button>
@@ -306,7 +433,7 @@ function TransactionTable({ transactions }: { transactions: TaxTransaction[] }) 
 // ─── Year-over-year chart ─────────────────────────────────────────────────────
 
 function YearOverYearChart({ data }: { data: YearSummary[] }) {
-  const chartData = data.map(y => ({
+  const chartData = data.map((y) => ({
     year: String(y.year),
     Redemptions: y.total_redemptions_usd,
     Prizes: y.total_prizes_usd,
@@ -314,16 +441,19 @@ function YearOverYearChart({ data }: { data: YearSummary[] }) {
   }))
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <TrendingUp className="w-4 h-4 text-brand-400" />
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+      <div className="mb-4 flex items-center gap-2">
+        <TrendingUp className="text-brand-400 h-4 w-4" />
         <h3 className="text-sm font-semibold text-white">Year-Over-Year Summary</h3>
       </div>
       <ResponsiveContainer width="100%" height={200}>
         <BarChart data={chartData} barCategoryGap="25%">
           <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
           <XAxis dataKey="year" tick={{ fill: '#71717a', fontSize: 12 }} />
-          <YAxis tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} tick={{ fill: '#71717a', fontSize: 10 }} />
+          <YAxis
+            tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+            tick={{ fill: '#71717a', fontSize: 10 }}
+          />
           <Tooltip content={<TaxTooltip />} />
           <Legend wrapperStyle={{ fontSize: 11, color: '#71717a' }} />
           <Bar dataKey="Redemptions" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
@@ -338,7 +468,7 @@ function YearOverYearChart({ data }: { data: YearSummary[] }) {
 // ─── Monthly chart ────────────────────────────────────────────────────────────
 
 function MonthlyChart({ data }: { data: MonthlyBreakdown[] }) {
-  const chartData = data.map(m => ({
+  const chartData = data.map((m) => ({
     month: m.month,
     Redemptions: m.redemptions,
     Prizes: m.prizes,
@@ -361,8 +491,20 @@ function MonthlyChart({ data }: { data: MonthlyBreakdown[] }) {
         <XAxis dataKey="month" tick={{ fill: '#71717a', fontSize: 10 }} />
         <YAxis tickFormatter={(v) => `$${v}`} tick={{ fill: '#71717a', fontSize: 10 }} />
         <Tooltip content={<TaxTooltip />} />
-        <Area type="monotone" dataKey="Redemptions" stroke="#8b5cf6" fill="url(#taxRedGrad)" strokeWidth={2} />
-        <Area type="monotone" dataKey="Prizes" stroke="#06b6d4" fill="url(#taxBlueGrad)" strokeWidth={2} />
+        <Area
+          type="monotone"
+          dataKey="Redemptions"
+          stroke="#8b5cf6"
+          fill="url(#taxRedGrad)"
+          strokeWidth={2}
+        />
+        <Area
+          type="monotone"
+          dataKey="Prizes"
+          stroke="#06b6d4"
+          fill="url(#taxBlueGrad)"
+          strokeWidth={2}
+        />
       </AreaChart>
     </ResponsiveContainer>
   )
@@ -370,24 +512,30 @@ function MonthlyChart({ data }: { data: MonthlyBreakdown[] }) {
 
 // ─── Platform breakdown ───────────────────────────────────────────────────────
 
-function PlatformBreakdown({ platforms }: { platforms: Array<{ name: string; amount: number; pct: number }> }) {
+function PlatformBreakdown({
+  platforms,
+}: {
+  platforms: Array<{ name: string; amount: number; pct: number }>
+}) {
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
+    <div className="space-y-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
       <div className="flex items-center gap-2">
-        <Landmark className="w-4 h-4 text-brand-400" />
+        <Landmark className="text-brand-400 h-4 w-4" />
         <h3 className="text-sm font-semibold text-white">Income by Platform</h3>
       </div>
       <div className="space-y-2.5">
         {platforms.map((p, i) => (
           <div key={p.name}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-zinc-300 truncate max-w-36">{p.name}</span>
+            <div className="mb-1 flex items-center justify-between">
+              <span className="max-w-36 truncate text-xs text-zinc-300">{p.name}</span>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-zinc-500">{p.pct.toFixed(1)}%</span>
-                <span className="text-xs font-bold text-white tabular-nums">{formatUSD(p.amount, 0)}</span>
+                <span className="text-xs font-bold tabular-nums text-white">
+                  {formatUSD(p.amount, 0)}
+                </span>
               </div>
             </div>
-            <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+            <div className="h-1.5 overflow-hidden rounded-full bg-zinc-800">
               <div
                 className="h-full rounded-full transition-all duration-700"
                 style={{
@@ -413,40 +561,45 @@ function TaxEstimatePanel({ summary }: { summary: TaxSummaryData }) {
   ]
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
+    <div className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
       <div className="flex items-center gap-2">
-        <Calculator className="w-4 h-4 text-red-400" />
+        <Calculator className="h-4 w-4 text-red-400" />
         <h3 className="text-sm font-semibold text-white">Estimated Tax Liability</h3>
       </div>
 
       {/* Big number */}
-      <div className="text-center py-3">
-        <p className="text-xs text-zinc-500 mb-1">Total Estimated Owed</p>
-        <p className="text-4xl font-black text-red-400 tabular-nums">
+      <div className="py-3 text-center">
+        <p className="mb-1 text-xs text-zinc-500">Total Estimated Owed</p>
+        <p className="text-4xl font-black tabular-nums text-red-400">
           {formatUSD(summary.est_total_liability)}
         </p>
-        <p className="text-xs text-zinc-600 mt-1">~{summary.effective_rate}% effective rate</p>
+        <p className="mt-1 text-xs text-zinc-600">~{summary.effective_rate}% effective rate</p>
       </div>
 
       {/* Breakdown */}
       <div className="space-y-2 border-t border-zinc-800 pt-3">
-        {brackets.map(b => (
+        {brackets.map((b) => (
           <div key={b.label} className="flex items-center justify-between">
             <span className="text-xs text-zinc-500">{b.label}</span>
-            <span className={cn('text-sm font-bold tabular-nums', b.color)}>{formatUSD(b.amount)}</span>
+            <span className={cn('text-sm font-bold tabular-nums', b.color)}>
+              {formatUSD(b.amount)}
+            </span>
           </div>
         ))}
-        <div className="flex items-center justify-between border-t border-zinc-800 pt-2 mt-2">
+        <div className="mt-2 flex items-center justify-between border-t border-zinc-800 pt-2">
           <span className="text-xs font-semibold text-zinc-300">Total Taxable Income</span>
-          <span className="text-sm font-black text-white tabular-nums">{formatUSD(summary.total_taxable_usd)}</span>
+          <span className="text-sm font-black tabular-nums text-white">
+            {formatUSD(summary.total_taxable_usd)}
+          </span>
         </div>
       </div>
 
       {/* Disclaimer */}
-      <div className="flex items-start gap-2 bg-yellow-900/10 border border-yellow-800/30 rounded-lg p-3">
-        <AlertCircle className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
-        <p className="text-[10px] text-yellow-600 leading-relaxed">
-          Estimates only. Sweepstakes casino winnings may have complex tax treatment. Consult a qualified tax professional.
+      <div className="flex items-start gap-2 rounded-lg border border-yellow-800/30 bg-yellow-900/10 p-3">
+        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-500" />
+        <p className="text-[10px] leading-relaxed text-yellow-600">
+          Estimates only. Sweepstakes casino winnings may have complex tax treatment. Consult a
+          qualified tax professional.
         </p>
       </div>
 
@@ -454,9 +607,9 @@ function TaxEstimatePanel({ summary }: { summary: TaxSummaryData }) {
         href="https://www.irs.gov/taxtopics/tc419"
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-1 text-xs text-brand-400 hover:text-brand-300 transition-colors"
+        className="text-brand-400 hover:text-brand-300 flex items-center gap-1 text-xs transition-colors"
       >
-        IRS guidance on gambling income <ExternalLink className="w-3 h-3" />
+        IRS guidance on gambling income <ExternalLink className="h-3 w-3" />
       </a>
     </div>
   )
@@ -479,13 +632,13 @@ function ExportButton({ year }: { year: number }) {
       onClick={handleExport}
       disabled={downloading}
       className={cn(
-        'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold border transition-all',
+        'flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-all',
         downloading
-          ? 'bg-zinc-800 text-zinc-500 border-zinc-700 cursor-not-allowed'
-          : 'bg-green-900/20 text-green-300 border-green-700/50 hover:bg-green-900/40 hover:border-green-600',
+          ? 'cursor-not-allowed border-zinc-700 bg-zinc-800 text-zinc-500'
+          : 'border-green-700/50 bg-green-900/20 text-green-300 hover:border-green-600 hover:bg-green-900/40'
       )}
     >
-      <Download className={cn('w-4 h-4', downloading && 'animate-bounce')} />
+      <Download className={cn('h-4 w-4', downloading && 'animate-bounce')} />
       {downloading ? 'Preparing…' : 'Export CSV'}
     </button>
   )
@@ -498,7 +651,7 @@ const AVAILABLE_YEARS = [2026, 2025, 2024, 2023]
 export function TaxCenterPage() {
   const currentYear = new Date().getFullYear()
   const [selectedYear, setSelectedYear] = useState(
-    AVAILABLE_YEARS.includes(currentYear - 1) ? currentYear - 1 : AVAILABLE_YEARS[1] ?? 2025
+    AVAILABLE_YEARS.includes(currentYear - 1) ? currentYear - 1 : (AVAILABLE_YEARS[1] ?? 2025)
   )
 
   const { data: summaryData, isLoading: summaryLoading } = useQuery({
@@ -523,29 +676,33 @@ export function TaxCenterPage() {
   })
 
   // Graceful fallback
-  const summary = (summaryData as TaxSummaryData | undefined) ?? STUB_SUMMARIES[selectedYear] ?? STUB_SUMMARIES[2025]!
+  const summary =
+    (summaryData as TaxSummaryData | undefined) ??
+    STUB_SUMMARIES[selectedYear] ??
+    STUB_SUMMARIES[2025]!
   const transactions = (txData as TaxTransaction[] | undefined) ?? STUB_TRANSACTIONS
   const yoy = (yoyData as YearSummary[] | undefined) ?? STUB_YOY
 
   const isLoading = summaryLoading || txLoading
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="mx-auto max-w-7xl space-y-6 p-6">
       {/* ── Header ──────────────────────────────────────────── */}
       <ScrollReveal>
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
           <div>
             <TextReveal as="h1" className="text-2xl font-bold text-white">
               Tax Center
             </TextReveal>
-            <p className="text-zinc-400 text-sm mt-1 max-w-xl">
-              Accountant-ready summaries, estimated liabilities, and a complete transaction record for every prize redemption you&apos;ve made.
+            <p className="mt-1 max-w-xl text-sm text-zinc-400">
+              Accountant-ready summaries, estimated liabilities, and a complete transaction record
+              for every prize redemption you&apos;ve made.
             </p>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex shrink-0 items-center gap-3">
             {/* Year picker */}
-            <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-700 rounded-lg overflow-hidden">
-              {AVAILABLE_YEARS.map(year => (
+            <div className="flex items-center gap-1 overflow-hidden rounded-lg border border-zinc-700 bg-zinc-900">
+              {AVAILABLE_YEARS.map((year) => (
                 <button
                   key={year}
                   onClick={() => setSelectedYear(year)}
@@ -553,7 +710,7 @@ export function TaxCenterPage() {
                     'px-3 py-2 text-sm font-semibold transition-all',
                     selectedYear === year
                       ? 'bg-brand-600 text-white'
-                      : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800',
+                      : 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300'
                   )}
                 >
                   {year}
@@ -567,30 +724,60 @@ export function TaxCenterPage() {
 
       {/* ── Disclaimer banner ─────────────────────────────── */}
       <ScrollReveal delay={40}>
-        <div className="flex items-start gap-3 bg-blue-950/30 border border-blue-800/40 rounded-xl px-4 py-3">
-          <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-          <p className="text-xs text-blue-300/80 leading-relaxed">
-            <strong className="text-blue-200">Not tax advice.</strong> SweepBot aggregates your redemption records to help you stay organized. Tax treatment of sweepstakes prizes varies by jurisdiction and individual circumstances.{' '}
-            <strong>Always consult a CPA or tax attorney</strong> before filing. Estimates use a 22% federal + 4.5% state blended rate as a rough proxy only.
+        <div className="flex items-start gap-3 rounded-xl border border-blue-800/40 bg-blue-950/30 px-4 py-3">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" />
+          <p className="text-xs leading-relaxed text-blue-300/80">
+            <strong className="text-blue-200">Not tax advice.</strong> SweepBot aggregates your
+            redemption records to help you stay organized. Tax treatment of sweepstakes prizes
+            varies by jurisdiction and individual circumstances.{' '}
+            <strong>Always consult a CPA or tax attorney</strong> before filing. Estimates use a 22%
+            federal + 4.5% state blended rate as a rough proxy only.
           </p>
         </div>
       </ScrollReveal>
 
       {isLoading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-24 bg-zinc-900 border border-zinc-800 rounded-xl animate-pulse" />
+            <div
+              key={i}
+              className="h-24 animate-pulse rounded-xl border border-zinc-800 bg-zinc-900"
+            />
           ))}
         </div>
       ) : (
         <>
           {/* ── Summary stats ─────────────────────────────── */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {[
-              { label: 'Total Redemptions', value: summary.total_redemptions_usd, sub: `${summary.transaction_count} transactions`, icon: DollarSign, color: 'text-green-400' },
-              { label: 'Total Prizes', value: summary.total_prizes_usd, sub: 'jackpots & promotions', icon: TrendingUp, color: 'text-cyan-400' },
-              { label: 'Total Taxable', value: summary.total_taxable_usd, sub: 'gross reportable income', icon: Scale, color: 'text-yellow-400' },
-              { label: 'Est. Tax Owed', value: summary.est_total_liability, sub: `~${summary.effective_rate}% effective rate`, icon: Landmark, color: 'text-red-400' },
+              {
+                label: 'Total Redemptions',
+                value: summary.total_redemptions_usd,
+                sub: `${summary.transaction_count} transactions`,
+                icon: DollarSign,
+                color: 'text-green-400',
+              },
+              {
+                label: 'Total Prizes',
+                value: summary.total_prizes_usd,
+                sub: 'jackpots & promotions',
+                icon: TrendingUp,
+                color: 'text-cyan-400',
+              },
+              {
+                label: 'Total Taxable',
+                value: summary.total_taxable_usd,
+                sub: 'gross reportable income',
+                icon: Scale,
+                color: 'text-yellow-400',
+              },
+              {
+                label: 'Est. Tax Owed',
+                value: summary.est_total_liability,
+                sub: `~${summary.effective_rate}% effective rate`,
+                icon: Landmark,
+                color: 'text-red-400',
+              },
             ].map((item, i) => (
               <ScrollReveal key={item.label} delay={i * 60}>
                 <TaxStat {...item} />
@@ -599,12 +786,38 @@ export function TaxCenterPage() {
           </div>
 
           {/* ── Secondary metrics ─────────────────────────── */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {[
-              { label: 'Platforms Used', value: summary.platforms_count, sub: 'with reportable income', icon: FileText, color: 'text-brand-400', prefix: '' },
-              { label: 'Federal Liability', value: summary.est_federal_liability, sub: 'estimated at 22%', icon: Landmark, color: 'text-red-400' },
-              { label: 'State Liability', value: summary.est_state_liability, sub: 'estimated at 4.5%', icon: Calculator, color: 'text-orange-400' },
-              { label: 'Transactions', value: summary.transaction_count, sub: 'completed redemptions', icon: ReceiptText, color: 'text-zinc-300', prefix: '' },
+              {
+                label: 'Platforms Used',
+                value: summary.platforms_count,
+                sub: 'with reportable income',
+                icon: FileText,
+                color: 'text-brand-400',
+                prefix: '',
+              },
+              {
+                label: 'Federal Liability',
+                value: summary.est_federal_liability,
+                sub: 'estimated at 22%',
+                icon: Landmark,
+                color: 'text-red-400',
+              },
+              {
+                label: 'State Liability',
+                value: summary.est_state_liability,
+                sub: 'estimated at 4.5%',
+                icon: Calculator,
+                color: 'text-orange-400',
+              },
+              {
+                label: 'Transactions',
+                value: summary.transaction_count,
+                sub: 'completed redemptions',
+                icon: ReceiptText,
+                color: 'text-zinc-300',
+                prefix: '',
+              },
             ].map((item, i) => (
               <ScrollReveal key={item.label} delay={240 + i * 60}>
                 <TaxStat {...item} />
@@ -613,19 +826,27 @@ export function TaxCenterPage() {
           </div>
 
           {/* ── Monthly chart + breakdown ──────────────────── */}
-          <div className="grid lg:grid-cols-3 gap-6">
+          <div className="grid gap-6 lg:grid-cols-3">
             {/* Monthly area chart */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="space-y-6 lg:col-span-2">
               <ScrollReveal delay={100}>
-                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-                  <div className="flex items-center justify-between mb-4">
+                <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+                  <div className="mb-4 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-brand-400" />
-                      <h3 className="text-sm font-semibold text-white">Monthly Income — {selectedYear}</h3>
+                      <Calendar className="text-brand-400 h-4 w-4" />
+                      <h3 className="text-sm font-semibold text-white">
+                        Monthly Income — {selectedYear}
+                      </h3>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="flex items-center gap-1.5 text-xs text-zinc-500"><span className="w-2 h-2 rounded-full bg-brand-500 inline-block" />Redemptions</span>
-                      <span className="flex items-center gap-1.5 text-xs text-zinc-500"><span className="w-2 h-2 rounded-full bg-cyan-500 inline-block" />Prizes</span>
+                      <span className="flex items-center gap-1.5 text-xs text-zinc-500">
+                        <span className="bg-brand-500 inline-block h-2 w-2 rounded-full" />
+                        Redemptions
+                      </span>
+                      <span className="flex items-center gap-1.5 text-xs text-zinc-500">
+                        <span className="inline-block h-2 w-2 rounded-full bg-cyan-500" />
+                        Prizes
+                      </span>
                     </div>
                   </div>
                   <MonthlyChart data={summary.monthly} />
@@ -655,27 +876,30 @@ export function TaxCenterPage() {
 
               {/* Accountant package CTA */}
               <ScrollReveal delay={160}>
-                <SpotlightCard className="relative overflow-hidden bg-gradient-to-br from-brand-950/70 to-zinc-900 border border-brand-800/40 rounded-xl p-4">
-                  <div className="absolute -top-4 -right-4 w-20 h-20 bg-brand-500/10 rounded-full blur-2xl" />
+                <SpotlightCard className="from-brand-950/70 border-brand-800/40 relative overflow-hidden rounded-xl border bg-gradient-to-br to-zinc-900 p-4">
+                  <div className="bg-brand-500/10 absolute -right-4 -top-4 h-20 w-20 rounded-full blur-2xl" />
                   <div className="relative">
-                    <div className="flex items-center gap-2 mb-2">
-                      <FileText className="w-4 h-4 text-brand-400" />
-                      <span className="text-xs font-bold text-brand-300 uppercase tracking-wide">Accountant Package</span>
+                    <div className="mb-2 flex items-center gap-2">
+                      <FileText className="text-brand-400 h-4 w-4" />
+                      <span className="text-brand-300 text-xs font-bold uppercase tracking-wide">
+                        Accountant Package
+                      </span>
                     </div>
-                    <p className="text-sm font-semibold text-white mb-1">Ready for Your CPA</p>
-                    <p className="text-xs text-zinc-400 mb-3">
-                      Export a complete, PDF-formatted summary with all transactions, platform totals, and estimated liabilities &mdash; formatted for CPA review.
+                    <p className="mb-1 text-sm font-semibold text-white">Ready for Your CPA</p>
+                    <p className="mb-3 text-xs text-zinc-400">
+                      Export a complete, PDF-formatted summary with all transactions, platform
+                      totals, and estimated liabilities &mdash; formatted for CPA review.
                     </p>
                     <div className="flex flex-col gap-2">
                       <button
                         onClick={() => window.open(api.tax.exportUrl(selectedYear), '_blank')}
-                        className="flex items-center justify-center gap-1.5 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-500 px-3 py-2 rounded-lg transition-colors"
+                        className="bg-brand-600 hover:bg-brand-500 flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-white transition-colors"
                       >
-                        <Download className="w-3.5 h-3.5" />
+                        <Download className="h-3.5 w-3.5" />
                         Download CSV
                       </button>
-                      <button className="flex items-center justify-center gap-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 border border-zinc-700 hover:border-zinc-600 px-3 py-2 rounded-lg transition-colors">
-                        <FileText className="w-3.5 h-3.5" />
+                      <button className="flex items-center justify-center gap-1.5 rounded-lg border border-zinc-700 px-3 py-2 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200">
+                        <FileText className="h-3.5 w-3.5" />
                         PDF Summary (Pro)
                       </button>
                     </div>
@@ -685,23 +909,37 @@ export function TaxCenterPage() {
 
               {/* Resources */}
               <ScrollReveal delay={200}>
-                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-2">
-                  <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-3">Tax Resources</h3>
+                <div className="space-y-2 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                    Tax Resources
+                  </h3>
                   {[
-                    { label: 'IRS Topic 419: Gambling Income', href: 'https://www.irs.gov/taxtopics/tc419' },
-                    { label: 'W-2G Reporting Thresholds', href: 'https://www.irs.gov/forms-pubs/about-form-w-2-g' },
-                    { label: 'State Tax Guides (H&R Block)', href: 'https://www.hrblock.com/tax-center/income/other-income/gambling-winnings-tax/' },
-                    { label: 'Find a CPA Near You', href: 'https://www.aicpa.org/forthepublic/find-a-cpa' },
+                    {
+                      label: 'IRS Topic 419: Gambling Income',
+                      href: 'https://www.irs.gov/taxtopics/tc419',
+                    },
+                    {
+                      label: 'W-2G Reporting Thresholds',
+                      href: 'https://www.irs.gov/forms-pubs/about-form-w-2-g',
+                    },
+                    {
+                      label: 'State Tax Guides (H&R Block)',
+                      href: 'https://www.hrblock.com/tax-center/income/other-income/gambling-winnings-tax/',
+                    },
+                    {
+                      label: 'Find a CPA Near You',
+                      href: 'https://www.aicpa.org/forthepublic/find-a-cpa',
+                    },
                   ].map(({ label, href }) => (
                     <a
                       key={label}
                       href={href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between gap-2 text-xs text-zinc-500 hover:text-zinc-300 transition-colors group py-1"
+                      className="group flex items-center justify-between gap-2 py-1 text-xs text-zinc-500 transition-colors hover:text-zinc-300"
                     >
                       <span>{label}</span>
-                      <ExternalLink className="w-3 h-3 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <ExternalLink className="h-3 w-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
                     </a>
                   ))}
                 </div>

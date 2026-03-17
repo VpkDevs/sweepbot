@@ -11,6 +11,7 @@ You have ~100 quick wins available. **You cannot do them all.** The question is:
 These 10 items deliver 80% of the impact perception. **Do these first.**
 
 ### 1. ✅ Fix Critical Issues (10 min)
+
 - [ ] Verify all API responses have `data` field
 - [ ] Fix emoji encoding in comments
 - [ ] Test all forms submit successfully
@@ -20,7 +21,9 @@ These 10 items deliver 80% of the impact perception. **Do these first.**
 ---
 
 ### 2. 📺 Add Loading Skeletons Everywhere (15 min)
+
 **Files to update**:
+
 - `DashboardPage.tsx` - Show skeleton while stats load
 - `AchievementsPage.tsx` - Show skeleton while badges load
 - `AnalyticsPage.tsx` - Show skeleton while charts load
@@ -29,6 +32,7 @@ These 10 items deliver 80% of the impact perception. **Do these first.**
 - `RecordsPage.tsx` - Already has RecordsSkeleton ✅
 
 **Code Pattern** (same everywhere):
+
 ```tsx
 const { data, isLoading } = useQuery({ ... })
 if (isLoading) return <LoadingState variant="card" count={3} />
@@ -39,7 +43,9 @@ if (isLoading) return <LoadingState variant="card" count={3} />
 ---
 
 ### 3. 🎨 Improve All Empty States (10 min)
+
 **Files to update**:
+
 - SessionsPage (no sessions)
 - RedemptionsPage (no redemptions)
 - FlowsPage (no flows)
@@ -48,11 +54,12 @@ if (isLoading) return <LoadingState variant="card" count={3} />
 - RecordsPage (already has this ✅)
 
 **Code Pattern**:
+
 ```tsx
 if (!data || data.length === 0) {
   return (
     <EmptyState
-      icon={<YourIcon className="w-12 h-12 text-brand-400" />}
+      icon={<YourIcon className="text-brand-400 h-12 w-12" />}
       title="No [Items] Yet"
       description="Start [action] to see your [items] here."
       action={<Button>Get Started</Button>}
@@ -66,16 +73,14 @@ if (!data || data.length === 0) {
 ---
 
 ### 4. 🎬 Add Page Transition Animations (15 min)
+
 Wrap each page in fade-in animation.
 
 **Code Pattern** (one line per page):
+
 ```tsx
 export function SessionsPage() {
-  return (
-    <div className="animate-fade-in-up">
-      {/* existing content */}
-    </div>
-  )
+  return <div className="animate-fade-in-up">{/* existing content */}</div>
 }
 ```
 
@@ -86,23 +91,27 @@ Pages to update: DashboardPage, SessionsPage, AnalyticsPage, AchievementsPage, H
 ---
 
 ### 5. ✨ Add Form Error Styling (10 min)
+
 Make error states obvious.
 
 **Update SignUpPage, SignInPage, and all modals**:
+
 ```tsx
 // For inputs with errors:
-<input
+;<input
   className={cn(
-    'border-2 border-zinc-600 rounded-lg px-3 py-2 bg-zinc-900 text-white',
+    'rounded-lg border-2 border-zinc-600 bg-zinc-900 px-3 py-2 text-white',
     error && 'border-red-500 bg-red-900/10'
   )}
 />
-{error && (
-  <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
-    <AlertCircle className="w-3 h-3" />
-    {error}
-  </p>
-)}
+{
+  error && (
+    <p className="mt-1 flex items-center gap-1 text-sm text-red-400">
+      <AlertCircle className="h-3 w-3" />
+      {error}
+    </p>
+  )
+}
 ```
 
 **Impact**: Users know exactly what went wrong
@@ -110,9 +119,11 @@ Make error states obvious.
 ---
 
 ### 6. 📱 Test Mobile Responsiveness (15 min)
+
 Open Chrome DevTools → Mobile view (iPhone SE: 375px)
 
 **Checklist**:
+
 - [ ] Sidebar collapses to hamburger
 - [ ] Text doesn't overflow
 - [ ] Buttons are touchable (44x44px)
@@ -127,9 +138,11 @@ Open Chrome DevTools → Mobile view (iPhone SE: 375px)
 ---
 
 ### 7. 🔔 Verify Error Handling (10 min)
+
 Test what happens when things fail:
 
 **Scenarios to test**:
+
 - [ ] Turn off WiFi → See network error + retry button
 - [ ] Invalid credentials → See friendly error message
 - [ ] Server error → See helpful error, not 500 code
@@ -142,7 +155,9 @@ Test what happens when things fail:
 ---
 
 ### 8. 🎯 Add Welcome/Onboarding (10 min)
+
 Verify OnboardingTour component:
+
 - [ ] Appears on first login
 - [ ] Shows key features
 - [ ] Can be dismissed
@@ -153,15 +168,15 @@ Verify OnboardingTour component:
 ---
 
 ### 9. 📝 Add Page Descriptions (5 min)
+
 Every page needs a subtitle explaining its purpose.
 
 **Pattern**:
+
 ```tsx
 <div>
   <h1 className="text-2xl font-bold text-white">Sessions</h1>
-  <p className="text-zinc-400 text-sm mt-1">
-    Your complete play history across all platforms.
-  </p>
+  <p className="mt-1 text-sm text-zinc-400">Your complete play history across all platforms.</p>
 </div>
 ```
 
@@ -172,7 +187,9 @@ Every page needs a subtitle explaining its purpose.
 ---
 
 ### 10. ✅ Verify Notification System Works (5 min)
+
 **Test**:
+
 - [ ] NotificationPanel shows unread count
 - [ ] Bell icon appears in AppShell
 - [ ] Clicking bell opens dropdown
@@ -186,6 +203,7 @@ Every page needs a subtitle explaining its purpose.
 ## ⏱️ The 90-Minute Result
 
 After this work, your app will look:
+
 - ✅ Fast (skeleton loaders)
 - ✅ Professional (animations + polish)
 - ✅ Intentional (empty states)
@@ -202,6 +220,7 @@ After this work, your app will look:
 If you have more time, tackle these next:
 
 ### 11-15. Visual Polish (45 min total)
+
 - [ ] Add hover states to buttons (5 min)
 - [ ] Add color consistency audit (10 min)
 - [ ] Add loading spinners to slow endpoints (10 min)
@@ -209,12 +228,14 @@ If you have more time, tackle these next:
 - [ ] Add gradient backgrounds to hero sections (10 min)
 
 ### 16-20. Content Polish (30 min)
+
 - [ ] Add help icons with tooltips (15 min)
 - [ ] Improve form placeholder text (5 min)
 - [ ] Make error messages more friendly (5 min)
 - [ ] Add "last updated" timestamps (5 min)
 
 ### 21-25. Trust Signals (15 min)
+
 - [ ] Add Responsible Play resources link (5 min)
 - [ ] Add Privacy Policy link in footer (2 min)
 - [ ] Add "Verified" badge to big wins (3 min)
@@ -225,6 +246,7 @@ If you have more time, tackle these next:
 ## 🚀 The Final Push (If You Have 4+ Hours)
 
 ### Advanced Items Worth Doing:
+
 1. **Achievement Animations** (20 min)
    - Add confetti on first achievement unlock
    - Makes gamification feel real
@@ -249,27 +271,28 @@ If you have more time, tackle these next:
 
 ## ⚡ DECISION MATRIX
 
-| Item | Time | Impact | Do When |
-|------|------|--------|---------|
-| Loading skeletons | 15m | 🔥🔥🔥 | ASAP |
-| Empty states | 10m | 🔥🔥🔥 | ASAP |
-| Page animations | 15m | 🔥🔥 | ASAP |
-| Error styling | 10m | 🔥🔥 | ASAP |
-| Mobile test | 15m | 🔥🔥 | ASAP |
-| Error handling | 10m | 🔥🔥 | ASAP |
-| Onboarding | 10m | 🔥🔥 | ASAP |
-| Page descriptions | 5m | 🔥 | ASAP |
-| Notifications | 5m | 🔥 | ASAP |
-| Hover states | 5m | 🔥 | If time |
-| Command palette | 45m | 🔥🔥 | If time |
-| Achievements anim | 20m | 🔥 | If time |
-| Share buttons | 20m | 🔥 | If time |
+| Item              | Time | Impact | Do When |
+| ----------------- | ---- | ------ | ------- |
+| Loading skeletons | 15m  | 🔥🔥🔥 | ASAP    |
+| Empty states      | 10m  | 🔥🔥🔥 | ASAP    |
+| Page animations   | 15m  | 🔥🔥   | ASAP    |
+| Error styling     | 10m  | 🔥🔥   | ASAP    |
+| Mobile test       | 15m  | 🔥🔥   | ASAP    |
+| Error handling    | 10m  | 🔥🔥   | ASAP    |
+| Onboarding        | 10m  | 🔥🔥   | ASAP    |
+| Page descriptions | 5m   | 🔥     | ASAP    |
+| Notifications     | 5m   | 🔥     | ASAP    |
+| Hover states      | 5m   | 🔥     | If time |
+| Command palette   | 45m  | 🔥🔥   | If time |
+| Achievements anim | 20m  | 🔥     | If time |
+| Share buttons     | 20m  | 🔥     | If time |
 
 ---
 
 ## 📋 EXECUTION CHECKLIST
 
 ### Phase 1: Critical (90 min)
+
 - [ ] Fix API responses (10 min)
 - [ ] Fix emoji encoding (5 min)
 - [ ] Add loading skeletons (15 min)
@@ -285,6 +308,7 @@ If you have more time, tackle these next:
 **Total: 115 minutes** (cut 20 min from one section or just extend slightly)
 
 ### Phase 2: Polish (90 min, optional)
+
 - [ ] Add hover states (5 min)
 - [ ] Color consistency audit (10 min)
 - [ ] Slow endpoint spinners (10 min)
@@ -302,6 +326,7 @@ If you have more time, tackle these next:
 **Total: 90 minutes**
 
 ### Phase 3: Advanced (90+ min, only if time)
+
 - [ ] Achievement animations (20 min)
 - [ ] Command palette (45 min)
 - [ ] Rich tooltips (20 min)
@@ -338,6 +363,7 @@ If you have more time, tackle these next:
 ## 🎯 Success Metrics
 
 After this work, on launch day your app should:
+
 - ✅ Load without errors
 - ✅ Show loading states, not blank screens
 - ✅ Have friendly, helpful empty states

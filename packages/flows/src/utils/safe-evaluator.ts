@@ -49,9 +49,9 @@ export function safeEvaluate(expression: string, variables: Map<string, unknown>
     }
     return result
   } catch (error) {
-    logger.warn('Expression evaluation failed', { 
-      expression: withValues, 
-      error: error instanceof Error ? error.message : String(error) 
+    logger.warn('Expression evaluation failed', {
+      expression: withValues,
+      error: error instanceof Error ? error.message : String(error),
     })
     return 0
   }
@@ -63,10 +63,10 @@ export function safeEvaluate(expression: string, variables: Map<string, unknown>
 function sanitizeExpression(expression: string): string | null {
   // Trim whitespace
   let sanitized = expression.trim()
-  
+
   // Remove any non-printable characters
   sanitized = sanitized.replace(/[\x00-\x1F\x7F]/g, '')
-  
+
   // Check for dangerous patterns
   const dangerousPatterns = [
     /require\s*\(/i,
@@ -278,11 +278,11 @@ function parseAndEvaluate(expression: string): number {
   }
 
   const result = parseExpression()
-  
+
   // Check if all tokens were consumed
   if (position < tokens.length) {
-    logger.warn('Unexpected tokens remaining after parsing', { 
-      remaining: tokens.slice(position) 
+    logger.warn('Unexpected tokens remaining after parsing', {
+      remaining: tokens.slice(position),
     })
   }
 
@@ -372,4 +372,3 @@ export function validateExpression(expression: string): { valid: boolean; error?
 
   return { valid: true }
 }
-

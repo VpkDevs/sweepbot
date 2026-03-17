@@ -35,13 +35,7 @@ const log = createLogger('StorageManager')
  *   idle        → no spins for IDLE_THRESHOLD_MS; session auto-paused
  *   syncing     → background flush in progress; no new transactions accepted
  */
-export type SessionPhase =
-  | 'warmup'
-  | 'active'
-  | 'bonus_round'
-  | 'cooling_down'
-  | 'idle'
-  | 'syncing'
+export type SessionPhase = 'warmup' | 'active' | 'bonus_round' | 'cooling_down' | 'idle' | 'syncing'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Balance snapshot
@@ -488,7 +482,7 @@ export class StorageManager {
    * Returns null if there is no active session.
    */
   async mutateSession(
-    mutator: (session: SessionStorageData) => SessionStorageData,
+    mutator: (session: SessionStorageData) => SessionStorageData
   ): Promise<SessionStorageData | null> {
     await this.init()
     const session = await this.get('sessionData')
@@ -523,8 +517,7 @@ export class StorageManager {
       }
 
       // Real-time RTP
-      s.rtpCurrent =
-        s.totalWagered > 0 ? +((s.totalWon / s.totalWagered) * 100).toFixed(2) : 0
+      s.rtpCurrent = s.totalWagered > 0 ? +((s.totalWon / s.totalWagered) * 100).toFixed(2) : 0
       const MAX_RTP_SAMPLES = 50
       s.rtpSamples = [...s.rtpSamples, s.rtpCurrent].slice(-MAX_RTP_SAMPLES)
 
@@ -556,7 +549,7 @@ export class StorageManager {
         }
         s.streakSummary.longestLoss = Math.max(
           s.streakSummary.longestLoss,
-          Math.abs(s.streakSummary.current),
+          Math.abs(s.streakSummary.current)
         )
       }
 

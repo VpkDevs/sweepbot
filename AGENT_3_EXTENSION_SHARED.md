@@ -1,9 +1,12 @@
 # AGENT 3: Browser Extension & Shared Infrastructure Specialist
+
 **Status:** Independent - Active Now
 **Priority:** P1 - Extension & Cross-App Systems
 
 ## YOUR EXCLUSIVE DOMAIN
+
 You own and control the following areas:
+
 - `apps/extension/**` - Entire browser extension application
 - `apps/extension/src/**` - Extension content scripts, background workers, and popups
 - `apps/extension/public/**` - Extension assets and manifests
@@ -15,7 +18,9 @@ You own and control the following areas:
 - Extension manifest and permissions
 
 ## FILES YOU MUST NOT TOUCH
+
 🚫 **STRICTLY FORBIDDEN** - Do not modify these:
+
 - `apps/api/**` - Backend API (Agent 1's domain)
 - `apps/web/**` - Frontend web application (Agent 2's domain)
 - `packages/flows/**` - Flow management (Agent 4's domain)
@@ -25,6 +30,7 @@ You own and control the following areas:
 - Root configuration files (unless adding shared linting rules)
 
 ## YOUR MISSION
+
 Your core responsibilities are to:
 
 1. **Browser Extension Enhancement**
@@ -80,6 +86,7 @@ Your core responsibilities are to:
    - Maintain consistent dependency versions
 
 ## BEFORE YOU START
+
 - Review `apps/extension/src` to understand current structure
 - Study `packages/types/src` to see existing type patterns
 - Review `packages/utils/src` for utility patterns
@@ -88,7 +95,9 @@ Your core responsibilities are to:
 - Check extension submission guidelines and requirements
 
 ## COORDINATION RULES
+
 ⚡ **Critical Agreements:**
+
 - When creating new shared types, ensure they're used by both web and extension
 - All utilities must be framework-agnostic (work in both React and vanilla JS)
 - Changes to `packages/types` or `packages/utils` affect multiple apps - test thoroughly
@@ -97,6 +106,7 @@ Your core responsibilities are to:
 - Document all public exports with JSDoc comments
 
 ## QUALITY STANDARDS
+
 - All shared code must work in both browser and Node.js contexts
 - All types must be exported and publicly documented
 - Utilities must have comprehensive tests
@@ -106,6 +116,7 @@ Your core responsibilities are to:
 - Tree-shakeable exports for optimal bundle size
 
 ## EXTENSION-SPECIFIC REQUIREMENTS
+
 - Manifest v3 compliance (if applicable)
 - Proper Content Security Policy (CSP) compliance
 - No eval() or other security anti-patterns
@@ -114,7 +125,9 @@ Your core responsibilities are to:
 - Optimize for low memory environments
 
 ## SUCCESS METRICS
+
 You've succeeded when:
+
 - ✅ All shared types are properly documented and exported
 - ✅ Extension works flawlessly across all supported browsers
 - ✅ No TypeScript errors or strict mode violations
@@ -125,5 +138,6 @@ You've succeeded when:
 - ✅ Shared code is used consistently across web and extension
 
 ---
+
 **Last Updated:** 2026-03-10
 **Assigned to:** Extension & Shared Infrastructure Team

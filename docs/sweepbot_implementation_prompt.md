@@ -5,6 +5,7 @@
 You are implementing a massive feature expansion for SweepBot, an existing TypeScript monorepo. The codebase uses Fastify backend with Drizzle ORM, React frontend with TanStack Router, a WXT browser extension, and Supabase/PostgreSQL for the database. The project already has ~13,000 lines of production code across ~101 files with core session tracking, analytics, the Trust Index, responsible play, and automation scaffolding in place.
 
 This prompt specifies two major bodies of work:
+
 1. **SweepBot Flows** — A natural language automation scripting engine (THE flagship differentiator)
 2. **Top 25 Features** — High-impact features that deepen the data moat, increase engagement, and drive monetization
 
@@ -16,13 +17,16 @@ All code must be production-grade TypeScript. Fully typed. Error-handled. Well-c
 
 ## What This Is
 
-SweepBot Flows is a system where users type plain English instructions and SweepBot converts them into executable, schedulable, multi-platform automation scripts. The user never sees code, never touches a flowchart builder, never drags and drops anything. They just *talk* to SweepBot the way they'd talk to a friend, and SweepBot does what they ask.
+SweepBot Flows is a system where users type plain English instructions and SweepBot converts them into executable, schedulable, multi-platform automation scripts. The user never sees code, never touches a flowchart builder, never drags and drops anything. They just _talk_ to SweepBot the way they'd talk to a friend, and SweepBot does what they ask.
 
 **Example user input:**
+
 > "Every day at 3:30, open Chumba, grab my daily bonus, throw it on Sweet Bonanza at minimum bet. If I hit over 5x what the bonus was, keep going. If not, stop and close out."
 
 **SweepBot responds with a structured confirmation:**
+
 > Here's what I'll do:
+>
 > - ⏰ Trigger: Daily at 3:30 PM
 > - 🌐 Open Chumba Casino, log in
 > - 🎁 Claim daily login bonus → store as $BONUS
@@ -51,19 +55,19 @@ This layer converts natural language into a structured Flow Definition (a JSON A
 //   Pass 4: Validation — ensure the flow is safe, complete, and executable
 
 interface FlowInterpretationRequest {
-  userId: string;
-  rawInput: string;
-  conversationHistory?: ConversationMessage[]; // for multi-turn refinement
-  existingFlows?: FlowDefinition[]; // context of what user already has
+  userId: string
+  rawInput: string
+  conversationHistory?: ConversationMessage[] // for multi-turn refinement
+  existingFlows?: FlowDefinition[] // context of what user already has
 }
 
 interface FlowInterpretationResult {
-  flow: FlowDefinition;
-  confidence: number; // 0-1, how confident we are in the interpretation
-  humanReadableSummary: string; // plain English confirmation
-  ambiguities?: Ambiguity[]; // things we need to clarify
-  warnings?: FlowWarning[]; // responsible play concerns, platform limitations
-  suggestedImprovements?: string[]; // "Did you also want to..."
+  flow: FlowDefinition
+  confidence: number // 0-1, how confident we are in the interpretation
+  humanReadableSummary: string // plain English confirmation
+  ambiguities?: Ambiguity[] // things we need to clarify
+  warnings?: FlowWarning[] // responsible play concerns, platform limitations
+  suggestedImprovements?: string[] // "Did you also want to..."
 }
 ```
 
@@ -104,14 +108,14 @@ interface FlowInterpretationResult {
 //   - Map to stop conditions
 
 interface EntityMap {
-  platforms: PlatformEntity[];
-  games: GameEntity[];
-  actions: ActionEntity[];
-  conditions: ConditionEntity[];
-  schedules: ScheduleEntity[];
-  amounts: AmountEntity[];
-  durations: DurationEntity[];
-  variables: VariableEntity[];
+  platforms: PlatformEntity[]
+  games: GameEntity[]
+  actions: ActionEntity[]
+  conditions: ConditionEntity[]
+  schedules: ScheduleEntity[]
+  amounts: AmountEntity[]
+  durations: DurationEntity[]
+  variables: VariableEntity[]
 }
 ```
 
@@ -121,28 +125,28 @@ interface EntityMap {
 // A Flow is a tree of nodes. Each node is an action, condition, loop, or control flow.
 
 interface FlowDefinition {
-  id: string;
-  userId: string;
-  name: string; // auto-generated or user-named
-  description: string; // the original natural language input
-  version: number;
-  status: 'draft' | 'active' | 'paused' | 'archived';
-  trigger: FlowTrigger;
-  rootNode: FlowNode;
-  variables: FlowVariable[];
-  responsiblePlayGuardrails: ResponsiblePlayGuardrail[];
-  createdAt: Date;
-  updatedAt: Date;
-  lastExecutedAt?: Date;
-  executionCount: number;
-  performanceStats: FlowPerformanceStats;
+  id: string
+  userId: string
+  name: string // auto-generated or user-named
+  description: string // the original natural language input
+  version: number
+  status: 'draft' | 'active' | 'paused' | 'archived'
+  trigger: FlowTrigger
+  rootNode: FlowNode
+  variables: FlowVariable[]
+  responsiblePlayGuardrails: ResponsiblePlayGuardrail[]
+  createdAt: Date
+  updatedAt: Date
+  lastExecutedAt?: Date
+  executionCount: number
+  performanceStats: FlowPerformanceStats
 }
 
 type FlowTrigger =
   | { type: 'scheduled'; cron: string; timezone: string }
   | { type: 'manual' }
   | { type: 'event'; event: FlowEventType } // e.g., "when a new bonus drops"
-  | { type: 'condition'; condition: FlowConditionNode }; // e.g., "when jackpot exceeds $X"
+  | { type: 'condition'; condition: FlowConditionNode } // e.g., "when jackpot exceeds $X"
 
 type FlowNode =
   | FlowActionNode
@@ -153,62 +157,62 @@ type FlowNode =
   | FlowWaitNode
   | FlowStopNode
   | FlowAlertNode
-  | FlowStoreNode;
+  | FlowStoreNode
 
 interface FlowActionNode {
-  type: 'action';
-  id: string;
-  action: AutomationAction; // maps to the automation engine's action types
-  platform: string;
-  parameters: Record<string, any>;
-  timeout: number; // max time to wait for this action
-  onFailure: 'skip' | 'retry' | 'stop' | FlowNode;
-  next?: FlowNode;
+  type: 'action'
+  id: string
+  action: AutomationAction // maps to the automation engine's action types
+  platform: string
+  parameters: Record<string, any>
+  timeout: number // max time to wait for this action
+  onFailure: 'skip' | 'retry' | 'stop' | FlowNode
+  next?: FlowNode
 }
 
 interface FlowConditionNode {
-  type: 'condition';
-  id: string;
-  left: FlowValue; // what we're comparing
-  operator: '>' | '<' | '>=' | '<=' | '==' | '!=' | 'contains' | 'exists';
-  right: FlowValue; // what we're comparing against
-  onTrue: FlowNode;
-  onFalse?: FlowNode;
+  type: 'condition'
+  id: string
+  left: FlowValue // what we're comparing
+  operator: '>' | '<' | '>=' | '<=' | '==' | '!=' | 'contains' | 'exists'
+  right: FlowValue // what we're comparing against
+  onTrue: FlowNode
+  onFalse?: FlowNode
 }
 
 interface FlowLoopNode {
-  type: 'loop';
-  id: string;
-  condition: FlowConditionNode; // keep looping while this is true
-  body: FlowNode;
-  maxIterations: number; // safety cap — responsible play
-  maxDuration: number; // max time in ms — responsible play
+  type: 'loop'
+  id: string
+  condition: FlowConditionNode // keep looping while this is true
+  body: FlowNode
+  maxIterations: number // safety cap — responsible play
+  maxDuration: number // max time in ms — responsible play
 }
 
 interface FlowSequenceNode {
-  type: 'sequence';
-  id: string;
-  steps: FlowNode[];
+  type: 'sequence'
+  id: string
+  steps: FlowNode[]
 }
 
 interface FlowParallelNode {
-  type: 'parallel';
-  id: string;
-  branches: FlowNode[];
-  waitFor: 'all' | 'any' | 'none';
+  type: 'parallel'
+  id: string
+  branches: FlowNode[]
+  waitFor: 'all' | 'any' | 'none'
 }
 
 type FlowValue =
   | { type: 'literal'; value: number | string | boolean }
   | { type: 'variable'; name: string }
   | { type: 'expression'; expression: string } // e.g., "$BONUS * 5"
-  | { type: 'query'; query: DataQuery }; // e.g., "my balance on Chumba"
+  | { type: 'query'; query: DataQuery } // e.g., "my balance on Chumba"
 
 interface FlowVariable {
-  name: string;
-  type: 'number' | 'string' | 'boolean' | 'platform' | 'game';
-  value?: any;
-  source?: 'user_input' | 'action_result' | 'system_query' | 'literal';
+  name: string
+  type: 'number' | 'string' | 'boolean' | 'platform' | 'game'
+  value?: any
+  source?: 'user_input' | 'action_result' | 'system_query' | 'literal'
 }
 ```
 
@@ -243,21 +247,27 @@ interface FlowVariable {
 //    play suite), no Flows execute. Period.
 
 interface ResponsiblePlayGuardrail {
-  type: 'max_duration' | 'max_loss' | 'balance_floor' | 'max_iterations' |
-        'chase_detection' | 'cool_down_check' | 'daily_aggregate';
-  value: number | boolean;
-  source: 'user_specified' | 'system_default' | 'system_mandatory';
-  overridable: boolean; // system_mandatory guardrails are NEVER overridable
+  type:
+    | 'max_duration'
+    | 'max_loss'
+    | 'balance_floor'
+    | 'max_iterations'
+    | 'chase_detection'
+    | 'cool_down_check'
+    | 'daily_aggregate'
+  value: number | boolean
+  source: 'user_specified' | 'system_default' | 'system_mandatory'
+  overridable: boolean // system_mandatory guardrails are NEVER overridable
 }
 
 interface FlowValidationResult {
-  valid: boolean;
-  guardrailsApplied: ResponsiblePlayGuardrail[];
-  guardrailsInjected: ResponsiblePlayGuardrail[]; // ones we added that user didn't specify
-  warnings: string[];
-  errors: string[];
-  requiresUserAcknowledgment: boolean; // if chase detection or risky patterns found
-  acknowledgmentPrompt?: string;
+  valid: boolean
+  guardrailsApplied: ResponsiblePlayGuardrail[]
+  guardrailsInjected: ResponsiblePlayGuardrail[] // ones we added that user didn't specify
+  warnings: string[]
+  errors: string[]
+  requiresUserAcknowledgment: boolean // if chase detection or risky patterns found
+  acknowledgmentPrompt?: string
 }
 ```
 
@@ -270,38 +280,46 @@ interface FlowValidationResult {
 // It maintains execution state, handles failures, respects guardrails, and logs everything.
 
 interface FlowExecutionContext {
-  flowId: string;
-  executionId: string; // unique per run
-  userId: string;
-  variables: Map<string, any>;
-  startedAt: Date;
-  currentNode: string; // ID of the currently executing node
-  status: 'running' | 'paused' | 'completed' | 'failed' | 'stopped_by_guardrail';
-  log: FlowExecutionLog[];
-  metrics: FlowExecutionMetrics;
+  flowId: string
+  executionId: string // unique per run
+  userId: string
+  variables: Map<string, any>
+  startedAt: Date
+  currentNode: string // ID of the currently executing node
+  status: 'running' | 'paused' | 'completed' | 'failed' | 'stopped_by_guardrail'
+  log: FlowExecutionLog[]
+  metrics: FlowExecutionMetrics
 }
 
 interface FlowExecutionLog {
-  timestamp: Date;
-  nodeId: string;
-  type: 'action_start' | 'action_complete' | 'action_failed' | 'condition_evaluated' |
-        'loop_iteration' | 'variable_set' | 'guardrail_triggered' | 'user_alert' | 'error';
-  details: Record<string, any>;
+  timestamp: Date
+  nodeId: string
+  type:
+    | 'action_start'
+    | 'action_complete'
+    | 'action_failed'
+    | 'condition_evaluated'
+    | 'loop_iteration'
+    | 'variable_set'
+    | 'guardrail_triggered'
+    | 'user_alert'
+    | 'error'
+  details: Record<string, any>
 }
 
 interface FlowExecutionMetrics {
-  totalDuration: number;
-  actionsExecuted: number;
-  conditionsEvaluated: number;
-  loopIterations: number;
-  platformsAccessed: string[];
-  bonusesClaimed: number;
-  bonusValueClaimed: number;
-  spinsExecuted: number;
-  totalWagered: number;
-  totalWon: number;
-  netResult: number;
-  guardrailsTriggered: string[];
+  totalDuration: number
+  actionsExecuted: number
+  conditionsEvaluated: number
+  loopIterations: number
+  platformsAccessed: string[]
+  bonusesClaimed: number
+  bonusValueClaimed: number
+  spinsExecuted: number
+  totalWagered: number
+  totalWon: number
+  netResult: number
+  guardrailsTriggered: string[]
 }
 
 // The executor MUST:
@@ -367,12 +385,12 @@ interface FlowExecutionMetrics {
 // - Natural language editing of active Flows ("pause my Chumba flow for a week")
 
 interface ConversationState {
-  userId: string;
-  sessionId: string;
-  currentFlow: Partial<FlowDefinition>;
-  turns: ConversationTurn[];
-  pendingQuestions: string[];
-  status: 'building' | 'confirming' | 'modifying' | 'complete';
+  userId: string
+  sessionId: string
+  currentFlow: Partial<FlowDefinition>
+  turns: ConversationTurn[]
+  pendingQuestions: string[]
+  status: 'building' | 'confirming' | 'modifying' | 'complete'
 }
 ```
 
@@ -393,23 +411,23 @@ interface ConversationState {
 // Flows have ratings, verified performance data, and usage counts.
 
 interface SharedFlow {
-  id: string;
-  creatorId: string;
-  title: string;
-  description: string; // the natural language recipe
-  category: FlowCategory;
-  tags: string[];
-  flowTemplate: FlowDefinition; // with platform/game references as variables
-  pricing: 'free' | { amount: number; currency: 'USD' };
+  id: string
+  creatorId: string
+  title: string
+  description: string // the natural language recipe
+  category: FlowCategory
+  tags: string[]
+  flowTemplate: FlowDefinition // with platform/game references as variables
+  pricing: 'free' | { amount: number; currency: 'USD' }
   stats: {
-    imports: number;
-    activeUsers: number;
-    averageNetResult: number; // verified by SweepBot data
-    averageTimeSaved: number; // minutes per execution
-    rating: number;
-    reviews: number;
-  };
-  verifiedPerformance: boolean; // SweepBot has enough data to verify claims
+    imports: number
+    activeUsers: number
+    averageNetResult: number // verified by SweepBot data
+    averageTimeSaved: number // minutes per execution
+    rating: number
+    reviews: number
+  }
+  verifiedPerformance: boolean // SweepBot has enough data to verify claims
 }
 
 type FlowCategory =
@@ -419,7 +437,7 @@ type FlowCategory =
   | 'multi_platform_routine'
   | 'jackpot_hunting'
   | 'bankroll_management'
-  | 'responsible_play';
+  | 'responsible_play'
 ```
 
 ### 5. Database Schema (Drizzle ORM)
@@ -430,7 +448,9 @@ type FlowCategory =
 // flows table
 export const flows = pgTable('flows', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id),
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description').notNull(), // original natural language
   definition: jsonb('definition').notNull(), // FlowDefinition JSON
@@ -444,13 +464,17 @@ export const flows = pgTable('flows', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   lastExecutedAt: timestamp('last_executed_at'),
   executionCount: integer('execution_count').notNull().default(0),
-});
+})
 
 // flow_executions table — every single run is logged
 export const flowExecutions = pgTable('flow_executions', {
   id: uuid('id').primaryKey().defaultRandom(),
-  flowId: uuid('flow_id').notNull().references(() => flows.id),
-  userId: uuid('user_id').notNull().references(() => users.id),
+  flowId: uuid('flow_id')
+    .notNull()
+    .references(() => flows.id),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id),
   status: varchar('status', { length: 30 }).notNull(),
   startedAt: timestamp('started_at').notNull(),
   completedAt: timestamp('completed_at'),
@@ -458,23 +482,27 @@ export const flowExecutions = pgTable('flow_executions', {
   log: jsonb('log').notNull(), // FlowExecutionLog[]
   guardrailsTriggered: jsonb('guardrails_triggered'),
   errorDetails: text('error_details'),
-});
+})
 
 // flow_conversations table — multi-turn building history
 export const flowConversations = pgTable('flow_conversations', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id),
   flowId: uuid('flow_id').references(() => flows.id),
   turns: jsonb('turns').notNull(),
   status: varchar('status', { length: 20 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+})
 
 // shared_flows table — marketplace
 export const sharedFlows = pgTable('shared_flows', {
   id: uuid('id').primaryKey().defaultRandom(),
-  creatorId: uuid('creator_id').notNull().references(() => users.id),
+  creatorId: uuid('creator_id')
+    .notNull()
+    .references(() => users.id),
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description').notNull(),
   category: varchar('category', { length: 50 }).notNull(),
@@ -490,7 +518,7 @@ export const sharedFlows = pgTable('shared_flows', {
   verifiedPerformance: boolean('verified_performance').notNull().default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+})
 ```
 
 ### 6. API Endpoints (Fastify)
@@ -584,13 +612,20 @@ Implement each of the following as complete features with database schema, API e
 Automatically completes wagering requirements using optimal game selection.
 
 **Schema:**
+
 ```typescript
 export const wageringTasks = pgTable('wagering_tasks', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id),
-  platformId: uuid('platform_id').notNull().references(() => platforms.id),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id),
+  platformId: uuid('platform_id')
+    .notNull()
+    .references(() => platforms.id),
   requiredWagerAmount: decimal('required_wager_amount', { precision: 12, scale: 2 }).notNull(),
-  completedWagerAmount: decimal('completed_wager_amount', { precision: 12, scale: 2 }).notNull().default('0'),
+  completedWagerAmount: decimal('completed_wager_amount', { precision: 12, scale: 2 })
+    .notNull()
+    .default('0'),
   strategy: varchar('strategy', { length: 30 }).notNull().default('minimize_loss'), // minimize_loss | maximize_speed | balanced
   selectedGames: jsonb('selected_games').notNull(), // games chosen by algorithm (lowest volatility + highest RTP)
   status: varchar('status', { length: 20 }).notNull().default('pending'),
@@ -598,7 +633,7 @@ export const wageringTasks = pgTable('wagering_tasks', {
   completedAt: timestamp('completed_at'),
   totalLostDuringPlaythrough: decimal('total_lost', { precision: 10, scale: 2 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+})
 ```
 
 **Logic:** Query Game Intelligence DB for games on the target platform, sort by (highest RTP + lowest volatility), auto-play minimum bets until requirement met. Integrate with Flows engine for scheduling.
@@ -610,16 +645,19 @@ export const wageringTasks = pgTable('wagering_tasks', {
 Morning report delivered via push notification, email, and in-app.
 
 **Schema:**
+
 ```typescript
 export const dailyDigests = pgTable('daily_digests', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id),
   date: date('date').notNull(),
   content: jsonb('content').notNull(), // structured digest data
   deliveredVia: jsonb('delivered_via').notNull(), // ['push', 'email', 'in_app']
   openedAt: timestamp('opened_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+})
 ```
 
 **Content includes:** overnight Flow execution summaries, bonuses available today, yesterday's P&L, portfolio balance, Trust Index changes for tracked platforms, new game releases, pending redemption updates, community highlights.
@@ -639,26 +677,31 @@ Statistical analysis of session patterns with variance modeling.
 Real-time uptime, load time, and error rate tracking for every platform.
 
 **Schema:**
+
 ```typescript
 export const platformHealthChecks = pgTable('platform_health_checks', {
   id: uuid('id').primaryKey().defaultRandom(),
-  platformId: uuid('platform_id').notNull().references(() => platforms.id),
+  platformId: uuid('platform_id')
+    .notNull()
+    .references(() => platforms.id),
   checkedAt: timestamp('checked_at').notNull(),
   isUp: boolean('is_up').notNull(),
   responseTimeMs: integer('response_time_ms'),
   errorType: varchar('error_type', { length: 50 }),
   region: varchar('region', { length: 20 }),
-});
+})
 
 export const platformHealthSummary = pgTable('platform_health_summary', {
-  platformId: uuid('platform_id').primaryKey().references(() => platforms.id),
+  platformId: uuid('platform_id')
+    .primaryKey()
+    .references(() => platforms.id),
   uptimePercent7d: decimal('uptime_7d', { precision: 5, scale: 2 }),
   uptimePercent30d: decimal('uptime_30d', { precision: 5, scale: 2 }),
   avgResponseTimeMs: integer('avg_response_time_ms'),
   currentStatus: varchar('current_status', { length: 20 }).notNull(),
   lastDownAt: timestamp('last_down_at'),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+})
 ```
 
 **Service:** Run health checks every 5 minutes per platform. Store results. Feed into Trust Index. Alert users if a platform they have pending redemptions on goes down.
@@ -714,22 +757,31 @@ Instant notifications when new games launch on tracked platforms.
 Crowdsourced, data-verified leaderboard of community wins.
 
 **Schema:**
+
 ```typescript
 export const verifiedWins = pgTable('verified_wins', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id),
-  sessionId: uuid('session_id').notNull().references(() => sessions.id),
-  platformId: uuid('platform_id').notNull().references(() => platforms.id),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id),
+  sessionId: uuid('session_id')
+    .notNull()
+    .references(() => sessions.id),
+  platformId: uuid('platform_id')
+    .notNull()
+    .references(() => platforms.id),
   gameName: varchar('game_name', { length: 255 }).notNull(),
   betAmount: decimal('bet_amount', { precision: 10, scale: 2 }).notNull(),
   winAmount: decimal('win_amount', { precision: 12, scale: 2 }).notNull(),
   multiplier: decimal('multiplier', { precision: 10, scale: 2 }).notNull(),
   isBonusRound: boolean('is_bonus_round').notNull(),
-  verificationStatus: varchar('verification_status', { length: 20 }).notNull().default('auto_verified'),
+  verificationStatus: varchar('verification_status', { length: 20 })
+    .notNull()
+    .default('auto_verified'),
   screenshotUrl: varchar('screenshot_url', { length: 500 }),
   occurredAt: timestamp('occurred_at').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+})
 ```
 
 **Key:** These wins are verified by SweepBot's session tracking data — not screenshots that can be faked. Massive trust differentiator. Leaderboards: daily, weekly, monthly, all-time. Filter by platform, game, bet size.
@@ -741,34 +793,47 @@ export const verifiedWins = pgTable('verified_wins', {
 Form groups with friends, share stats, compete, run challenges.
 
 **Schema:**
+
 ```typescript
 export const crews = pgTable('crews', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 100 }).notNull(),
-  creatorId: uuid('creator_id').notNull().references(() => users.id),
+  creatorId: uuid('creator_id')
+    .notNull()
+    .references(() => users.id),
   avatarUrl: varchar('avatar_url', { length: 500 }),
   maxMembers: integer('max_members').notNull().default(10),
   isPublic: boolean('is_public').notNull().default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+})
 
-export const crewMembers = pgTable('crew_members', {
-  crewId: uuid('crew_id').notNull().references(() => crews.id),
-  userId: uuid('user_id').notNull().references(() => users.id),
-  role: varchar('role', { length: 20 }).notNull().default('member'),
-  joinedAt: timestamp('joined_at').defaultNow().notNull(),
-}, (t) => ({ pk: primaryKey(t.crewId, t.userId) }));
+export const crewMembers = pgTable(
+  'crew_members',
+  {
+    crewId: uuid('crew_id')
+      .notNull()
+      .references(() => crews.id),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    role: varchar('role', { length: 20 }).notNull().default('member'),
+    joinedAt: timestamp('joined_at').defaultNow().notNull(),
+  },
+  (t) => ({ pk: primaryKey(t.crewId, t.userId) })
+)
 
 export const crewChallenges = pgTable('crew_challenges', {
   id: uuid('id').primaryKey().defaultRandom(),
-  crewId: uuid('crew_id').notNull().references(() => crews.id),
+  crewId: uuid('crew_id')
+    .notNull()
+    .references(() => crews.id),
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description'),
   metric: varchar('metric', { length: 50 }).notNull(), // 'total_wins', 'highest_multiplier', 'most_bonuses', etc.
   startsAt: timestamp('starts_at').notNull(),
   endsAt: timestamp('ends_at').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+})
 ```
 
 ---
@@ -780,6 +845,7 @@ Badges, milestones, streaks that make SweepBot itself sticky.
 **Categories:** Milestone badges (first session tracked, 100th session, etc.), streak badges (7-day, 30-day, 365-day tracking streak), performance badges (hit a 100x+, complete a wagering requirement, fastest redemption), community badges (first review, helpful mentor, top contributor), responsible play badges (set limits, completed cool-down, 30 days under budget). Display on user profile. Shareable. Achievement notifications.
 
 **Schema:**
+
 ```typescript
 export const achievements = pgTable('achievements', {
   id: varchar('id', { length: 50 }).primaryKey(), // e.g., 'first_session', 'streak_30d'
@@ -789,14 +855,22 @@ export const achievements = pgTable('achievements', {
   iconUrl: varchar('icon_url', { length: 500 }),
   rarity: varchar('rarity', { length: 20 }).notNull(), // common, uncommon, rare, epic, legendary
   criteria: jsonb('criteria').notNull(), // machine-readable unlock conditions
-});
+})
 
-export const userAchievements = pgTable('user_achievements', {
-  userId: uuid('user_id').notNull().references(() => users.id),
-  achievementId: varchar('achievement_id', { length: 50 }).notNull().references(() => achievements.id),
-  unlockedAt: timestamp('unlocked_at').defaultNow().notNull(),
-  metadata: jsonb('metadata'), // context about how they unlocked it
-}, (t) => ({ pk: primaryKey(t.userId, t.achievementId) }));
+export const userAchievements = pgTable(
+  'user_achievements',
+  {
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    achievementId: varchar('achievement_id', { length: 50 })
+      .notNull()
+      .references(() => achievements.id),
+    unlockedAt: timestamp('unlocked_at').defaultNow().notNull(),
+    metadata: jsonb('metadata'), // context about how they unlocked it
+  },
+  (t) => ({ pk: primaryKey(t.userId, t.achievementId) })
+)
 ```
 
 ---
@@ -816,10 +890,13 @@ End-of-year shareable infographic. Viral marketing engine.
 Compares every purchase option across platforms by actual value per dollar.
 
 **Schema:**
+
 ```typescript
 export const goldCoinPackages = pgTable('gold_coin_packages', {
   id: uuid('id').primaryKey().defaultRandom(),
-  platformId: uuid('platform_id').notNull().references(() => platforms.id),
+  platformId: uuid('platform_id')
+    .notNull()
+    .references(() => platforms.id),
   packageName: varchar('package_name', { length: 255 }).notNull(),
   priceCents: integer('price_cents').notNull(),
   goldCoins: integer('gold_coins').notNull(),
@@ -829,7 +906,7 @@ export const goldCoinPackages = pgTable('gold_coin_packages', {
   isPromotion: boolean('is_promotion').notNull().default(false),
   promotionExpiresAt: timestamp('promotion_expires_at'),
   scrapedAt: timestamp('scraped_at').defaultNow().notNull(),
-});
+})
 ```
 
 **Service:** Scrape package pages on each platform, calculate value-per-dollar, rank globally across all platforms. Alert users when exceptional deals appear. Track historical pricing to detect patterns (e.g., "Chumba always runs a 3x bonus on the first of the month").
@@ -867,6 +944,7 @@ Engagement-driving daily challenges that increase platform stickiness.
 **Examples:** "Try a game you've never played before," "Play on 3 different platforms today," "Complete a redemption," "Set a new personal RTP record on any game," "Claim bonuses on all tracked platforms," "Share a Flow with the community."
 
 **Schema:**
+
 ```typescript
 export const dailyChallenges = pgTable('daily_challenges', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -876,15 +954,23 @@ export const dailyChallenges = pgTable('daily_challenges', {
   criteria: jsonb('criteria').notNull(), // machine-readable completion conditions
   rewardType: varchar('reward_type', { length: 30 }).notNull(), // 'xp', 'badge', 'marketplace_credit'
   rewardValue: integer('reward_value').notNull(),
-});
+})
 
-export const userChallengeProgress = pgTable('user_challenge_progress', {
-  userId: uuid('user_id').notNull().references(() => users.id),
-  challengeId: uuid('challenge_id').notNull().references(() => dailyChallenges.id),
-  status: varchar('status', { length: 20 }).notNull().default('active'),
-  progress: decimal('progress', { precision: 5, scale: 2 }).notNull().default('0'), // 0-100
-  completedAt: timestamp('completed_at'),
-}, (t) => ({ pk: primaryKey(t.userId, t.challengeId) }));
+export const userChallengeProgress = pgTable(
+  'user_challenge_progress',
+  {
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    challengeId: uuid('challenge_id')
+      .notNull()
+      .references(() => dailyChallenges.id),
+    status: varchar('status', { length: 20 }).notNull().default('active'),
+    progress: decimal('progress', { precision: 5, scale: 2 }).notNull().default('0'), // 0-100
+    completedAt: timestamp('completed_at'),
+  },
+  (t) => ({ pk: primaryKey(t.userId, t.challengeId) })
+)
 ```
 
 ---
@@ -902,11 +988,16 @@ Automatically detect and profile new sweepstakes casino launches.
 Track support quality per platform based on community data.
 
 **Schema:**
+
 ```typescript
 export const supportInteractions = pgTable('support_interactions', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id),
-  platformId: uuid('platform_id').notNull().references(() => platforms.id),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id),
+  platformId: uuid('platform_id')
+    .notNull()
+    .references(() => platforms.id),
   category: varchar('category', { length: 50 }).notNull(), // 'redemption_issue', 'account_problem', 'technical', 'bonus_dispute'
   contactMethod: varchar('contact_method', { length: 30 }).notNull(), // 'live_chat', 'email', 'phone'
   responseTimeMinutes: integer('response_time_minutes'),
@@ -915,7 +1006,7 @@ export const supportInteractions = pgTable('support_interactions', {
   satisfactionRating: integer('satisfaction_rating'), // 1-5
   notes: text('notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+})
 ```
 
 **Aggregation:** Per-platform support scorecard: avg response time, avg resolution time, resolution rate, satisfaction score. Feed into Trust Index. Invaluable data that no one else collects.
@@ -943,16 +1034,19 @@ Track state-by-state legislative activity.
 Short guides for every tracked game.
 
 **Schema:**
+
 ```typescript
 export const gameTutorials = pgTable('game_tutorials', {
   id: uuid('id').primaryKey().defaultRandom(),
-  gameId: uuid('game_id').notNull().references(() => games.id),
+  gameId: uuid('game_id')
+    .notNull()
+    .references(() => games.id),
   content: text('content').notNull(), // markdown
   bonusMechanics: text('bonus_mechanics'), // how the bonus works
   symbolGuide: jsonb('symbol_guide'), // symbol → payout mapping
   communityTips: jsonb('community_tips'), // user-contributed tips
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+})
 ```
 
 **Content:** How the game works, what the symbols pay, how the bonus triggers, what the bonus does, any special mechanics, community tips. Auto-generated framework from game provider data, enriched by community contributions.
@@ -972,16 +1066,23 @@ AI-generated newsletter — the "SweepBot Weekly."
 Track and display personal bests like a sports stats card.
 
 **Schema:**
+
 ```typescript
-export const personalRecords = pgTable('personal_records', {
-  userId: uuid('user_id').notNull().references(() => users.id),
-  recordType: varchar('record_type', { length: 50 }).notNull(), // 'biggest_win', 'highest_multiplier', 'longest_session', 'best_rtp_day', 'fastest_redemption', 'most_bonuses_one_day'
-  value: decimal('value', { precision: 14, scale: 2 }).notNull(),
-  details: jsonb('details').notNull(), // game, platform, date, context
-  achievedAt: timestamp('achieved_at').notNull(),
-  previousRecord: decimal('previous_record', { precision: 14, scale: 2 }),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-}, (t) => ({ pk: primaryKey(t.userId, t.recordType) }));
+export const personalRecords = pgTable(
+  'personal_records',
+  {
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    recordType: varchar('record_type', { length: 50 }).notNull(), // 'biggest_win', 'highest_multiplier', 'longest_session', 'best_rtp_day', 'fastest_redemption', 'most_bonuses_one_day'
+    value: decimal('value', { precision: 14, scale: 2 }).notNull(),
+    details: jsonb('details').notNull(), // game, platform, date, context
+    achievedAt: timestamp('achieved_at').notNull(),
+    previousRecord: decimal('previous_record', { precision: 14, scale: 2 }),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => ({ pk: primaryKey(t.userId, t.recordType) })
+)
 ```
 
 **Frontend:** Stats card component showing all personal records. Animation when a record is broken during a session. "NEW PERSONAL BEST!" notification. Shareable. Another viral screenshot feature.
@@ -993,6 +1094,7 @@ export const personalRecords = pgTable('personal_records', {
 Execute in this order. Each phase should be fully complete before moving to the next.
 
 ## Phase 1: SweepBot Flows Core (HIGHEST PRIORITY)
+
 1. Flow Definition types and schema (the AST)
 2. Database tables and Drizzle migrations
 3. Rule-based NLP interpreter (entities, actions, conditions, schedules)
@@ -1005,6 +1107,7 @@ Execute in this order. Each phase should be fully complete before moving to the 
 10. LLM fallback integration for complex interpretations
 
 ## Phase 2: Analytics Expansion
+
 11. Win/Loss Heatmaps (Feature 7)
 12. Hot/Cold Streak Detection (Feature 3)
 13. Session Replay Summaries (Feature 6)
@@ -1013,6 +1116,7 @@ Execute in this order. Each phase should be fully complete before moving to the 
 16. Bonus Efficiency Score (Feature 5)
 
 ## Phase 3: Intelligence & Monitoring
+
 17. Platform Health Monitor (Feature 4)
 18. New Game Alert System (Feature 9)
 19. Gold Coin Package Value Ranker (Feature 14)
@@ -1021,6 +1125,7 @@ Execute in this order. Each phase should be fully complete before moving to the 
 22. Regulatory Radar (Feature 22)
 
 ## Phase 4: Community & Engagement
+
 23. Verified Big Win Board (Feature 10)
 24. Achievement System (Feature 12)
 25. Daily Challenges (Feature 18)
@@ -1029,6 +1134,7 @@ Execute in this order. Each phase should be fully complete before moving to the 
 28. Customer Support Scorecards (Feature 20)
 
 ## Phase 5: Monetization & Growth
+
 29. Flow Marketplace (sharing + selling)
 30. Affiliate Offer Comparator (Feature 21)
 31. Smart Wagering Autopilot (Feature 1)
@@ -1037,6 +1143,7 @@ Execute in this order. Each phase should be fully complete before moving to the 
 34. Daily Digest Briefing (Feature 2)
 
 ## Phase 6: Security & Compliance
+
 35. Account Breach Monitor (Feature 16)
 36. VPN Compliance Checker (Feature 17)
 

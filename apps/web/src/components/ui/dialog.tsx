@@ -14,10 +14,7 @@ const DialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
-    className={cn(
-      'fixed inset-0 z-50 modal-backdrop animate-fade-in',
-      className,
-    )}
+    className={cn('modal-backdrop animate-fade-in fixed inset-0 z-50', className)}
     {...props}
   />
 ))
@@ -32,13 +29,13 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed left-[50%] top-[50%] z-50 grid w-full max-w-md translate-x-[-50%] translate-y-[-50%] rounded-2xl glass-card-elevated border border-white/5 p-6 shadow-xl animate-fade-in sm:rounded-2xl',
-        className,
+        'glass-card-elevated animate-fade-in fixed left-[50%] top-[50%] z-50 grid w-full max-w-md translate-x-[-50%] translate-y-[-50%] rounded-2xl border border-white/5 p-6 shadow-xl sm:rounded-2xl',
+        className
       )}
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-lg text-zinc-500 hover:text-white transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500">
+      <DialogPrimitive.Close className="focus-visible:outline-brand-500 absolute right-4 top-4 rounded-lg text-zinc-500 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2">
         <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
@@ -47,26 +44,14 @@ const DialogContent = React.forwardRef<
 ))
 DialogContent.displayName = DialogPrimitive.Content.displayName
 
-const DialogHeader = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn('flex flex-col space-y-1.5 text-center sm:text-left', className)}
-    {...props}
-  />
+const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn('flex flex-col space-y-1.5 text-center sm:text-left', className)} {...props} />
 )
 DialogHeader.displayName = 'DialogHeader'
 
-const DialogFooter = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
+const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn(
-      'flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2',
-      className,
-    )}
+    className={cn('flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2', className)}
     {...props}
   />
 )

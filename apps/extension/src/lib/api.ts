@@ -44,7 +44,7 @@ export class ApiError extends Error {
     message: string,
     public readonly status: number,
     public readonly code: string,
-    public readonly retryable: boolean,
+    public readonly retryable: boolean
   ) {
     super(message)
     this.name = 'ApiError'
@@ -54,7 +54,7 @@ export class ApiError extends Error {
 export class NetworkError extends Error {
   constructor(
     message: string,
-    public readonly retryable = true,
+    public readonly retryable = true
   ) {
     super(message)
     this.name = 'NetworkError'
@@ -134,7 +134,7 @@ export class ExtensionAPI {
     method: string,
     path: string,
     body?: unknown,
-    opts: { timeoutMs?: number; retries?: number } = {},
+    opts: { timeoutMs?: number; retries?: number } = {}
   ): Promise<T> {
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS
     const maxRetries = opts.retries ?? MAX_RETRIES
@@ -175,7 +175,9 @@ export class ExtensionAPI {
             const err = (await response.json()) as { error?: { code?: string; message?: string } }
             code = err.error?.code ?? code
             message = err.error?.message ?? message
-          } catch { /* ignore */ }
+          } catch {
+            /* ignore */
+          }
 
           const retryable = response.status >= 500 && response.status < 600
           throw new ApiError(message, response.status, code, retryable)
@@ -243,7 +245,7 @@ export class ExtensionAPI {
   async updateSessionBalance(
     sessionId: string,
     scBalance: number,
-    gcBalance: number,
+    gcBalance: number
   ): Promise<void> {
     await this.request<void>('PATCH', `/sessions/${sessionId}/balance`, {
       sc_balance: scBalance,
@@ -264,10 +266,7 @@ export class ExtensionAPI {
     })
   }
 
-  async batchTransactions(
-    sessionId: string,
-    transactions: TransactionRequest[],
-  ): Promise<void> {
+  async batchTransactions(sessionId: string, transactions: TransactionRequest[]): Promise<void> {
     if (transactions.length === 0) return
     await this.request<void>('POST', '/sessions/transactions/batch', {
       session_id: sessionId,

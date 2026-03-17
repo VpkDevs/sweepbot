@@ -1,4 +1,5 @@
 # SweepBot — Gap Analysis Report
+
 **Generated:** March 2026
 **Scope:** Full codebase audit — missing implementations, broken contracts, half-built features
 **Method:** Cross-referencing all route files, API client (`api.ts`), DB schema (`comprehensive.ts`), and frontend pages
@@ -7,7 +8,7 @@
 
 ## Executive Summary
 
-The codebase has a solid architectural spine but contains **6 critical blockers** that would cause immediate runtime crashes on production, **14 high-severity gaps** (silent failures, broken API contracts), and **12 medium/low issues** (placeholders, stubs, disabled features). None of these are logic errors in completed code — they are structural gaps between what the code *assumes exists* and what is *actually defined*.
+The codebase has a solid architectural spine but contains **6 critical blockers** that would cause immediate runtime crashes on production, **14 high-severity gaps** (silent failures, broken API contracts), and **12 medium/low issues** (placeholders, stubs, disabled features). None of these are logic errors in completed code — they are structural gaps between what the code _assumes exists_ and what is _actually defined_.
 
 ---
 
@@ -18,6 +19,7 @@ These tables are actively queried or written to at runtime. Their absence means 
 ---
 
 ### 1.1 `trust_index_scores` — Used everywhere in `trust.ts`
+
 **Severity:** 🔴 CRITICAL
 **Files:** `apps/api/src/routes/trust.ts` (20+ references), `apps/api/src/routes/platforms.ts`
 **Schema file:** `apps/api/src/db/schema/comprehensive.ts` — **not defined anywhere**
@@ -45,6 +47,7 @@ CREATE INDEX ON trust_index_scores (platform_id, calculated_at DESC);
 ---
 
 ### 1.2 `trust_index_alerts` — Used in new `trust.ts` alert endpoints
+
 **Severity:** 🔴 CRITICAL
 **Files:** `apps/api/src/routes/trust.ts` — GET/POST/DELETE `/trust-index/alerts`
 **Schema file:** Not defined
@@ -70,6 +73,7 @@ CREATE TABLE trust_index_alerts (
 ---
 
 ### 1.3 `tos_snapshots` — Referenced in `trust.ts` and `platforms.ts`
+
 **Severity:** 🔴 CRITICAL
 **Files:** `apps/api/src/routes/trust.ts`, `apps/api/src/routes/platforms.ts`
 **Schema file:** Defined in `apps/api/src/db/schema/data-collection.ts` but **never exported from the schema index** and not re-exported via `comprehensive.ts`.
@@ -77,6 +81,7 @@ CREATE TABLE trust_index_alerts (
 `trust.ts` queries `changes_detected`, `change_severity`, `change_summary`, `affected_sections`, `captured_at` from `tos_snapshots`. These columns need to be confirmed against `data-collection.ts` and the table must be exported.
 
 **Fix:** Add to `apps/api/src/db/schema/comprehensive.ts` (or re-export from index):
+
 ```typescript
 export { tosSnapshots } from './data-collection.js'
 ```
@@ -84,6 +89,7 @@ export { tosSnapshots } from './data-collection.js'
 ---
 
 ### 1.4 `redemptions` — Used in `trust.ts`, `user.ts`, `redemptions.ts`
+
 **Severity:** 🔴 CRITICAL
 **Files:** `apps/api/src/routes/trust.ts`, `apps/api/src/routes/user.ts`
 **Schema file:** Not in `comprehensive.ts`. May be in another schema file but not confirmed as exported.
@@ -93,6 +99,7 @@ export { tosSnapshots } from './data-collection.js'
 ---
 
 ### 1.5 `platform_ratings` — Referenced in `trust.ts` scoring engine
+
 **Severity:** 🔴 CRITICAL
 **Files:** `apps/api/src/routes/trust.ts` — `recalculatePlatformScore()`
 
@@ -101,6 +108,7 @@ export { tosSnapshots } from './data-collection.js'
 ---
 
 ### 1.6 `platform_bonuses` — Referenced in `trust.ts` bonus generosity scoring
+
 **Severity:** 🔴 CRITICAL
 **Files:** `apps/api/src/routes/trust.ts` — `recalculatePlatformScore()`
 
@@ -115,6 +123,7 @@ export { tosSnapshots } from './data-collection.js'
 **Registration:** `routes/index.ts` line 40: `await app.register(trustRoutes, { prefix: '/trust-index' })`
 
 The routes **inside** `trust.ts` are declared as:
+
 ```typescript
 app.get('/trust-index', ...)           // → resolves to GET /trust-index/trust-index ❌
 app.get('/trust-index/leaderboard', ...)  // → resolves to GET /trust-index/trust-index/leaderboard ❌
@@ -134,14 +143,15 @@ Same bug exists in the original `jackpots.ts`: route declares `app.get('/jackpot
 
 The new `TrustIndexPage.tsx` calls multiple methods that do not exist in `api.ts`:
 
-| Called in TrustIndexPage.tsx | Exists in api.ts | Impact |
-|------------------------------|-----------------|--------|
-| `api.trust.detail(platformId)` | ❌ Missing | Detail panel throws TypeError immediately |
-| `api.trust.leaderboard()` | ❌ Missing | Global stats panel is blank |
-| `api.trust.addAlert(data)` | ❌ Missing | Bell button throws on click |
-| `api.trust.removeAlert(platformId)` | ❌ Missing | Bell button throws on click |
+| Called in TrustIndexPage.tsx        | Exists in api.ts | Impact                                    |
+| ----------------------------------- | ---------------- | ----------------------------------------- |
+| `api.trust.detail(platformId)`      | ❌ Missing       | Detail panel throws TypeError immediately |
+| `api.trust.leaderboard()`           | ❌ Missing       | Global stats panel is blank               |
+| `api.trust.addAlert(data)`          | ❌ Missing       | Bell button throws on click               |
+| `api.trust.removeAlert(platformId)` | ❌ Missing       | Bell button throws on click               |
 
 `api.ts` only has:
+
 ```typescript
 trust: {
   list: (params?) => ...,
@@ -150,6 +160,7 @@ trust: {
 ```
 
 **Fix required in `api.ts`:**
+
 ```typescript
 trust: {
   list:        (params?) => request(`/trust-index${toQS(params)}`),
@@ -170,13 +181,19 @@ trust: {
 **File:** `apps/api/src/routes/flows.ts` lines 8–9
 
 ```typescript
-import { FlowInterpreter, FlowExecutor, ResponsiblePlayValidator, ConversationManager } from '@sweepbot/flows'
+import {
+  FlowInterpreter,
+  FlowExecutor,
+  ResponsiblePlayValidator,
+  ConversationManager,
+} from '@sweepbot/flows'
 import type { ConversationState } from '@sweepbot/flows'
 ```
 
 This package is referenced as a workspace dependency but **does not exist** anywhere in the monorepo. The entire Flows feature (`/flows/*` — 15+ endpoints covering flow CRUD, execution, conversations, marketplace) will fail to compile and crash on server startup.
 
 **Options:**
+
 1. Create the `@sweepbot/flows` package as a stub (stub classes with matching interfaces)
 2. Inline the interpreter logic into `flows.ts`
 3. Gate the `flows` routes behind a feature flag and skip registration until the package exists
@@ -191,14 +208,14 @@ This package is referenced as a workspace dependency but **does not exist** anyw
 
 The `jackpotSnapshots` table in `comprehensive.ts` defines field `value` (Drizzle column name). But `jackpots.ts` queries fields named `amount`, `last_hit_at`, `last_hit_amount` that don't exist in the schema:
 
-| Field queried in `jackpots.ts` | In `jackpotSnapshots` schema | Status |
-|-------------------------------|------------------------------|--------|
-| `js.amount` | `value` | ❌ Wrong name |
-| `js.last_hit_at` | Not defined | ❌ Missing column |
-| `js.last_hit_amount` | Not defined | ❌ Missing column |
-| `js.jackpot_name` | Not defined | ❌ Missing column |
-| `js.growth_rate_per_hour` | Not defined | ❌ Computed, not stored |
-| `js.captured_at` | `capturedAt` | ✅ Exists |
+| Field queried in `jackpots.ts` | In `jackpotSnapshots` schema | Status                  |
+| ------------------------------ | ---------------------------- | ----------------------- |
+| `js.amount`                    | `value`                      | ❌ Wrong name           |
+| `js.last_hit_at`               | Not defined                  | ❌ Missing column       |
+| `js.last_hit_amount`           | Not defined                  | ❌ Missing column       |
+| `js.jackpot_name`              | Not defined                  | ❌ Missing column       |
+| `js.growth_rate_per_hour`      | Not defined                  | ❌ Computed, not stored |
+| `js.captured_at`               | `capturedAt`                 | ✅ Exists               |
 
 Either the schema needs new columns or the route needs to use the correct column names.
 
@@ -212,19 +229,21 @@ Either the schema needs new columns or the route needs to use the correct column
 
 The rewritten `sessions.ts` references fields that don't exist in the Drizzle schema:
 
-| Field used in sessions.ts | In sessions schema | Impact |
-|--------------------------|-------------------|--------|
-| `sessions.durationSeconds` | ❌ Missing | PATCH /end SET fails silently |
-| `sessions.metadata` | ❌ Missing | client_session_id idempotency query always misses |
-| `sessions.scBalanceStart` | ✅ Exists as `sc_balance_start` | OK |
+| Field used in sessions.ts  | In sessions schema              | Impact                                            |
+| -------------------------- | ------------------------------- | ------------------------------------------------- |
+| `sessions.durationSeconds` | ❌ Missing                      | PATCH /end SET fails silently                     |
+| `sessions.metadata`        | ❌ Missing                      | client_session_id idempotency query always misses |
+| `sessions.scBalanceStart`  | ✅ Exists as `sc_balance_start` | OK                                                |
 
 **Migrations needed:**
+
 ```sql
 ALTER TABLE sessions ADD COLUMN duration_seconds INTEGER;
 ALTER TABLE sessions ADD COLUMN metadata JSONB DEFAULT '{}';
 ```
 
 Also in the Drizzle schema:
+
 ```typescript
 durationSeconds: integer('duration_seconds'),
 metadata: jsonb('metadata').default('{}'),
@@ -247,6 +266,7 @@ metadata: jsonb('metadata').default('{}'),
 **File:** `apps/api/src/routes/sessions.ts`
 
 The status transition endpoint and heartbeat endpoint do:
+
 ```typescript
 await db.update(sessions).set(updatePayload as ...).where(...)
 ```
@@ -263,13 +283,13 @@ Where `updatePayload` is a `Record<string, unknown>` built dynamically. Drizzle 
 **Schema file:** `comprehensive.ts` lines 29–40
 **Route file:** `apps/api/src/routes/platforms.ts`
 
-| Field queried | In `games` schema | Status |
-|--------------|-------------------|--------|
-| `g.thumbnail_url` | ❌ Missing | NULL returned silently |
-| `g.provider_id` | ❌ Missing (has `provider` varchar) | JOIN fails |
-| `g.is_featured` | ❌ Missing | NULL |
-| `g.jackpot_eligible` | ❌ Missing | NULL |
-| `g.release_date` | ❌ Missing | NULL |
+| Field queried        | In `games` schema                   | Status                 |
+| -------------------- | ----------------------------------- | ---------------------- |
+| `g.thumbnail_url`    | ❌ Missing                          | NULL returned silently |
+| `g.provider_id`      | ❌ Missing (has `provider` varchar) | JOIN fails             |
+| `g.is_featured`      | ❌ Missing                          | NULL                   |
+| `g.jackpot_eligible` | ❌ Missing                          | NULL                   |
+| `g.release_date`     | ❌ Missing                          | NULL                   |
 
 ---
 
@@ -291,6 +311,7 @@ Where `updatePayload` is a `Record<string, unknown>` built dynamically. Drizzle 
 **File:** `apps/web/src/pages/AnalyticsPage.tsx`
 
 The analytics backend (`analytics.ts`) was completely rebuilt in the previous session with 3 new endpoints:
+
 - `GET /analytics/streaks` — win/loss streak data
 - `GET /analytics/insights` — automated pattern detection + personal records
 - `GET /analytics/export` — CSV download
@@ -334,11 +355,12 @@ Note: `api.ts` has **two separate tax endpoints** — `api.user.taxSummary()` an
 **File:** `apps/api/src/routes/index.ts`
 
 ```typescript
-await app.register(featuresRoutes,    { prefix: '/features' })  // → /features/achievements/...
+await app.register(featuresRoutes, { prefix: '/features' }) // → /features/achievements/...
 await app.register(achievementRoutes, { prefix: '/achievements' }) // → /achievements/...
 ```
 
 `api.ts` calls **both**:
+
 - `api.features.achievements()` → `GET /features/achievements`
 - `api.achievements.streaks()` → `GET /achievements/streaks`
 
@@ -352,7 +374,7 @@ This is intentional duplication (Phase 2 vs Phase 1 endpoints), but `Achievement
 **File:** `apps/api/src/routes/index.ts` line 44
 
 ```typescript
-await app.register(gameIntelligenceRoutes)  // No prefix
+await app.register(gameIntelligenceRoutes) // No prefix
 ```
 
 All other route modules get a `/noun` prefix. `gameIntelligenceRoutes` has no prefix, which means its routes are mounted at the root of `/api/v1`. Depending on what paths are declared inside `intelligence.ts`, this could cause accidental route collisions. Should likely be: `{ prefix: '/intelligence' }`.
@@ -365,6 +387,7 @@ All other route modules get a `/noun` prefix. `gameIntelligenceRoutes` has no pr
 **File:** `apps/api/src/routes/platforms.ts`
 
 Route queries `INNER JOIN game_providers gp ON gp.id = g.provider_id` — but:
+
 1. `game_providers` table is not defined anywhere
 2. `games.provider_id` column doesn't exist (schema has `games.provider` as varchar, not a FK)
 
@@ -433,62 +456,48 @@ This route file is registered (`{ prefix: '/payment-methods' }`) but was not aud
 
 ## Summary Table
 
-| # | Issue | File(s) | Severity | Fix Effort |
-|---|-------|---------|----------|------------|
-| 1 | `trust_index_scores` table missing | trust.ts, platforms.ts | 🔴 CRITICAL | Migration + schema |
-| 2 | `trust_index_alerts` table missing | trust.ts | 🔴 CRITICAL | Migration + schema |
-| 3 | `tos_snapshots` not exported from schema | data-collection.ts | 🔴 CRITICAL | Export + re-test |
-| 4 | `redemptions` table not confirmed in schema | trust.ts, user.ts | 🔴 CRITICAL | Confirm + export |
-| 5 | `platform_ratings` table missing | trust.ts | 🔴 CRITICAL | Migration + schema |
-| 6 | `platform_bonuses` table missing | trust.ts | 🔴 CRITICAL | Migration + schema |
-| 7 | Double-prefix bug in trust.ts routes | trust.ts | 🔴 CRITICAL | Path fix |
-| 8 | `@sweepbot/flows` package doesn't exist | flows.ts | 🟠 HIGH | Create stub package |
-| 9 | Jackpot schema field mismatch (`value` vs `amount`) | jackpots.ts + schema | 🟠 HIGH | Schema migration |
-| 10 | `sessions` table missing `durationSeconds`, `metadata` | sessions.ts + schema | 🟠 HIGH | Migration + schema |
-| 11 | `flow_conversations` table not defined | flows.ts | 🟠 HIGH | Migration + schema |
-| 12 | `api.ts` missing trust.detail/leaderboard/addAlert/removeAlert | api.ts | 🟠 HIGH | 8 lines of code |
-| 13 | Dynamic `.set()` type error in sessions.ts | sessions.ts | 🟠 HIGH | Use typed objects |
-| 14 | `games` table missing thumbnail/featured/jackpot fields | platforms.ts + schema | 🟠 HIGH | Migration |
-| 15 | `platforms` table uses `isActive` but routes filter on `status` | trust.ts, platforms.ts | 🟠 HIGH | SQL fix |
-| 16 | `AnalyticsPage.tsx` not updated with 3 new endpoints | AnalyticsPage.tsx | 🟠 HIGH | Frontend work |
-| 17 | WebSocket jackpots disabled | server.ts, jackpots.ts | 🟡 MEDIUM | Awaiting library |
-| 18 | Tax summary queries `received_at` (should be `completed_at`) | user.ts | 🟡 MEDIUM | 1-line SQL fix |
-| 19 | Duplicate achievements routes (/features vs /achievements) | index.ts, api.ts | 🟡 MEDIUM | Consolidate |
-| 20 | `gameIntelligenceRoutes` has no prefix | index.ts | 🟡 MEDIUM | Add prefix |
-| 21 | `game_providers` table missing, `provider_id` FK missing | platforms.ts + schema | 🟡 MEDIUM | Migration |
-| 22 | `platform_community_signals` table missing | platforms.ts | 🟡 MEDIUM | Migration |
-| 23 | Legacy state migration shim in flows production path | flows.ts | 🟡 MEDIUM | Extract to script |
-| 24 | Redis rate limiter not connected | server.ts | 🟢 LOW | Phase 2 task |
-| 25 | Self-exclusion not enforced in auth middleware | user.ts, middleware | 🟢 LOW | Middleware hook |
-| 26 | `payment-methods.ts` not audited | payment-methods.ts | 🟢 LOW | Review |
+| #   | Issue                                                           | File(s)                | Severity    | Fix Effort          |
+| --- | --------------------------------------------------------------- | ---------------------- | ----------- | ------------------- |
+| 1   | `trust_index_scores` table missing                              | trust.ts, platforms.ts | 🔴 CRITICAL | Migration + schema  |
+| 2   | `trust_index_alerts` table missing                              | trust.ts               | 🔴 CRITICAL | Migration + schema  |
+| 3   | `tos_snapshots` not exported from schema                        | data-collection.ts     | 🔴 CRITICAL | Export + re-test    |
+| 4   | `redemptions` table not confirmed in schema                     | trust.ts, user.ts      | 🔴 CRITICAL | Confirm + export    |
+| 5   | `platform_ratings` table missing                                | trust.ts               | 🔴 CRITICAL | Migration + schema  |
+| 6   | `platform_bonuses` table missing                                | trust.ts               | 🔴 CRITICAL | Migration + schema  |
+| 7   | Double-prefix bug in trust.ts routes                            | trust.ts               | 🔴 CRITICAL | Path fix            |
+| 8   | `@sweepbot/flows` package doesn't exist                         | flows.ts               | 🟠 HIGH     | Create stub package |
+| 9   | Jackpot schema field mismatch (`value` vs `amount`)             | jackpots.ts + schema   | 🟠 HIGH     | Schema migration    |
+| 10  | `sessions` table missing `durationSeconds`, `metadata`          | sessions.ts + schema   | 🟠 HIGH     | Migration + schema  |
+| 11  | `flow_conversations` table not defined                          | flows.ts               | 🟠 HIGH     | Migration + schema  |
+| 12  | `api.ts` missing trust.detail/leaderboard/addAlert/removeAlert  | api.ts                 | 🟠 HIGH     | 8 lines of code     |
+| 13  | Dynamic `.set()` type error in sessions.ts                      | sessions.ts            | 🟠 HIGH     | Use typed objects   |
+| 14  | `games` table missing thumbnail/featured/jackpot fields         | platforms.ts + schema  | 🟠 HIGH     | Migration           |
+| 15  | `platforms` table uses `isActive` but routes filter on `status` | trust.ts, platforms.ts | 🟠 HIGH     | SQL fix             |
+| 16  | `AnalyticsPage.tsx` not updated with 3 new endpoints            | AnalyticsPage.tsx      | 🟠 HIGH     | Frontend work       |
+| 17  | WebSocket jackpots disabled                                     | server.ts, jackpots.ts | 🟡 MEDIUM   | Awaiting library    |
+| 18  | Tax summary queries `received_at` (should be `completed_at`)    | user.ts                | 🟡 MEDIUM   | 1-line SQL fix      |
+| 19  | Duplicate achievements routes (/features vs /achievements)      | index.ts, api.ts       | 🟡 MEDIUM   | Consolidate         |
+| 20  | `gameIntelligenceRoutes` has no prefix                          | index.ts               | 🟡 MEDIUM   | Add prefix          |
+| 21  | `game_providers` table missing, `provider_id` FK missing        | platforms.ts + schema  | 🟡 MEDIUM   | Migration           |
+| 22  | `platform_community_signals` table missing                      | platforms.ts           | 🟡 MEDIUM   | Migration           |
+| 23  | Legacy state migration shim in flows production path            | flows.ts               | 🟡 MEDIUM   | Extract to script   |
+| 24  | Redis rate limiter not connected                                | server.ts              | 🟢 LOW      | Phase 2 task        |
+| 25  | Self-exclusion not enforced in auth middleware                  | user.ts, middleware    | 🟢 LOW      | Middleware hook     |
+| 26  | `payment-methods.ts` not audited                                | payment-methods.ts     | 🟢 LOW      | Review              |
 
 ---
 
 ## Recommended Fix Order
 
 **Day 1 — Unblock the server:**
+
 1. Fix double-prefix bug in `trust.ts` (all routes → `/`, `/:platformId`, etc.)
 2. Fix `gameIntelligenceRoutes` prefix
 3. Create stub `@sweepbot/flows` package so server starts without crashing
 4. Fix `platforms` schema: replace `p.status` with `p.is_active` in raw SQL throughout
 
-**Day 2 — Write missing migrations:**
-5. `trust_index_scores` table + Drizzle schema export
-6. `trust_index_alerts` table + Drizzle schema export
-7. Confirm `redemptions` table schema and export it
-8. `platform_ratings` table
-9. `platform_bonuses` table
-10. `sessions.duration_seconds`, `sessions.metadata` columns
-11. `flow_conversations` table
-12. `jackpot_snapshots` add `jackpot_name`, `last_hit_at`, `last_hit_amount` columns (or rename `value` → `amount`)
+**Day 2 — Write missing migrations:** 5. `trust_index_scores` table + Drizzle schema export 6. `trust_index_alerts` table + Drizzle schema export 7. Confirm `redemptions` table schema and export it 8. `platform_ratings` table 9. `platform_bonuses` table 10. `sessions.duration_seconds`, `sessions.metadata` columns 11. `flow_conversations` table 12. `jackpot_snapshots` add `jackpot_name`, `last_hit_at`, `last_hit_amount` columns (or rename `value` → `amount`)
 
-**Day 3 — API contracts:**
-13. Add missing methods to `api.ts` (trust.detail, trust.leaderboard, trust.addAlert, trust.removeAlert)
-14. Fix sessions.ts dynamic `.set()` calls with typed payloads
-15. Fix `user.ts` tax summary `received_at` → `completed_at`
-16. Add `games` missing columns (thumbnail_url, is_featured, jackpot_eligible)
+**Day 3 — API contracts:** 13. Add missing methods to `api.ts` (trust.detail, trust.leaderboard, trust.addAlert, trust.removeAlert) 14. Fix sessions.ts dynamic `.set()` calls with typed payloads 15. Fix `user.ts` tax summary `received_at` → `completed_at` 16. Add `games` missing columns (thumbnail_url, is_featured, jackpot_eligible)
 
-**Day 4 — Finish pending features:**
-17. Update `AnalyticsPage.tsx` with Streak Card, Insights Panel, Export button
-18. Consolidate duplicate achievements routes
-19. Add self-exclusion check to auth middleware
+**Day 4 — Finish pending features:** 17. Update `AnalyticsPage.tsx` with Streak Card, Insights Panel, Export button 18. Consolidate duplicate achievements routes 19. Add self-exclusion check to auth middleware

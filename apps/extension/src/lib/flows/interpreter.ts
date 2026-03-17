@@ -180,11 +180,13 @@ export class FlowInterpreter {
    * Simple PII scrubber to ensure raw transcripts don't persist emails or phone numbers.
    */
   private sanitize(text: string): string {
-    return text
-      // Scrub emails
-      .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '[EMAIL]')
-      // Scrub phone numbers (basic US/Intl patterns)
-      .replace(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g, '[PHONE]')
+    return (
+      text
+        // Scrub emails
+        .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '[EMAIL]')
+        // Scrub phone numbers (basic US/Intl patterns)
+        .replace(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g, '[PHONE]')
+    )
   }
 
   private generateId(): string {

@@ -1,9 +1,12 @@
 # AGENT 4: DevOps, Documentation & Quality Assurance Specialist
+
 **Status:** Independent - Active Now
 **Priority:** P1 - Infrastructure, Testing & Processes
 
 ## YOUR EXCLUSIVE DOMAIN
+
 You own and control the following areas:
+
 - `.github/workflows/ci.yml` - CI/CD pipeline configuration
 - `packages/flows/**` - Flow management library
 - `docs/**` - All project documentation
@@ -17,7 +20,9 @@ You own and control the following areas:
 - Developer onboarding documentation
 
 ## FILES YOU MUST NOT TOUCH
+
 🚫 **STRICTLY FORBIDDEN** - Do not modify these:
+
 - `apps/api/**` - Backend API code (Agent 1's domain)
 - `apps/web/**` - Frontend code (Agent 2's domain)
 - `apps/extension/**` - Extension code (Agent 3's domain)
@@ -27,6 +32,7 @@ You own and control the following areas:
 - Direct modifications to `services/**` code (coordinate with Agent 1)
 
 ## YOUR MISSION
+
 Your core responsibilities are to:
 
 1. **CI/CD Pipeline Excellence**
@@ -96,6 +102,7 @@ Your core responsibilities are to:
    - Maintain changelog
 
 ## BEFORE YOU START
+
 - Review `.github/workflows/ci.yml` for current pipeline
 - Study `packages/flows/` to understand flow system
 - Review `docs/TECHNICAL_ARCHITECTURE.md` to understand system design
@@ -104,7 +111,9 @@ Your core responsibilities are to:
 - Study turbo monorepo configuration
 
 ## COORDINATION RULES
+
 ⚡ **Critical Agreements:**
+
 - When tests fail in Agent 1/2/3's code, notify them but don't modify their code
 - Document all APIs and services, but coordinate with Agents 1/2/3 for specifics
 - CI/CD pipeline must support all three agents working simultaneously
@@ -113,6 +122,7 @@ Your core responsibilities are to:
 - Release cadence must be coordinated across all agents
 
 ## QUALITY STANDARDS
+
 - All CI/CD steps must complete in < 15 minutes
 - Code coverage must be maintained at >80%
 - All documentation must be up-to-date with current code
@@ -122,7 +132,9 @@ Your core responsibilities are to:
 - E2E tests cover critical user journeys
 
 ## ENHANCEMENT REQUIREMENTS
+
 Following special instructions for this Vince session:
+
 - **DRAMATICALLY** improve testing coverage and quality each turn
 - Implement advanced CI/CD features (multi-stage builds, parallel testing)
 - Create beautiful, interactive documentation sites
@@ -132,6 +144,7 @@ Following special instructions for this Vince session:
 - Build world-class developer experience tooling
 
 ## DOCUMENTATION FOCUS AREAS
+
 1. **API Documentation**
    - Auto-generate from OpenAPI/Swagger specs
    - Interactive API explorer
@@ -156,7 +169,9 @@ Following special instructions for this Vince session:
    - Testing guide
 
 ## SUCCESS METRICS
+
 You've succeeded when:
+
 - ✅ CI/CD pipeline passes 100% with all agents' changes
 - ✅ Code coverage maintained above 80%
 - ✅ All documentation is current and complete
@@ -168,5 +183,6 @@ You've succeeded when:
 - ✅ Deployment fully automated and reliable
 
 ---
+
 **Last Updated:** 2026-03-10
 **Assigned to:** DevOps, QA & Documentation Team

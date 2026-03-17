@@ -10,9 +10,9 @@ export function createLogger(context: string) {
     // debug and info are silenced in production builds to avoid console noise
     // and accidental leakage of session/context data.
     debug: isDev ? (...args: unknown[]) => console.debug(prefix, ...args) : noop,
-    info:  isDev ? (...args: unknown[]) => console.log(prefix, ...args)   : noop,
+    info: isDev ? (...args: unknown[]) => console.log(prefix, ...args) : noop,
     // warn and error remain unconditional so production issues are surfaced.
-    warn:  (...args: unknown[]) => console.warn(prefix, ...args),
+    warn: (...args: unknown[]) => console.warn(prefix, ...args),
     error: (...args: unknown[]) => console.error(prefix, ...args),
   }
 }

@@ -136,6 +136,5 @@ export const utilities = {
   focusRing:
     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
   truncate: 'overflow-hidden text-ellipsis whitespace-nowrap',
-  visuallyHidden:
-    'absolute w-1 h-1 p-0 -m-1 overflow-hidden clip-rect(0,0,0,0) border-0',
+  visuallyHidden: 'absolute w-1 h-1 p-0 -m-1 overflow-hidden clip-rect(0,0,0,0) border-0',
 } as const

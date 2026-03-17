@@ -11,9 +11,11 @@ This guide provides step-by-step instructions for implementing the 9 critical is
 **Severity**: 🔴 CRITICAL
 
 ### The Problem
+
 The batch transaction endpoint deduplicates incoming transactions but always increments session totals from the request body, not from actual inserted rows. On retry with conflicts, this double-counts totals.
 
 ### Implementation
+
 Modify the `POST /transactions/batch` endpoint to track inserted rows:
 
 ```typescript
@@ -26,7 +28,7 @@ const insertResult = await db.insert(transactions).values(
 // insertResult should give us the count of actually inserted rows
 
 // Then use that count, not the input array length, for aggregation
-const actuallyInserted = newTxs.length  // This is correct now
+const actuallyInserted = newTxs.length // This is correct now
 // But for safety, verify against database:
 const insertedCount = await db.execute(
   sql`SELECT COUNT(*) FROM transactions WHERE session_id = ${session_id} AND timestamp >= ${minTimestamp}`
@@ -34,6 +36,7 @@ const insertedCount = await db.execute(
 ```
 
 ### Testing
+
 ```bash
 # Test idempotency with retries
 curl -X POST /sessions/{id}/transactions/batch \
@@ -54,24 +57,27 @@ curl -X GET /sessions/{id}
 **Severity**: 🔴 CRITICAL
 
 ### The Problem
+
 JavaScript summing with IEEE-754 floating-point causes cumulative rounding drift when applied to fixed-scale NUMERIC columns.
 
 ### Implementation Option A: Integer Cents (Recommended)
+
 Store amounts as integer cents, not floats:
 
 ```typescript
 // BEFORE
 bet_amount: z.number().positive().max(999_999)
 
-// AFTER  
-bet_amount: z.number().positive().max(99999900)  // In cents, so max $999,999.00
+// AFTER
+bet_amount: z.number().positive().max(99999900) // In cents, so max $999,999.00
 
 // In database operations
-const betCents = Math.round(tx.bet_amount * 100)  // Convert to cents once
-const betAmount = (betCents / 100).toFixed(2)  // Display as dollars
+const betCents = Math.round(tx.bet_amount * 100) // Convert to cents once
+const betAmount = (betCents / 100).toFixed(2) // Display as dollars
 ```
 
 ### Implementation Option B: SQL-Side Aggregation (If Keeping Floats)
+
 ```typescript
 // Instead of summing in JavaScript:
 const deltas = {
@@ -91,6 +97,7 @@ const stats = await db.execute(sql`
 ```
 
 ### Testing
+
 ```bash
 # Test with fractional amounts that cause rounding errors
 # e.g., $0.01 * 11 should equal $0.11, not $0.109999...
@@ -114,9 +121,11 @@ POST /sessions/{id}/transactions/batch
 **Severity**: 🔴 CRITICAL
 
 ### The Problem
+
 Audit log extracts client IP from raw `x-forwarded-for` header without validating proxy trust, allowing IP spoofing.
 
 ### Implementation
+
 Create `apps/api/src/middleware/audit.ts`:
 
 ```typescript
@@ -132,7 +141,7 @@ import { audit_logs } from '../db/schema/audit.js'
 function getClientIp(request: FastifyRequest): string {
   // Fastify automatically parses and validates based on trustProxy setting
   return request.ip ?? 'unknown'
-  
+
   // If you need x-forwarded-for override:
   // if (process.env.TRUST_PROXY === 'true') {
   //   const forwarded = request.headers['x-forwarded-for']
@@ -147,7 +156,7 @@ const auditPlugin: FastifyPlugin = async (app) => {
     try {
       const clientIp = getClientIp(request)
       const userId = request.user?.id ?? null
-      
+
       await db.insert(audit_logs).values({
         userId,
         action: `${request.method} ${request.url}`,
@@ -167,18 +176,20 @@ export default auditPlugin
 ```
 
 ### Configuration
+
 In `apps/api/src/main.ts`, set trustProxy:
 
 ```typescript
 const app = await build({
   // ... other options
-  trustProxy: true,  // Behind reverse proxy (Vercel, load balancer)
+  trustProxy: true, // Behind reverse proxy (Vercel, load balancer)
   // OR specify specific IPs:
   // trustProxy: ['10.0.0.1', '10.0.0.2']
 })
 ```
 
 ### Testing
+
 ```bash
 # Test without spoofing (direct connection)
 curl http://localhost:3000/api/v1/sessions
@@ -198,9 +209,11 @@ curl -H "X-Forwarded-For: 1.2.3.4" http://localhost:3000/api/v1/sessions
 **Severity**: 🟡 MEDIUM
 
 ### The Problem
+
 Some error responses use `{ success: false, error: { code, message } }` instead of standard shape.
 
 ### Implementation
+
 Ensure all error responses match:
 
 ```typescript
@@ -245,6 +258,7 @@ if (!body.email) {
 **Severity**: 🟡 MEDIUM
 
 ### Implementation
+
 ```typescript
 // BEFORE
 import { registerRequestTimingHook } from '../middleware/timing.js'
@@ -268,6 +282,7 @@ describe('Audit Middleware', () => {
 **Severity**: 🟡 MEDIUM
 
 ### Implementation
+
 ```typescript
 // BEFORE
 // Test: vi.mock('../../utils/logger')
@@ -281,7 +296,7 @@ vi.mock('../utils/logger', () => ({
     info: vi.fn(),
     error: vi.fn(),
     warn: vi.fn(),
-  }
+  },
 }))
 
 // Then use it
@@ -297,14 +312,16 @@ import { logger } from '../utils/logger.js'
 **Severity**: 🟡 MEDIUM
 
 ### The Problem
+
 Multiple `.filter()` calls on hot path with up to 500 transactions wastes CPU.
 
 ### Implementation
+
 ```typescript
 // BEFORE
-const wins = txs.filter(tx => tx.result === 'win')
-const losses = txs.filter(tx => tx.result === 'loss')
-const bonuses = txs.filter(tx => tx.bonus_triggered)
+const wins = txs.filter((tx) => tx.result === 'win')
+const losses = txs.filter((tx) => tx.result === 'loss')
+const bonuses = txs.filter((tx) => tx.bonus_triggered)
 
 const totalWagered = txs.reduce((sum, tx) => sum + tx.bet_amount, 0)
 const totalWon = txs.reduce((sum, tx) => sum + tx.win_amount, 0)
@@ -336,15 +353,17 @@ for (const tx of txs) {
 **Severity**: 🟡 MEDIUM
 
 ### The Problem
+
 Input passes validation but becomes empty after sanitization (e.g., `<b></b>` is valid before, empty after).
 
 ### Implementation
+
 ```typescript
 import DOMPurify from 'isomorphic-dompurify'
 
 // BEFORE
-const validated = schema.parse(req.body)  // Might be "<b></b>"
-const sanitized = DOMPurify.sanitize(validated.description)  // Becomes ""
+const validated = schema.parse(req.body) // Might be "<b></b>"
+const sanitized = DOMPurify.sanitize(validated.description) // Becomes ""
 
 // AFTER - Validate after sanitization too
 const validated = schema.parse(req.body)
@@ -364,9 +383,11 @@ if (schema.parse({ ...validated, description: sanitized }).description === '') {
 **Severity**: 🟡 MEDIUM
 
 ### The Problem
+
 `x-forwarded-for` can be an array, but code casts to string and calls `.split()`, risking runtime error.
 
 ### Implementation
+
 ```typescript
 // BEFORE
 const clientIp = (request.headers['x-forwarded-for'] as string).split(',')[0]
@@ -375,10 +396,10 @@ const clientIp = (request.headers['x-forwarded-for'] as string).split(',')[0]
 // AFTER - Type-safe handling
 function getClientIpFromHeader(header: string | string[] | undefined): string | null {
   if (!header) return null
-  
+
   const value = typeof header === 'string' ? header : header[0]
   if (!value) return null
-  
+
   // x-forwarded-for is comma-separated list of IPs
   return value.split(',')[0]?.trim() ?? null
 }
@@ -408,6 +429,7 @@ const clientIp = getClientIpFromHeader(request.headers['x-forwarded-for']) ?? 'u
 ## Testing Strategy
 
 ### Unit Tests
+
 ```bash
 pnpm test -- audit.test.ts
 pnpm test -- transactions.test.ts
@@ -415,6 +437,7 @@ pnpm test -- flows.test.ts
 ```
 
 ### Integration Tests
+
 ```bash
 # Test batch transaction idempotency
 pnpm test:e2e -- batch-transactions.spec.ts
@@ -427,6 +450,7 @@ pnpm test:e2e -- audit-logging.spec.ts
 ```
 
 ### Manual Testing
+
 ```bash
 # Start dev server
 pnpm dev
@@ -460,6 +484,7 @@ curl -X POST http://localhost:3000/api/v1/sessions \
 ## Questions or Need Help?
 
 Refer to:
+
 - Fastify docs: https://www.fastify.io/docs/latest/
 - Drizzle ORM: https://orm.drizzle.team/
 - DOMPurify: https://github.com/cure53/DOMPurify

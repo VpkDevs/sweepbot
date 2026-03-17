@@ -9,20 +9,20 @@ import { z } from 'zod'
 const webEnvSchema = z.object({
   // API Configuration
   VITE_API_URL: z.string().min(1).default('/api/v1'),
-  
+
   // Supabase Configuration
   VITE_SUPABASE_URL: z.string().url(),
   VITE_SUPABASE_ANON_KEY: z.string().min(1),
-  
+
   // Feature Flags
   VITE_ENABLE_ANALYTICS: z.enum(['true', 'false']).default('true'),
   VITE_ENABLE_DEBUG: z.enum(['true', 'false']).default('false'),
   VITE_ENABLE_EXPERIMENTAL_FEATURES: z.enum(['true', 'false']).default('false'),
-  
+
   // Third-party Services
   VITE_SENTRY_DSN: z.string().url().optional(),
   VITE_POSTHOG_KEY: z.string().optional(),
-  
+
   // App Configuration
   VITE_APP_NAME: z.string().default('SweepBot'),
   VITE_APP_URL: z.string().url().default('https://app.sweepbot.app'),
@@ -72,7 +72,12 @@ export function getWebEnv(): WebEnv {
 /**
  * Check if a feature flag is enabled
  */
-export function isFeatureEnabled(feature: keyof Pick<WebEnv, 'VITE_ENABLE_ANALYTICS' | 'VITE_ENABLE_DEBUG' | 'VITE_ENABLE_EXPERIMENTAL_FEATURES'>): boolean {
+export function isFeatureEnabled(
+  feature: keyof Pick<
+    WebEnv,
+    'VITE_ENABLE_ANALYTICS' | 'VITE_ENABLE_DEBUG' | 'VITE_ENABLE_EXPERIMENTAL_FEATURES'
+  >
+): boolean {
   const env = getWebEnv()
   return env[feature] === 'true'
 }
@@ -100,18 +105,37 @@ export function isBuild(): boolean {
 
 // Export individual env values for convenience
 export const env = {
-  get apiUrl() { return getWebEnv().VITE_API_URL },
-  get supabaseUrl() { return getWebEnv().VITE_SUPABASE_URL },
-  get supabaseAnonKey() { return getWebEnv().VITE_SUPABASE_ANON_KEY },
-  get enableAnalytics() { return isFeatureEnabled('VITE_ENABLE_ANALYTICS') },
-  get enableDebug() { return isFeatureEnabled('VITE_ENABLE_DEBUG') },
-  get enableExperimental() { return isFeatureEnabled('VITE_ENABLE_EXPERIMENTAL_FEATURES') },
-  get sentryDsn() { return getWebEnv().VITE_SENTRY_DSN },
-  get posthogKey() { return getWebEnv().VITE_POSTHOG_KEY },
-  get appName() { return getWebEnv().VITE_APP_NAME },
-  get appUrl() { return getWebEnv().VITE_APP_URL },
+  get apiUrl() {
+    return getWebEnv().VITE_API_URL
+  },
+  get supabaseUrl() {
+    return getWebEnv().VITE_SUPABASE_URL
+  },
+  get supabaseAnonKey() {
+    return getWebEnv().VITE_SUPABASE_ANON_KEY
+  },
+  get enableAnalytics() {
+    return isFeatureEnabled('VITE_ENABLE_ANALYTICS')
+  },
+  get enableDebug() {
+    return isFeatureEnabled('VITE_ENABLE_DEBUG')
+  },
+  get enableExperimental() {
+    return isFeatureEnabled('VITE_ENABLE_EXPERIMENTAL_FEATURES')
+  },
+  get sentryDsn() {
+    return getWebEnv().VITE_SENTRY_DSN
+  },
+  get posthogKey() {
+    return getWebEnv().VITE_POSTHOG_KEY
+  },
+  get appName() {
+    return getWebEnv().VITE_APP_NAME
+  },
+  get appUrl() {
+    return getWebEnv().VITE_APP_URL
+  },
   isDevelopment,
   isProduction,
   isBuild,
 }
-

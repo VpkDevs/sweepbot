@@ -3,11 +3,7 @@
  * Provides centralized error handling and retry logic for all queries
  */
 
-import { 
-  QueryClient, 
-  QueryClientProvider, 
-  UseQueryResult,
-} from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, UseQueryResult } from '@tanstack/react-query'
 import { ReactNode, useState } from 'react'
 
 // Default retry configuration
@@ -73,34 +69,24 @@ export function useQueryWithErrorHandling<T>(
 /**
  * Default error fallback component
  */
-export function QueryErrorFallback({ 
-  error,
-  reset,
-}: { 
-  error: Error
-  reset: () => void
-}) {
+export function QueryErrorFallback({ error, reset }: { error: Error; reset: () => void }) {
   const errorMessage = error?.message || 'An unexpected error occurred'
-  
+
   return (
     <div className="flex flex-col items-center justify-center p-8 text-center">
-      <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-6 max-w-md">
-        <h3 className="text-lg font-bold text-red-400 mb-2">
-          Something went wrong
-        </h3>
-        <p className="text-zinc-400 text-sm mb-4">
-          {errorMessage}
-        </p>
-        <div className="flex gap-3 justify-center">
+      <div className="max-w-md rounded-2xl border border-red-500/20 bg-red-500/10 p-6">
+        <h3 className="mb-2 text-lg font-bold text-red-400">Something went wrong</h3>
+        <p className="mb-4 text-sm text-zinc-400">{errorMessage}</p>
+        <div className="flex justify-center gap-3">
           <button
             onClick={reset}
-            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-medium rounded-lg transition-colors"
+            className="rounded-lg bg-zinc-800 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
           >
             Try Again
           </button>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm font-medium rounded-lg transition-colors"
+            className="rounded-lg bg-red-500/20 px-4 py-2 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/30"
           >
             Reload Page
           </button>
@@ -117,8 +103,8 @@ export function QueryLoadingFallback() {
   return (
     <div className="flex items-center justify-center p-8">
       <div className="flex flex-col items-center gap-3">
-        <div className="w-8 h-8 border-2 border-brand-500/30 border-t-brand-500 rounded-full animate-spin" />
-        <span className="text-zinc-500 text-sm">Loading...</span>
+        <div className="border-brand-500/30 border-t-brand-500 h-8 w-8 animate-spin rounded-full border-2" />
+        <span className="text-sm text-zinc-500">Loading...</span>
       </div>
     </div>
   )
@@ -127,16 +113,16 @@ export function QueryLoadingFallback() {
 /**
  * Empty state fallback component
  */
-export function QueryEmptyFallback({ 
+export function QueryEmptyFallback({
   message = 'No data available',
   action,
-}: { 
+}: {
   message?: string
-  action?: ReactNode 
+  action?: ReactNode
 }) {
   return (
     <div className="flex flex-col items-center justify-center p-8 text-center">
-      <div className="text-zinc-500 mb-4">{message}</div>
+      <div className="mb-4 text-zinc-500">{message}</div>
       {action}
     </div>
   )
@@ -145,20 +131,10 @@ export function QueryEmptyFallback({
 /**
  * Provider component that wraps the app with QueryClient
  */
-export function QueryProvider({ 
-  children,
-  client,
-}: { 
-  children: ReactNode
-  client?: QueryClient
-}) {
+export function QueryProvider({ children, client }: { children: ReactNode; client?: QueryClient }) {
   const [queryClient] = useState(() => client || createQueryClient())
-  
-  return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
-  )
+
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
 }
 
 /**
@@ -171,4 +147,3 @@ export function useQueryHelpers() {
     isOffline: () => !navigator.onLine,
   }
 }
-

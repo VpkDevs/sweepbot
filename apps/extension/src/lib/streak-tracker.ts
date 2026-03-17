@@ -29,7 +29,7 @@ class StreakTracker {
   async recordSession(platformSlug: string): Promise<StreakUpdate> {
     const today = this.getTodayDateString()
     const streakData = await this.getStreakData()
-    
+
     const lastDate = streakData.lastSessionDate
     const isNewDay = lastDate !== today
     const streakBroken = this.isStreakBroken(lastDate, today)
@@ -45,7 +45,7 @@ class StreakTracker {
 
     // New day
     const previousStreak = streakData.currentStreak
-    
+
     if (streakBroken) {
       // Streak broken, reset to 1
       streakData.currentStreak = 1
@@ -58,7 +58,7 @@ class StreakTracker {
 
     streakData.lastSessionDate = today
     streakData.totalSessions += 1
-    
+
     if (streakData.currentStreak > streakData.longestStreak) {
       streakData.longestStreak = streakData.currentStreak
     }
@@ -78,7 +78,7 @@ class StreakTracker {
 
   async getStreakData(): Promise<StreakData> {
     const stored = await storage.get(this.STORAGE_KEY)
-    
+
     if (stored) {
       return stored as StreakData
     }
@@ -115,13 +115,13 @@ class StreakTracker {
 
   private checkMilestone(previousStreak: number, currentStreak: number): number | undefined {
     const milestones = [7, 30, 100, 365]
-    
+
     for (const milestone of milestones) {
       if (currentStreak >= milestone && previousStreak < milestone) {
         return milestone
       }
     }
-    
+
     return undefined
   }
 
@@ -133,8 +133,8 @@ class StreakTracker {
   }> {
     const data = await this.getStreakData()
     const milestones = [7, 30, 100, 365]
-    
-    const nextMilestone = milestones.find(m => m > data.currentStreak) ?? null
+
+    const nextMilestone = milestones.find((m) => m > data.currentStreak) ?? null
     const daysUntilMilestone = nextMilestone ? nextMilestone - data.currentStreak : null
 
     return {

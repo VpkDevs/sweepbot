@@ -16,24 +16,12 @@ export function Card({
     ghost: 'rounded-2xl border border-white/5 bg-transparent',
   }
 
-  return (
-    <div className={cn(variantStyles[variant], className)}>
-      {children}
-    </div>
-  )
+  return <div className={cn(variantStyles[variant], className)}>{children}</div>
 }
 
-export function CardHeader({
-  children,
-  className,
-}: {
-  children: ReactNode
-  className?: string
-}) {
+export function CardHeader({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn('border-b border-white/5 px-6 py-4 sm:px-8', className)}>
-      {children}
-    </div>
+    <div className={cn('border-b border-white/5 px-6 py-4 sm:px-8', className)}>{children}</div>
   )
 }
 
@@ -48,19 +36,15 @@ export function CardTitle({
 }) {
   const Component = Comp as any
   return (
-    <Component className={cn('text-lg font-bold leading-tight text-white tracking-tight', className)}>
+    <Component
+      className={cn('text-lg font-bold leading-tight tracking-tight text-white', className)}
+    >
       {children}
     </Component>
   )
 }
 
-export function CardContent({
-  children,
-  className,
-}: {
-  children: ReactNode
-  className?: string
-}) {
+export function CardContent({ children, className }: { children: ReactNode; className?: string }) {
   return <div className={cn('px-6 py-4 sm:px-8 sm:py-6', className)}>{children}</div>
 }
 

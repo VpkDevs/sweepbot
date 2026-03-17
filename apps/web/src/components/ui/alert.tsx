@@ -17,28 +17,26 @@ const alertVariants = cva(
     defaultVariants: {
       variant: 'default',
     },
-  },
+  }
 )
 
 const Alert = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
 >(({ className, variant, ...props }, ref) => (
-  <div
-    ref={ref}
-    role="alert"
-    className={cn(alertVariants({ variant }), className)}
-    {...props}
-  />
+  <div ref={ref} role="alert" className={cn(alertVariants({ variant }), className)} {...props} />
 ))
 Alert.displayName = 'Alert'
 
-const AlertTitle = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLHeadingElement>
->(({ className, ...props }, ref) => (
-  <h5 ref={ref} className={cn('mb-1 font-semibold leading-tight tracking-tight', className)} {...props} />
-))
+const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
+  ({ className, ...props }, ref) => (
+    <h5
+      ref={ref}
+      className={cn('mb-1 font-semibold leading-tight tracking-tight', className)}
+      {...props}
+    />
+  )
+)
 AlertTitle.displayName = 'AlertTitle'
 
 const AlertDescription = React.forwardRef<
@@ -50,7 +48,11 @@ const AlertDescription = React.forwardRef<
 AlertDescription.displayName = 'AlertDescription'
 
 // Icon helpers
-function AlertIcon({ variant = 'default' }: { variant?: 'default' | 'success' | 'warning' | 'destructive' }) {
+function AlertIcon({
+  variant = 'default',
+}: {
+  variant?: 'default' | 'success' | 'warning' | 'destructive'
+}) {
   const icons = {
     default: <Info className="h-4 w-4" />,
     success: <CheckCircle2 className="h-4 w-4" />,

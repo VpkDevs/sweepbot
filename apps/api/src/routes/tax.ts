@@ -59,7 +59,8 @@ export async function taxRoutes(app: FastifyInstance): Promise<void> {
     const estFederal = Math.round(totalTaxableUsd * 0.22 * 100) / 100
     const estState = Math.round(totalTaxableUsd * 0.045 * 100) / 100
     const estTotal = Math.round((estFederal + estState) * 100) / 100
-    const effectiveRate = totalTaxableUsd > 0 ? Math.round((estTotal / totalTaxableUsd) * 10_000) / 100 : 0
+    const effectiveRate =
+      totalTaxableUsd > 0 ? Math.round((estTotal / totalTaxableUsd) * 10_000) / 100 : 0
 
     const monthly = await dbQuery(sql`
       SELECT
@@ -106,7 +107,11 @@ export async function taxRoutes(app: FastifyInstance): Promise<void> {
       othersAmount > 0
         ? [
             ...top,
-            { name: 'Others', amount: othersAmount, pct: totalForPct > 0 ? (othersAmount / totalForPct) * 100 : 0 },
+            {
+              name: 'Others',
+              amount: othersAmount,
+              pct: totalForPct > 0 ? (othersAmount / totalForPct) * 100 : 0,
+            },
           ]
         : top
 
@@ -263,4 +268,3 @@ export async function taxRoutes(app: FastifyInstance): Promise<void> {
       .send(csv)
   })
 }
-

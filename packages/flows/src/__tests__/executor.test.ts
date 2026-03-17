@@ -659,7 +659,9 @@ describe('FlowExecutor', () => {
       }
 
       const exec = new FlowExecutor()
-      const ctx = await exec.execute(flow, 'u1', undefined, { responsiblePlay: { isInCooldown: false } })
+      const ctx = await exec.execute(flow, 'u1', undefined, {
+        responsiblePlay: { isInCooldown: false },
+      })
       expect(ctx.status).not.toBe('stopped_by_guardrail')
     })
 
@@ -689,7 +691,9 @@ describe('FlowExecutor', () => {
       }
 
       const exec = new FlowExecutor()
-      const ctx = await exec.execute(flow, 'u1', undefined, { responsiblePlay: { now: new Date(Date.now() - 10_000) } })
+      const ctx = await exec.execute(flow, 'u1', undefined, {
+        responsiblePlay: { now: new Date(Date.now() - 10_000) },
+      })
       expect(ctx.status).toBe('stopped_by_guardrail')
       expect(ctx.metrics.guardrailsTriggered).toContain('max_duration')
     })

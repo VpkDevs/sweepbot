@@ -50,34 +50,30 @@ export const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
 // makes getTierFromPriceId('') incorrectly return a paid tier for missing price IDs.
 const _tierEntries: Array<[string | undefined, string]> = [
   [env.STRIPE_PRICE_STARTER_MONTHLY, 'starter'],
-  [env.STRIPE_PRICE_STARTER_ANNUAL,  'starter'],
-  [env.STRIPE_PRICE_PRO_MONTHLY,     'pro'],
-  [env.STRIPE_PRICE_PRO_ANNUAL,      'pro'],
+  [env.STRIPE_PRICE_STARTER_ANNUAL, 'starter'],
+  [env.STRIPE_PRICE_PRO_MONTHLY, 'pro'],
+  [env.STRIPE_PRICE_PRO_ANNUAL, 'pro'],
   [env.STRIPE_PRICE_ANALYST_MONTHLY, 'analyst'],
-  [env.STRIPE_PRICE_ANALYST_ANNUAL,  'analyst'],
-  [env.STRIPE_PRICE_ELITE_MONTHLY,   'elite'],
-  [env.STRIPE_PRICE_ELITE_ANNUAL,    'elite'],
-  [env.STRIPE_PRICE_LIFETIME,        'elite'],
+  [env.STRIPE_PRICE_ANALYST_ANNUAL, 'analyst'],
+  [env.STRIPE_PRICE_ELITE_MONTHLY, 'elite'],
+  [env.STRIPE_PRICE_ELITE_ANNUAL, 'elite'],
+  [env.STRIPE_PRICE_LIFETIME, 'elite'],
 ]
 
 export const TIER_PRICE_MAP: Readonly<Record<string, string>> = Object.freeze(
-  Object.fromEntries(
-    _tierEntries.filter((entry): entry is [string, string] => Boolean(entry[0]))
-  )
+  Object.fromEntries(_tierEntries.filter((entry): entry is [string, string] => Boolean(entry[0])))
 )
 
 // Reverse map: tier → canonical monthly price ID (used for MRR estimation)
 const _tierMonthlyEntries: Array<[string, string | undefined]> = [
   ['starter', env.STRIPE_PRICE_STARTER_MONTHLY],
-  ['pro',     env.STRIPE_PRICE_PRO_MONTHLY],
+  ['pro', env.STRIPE_PRICE_PRO_MONTHLY],
   ['analyst', env.STRIPE_PRICE_ANALYST_MONTHLY],
-  ['elite',   env.STRIPE_PRICE_ELITE_MONTHLY],
+  ['elite', env.STRIPE_PRICE_ELITE_MONTHLY],
 ]
 
 export const TIER_MONTHLY_PRICE_MAP: Readonly<Record<string, string>> = Object.freeze(
-  Object.fromEntries(
-    _tierMonthlyEntries.filter((e): e is [string, string] => Boolean(e[1]))
-  )
+  Object.fromEntries(_tierMonthlyEntries.filter((e): e is [string, string] => Boolean(e[1])))
 )
 
 // ─── Typed error class ────────────────────────────────────────────────────────
@@ -100,12 +96,7 @@ export class StripeServiceError extends Error {
   readonly retryable: boolean
   override readonly cause?: unknown
 
-  constructor(
-    code: StripeServiceErrorCode,
-    message: string,
-    retryable = false,
-    cause?: unknown,
-  ) {
+  constructor(code: StripeServiceErrorCode, message: string, retryable = false, cause?: unknown) {
     super(message)
     this.name = 'StripeServiceError'
     this.code = code
@@ -136,14 +127,17 @@ async function withRetry<T>(fn: () => Promise<T>, label: string): Promise<T> {
           status === 429 ? 'RATE_LIMITED' : 'STRIPE_ERROR',
           `${label} failed: ${(err as Error).message}`,
           isRetryable,
-          err,
+          err
         )
       }
 
       // Exponential back-off: 250 ms, 500 ms, 1 000 ms + random jitter
-      const delayMs = (2 ** attempt) * 250 + Math.random() * 100
-      logger.warn({ label, attempt, delayMs, status }, `Stripe transient error — retrying in ${delayMs.toFixed(0)} ms`)
-      await new Promise(r => setTimeout(r, delayMs))
+      const delayMs = 2 ** attempt * 250 + Math.random() * 100
+      logger.warn(
+        { label, attempt, delayMs, status },
+        `Stripe transient error — retrying in ${delayMs.toFixed(0)} ms`
+      )
+      await new Promise((r) => setTimeout(r, delayMs))
     }
   }
 
@@ -174,7 +168,7 @@ function idempotencyKey(...parts: string[]): string {
 export async function getOrCreateCustomer(
   userId: string,
   email: string,
-  displayName?: string,
+  displayName?: string
 ): Promise<string> {
   const { rows } = await dbQuery<{ stripe_customer_id: string | null }>(sql`
     SELECT stripe_customer_id FROM subscriptions WHERE user_id = ${userId} LIMIT 1
@@ -188,9 +182,9 @@ export async function getOrCreateCustomer(
     () =>
       stripe.customers.create(
         { email, ...(displayName ? { name: displayName } : {}), metadata: { userId } },
-        { idempotencyKey: idempotencyKey('create-customer', userId, email) },
+        { idempotencyKey: idempotencyKey('create-customer', userId, email) }
       ),
-    'customers.create',
+    'customers.create'
   )
 
   // Persist to both tables atomically — second write is best-effort mirroring
@@ -202,7 +196,7 @@ export async function getOrCreateCustomer(
 
   void dbQuery(sql`
     UPDATE profiles SET stripe_customer_id = ${customer.id} WHERE id = ${userId}
-  `).catch(err => logger.warn({ err, userId }, 'Failed to mirror stripe_customer_id to profiles'))
+  `).catch((err) => logger.warn({ err, userId }, 'Failed to mirror stripe_customer_id to profiles'))
 
   logger.info({ userId, customerId: customer.id }, 'Stripe customer created')
   return customer.id
@@ -218,9 +212,9 @@ export async function syncCustomerEmail(customerId: string, email: string): Prom
       stripe.customers.update(
         customerId,
         { email },
-        { idempotencyKey: idempotencyKey('sync-email', customerId, email) },
+        { idempotencyKey: idempotencyKey('sync-email', customerId, email) }
       ),
-    'customers.update(email)',
+    'customers.update(email)'
   )
   logger.info({ customerId, email }, 'Stripe customer email synced')
 }
@@ -247,7 +241,7 @@ export interface CheckoutOptions {
  * lifetime purchase.  Automatically determines `mode` from the price ID.
  */
 export async function createCheckoutSession(
-  opts: CheckoutOptions,
+  opts: CheckoutOptions
 ): Promise<Stripe.Checkout.Session> {
   const customerId = await getOrCreateCustomer(opts.userId, opts.email, opts.displayName)
   const isLifetime = opts.priceId === env.STRIPE_PRICE_LIFETIME
@@ -262,9 +256,7 @@ export async function createCheckoutSession(
     metadata: { userId: opts.userId },
     // Allow built-in promo-code input unless caller provides one explicitly
     allow_promotion_codes: !opts.promotionCode,
-    ...(opts.promotionCode
-      ? { discounts: [{ promotion_code: opts.promotionCode }] }
-      : {}),
+    ...(opts.promotionCode ? { discounts: [{ promotion_code: opts.promotionCode }] } : {}),
     ...(!isLifetime
       ? {
           subscription_data: {
@@ -280,7 +272,7 @@ export async function createCheckoutSession(
       stripe.checkout.sessions.create(params, {
         idempotencyKey: idempotencyKey('checkout', opts.userId, opts.priceId),
       }),
-    'checkout.sessions.create',
+    'checkout.sessions.create'
   )
 }
 
@@ -290,7 +282,7 @@ export async function createCheckoutSession(
  */
 export async function createPortalSession(
   userId: string,
-  returnUrl: string,
+  returnUrl: string
 ): Promise<Stripe.BillingPortal.Session> {
   const { rows } = await dbQuery<{ stripe_customer_id: string | null }>(sql`
     SELECT stripe_customer_id FROM subscriptions WHERE user_id = ${userId} LIMIT 1
@@ -300,13 +292,13 @@ export async function createPortalSession(
   if (!customerId) {
     throw new StripeServiceError(
       'CUSTOMER_NOT_FOUND',
-      'No Stripe customer found for this user — cannot open billing portal',
+      'No Stripe customer found for this user — cannot open billing portal'
     )
   }
 
   return withRetry(
     () => stripe.billingPortal.sessions.create({ customer: customerId, return_url: returnUrl }),
-    'billingPortal.sessions.create',
+    'billingPortal.sessions.create'
   )
 }
 
@@ -320,7 +312,7 @@ export async function createPortalSession(
  */
 export async function previewSubscriptionChange(
   userId: string,
-  newPriceId: string,
+  newPriceId: string
 ): Promise<Stripe.UpcomingInvoice> {
   const { rows } = await dbQuery<{
     stripe_customer_id: string | null
@@ -337,12 +329,15 @@ export async function previewSubscriptionChange(
     throw new StripeServiceError('CUSTOMER_NOT_FOUND', 'User has no Stripe customer')
   }
   if (!row.stripe_subscription_id) {
-    throw new StripeServiceError('SUBSCRIPTION_NOT_FOUND', 'User has no active subscription to preview')
+    throw new StripeServiceError(
+      'SUBSCRIPTION_NOT_FOUND',
+      'User has no active subscription to preview'
+    )
   }
 
   const sub = await withRetry(
     () => stripe.subscriptions.retrieve(row.stripe_subscription_id!),
-    'subscriptions.retrieve(preview)',
+    'subscriptions.retrieve(preview)'
   )
 
   const itemId = sub.items.data[0]?.id
@@ -357,7 +352,7 @@ export async function previewSubscriptionChange(
         subscription: row.stripe_subscription_id!,
         subscription_items: [{ id: itemId, price: newPriceId }],
       }),
-    'invoices.retrieveUpcoming',
+    'invoices.retrieveUpcoming'
   )
 }
 
@@ -368,7 +363,7 @@ export async function previewSubscriptionChange(
 export async function changeSubscriptionPlan(
   userId: string,
   newPriceId: string,
-  prorationBehavior: Stripe.SubscriptionUpdateParams.ProrationBehavior = 'create_prorations',
+  prorationBehavior: Stripe.SubscriptionUpdateParams.ProrationBehavior = 'create_prorations'
 ): Promise<Stripe.Subscription> {
   const { rows } = await dbQuery<{
     stripe_subscription_id: string | null
@@ -387,13 +382,13 @@ export async function changeSubscriptionPlan(
 
   const currentSub = await withRetry(
     () => stripe.subscriptions.retrieve(row.stripe_subscription_id!),
-    'subscriptions.retrieve(change-plan)',
+    'subscriptions.retrieve(change-plan)'
   )
 
   if (!['active', 'trialing'].includes(currentSub.status)) {
     throw new StripeServiceError(
       'SUBSCRIPTION_NOT_ACTIVE',
-      `Cannot change plan — subscription is in status "${currentSub.status}"`,
+      `Cannot change plan — subscription is in status "${currentSub.status}"`
     )
   }
 
@@ -411,16 +406,13 @@ export async function changeSubscriptionPlan(
           proration_behavior: prorationBehavior,
           metadata: { userId },
         },
-        { idempotencyKey: idempotencyKey('change-plan', userId, newPriceId) },
+        { idempotencyKey: idempotencyKey('change-plan', userId, newPriceId) }
       ),
-    'subscriptions.update(plan-change)',
+    'subscriptions.update(plan-change)'
   )
 
   const newTier = getTierFromPriceId(newPriceId)
-  logger.info(
-    { userId, oldTier: row.tier, newTier, newPriceId },
-    'Subscription plan changed',
-  )
+  logger.info({ userId, oldTier: row.tier, newTier, newPriceId }, 'Subscription plan changed')
   return updated
 }
 
@@ -433,7 +425,7 @@ export async function changeSubscriptionPlan(
  */
 export async function cancelSubscription(
   userId: string,
-  immediately = false,
+  immediately = false
 ): Promise<Stripe.Subscription> {
   const { rows } = await dbQuery<{ stripe_subscription_id: string | null }>(sql`
     SELECT stripe_subscription_id FROM subscriptions
@@ -443,13 +435,16 @@ export async function cancelSubscription(
 
   const subId = rows[0]?.stripe_subscription_id
   if (!subId) {
-    throw new StripeServiceError('SUBSCRIPTION_NOT_FOUND', 'No cancellable subscription found for user')
+    throw new StripeServiceError(
+      'SUBSCRIPTION_NOT_FOUND',
+      'No cancellable subscription found for user'
+    )
   }
 
   if (immediately) {
     const canceled = await withRetry(
       () => stripe.subscriptions.cancel(subId, { prorate: true }),
-      'subscriptions.cancel(immediate)',
+      'subscriptions.cancel(immediate)'
     )
     logger.info({ userId, subId }, 'Subscription canceled immediately')
     return canceled
@@ -460,9 +455,9 @@ export async function cancelSubscription(
       stripe.subscriptions.update(
         subId,
         { cancel_at_period_end: true },
-        { idempotencyKey: idempotencyKey('cancel-eop', userId, subId) },
+        { idempotencyKey: idempotencyKey('cancel-eop', userId, subId) }
       ),
-    'subscriptions.update(cancel_at_period_end)',
+    'subscriptions.update(cancel_at_period_end)'
   )
   logger.info({ userId, subId }, 'Subscription will cancel at period end')
   return updated
@@ -490,7 +485,7 @@ export async function reactivateSubscription(userId: string): Promise<Stripe.Sub
   if (!row.cancel_at_period_end) {
     throw new StripeServiceError(
       'PLAN_ALREADY_ACTIVE',
-      'Subscription is not scheduled for cancellation — nothing to reactivate',
+      'Subscription is not scheduled for cancellation — nothing to reactivate'
     )
   }
 
@@ -499,9 +494,9 @@ export async function reactivateSubscription(userId: string): Promise<Stripe.Sub
       stripe.subscriptions.update(
         row.stripe_subscription_id!,
         { cancel_at_period_end: false },
-        { idempotencyKey: idempotencyKey('reactivate', userId, row.stripe_subscription_id!) },
+        { idempotencyKey: idempotencyKey('reactivate', userId, row.stripe_subscription_id!) }
       ),
-    'subscriptions.update(reactivate)',
+    'subscriptions.update(reactivate)'
   )
   logger.info({ userId }, 'Subscription reactivated — cancellation rescinded')
   return updated
@@ -513,7 +508,7 @@ export async function reactivateSubscription(userId: string): Promise<Stripe.Sub
  */
 export async function applyPromotionCode(
   userId: string,
-  promotionCodeId: string,
+  promotionCodeId: string
 ): Promise<Stripe.Subscription> {
   const { rows } = await dbQuery<{ stripe_subscription_id: string | null }>(sql`
     SELECT stripe_subscription_id FROM subscriptions
@@ -523,7 +518,10 @@ export async function applyPromotionCode(
 
   const subId = rows[0]?.stripe_subscription_id
   if (!subId) {
-    throw new StripeServiceError('SUBSCRIPTION_NOT_FOUND', 'No active subscription to apply promotion to')
+    throw new StripeServiceError(
+      'SUBSCRIPTION_NOT_FOUND',
+      'No active subscription to apply promotion to'
+    )
   }
 
   return withRetry(
@@ -531,9 +529,9 @@ export async function applyPromotionCode(
       stripe.subscriptions.update(
         subId,
         { discounts: [{ promotion_code: promotionCodeId }] },
-        { idempotencyKey: idempotencyKey('apply-promo', userId, promotionCodeId) },
+        { idempotencyKey: idempotencyKey('apply-promo', userId, promotionCodeId) }
       ),
-    'subscriptions.update(promo-code)',
+    'subscriptions.update(promo-code)'
   )
 }
 
@@ -552,7 +550,7 @@ export async function listPaymentMethods(userId: string): Promise<Stripe.Payment
 
   const { data } = await withRetry(
     () => stripe.paymentMethods.list({ customer: customerId, type: 'card', limit: 20 }),
-    'paymentMethods.list',
+    'paymentMethods.list'
   )
   return data
 }
@@ -560,7 +558,7 @@ export async function listPaymentMethods(userId: string): Promise<Stripe.Payment
 /** Set a payment method as the default for future invoices on the customer. */
 export async function setDefaultPaymentMethod(
   userId: string,
-  paymentMethodId: string,
+  paymentMethodId: string
 ): Promise<void> {
   const { rows } = await dbQuery<{ stripe_customer_id: string | null }>(sql`
     SELECT stripe_customer_id FROM subscriptions WHERE user_id = ${userId} LIMIT 1
@@ -576,9 +574,9 @@ export async function setDefaultPaymentMethod(
       stripe.customers.update(
         customerId,
         { invoice_settings: { default_payment_method: paymentMethodId } },
-        { idempotencyKey: idempotencyKey('set-default-pm', userId, paymentMethodId) },
+        { idempotencyKey: idempotencyKey('set-default-pm', userId, paymentMethodId) }
       ),
-    'customers.update(default-pm)',
+    'customers.update(default-pm)'
   )
   logger.info({ userId, paymentMethodId }, 'Default payment method updated')
 }
@@ -587,10 +585,7 @@ export async function setDefaultPaymentMethod(
  * Detach a payment method from the customer's Stripe vault.
  * Performs an ownership check before detaching to prevent IDOR.
  */
-export async function removePaymentMethod(
-  userId: string,
-  paymentMethodId: string,
-): Promise<void> {
+export async function removePaymentMethod(userId: string, paymentMethodId: string): Promise<void> {
   const { rows } = await dbQuery<{ stripe_customer_id: string | null }>(sql`
     SELECT stripe_customer_id FROM subscriptions WHERE user_id = ${userId} LIMIT 1
   `)
@@ -603,20 +598,17 @@ export async function removePaymentMethod(
   // Ownership check: verify PM belongs to this customer before detaching
   const pm = await withRetry(
     () => stripe.paymentMethods.retrieve(paymentMethodId),
-    'paymentMethods.retrieve(ownership-check)',
+    'paymentMethods.retrieve(ownership-check)'
   )
 
   if ((pm.customer as string | null) !== customerId) {
     throw new StripeServiceError(
       'OWNERSHIP_VIOLATION',
-      'Payment method does not belong to this customer',
+      'Payment method does not belong to this customer'
     )
   }
 
-  await withRetry(
-    () => stripe.paymentMethods.detach(paymentMethodId),
-    'paymentMethods.detach',
-  )
+  await withRetry(() => stripe.paymentMethods.detach(paymentMethodId), 'paymentMethods.detach')
   logger.info({ userId, paymentMethodId }, 'Payment method removed from vault')
 }
 
@@ -636,8 +628,8 @@ export function getTierFromPriceId(priceId: string): string {
  */
 export async function syncSubscriptionToDb(subscription: Stripe.Subscription): Promise<void> {
   const customerId = subscription.customer as string
-  const priceId    = subscription.items.data[0]?.price.id ?? ''
-  const tier       = getTierFromPriceId(priceId)
+  const priceId = subscription.items.data[0]?.price.id ?? ''
+  const tier = getTierFromPriceId(priceId)
 
   await dbQuery(sql`
     UPDATE subscriptions
@@ -647,7 +639,7 @@ export async function syncSubscriptionToDb(subscription: Stripe.Subscription): P
       stripe_subscription_id = ${subscription.id},
       stripe_price_id       = ${priceId},
       current_period_start  = ${new Date(subscription.current_period_start * 1000)},
-      current_period_end    = ${new Date(subscription.current_period_end   * 1000)},
+      current_period_end    = ${new Date(subscription.current_period_end * 1000)},
       cancel_at_period_end  = ${subscription.cancel_at_period_end},
       updated_at            = NOW()
     WHERE stripe_customer_id = ${customerId}
@@ -655,7 +647,7 @@ export async function syncSubscriptionToDb(subscription: Stripe.Subscription): P
 
   logger.info(
     { customerId, tier, status: subscription.status, subId: subscription.id },
-    'Subscription synced to DB',
+    'Subscription synced to DB'
   )
 }
 
@@ -704,7 +696,6 @@ export async function handleWebhookEvent(event: Stripe.Event): Promise<void> {
   }
 
   switch (event.type) {
-
     // ── Subscription state ────────────────────────────────────────────────────
     case 'customer.subscription.created':
     case 'customer.subscription.updated':
@@ -761,8 +752,8 @@ export async function handleWebhookEvent(event: Stripe.Event): Promise<void> {
           (${customerId}, 'payment_succeeded', ${invoice.amount_paid},
            ${invoice.currency}, ${invoice.id}, NOW())
         ON CONFLICT (stripe_invoice_id) DO NOTHING
-      `).catch(err =>
-        logger.error({ err }, 'Failed to write billing_events for payment_succeeded'),
+      `).catch((err) =>
+        logger.error({ err }, 'Failed to write billing_events for payment_succeeded')
       )
       break
     }
@@ -785,11 +776,12 @@ export async function handleWebhookEvent(event: Stripe.Event): Promise<void> {
           (${customerId}, 'payment_failed', ${invoice.amount_due},
            ${invoice.currency}, ${invoice.id}, NOW())
         ON CONFLICT (stripe_invoice_id) DO NOTHING
-      `).catch(err =>
-        logger.error({ err }, 'Failed to write billing_events for payment_failed'),
-      )
+      `).catch((err) => logger.error({ err }, 'Failed to write billing_events for payment_failed'))
 
-      logger.warn({ customerId, invoiceId: invoice.id }, 'Invoice payment failed — subscription past_due')
+      logger.warn(
+        { customerId, invoiceId: invoice.id },
+        'Invoice payment failed — subscription past_due'
+      )
       break
     }
 
@@ -808,7 +800,9 @@ export async function handleWebhookEvent(event: Stripe.Event): Promise<void> {
       `)
       void dbQuery(sql`
         UPDATE profiles SET stripe_customer_id = ${customerId} WHERE id = ${userId}
-      `).catch(err => logger.warn({ err, userId }, 'Failed to mirror stripe_customer_id to profiles'))
+      `).catch((err) =>
+        logger.warn({ err, userId }, 'Failed to mirror stripe_customer_id to profiles')
+      )
 
       if (session.mode === 'payment') {
         // Lifetime deal — grant elite access that effectively never expires
@@ -857,17 +851,17 @@ export async function computeCustomerMrr(customerId: string): Promise<number> {
         status: 'active',
         expand: ['data.items.data.price'],
       }),
-    'subscriptions.list(mrr)',
+    'subscriptions.list(mrr)'
   )
 
   let mrrCents = 0
 
   for (const sub of subs.data) {
     for (const item of sub.items.data) {
-      const price        = item.price
-      const unitAmount   = price.unit_amount ?? 0
-      const qty          = item.quantity ?? 1
-      const interval     = price.recurring?.interval
+      const price = item.price
+      const unitAmount = price.unit_amount ?? 0
+      const qty = item.quantity ?? 1
+      const interval = price.recurring?.interval
       const intervalCount = price.recurring?.interval_count ?? 1
 
       if (interval === 'month') {

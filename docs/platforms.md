@@ -1,9 +1,13 @@
 tremendously improve my prompt for researching sweepstakes casinos and then building the world's most comprehensive directory, central information hub, etc. for them:
- 
+
 "# Task: Create a Comprehensive Directory of U.S. Sweepstakes Casinos
+
 ## Objective
+
 Research and compile a detailed, accurate directory of sweepstakes casinos operating in the United States. This directory will serve as a reference guide for comparing platforms, with emphasis on newer, competitive entrants in the market.
+
 ## Background: What Are Sweepstakes Casinos?
+
 Sweepstakes casinos are social gaming platforms that operate legally in most U.S. states using a dual-currency model:
 
 **Play Currency** (e.g., "Gold Coins") - for entertainment
@@ -11,6 +15,7 @@ Sweepstakes casinos are social gaming platforms that operate legally in most U.S
 They operate under sweepstakes law rather than gambling regulations, distinguishing them from traditional online casinos.
 
 ## Critical Requirements
+
 ### Accuracy Standards (HIGHEST PRIORITY)
 
 ✅ Confirm each platform uses the dual-currency sweepstakes model (NOT real-money gambling)
@@ -27,7 +32,9 @@ Include well-established platforms only if space permits after covering newer en
 **If you cannot identify 800+ platforms with confidence, provide fewer with a note explaining the limitation**
 
 ## Required Data Points
+
 For each casino, provide the following in structured format:
+
 ### 1. Basic Information
 
 **Casino Name**: Official brand name
@@ -35,6 +42,7 @@ For each casino, provide the following in structured format:
 **Year Established**: Use format "Est. YYYY" or "Info N/A" if unknown
 
 ### 2. Welcome Offers (DETAILED)
+
 Provide THREE specific offers when available:
 
 **Free Welcome Bonus**: No-purchase sign-up offer (e.g., "5,000 GC + 2 SC free")
@@ -46,10 +54,12 @@ If bonuses vary/rotate, note "Varies - check site"
 Do not invent bonus structures
 
 ### 2.5 Daily Login Bonus SC/Day Average
+
 Provide a calculation of how many SC/Day on average a user gets if they log-in and never lose their daily login streak each day
 Provide a breakdown of what rewards the user gets each day (eg. Day 1: .2 sc, Day 2: 5000 gc, day 3: .4 sc, ... ... day 7: 1 sc, or whatever the schema might be
 Provide a breakdown of whether or not the platform is known to offer free SC in the user's email inbox and if so how often
 Provide a breakdown of how the platform handles AMOE mail-ins, how many SC they're worth, what the requirements are (some require blue ink, some black ink, some have no limit, some have strict limits. Include a URL for where users can get the code/inserts. See also: Sweepsbymail.com)
+
 ### 3. Currency System
 
 **Virtual Currencies**: Both currency names (e.g., "Gold Coins (GC) / Sweeps Coins (SC)")
@@ -69,15 +79,16 @@ Slot mechanics present (megaways, true ways, immortal ways, hold and win, etc.)
 **Redemption Options**: Methods and minimums (e.g., "Bank transfer, gift cards | Min: 100 SC")
 Use "Info N/A" if minimum redemption amounts are unknown
 **Mobile Access**: Use ONLY these standardized options:
-  - "iOS & Android apps"
-  - "iOS app only"
-  - "Android app only"
-  - "Mobile browser only"
-  - "Info N/A"
-KYC requirements! Do you need a physical ID or will uploaded pics work?
-Redemption friction rating: How easy/difficult does the platform tend to make redemptions?
-Number of High Volatility, Medium Volatility, and Low Volatility slots?
-(Ideally, a *full list of each slot present on the platform as well as their volatility, would be amazing*)
+
+- "iOS & Android apps"
+- "iOS app only"
+- "Android app only"
+- "Mobile browser only"
+- "Info N/A"
+  KYC requirements! Do you need a physical ID or will uploaded pics work?
+  Redemption friction rating: How easy/difficult does the platform tend to make redemptions?
+  Number of High Volatility, Medium Volatility, and Low Volatility slots?
+  (Ideally, a _full list of each slot present on the platform as well as their volatility, would be amazing_)
 
 ### 6. Distinguishing Features
 
@@ -86,7 +97,9 @@ Number of High Volatility, Medium Volatility, and Low Volatility slots?
 Focus on verifiable features (e.g., "Live dealer games," "Daily login bonuses," "Loyalty program")
 
 ## Output Format
+
 ### Part 1: Introductory Note
+
 Begin with a brief statement about:
 
 Your knowledge cutoff date
@@ -94,6 +107,7 @@ The number of verified platforms you're including
 Any limitations in the data you're providing
 
 ### Part 2: Directory Table
+
 Present all casinos in a markdown table with these columns:
 text| Casino Name | Website | Est. | Welcome Bonus | 1st Purchase | 2nd Purchase | Currencies | Games | Fishing | Alt Games | Redemption | Mobile | Key Features |
 **Table Requirements:**
@@ -107,7 +121,9 @@ Ensure proper markdown table formatting with aligned columns
 If certain columns have consistently unavailable data across most platforms, note this in your introductory statement
 
 ### Part 3: Mandatory Disclaimer
+
 ## Include this closing statement (update the bracketed date):
+
 **DISCLAIMER:**
 This directory is for informational purposes only. Information is accurate as of [INSERT YOUR KNOWLEDGE CUTOFF DATE]. Sweepstakes casino offerings, bonuses, and availability change frequently. Always verify:
 
@@ -115,7 +131,6 @@ Current promotional offers directly on platform websites
 Legal availability in your specific state
 Terms and conditions before participating
 Sweepstakes casinos are social gaming platforms. Play responsibly.
-
 
 ## Style Guidelines
 
@@ -139,11 +154,15 @@ Introductory note explains any data limitations
 ## Additional Guidance- **Prioritize accuracy over completeness** - a smaller, accurate directory is more valuable than a large, questionable one
 
 ### Overview
+
 ## A **world‑class sweepstakes casino mega‑hub** must be more than a directory: it’s a trusted information platform, a verification engine, a consumer protection center, a discovery marketplace, and a community hub. It must solve three core user problems: **find legal options for your state**, **verify payout and redemption claims**, and **choose the best offer with confidence**. Many existing directories focus on listings, bonuses, and reviews; a next‑level product layers verification, real‑time data, and dispute resolution on top of that. stakester.com sweepcasinos.com
+
 ### Feature Matrix (Core, Advanced, Visionary)
-**Feature****Core****Advanced****Visionary****Directory coverage**Exhaustive operator list; state availabilityOperator ownership, corporate links, historical changesGlobal operator lineage; M&A timeline**Search & filters**State, game type, redemption methodNatural language search; saved searchesPredictive search; voice search**Ratings & reviews**Verified user reviews; editorial reviewsWeighted trust score; review provenanceOn‑chain proof of review authenticity**Bonuses & offers**Live aggregator; coupon codesHistorical offer tracking; expected value calcDynamic price discovery; real‑time A/B offer testing**Payout verification**Reported payout times; minimum redemptionAggregated anonymized payout trackerBlockchain proof-of-payout; escrow verification**Legal hub**State legality matrix; plain‑English explainersAuto-updated legal alerts; lawyer summariesRegulatory sandbox integrations; automated compliance reports**Security & fraud**Scam blacklist; manual takedown processML fake‑review detection; operator risk scoringAI dispute mediator; escrowed payouts**Community**Forums; leaderboardsVerified player badges; tournamentsCross‑operator tournaments with site‑managed prize pools**APIs & data**Public listing APIPartner APIs; webhooks for changesReal‑time streaming feeds; white‑label portals**Mobile experience**Responsive site; PWANative apps; push notificationsOffline legal content; in‑app redemption helpers
+
+**Feature\*\***Core\***\*Advanced\*\***Visionary\***\*Directory coverage**Exhaustive operator list; state availabilityOperator ownership, corporate links, historical changesGlobal operator lineage; M&A timeline**Search & filters**State, game type, redemption methodNatural language search; saved searchesPredictive search; voice search**Ratings & reviews**Verified user reviews; editorial reviewsWeighted trust score; review provenanceOn‑chain proof of review authenticity**Bonuses & offers**Live aggregator; coupon codesHistorical offer tracking; expected value calcDynamic price discovery; real‑time A/B offer testing**Payout verification**Reported payout times; minimum redemptionAggregated anonymized payout trackerBlockchain proof-of-payout; escrow verification**Legal hub**State legality matrix; plain‑English explainersAuto-updated legal alerts; lawyer summariesRegulatory sandbox integrations; automated compliance reports**Security & fraud**Scam blacklist; manual takedown processML fake‑review detection; operator risk scoringAI dispute mediator; escrowed payouts**Community**Forums; leaderboardsVerified player badges; tournamentsCross‑operator tournaments with site‑managed prize pools**APIs & data**Public listing APIPartner APIs; webhooks for changesReal‑time streaming feeds; white‑label portals**Mobile experience**Responsive site; PWANative apps; push notificationsOffline legal content; in‑app redemption helpers
 
 ### Core Features Expanded
+
 #### Directory and Discovery
 
 **Canonical operator profiles** with **state availability**, accepted virtual currencies (Gold/Sweeps), redemption methods, minimum redemption, payout windows, licensing/ownership, contact and support channels, and historical T&C snapshots. This is the single source of truth users consult before signing up. stakester.comsweepskings.com
@@ -165,7 +184,6 @@ Introductory note explains any data limitations
 
 **Interactive state legality matrix** and an explainer library: how sweepstakes law works, difference between virtual currencies, tax implications, and step‑by‑step redemption guides. This reduces user confusion and legal risk. RotoWire
 
-
 ### Advanced and Above‑and‑Beyond Features
 
 **Live Payout Tracker**: anonymized, aggregated feed of redemption requests, processing times, and success rates by operator and state; visualized as heatmaps and percentile charts.
@@ -176,8 +194,8 @@ Introductory note explains any data limitations
 **Cross‑Operator Tournament Platform**: host tournaments with transparent rules and site‑managed prize pools; integrate leaderboards and social sharing.
 **Regulatory Monitoring Dashboard**: automated alerts for state law changes, enforcement actions, and operator license updates; provide legal summaries for users and operators.
 
-
 ### Technical Architecture and Data Model
+
 #### High‑level architecture
 
 **Data ingestion layer**: crawlers, operator feeds, partner APIs, and manual QA.
@@ -202,8 +220,8 @@ POST /operators/{id}/claim (operator claim + verification workflow)
 GET /payouts/aggregate?operator_id=123&period=30d
 POST /reviews (with verification token)
 
-
 ### Operations, Compliance, Moderation, and Monetization
+
 #### Operations and staffing
 
 **Core teams**: editorial/research, legal/compliance, data engineering, trust & safety, product/UX, partnerships, and customer support.
@@ -221,8 +239,8 @@ POST /reviews (with verification token)
 **Revenue mix**: affiliate/referral fees, sponsored listings (clearly labeled), premium operator profiles, API access fees, and ad inventory.
 **Transparency rules**: clearly label sponsored content; publish an editorial policy and conflict‑of‑interest disclosures. sweepskings.comsweepsranking.com
 
-
 ### Launch Roadmap, KPIs, and Risks
+
 #### Prioritized roadmap
 
 **MVP (0–4 months)**: canonical directory, state matrix, basic filters, editorial explainers, bonus aggregator, and review submission.
@@ -245,11 +263,9 @@ POST /reviews (with verification token)
 **Regulatory change** — automated legal monitoring and conservative labeling; maintain legal counsel.
 **Privacy and PII exposure** — minimize PII storage; encrypt and follow best practices. sweepcasinos.comRotoWire
 
-
 ### Personalized Recommendation for Vince in San Antonio
 
 **MVP focus**: nail the **state legality matrix** and **fast‑redemption filters** (Texas users prioritize these). Launch with a tight set of verified reviews and an editorial “how to redeem in Texas” guide. Add a **payout reporting widget** so Texas players can submit anonymized redemption timestamps — this builds local trust quickly. stakester.com
-
 
 If you want, I can now deliver one of the following next steps (pick one and I’ll proceed without asking clarifying questions):
 
@@ -257,5 +273,3 @@ If you want, I can now deliver one of the following next steps (pick one and I�
 **Complete data model and OpenAPI spec for the public and partner APIs**, or
 **Detailed UX flows and wireframe content for the operator profile, review submission, and payout reporting experiences**.
 Begin the research phase now."
-
-
