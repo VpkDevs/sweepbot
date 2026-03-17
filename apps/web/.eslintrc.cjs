@@ -29,6 +29,9 @@ module.exports = {
     'no-console': ['warn', { allow: ['warn', 'error', 'info'] }],
     // Legacy pattern in web internals — warn until refactored
     'no-constant-condition': 'warn',
+    // Project uses "semi: false" — leading semicolons like ;(expr) are intentional
+    // ASI guards, not bugs. Prettier manages all semicolon decisions here.
+    'no-extra-semi': 'off',
   },
   ignorePatterns: ['dist/', 'node_modules/', 'vite.config.*'],
 }
