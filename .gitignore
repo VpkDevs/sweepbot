@@ -86,5 +86,27 @@ _tmp_*-*
 .claude/settings.local.json
 .claude/launch.json
 
+# Claude Code worktrees (local dev isolation, not repo artifacts)
+.claude/worktrees/
+
+# Third-party AI/IDE tool directories (Blackbox, Qodo, Zencoder, Vivus, etc.)
+.blackbox/
+.qodo/
+.zencoder/
+.zenflow/
+.vivus/
+.kombai/
+.agent-prompts/
+
+# Local audit/log output directories
+_AUDITS/
+_LOGS/
+
+# Screenshots captured locally
+screenshots/
+
+# Archive files
+*.zip
+
 # Personal / non-technical documents (do not commit to repo)
 docs/What\ Vince\ Did.txt
