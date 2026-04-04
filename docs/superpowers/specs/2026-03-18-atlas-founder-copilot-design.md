@@ -1,5 +1,6 @@
 # Atlas Skill — Design Spec
-*The AI Co-Founder That Never Forgets, Never Sleeps, and Gets Smarter Every Project*
+
+_The AI Co-Founder That Never Forgets, Never Sleeps, and Gets Smarter Every Project_
 
 **Date:** 2026-03-18
 **Status:** Approved for implementation
@@ -19,7 +20,7 @@ This is not a launch checklist tool. It is not a code review bot. It is the oper
 
 ## Tagline
 
-> *One command. Full takeover. From broken code to financial freedom.*
+> _One command. Full takeover. From broken code to financial freedom._
 
 ---
 
@@ -81,16 +82,20 @@ Atlas maintains a permanent state directory that survives across all sessions an
 Atlas auto-detects mode from context. No flags needed.
 
 ### Single-Project Mode
+
 **Trigger:** `/atlas` run from inside a project directory (git repo root)
 
 Full founder copilot for one project. Runs the complete pipeline:
+
 ```
 Onboarding → Code Sprint → Legal → Launch Strategy →
 Marketing → Business Setup → Automation Handoff → Operations
 ```
+
 Exits when the product has a runs-itself score of 70+.
 
 ### Portfolio Mode
+
 **Trigger:** `/atlas` run from a parent directory containing multiple project folders, OR from any directory with no git repo
 
 Empire intelligence layer. Reads all project contexts, generates the weekly empire brief, allocates founder attention, surfaces sell signals, runs the opportunity scanner.
@@ -106,6 +111,7 @@ The most critical module. Atlas builds a complete mental model of the business b
 Atlas reads everything it can find:
 
 **Code signals:**
+
 - README, CLAUDE.md, PRD, all docs
 - All API routes, web pages, database schema, migration history
 - `package.json` dependencies (reveals architecture decisions and third-party services)
@@ -116,6 +122,7 @@ Atlas reads everything it can find:
 - Deployment config files (Vercel, Railway, Docker, etc.)
 
 **Business signals:**
+
 - Existing marketing copy, landing page content
 - Pricing configuration in code
 - Legal docs (if any)
@@ -124,6 +131,7 @@ Atlas reads everything it can find:
 - Analytics/monitoring setup
 
 **Maturity signals:**
+
 - Feature flag usage → deployment sophistication
 - API versioning → API maturity
 - Database migration count → schema stability
@@ -132,6 +140,7 @@ Atlas reads everything it can find:
 ### Pass 2: Inferences (silent — no user interaction)
 
 From raw signals, Atlas builds a structured picture:
+
 - Project completion percentage (estimated)
 - Project type classification (SaaS / browser extension / developer tool / marketplace / content / API / community / mobile)
 - Founder type (solo vs. team, technical vs. non-technical, estimated experience level from code patterns)
@@ -147,20 +156,24 @@ Every inference is tagged: `[INFERRED]`, `[CONFIRMED]`, `[UNKNOWN]`
 Atlas only asks about things it genuinely could not infer. Batched by category for efficiency — this is onboarding, not a conversation.
 
 **Business fundamentals:**
+
 - Geographic location (affects entity type, tax advice, compliance)
 - Definition of success (lifestyle business / VC-scale / acquisition target / other)
 - Timeline pressure (soft / 3 months / ASAP)
 - Financial runway or monthly budget ceiling
 
 **Distribution:**
+
 - Existing audience (email list, social following, community presence — size and platform)
 - Prior launch experience (what worked, what didn't)
 
 **Team:**
+
 - Solo founder or co-founders? If team, who does what?
 - Any contractors or employees already?
 
 **Personal:**
+
 - Risk tolerance (conservative / moderate / aggressive)
 
 ### Confirmation Ritual
@@ -267,6 +280,7 @@ The structured data object Atlas builds during onboarding and updates throughout
 **Purpose:** Eliminate every technical blocker between current state and production-ready.
 
 **Process:**
+
 1. Run priority scorecard: score every gap on (Impact 1-10) × (1/Effort 1-10)
 2. Execute in priority order — highest impact, lowest effort first
 3. Fix all P0 code blockers (routing bugs, missing tables, schema mismatches, broken imports)
@@ -276,12 +290,14 @@ The structured data object Atlas builds during onboarding and updates throughout
 7. Update runs-itself score
 
 **Output:**
+
 - Fixed, committed codebase
 - `docs/founder/RUNBOOK.md`
 - Updated `~/.atlas/portfolio/[project]/context.json`
 - Priority scorecard (human-readable)
 
 **Checkpoint:**
+
 ```
 Code Sprint complete.
   Fixed [N] blockers across [N] files
@@ -300,6 +316,7 @@ Type 'continue' to proceed to Legal & Compliance.
 **Purpose:** Get legally clean before launch.
 
 **Process:**
+
 1. Draft Terms of Service — filled in with this product's actual data practices and use cases (not a blank template)
 2. Draft Privacy Policy — specific to what data this product actually collects (read from codebase)
 3. Generate compliance checklist for project type and geographic market
@@ -309,6 +326,7 @@ Type 'continue' to proceed to Legal & Compliance.
 7. Identify ongoing compliance obligations (GDPR data deletion requests, CCPA opt-outs, etc.)
 
 **Output:**
+
 - `docs/legal/TERMS_OF_SERVICE.md`
 - `docs/legal/PRIVACY_POLICY.md`
 - `docs/legal/COMPLIANCE_CHECKLIST.md`
@@ -324,6 +342,7 @@ Type 'continue' to proceed to Legal & Compliance.
 **Purpose:** Write a complete, product-specific launch guide — not generic options, but the right strategy for this exact product.
 
 **Process:**
+
 1. Detect project type and target customer
 2. Pull relevant patterns from `~/.atlas/patterns/launch.md` (what worked for this founder before)
 3. Research comparable launches in this category (using web search if available)
@@ -339,6 +358,7 @@ Type 'continue' to proceed to Legal & Compliance.
 8. Generate personal brand content: launch story for building-in-public
 
 **Output:**
+
 - `docs/founder/LAUNCH_STRATEGY.md` (channel selection + full reasoning)
 - Complete copy for each selected channel (ready to post)
 - `docs/founder/LAUNCH_TIMELINE.md`
@@ -355,6 +375,7 @@ For timing decisions, Atlas models 3 branches with expected outcomes and confide
 **Purpose:** Build the complete marketing system — not a strategy doc, an executable playbook.
 
 **Process:**
+
 1. Identify which social platforms actually host the target customer (not which platforms are popular generally)
 2. Write platform-specific setup guide for each recommended platform (exact bio copy, profile setup, pinned post)
 3. Generate 30-day content calendar with specific posts — not topics, actual post text
@@ -364,6 +385,7 @@ For timing decisions, Atlas models 3 branches with expected outcomes and confide
 7. Personal brand layer: document launch journey, generate case study outline
 
 **Output:**
+
 - `docs/founder/MARKETING_PLAYBOOK.md`
 - `docs/founder/CONTENT_CALENDAR_30.md` (30 actual posts, ready to schedule)
 - `docs/founder/SEO_STRATEGY.md`
@@ -376,6 +398,7 @@ For timing decisions, Atlas models 3 branches with expected outcomes and confide
 **Purpose:** Get the legal/financial infrastructure right the first time — not generically, but for this founder's specific situation.
 
 **Process:**
+
 1. Recommend entity type (LLC/S-Corp/C-Corp) — with reasoning, confidence, and what changes the answer
 2. Write state-specific formation guide — the actual steps, not "consult a lawyer"
 3. Banking setup guide: which account types, which banks, why (business checking, savings, Stripe payout separation)
@@ -387,6 +410,7 @@ For timing decisions, Atlas models 3 branches with expected outcomes and confide
 9. Exit strategy options: what buyers pay for this type of business, what improves the multiple
 
 **Output:**
+
 - `docs/founder/BUSINESS_SETUP.md`
 - `docs/founder/TAX_CALENDAR.md`
 - Acquisition Readiness Score (initial) with improvement roadmap
@@ -399,6 +423,7 @@ For timing decisions, Atlas models 3 branches with expected outcomes and confide
 **Purpose:** Get the product to runs-itself score 70+ — the real definition of "done" for founder time.
 
 **Process:**
+
 1. Calculate gap between current score and 70
 2. List every automation that adds points, sorted by points-per-hour
 3. Implement each automation:
@@ -416,6 +441,7 @@ For timing decisions, Atlas models 3 branches with expected outcomes and confide
 8. Recalculate runs-itself score
 
 **Output:**
+
 - Implemented automation configs (committed)
 - `docs/founder/CONTRACTOR_ONBOARDING.md`
 - Updated runs-itself score (target: 70+)
@@ -431,6 +457,7 @@ For timing decisions, Atlas models 3 branches with expected outcomes and confide
 **Purpose:** Build the permanent operating system for this product.
 
 **Process:**
+
 1. Define the 5 North Star metrics for this specific product — not AARRR framework, but the 5 numbers that actually matter here
 2. Write weekly review ritual: what to look at, in what order, what questions to ask, how long it takes (target: 15 minutes)
 3. Set monitoring and alert thresholds — what numbers trigger action
@@ -445,6 +472,7 @@ For timing decisions, Atlas models 3 branches with expected outcomes and confide
 8. Write ROADMAP.md: phases from current stage through scale, with entry/exit criteria per phase
 
 **Output:**
+
 - `docs/founder/OPERATIONS_HANDBOOK.md`
 - `docs/founder/SUPPORT_PLAYBOOK.md`
 - `docs/founder/ROADMAP.md`
@@ -458,6 +486,7 @@ For timing decisions, Atlas models 3 branches with expected outcomes and confide
 **Purpose:** Run the empire intelligently — allocate founder attention where it has the highest ROI.
 
 **Process:**
+
 1. Read all project contexts and recent metrics
 2. Calculate runs-itself scores and trajectories for all products
 3. Segment portfolio: running-themselves / need-attention / in-sprint / sunset-candidates
@@ -474,6 +503,7 @@ For timing decisions, Atlas models 3 branches with expected outcomes and confide
 10. Update `~/.atlas/memory.md` with new cross-project patterns
 
 **Output:**
+
 - Portfolio weekly brief (terminal output)
 - Updated `~/.atlas/portfolio/index.md`
 - `YOUR_NEXT_MOVE.md` — single most important action across the entire empire
@@ -483,20 +513,26 @@ For timing decisions, Atlas models 3 branches with expected outcomes and confide
 ## The New Features (Final Push)
 
 ### The Prediction Engine
+
 Before committing to any major strategy, Atlas provides probabilistic outcome modeling:
+
 - Based on comparable products in `~/.atlas/memory.md` + pattern library
 - Each prediction has a confidence level (Low / Medium / High) with explicit reasoning
 - Parallel Universe model for high-stakes decisions: 3 branches, expected outcomes, trade-offs
 
 ### The Pattern Oracle
+
 Activates when 10+ projects are in memory. Surfaces behavioral patterns about this specific founder:
+
 - Consistent blindspots (automatically corrected in future sprints)
 - Consistent strengths (amplified in strategy recommendations)
 - "You've done X four times — here's what happened each time"
 - Prevents repeated mistakes structurally, not just by warning
 
 ### The Personal Brand Engine
+
 Every product shipped generates distribution assets automatically:
+
 - Building-in-public thread from git commits + milestones
 - Launch story after each significant milestone
 - Case study after product reaches $1K MRR
@@ -504,14 +540,18 @@ Every product shipped generates distribution assets automatically:
 - Content queued for approval — founder approves, doesn't write
 
 ### The Opportunity Scanner (Portfolio Mode)
+
 Atlas proactively surfaces:
+
 - Acquisition targets: undervalued products matching your portfolio + skill profile
 - Unmet market demand: community signals from Reddit/HN/IH/communities
 - Buy vs. Build analysis: when acquiring is faster than building
 - Open source monetization candidates
 
 ### The Delegation Engine
+
 Atlas generates complete contractor management artifacts:
+
 - Job postings (Upwork/Toptal) with specific technical requirements
 - Contractor onboarding doc for each product
 - SOW (Statement of Work) for each foreseeable contracted task
@@ -520,7 +560,9 @@ Atlas generates complete contractor management artifacts:
 - The moment a task can be safely delegated is flagged explicitly
 
 ### Zero-to-First-Dollar Mode
+
 Specialized sprint mode for getting first paying customer (not just launching):
+
 - Identifies the single feature that most justifies payment
 - Finds first 5-10 likely customers by name (LinkedIn, community presence)
 - Writes personalized direct outreach message for each
@@ -528,29 +570,37 @@ Specialized sprint mode for getting first paying customer (not just launching):
 - Tracks through to first payment before declaring success
 
 ### Risk Radar
+
 Runs as part of onboarding and after each module. Surfaces non-obvious risks:
+
 - Legal/regulatory: category-specific (sweepstakes law, GDPR, financial regulations, etc.)
 - Technical: production readiness gaps (rate limiting, auth edge cases, data loss vectors)
 - Market: competitive timing, pricing traps
 - Operational: single points of failure, bus factor = 1 scenarios
-Each risk flagged with: severity, likelihood, specific fix, and whether Atlas can fix it or needs human action.
+  Each risk flagged with: severity, likelihood, specific fix, and whether Atlas can fix it or needs human action.
 
 ### Acquisition Readiness Score
+
 Tracks the business as an asset from day one:
+
 - Score: 0-100 based on what acquirers actually buy (revenue quality, documentation, bus factor, growth, contracts, IP, data)
 - Specific improvement roadmap: what changes the score most with least effort
 - Revenue multiple estimate by category and score level
 - Buyer type identification: strategic / PE / indie acquirer
 
 ### Cross-Project Compounding
+
 Atlas maintains a personal stack library that grows with every project:
+
 - Reusable components extracted from past projects (auth, billing, notifications, analytics)
 - Automation blocks that apply across products
 - By project 10: new products start 40% more built
 - By project 50: 70% of a new product's infrastructure is pre-built
 
 ### Empire Financial Model
+
 Atlas tracks wealth trajectory across the entire portfolio:
+
 ```
 10 products @ $1K MRR avg  = $10K/mo  = $120K/yr
 50 products @ $1K MRR avg  = $50K/mo  = $600K/yr
@@ -643,6 +693,7 @@ docs/
 ## Implementation Notes
 
 ### Next Steps (implementation order)
+
 1. Create `skills/founder-copilot/` directory in the superpowers skills location
 2. Write `founder-copilot.md` (orchestrator) — handles mode detection, loads Business Context, invokes modules in sequence
 3. Write `onboarding.md` — the 3-pass engine; this is the most critical module
@@ -651,10 +702,13 @@ docs/
 6. Test on SweepBot as the first real run
 
 ### The Skill Creator Tool
+
 Use `superpowers:writing-skills` when implementing to ensure the skill files follow the correct format, trigger conditions, and invocation patterns for the superpowers ecosystem.
 
 ### SweepBot as Pilot
+
 SweepBot is the ideal first Atlas run — it has:
+
 - Known code blockers (6 missing DB tables, 4 routing bugs)
 - Known infrastructure gaps (no production env)
 - Known legal gaps (no ToS/Privacy Policy)
