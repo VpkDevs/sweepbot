@@ -31,6 +31,7 @@ export function sanitizeString(value: string): string {
     // here to avoid double-encoding when the React front-end renders {variable}.
     .replace(/<[^>]*>/g, '') // lgtm[js/incomplete-multi-character-sanitization]
     // Remove null bytes and non-printable control chars (excluding \t, \n, \r)
+    // eslint-disable-next-line no-control-regex
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
     // Collapse multiple whitespace runs (spaces, tabs, newlines) into one space
     .replace(/\s+/g, ' ')
@@ -47,6 +48,7 @@ export function sanitizeMultilineString(value: string): string {
     .replace(/<[^>]*>/g, '') // lgtm[js/incomplete-multi-character-sanitization]
     // Remove null bytes and non-printable control chars.
     // Keep: \x09 (tab), \x0A (LF / newline), \x0D (CR).
+    // eslint-disable-next-line no-control-regex
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
     // Normalise Windows line endings to Unix
     .replace(/\r\n/g, '\n')
