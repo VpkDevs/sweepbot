@@ -126,7 +126,15 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     },
     async (request, reply) => {
       const userId = request.user!.id
-      const body = UpdateProfileBody.parse(request.body)
+      const parsed = UpdateProfileBody.safeParse(request.body)
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: 'VALIDATION_ERROR',
+          message: parsed.error.errors.map((e) => e.message).join('; '),
+          status: 400,
+        })
+      }
+      const body = parsed.data
 
       const updates: string[] = ['updated_at = NOW()']
       const values: unknown[] = []
