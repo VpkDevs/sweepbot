@@ -156,7 +156,8 @@ describe('FlowInterpreter', () => {
 
       const flow = result.flow
       const steps = (flow.rootNode as any).steps
-      const loopNode = steps.find((s: any) => s.type === 'loop') || steps.find((s: any) => s.type === 'action')
+      const loopNode =
+        steps.find((s: any) => s.type === 'loop') || steps.find((s: any) => s.type === 'action')
       expect(loopNode).toBeDefined()
     })
   })
@@ -267,7 +268,9 @@ describe('FlowInterpreter', () => {
       })
 
       const flow = result.flow
-      const mandatoryGuards = flow.responsiblePlayGuardrails.filter((g) => g.source === 'system_mandatory')
+      const mandatoryGuards = flow.responsiblePlayGuardrails.filter(
+        (g) => g.source === 'system_mandatory'
+      )
       expect(mandatoryGuards.length).toBeGreaterThan(0)
     })
 

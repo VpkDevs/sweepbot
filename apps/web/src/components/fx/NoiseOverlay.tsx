@@ -1,9 +1,10 @@
 import { useId } from 'react'
+import type { CSSProperties } from 'react'
 import { cn } from '../../lib/utils'
 
 interface NoiseOverlayProps {
   opacity?: number
-  blendMode?: React.CSSProperties['mixBlendMode']
+  blendMode?: CSSProperties['mixBlendMode']
   animate?: boolean
 }
 
@@ -15,7 +16,7 @@ interface NoiseOverlayProps {
  */
 export function NoiseOverlay({
   opacity = 0.018,
-  blendMode = 'overlay' as React.CSSProperties['mixBlendMode'],
+  blendMode = 'overlay' as CSSProperties['mixBlendMode'],
   animate = true,
 }: NoiseOverlayProps) {
   // Unique SVG filter ID to prevent collisions
@@ -29,7 +30,7 @@ export function NoiseOverlay({
       aria-hidden
       className={cn('pointer-events-none fixed inset-0 z-[9998]', opacityClass, blendClass)}
     >
-      <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+      <svg className="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg">
         <filter id={filterId}>
           <feTurbulence
             type="fractalNoise"
@@ -38,13 +39,7 @@ export function NoiseOverlay({
             stitchTiles="stitch"
           >
             {animate && (
-              <animate
-                attributeName="seed"
-                from="0"
-                to="100"
-                dur="8s"
-                repeatCount="indefinite"
-              />
+              <animate attributeName="seed" from="0" to="100" dur="8s" repeatCount="indefinite" />
             )}
           </feTurbulence>
           <feColorMatrix type="saturate" values="0" />

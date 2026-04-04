@@ -54,12 +54,12 @@ export function RecordsPage() {
 
   if (!records) {
     return (
-      <div className="p-6 flex flex-col items-center justify-center min-h-[60vh] text-center animate-reveal-up">
-        <div className="empty-icon-wrapper w-20 h-20 rounded-2xl bg-brand-500/10 flex items-center justify-center mb-5">
-          <Trophy className="w-9 h-9 text-brand-400" />
+      <div className="animate-reveal-up flex min-h-[60vh] flex-col items-center justify-center p-6 text-center">
+        <div className="empty-icon-wrapper bg-brand-500/10 mb-5 flex h-20 w-20 items-center justify-center rounded-2xl">
+          <Trophy className="text-brand-400 h-9 w-9" />
         </div>
-        <h2 className="text-xl font-bold text-white mb-2">No Records Yet</h2>
-        <p className="text-zinc-500 text-sm max-w-sm text-pretty">
+        <h2 className="mb-2 text-xl font-bold text-white">No Records Yet</h2>
+        <p className="max-w-sm text-pretty text-sm text-zinc-500">
           Start logging sessions to build your personal record book.
         </p>
       </div>
@@ -69,8 +69,13 @@ export function RecordsPage() {
   const recordCards = [
     {
       label: 'Biggest Single Win',
-      value: records.biggest_single_win != null ? `${formatSC(records.biggest_single_win)} SC` : '\u2014',
-      sub: [records.biggest_win_game, records.biggest_win_platform].filter(Boolean).join(' \u00b7 ') || undefined,
+      value:
+        records.biggest_single_win != null
+          ? `${formatSC(records.biggest_single_win)} SC`
+          : '\u2014',
+      sub:
+        [records.biggest_win_game, records.biggest_win_platform].filter(Boolean).join(' \u00b7 ') ||
+        undefined,
       date: records.biggest_win_date,
       icon: Trophy,
       color: 'text-jackpot',
@@ -90,9 +95,10 @@ export function RecordsPage() {
     },
     {
       label: 'Best RTP Session',
-      value: records.best_rtp_session != null
-        ? `${(Number(records.best_rtp_session) * 100).toFixed(1)}%`
-        : '\u2014',
+      value:
+        records.best_rtp_session != null
+          ? `${(Number(records.best_rtp_session) * 100).toFixed(1)}%`
+          : '\u2014',
       sub: `Min. ${records.best_rtp_min_bets} bets to qualify`,
       icon: TrendingUp,
       color: 'text-brand-400',
@@ -138,36 +144,38 @@ export function RecordsPage() {
   ]
 
   return (
-    <div className="p-6 lg:p-8 space-y-8 max-w-6xl mx-auto">
+    <div className="mx-auto max-w-6xl space-y-8 p-6 lg:p-8">
       {/* Header */}
       <ScrollReveal>
-      <div className="flex items-center justify-between">
-        <div>
-          <TextReveal as="h1" className="heading-display text-white text-shimmer" stagger={50}>Personal Records</TextReveal>
-          {records.last_computed_at && (
-            <p className="text-zinc-600 text-xs mt-1.5 tabular-nums">
-              Last updated{' '}
-              {new Date(records.last_computed_at).toLocaleDateString('en', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })}
-            </p>
-          )}
+        <div className="flex items-center justify-between">
+          <div>
+            <TextReveal as="h1" className="heading-display text-shimmer text-white" stagger={50}>
+              Personal Records
+            </TextReveal>
+            {records.last_computed_at && (
+              <p className="mt-1.5 text-xs tabular-nums text-zinc-600">
+                Last updated{' '}
+                {new Date(records.last_computed_at).toLocaleDateString('en', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={() => refreshMutation.mutate()}
+            disabled={refreshMutation.isPending}
+            className="glass-card press-scale flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-zinc-300 transition-all hover:bg-white/[0.06] disabled:opacity-50"
+          >
+            <RefreshCw className={cn('h-3.5 w-3.5', refreshMutation.isPending && 'animate-spin')} />
+            Recalculate
+          </button>
         </div>
-        <button
-          onClick={() => refreshMutation.mutate()}
-          disabled={refreshMutation.isPending}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl glass-card text-zinc-300 text-sm font-medium transition-all hover:bg-white/[0.06] disabled:opacity-50 press-scale"
-        >
-          <RefreshCw className={cn('w-3.5 h-3.5', refreshMutation.isPending && 'animate-spin')} />
-          Recalculate
-        </button>
-      </div>
       </ScrollReveal>
 
       {/* Records grid */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {recordCards.map((card, i) => (
           <ScrollReveal key={card.label} delay={i * 60}>
             <RecordCard {...card} />
@@ -213,23 +221,35 @@ function RecordCard({
   return (
     <SpotlightCard
       className={cn(
-        'glass-card rounded-2xl p-5 space-y-3',
+        'glass-card space-y-3 rounded-2xl p-5',
         highlight && 'gradient-border-gold holo-surface',
-        glow,
+        glow
       )}
     >
       <div className="flex items-center gap-2.5">
-        <div className={cn('flex items-center justify-center w-8 h-8 rounded-xl bg-white/[0.04]', color)}>
-          <Icon className="w-4 h-4" />
+        <div
+          className={cn(
+            'flex h-8 w-8 items-center justify-center rounded-xl bg-white/[0.04]',
+            color
+          )}
+        >
+          <Icon className="h-4 w-4" />
         </div>
-        <span className="text-[10px] text-zinc-500 uppercase tracking-[0.15em] font-bold">{label}</span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-500">
+          {label}
+        </span>
       </div>
-      <p className={cn('text-2xl font-bold tabular-nums tracking-tight', value === '\u2014' ? 'text-zinc-700' : 'text-white')}>
+      <p
+        className={cn(
+          'text-2xl font-bold tabular-nums tracking-tight',
+          value === '\u2014' ? 'text-zinc-700' : 'text-white'
+        )}
+      >
         {value}
       </p>
-      {sub && <p className="text-xs text-zinc-500 leading-relaxed">{sub}</p>}
+      {sub && <p className="text-xs leading-relaxed text-zinc-500">{sub}</p>}
       {date && (
-        <p className="text-xs text-zinc-600 tabular-nums">
+        <p className="text-xs tabular-nums text-zinc-600">
           {new Date(date).toLocaleDateString('en', {
             month: 'short',
             day: 'numeric',
@@ -249,11 +269,11 @@ function RecordCard({
 
 function RecordsSkeleton() {
   return (
-    <div className="p-6 lg:p-8 space-y-8 max-w-6xl mx-auto">
-      <div className="h-8 w-48 skeleton-text rounded-lg" />
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="mx-auto max-w-6xl space-y-8 p-6 lg:p-8">
+      <div className="skeleton-text h-8 w-48 rounded-lg" />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 7 }).map((_, i) => (
-          <div key={i} className="glass-card rounded-2xl h-40 shimmer" />
+          <div key={i} className="glass-card shimmer h-40 rounded-2xl" />
         ))}
       </div>
     </div>

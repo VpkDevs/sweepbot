@@ -32,9 +32,7 @@ const UpdateRedemptionBody = z.object({
 
 const RedemptionListQuery = z.object({
   platformId: z.string().uuid().optional(),
-  status: z
-    .enum(['pending', 'processing', 'completed', 'rejected', 'cancelled'])
-    .optional(),
+  status: z.enum(['pending', 'processing', 'completed', 'rejected', 'cancelled']).optional(),
   paymentMethod: z.string().optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
@@ -169,9 +167,7 @@ export async function redemptionRoutes(app: FastifyInstance): Promise<void> {
       const query = RedemptionListQuery.parse(request.query)
       const offset = (query.page - 1) * query.pageSize
 
-      const platformFilter = query.platformId
-        ? sql`AND r.platform_id = ${query.platformId}`
-        : sql``
+      const platformFilter = query.platformId ? sql`AND r.platform_id = ${query.platformId}` : sql``
 
       const statusFilter = query.status ? sql`AND r.status = ${query.status}` : sql``
 

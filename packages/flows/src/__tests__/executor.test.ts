@@ -5,7 +5,13 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { FlowExecutor } from '../executor/executor'
-import type { FlowDefinition, FlowNode, FlowActionNode, FlowConditionNode, FlowLoopNode } from '../types'
+import type {
+  FlowDefinition,
+  FlowNode,
+  FlowActionNode,
+  FlowConditionNode,
+  FlowLoopNode,
+} from '../types'
 
 describe('FlowExecutor', () => {
   let executor: FlowExecutor
@@ -583,7 +589,7 @@ describe('FlowExecutor', () => {
     })
 
     // New behavior tests exercising actual executor behavior
-    it('should stop execution when cool_down_check guardrail is enabled', async () => {
+    it('should stop execution when user is in cooldown (runtime) and cool_down_check is enabled', async () => {
       const root: FlowNode = {
         type: 'action',
         id: 'action-root',
@@ -612,9 +618,84 @@ describe('FlowExecutor', () => {
       }
 
       const exec = new FlowExecutor()
-      const ctx = await exec.execute(flow, 'u1')
+      const ctx = await exec.execute(flow, 'u1', undefined, {
+        responsiblePlay: { isInCooldown: true, cooldownUntil: new Date(Date.now() + 60_000) },
+      })
       expect(ctx.status).toBe('stopped_by_guardrail')
-      expect(ctx.log.some(l => l.type === 'guardrail_triggered' && (l.details as any).guardrail === 'cool_down_check')).toBe(true)
+      expect(
+        ctx.log.some(
+          (l) =>
+            l.type === 'guardrail_triggered' && (l.details as any).guardrail === 'cool_down_check'
+        )
+      ).toBe(true)
+    })
+
+    it('should not stop execution just because cool_down_check exists (no runtime cooldown)', async () => {
+      const root: FlowNode = {
+        type: 'action',
+        id: 'action-root',
+        action: 'spin',
+        parameters: {},
+        timeout: 1000,
+        onFailure: 'stop',
+      }
+      const flow: FlowDefinition = {
+        id: 'flow-cooldown-2',
+        userId: 'u1',
+        name: 'Cooldown Test 2',
+        description: 'test',
+        version: 1,
+        status: 'draft',
+        trigger: { type: 'manual' },
+        rootNode: root,
+        variables: [],
+        responsiblePlayGuardrails: [
+          { type: 'cool_down_check', value: true, source: 'system_mandatory', overridable: false },
+        ],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        executionCount: 0,
+        performanceStats: {},
+      }
+
+      const exec = new FlowExecutor()
+      const ctx = await exec.execute(flow, 'u1', undefined, {
+        responsiblePlay: { isInCooldown: false },
+      })
+      expect(ctx.status).not.toBe('stopped_by_guardrail')
+    })
+
+    it('should stop execution when max_duration is exceeded', async () => {
+      const root: FlowNode = {
+        type: 'wait',
+        id: 'wait-root',
+        duration: 5,
+      }
+      const flow: FlowDefinition = {
+        id: 'flow-max-duration',
+        userId: 'u1',
+        name: 'Max duration test',
+        description: 'test',
+        version: 1,
+        status: 'draft',
+        trigger: { type: 'manual' },
+        rootNode: root,
+        variables: [],
+        responsiblePlayGuardrails: [
+          { type: 'max_duration', value: 1, source: 'system_default', overridable: true },
+        ],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        executionCount: 0,
+        performanceStats: {},
+      }
+
+      const exec = new FlowExecutor()
+      const ctx = await exec.execute(flow, 'u1', undefined, {
+        responsiblePlay: { now: new Date(Date.now() - 10_000) },
+      })
+      expect(ctx.status).toBe('stopped_by_guardrail')
+      expect(ctx.metrics.guardrailsTriggered).toContain('max_duration')
     })
 
     it('should store action result when parameters.storeAs is provided', async () => {
@@ -671,9 +752,23 @@ describe('FlowExecutor', () => {
           left: { type: 'literal', value: 1 },
           operator: '==',
           right: { type: 'literal', value: 1 },
-          onTrue: { type: 'action', id: 'body-a', action: 'spin', parameters: {}, timeout: 1000, onFailure: 'stop' },
+          onTrue: {
+            type: 'action',
+            id: 'body-a',
+            action: 'spin',
+            parameters: {},
+            timeout: 1000,
+            onFailure: 'stop',
+          },
         },
-        body: { type: 'action', id: 'body-a', action: 'spin', parameters: {}, timeout: 1000, onFailure: 'stop' },
+        body: {
+          type: 'action',
+          id: 'body-a',
+          action: 'spin',
+          parameters: {},
+          timeout: 1000,
+          onFailure: 'stop',
+        },
         maxIterations: 3,
         maxDuration: 60_000,
       }

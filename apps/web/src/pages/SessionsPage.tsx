@@ -37,10 +37,10 @@ export function SessionsPage() {
   const userPlatforms = (userPlatformsData as { data?: Record<string, unknown>[] })?.data ?? []
 
   return (
-    <div className="p-6 space-y-6 max-w-6xl mx-auto">
+    <div className="mx-auto max-w-6xl space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Sessions</h1>
-        <p className="text-zinc-400 text-sm mt-1">
+        <p className="mt-1 text-sm text-zinc-400">
           Your complete play history across all platforms.
         </p>
       </div>
@@ -48,14 +48,17 @@ export function SessionsPage() {
       {/* Filters */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 text-zinc-500">
-          <Filter className="w-4 h-4" />
+          <Filter className="h-4 w-4" />
           <span className="text-sm">Filter by:</span>
         </div>
         <select
           aria-label="Filter sessions by platform"
           value={platformFilter}
-          onChange={(e) => { setPlatformFilter(e.target.value); setPage(1) }}
-          className="px-3 py-1.5 bg-zinc-900 border border-zinc-800 text-zinc-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+          onChange={(e) => {
+            setPlatformFilter(e.target.value)
+            setPage(1)
+          }}
+          className="focus:ring-brand-500 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-300 focus:outline-none focus:ring-2"
         >
           <option value="">All Platforms</option>
           {userPlatforms.map((p) => (
@@ -64,52 +67,51 @@ export function SessionsPage() {
             </option>
           ))}
         </select>
-        {meta && (
-          <span className="text-xs text-zinc-600 ml-auto">{meta.total} total sessions</span>
-        )}
+        {meta && <span className="ml-auto text-xs text-zinc-600">{meta.total} total sessions</span>}
       </div>
 
       {/* Sessions list */}
-      <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+      <div className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
         {isLoading ? (
-          <div className="flex items-center justify-center h-48">
-            <Loader2 className="w-6 h-6 animate-spin text-zinc-500" />
+          <div className="flex h-48 items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
           </div>
         ) : sessions.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-zinc-500 gap-2">
-            <History className="w-8 h-8" />
+          <div className="flex h-48 flex-col items-center justify-center gap-2 text-zinc-500">
+            <History className="h-8 w-8" />
             <p className="text-sm">No sessions recorded yet</p>
             <p className="text-xs text-zinc-600">Install the browser extension to start tracking</p>
           </div>
         ) : (
           <div className="divide-y divide-zinc-800">
             {sessions.map((session) => {
-              const wagered = session['total_wagered'] as number ?? 0
-              const won = session['total_won'] as number ?? 0
+              const wagered = (session['total_wagered'] as number) ?? 0
+              const won = (session['total_won'] as number) ?? 0
               const net = won - wagered
               const rtp = session['rtp'] as number | null
               const rtpFmt = rtp ? formatRTP(rtp) : null
               const isOpen = !session['ended_at']
-              const duration = session['ended_at'] && session['started_at']
-                ? Math.round(
-                    (new Date(session['ended_at'] as string).getTime() -
-                      new Date(session['started_at'] as string).getTime()) /
-                      60000
-                  )
-                : null
+              const duration =
+                session['ended_at'] && session['started_at']
+                  ? Math.round(
+                      (new Date(session['ended_at'] as string).getTime() -
+                        new Date(session['started_at'] as string).getTime()) /
+                        60000
+                    )
+                  : null
 
               return (
                 <div
                   key={session['id'] as string}
-                  className="flex items-center gap-4 px-5 py-4 hover:bg-zinc-800/40 transition-colors group cursor-default"
+                  className="group flex cursor-default items-center gap-4 px-5 py-4 transition-colors hover:bg-zinc-800/40"
                 >
                   {/* Platform logo */}
-                  <div className="w-8 h-8 rounded-md bg-zinc-800 flex items-center justify-center shrink-0">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-zinc-800">
                     {session['platform_logo_url'] ? (
                       <img
                         src={session['platform_logo_url'] as string}
                         alt={`${session['platform_name']} logo`}
-                        className="w-8 h-8 rounded-md"
+                        className="h-8 w-8 rounded-md"
                       />
                     ) : (
                       <span className="text-xs text-zinc-600">
@@ -119,19 +121,19 @@ export function SessionsPage() {
                   </div>
 
                   {/* Main info */}
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-white">
                         {session['platform_name'] as string}
                       </span>
                       {isOpen && (
-                        <span className="flex items-center gap-1 px-1.5 py-0.5 bg-green-900/40 border border-green-800 text-green-400 text-xs rounded-full">
-                          <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+                        <span className="flex items-center gap-1 rounded-full border border-green-800 bg-green-900/40 px-1.5 py-0.5 text-xs text-green-400">
+                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-400" />
                           Live
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 mt-0.5">
+                    <div className="mt-0.5 flex items-center gap-3">
                       <span className="text-xs text-zinc-500">
                         {timeAgo(session['started_at'] as string)}
                       </span>
@@ -139,7 +141,7 @@ export function SessionsPage() {
                         <span className="text-xs text-zinc-600">{duration}m</span>
                       )}
                       {!!session['game_name'] && (
-                        <span className="text-xs text-zinc-600 truncate">
+                        <span className="truncate text-xs text-zinc-600">
                           {session['game_name'] as string}
                         </span>
                       )}
@@ -147,7 +149,7 @@ export function SessionsPage() {
                   </div>
 
                   {/* Stats */}
-                  <div className="hidden sm:flex items-center gap-6 text-right">
+                  <div className="hidden items-center gap-6 text-right sm:flex">
                     <div>
                       <p className="text-xs text-zinc-500">Wagered</p>
                       <p className="text-sm tabular-nums text-zinc-300">{formatSC(wagered)} SC</p>
@@ -166,14 +168,16 @@ export function SessionsPage() {
                     </div>
                     <div>
                       <p className="text-xs text-zinc-500">RTP</p>
-                      <p className={cn('text-sm tabular-nums', rtpFmt?.className ?? 'text-zinc-600')}>
+                      <p
+                        className={cn('text-sm tabular-nums', rtpFmt?.className ?? 'text-zinc-600')}
+                      >
                         {rtpFmt?.text ?? '—'}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-zinc-500">Bets</p>
                       <p className="text-sm tabular-nums text-zinc-300">
-                        {(session['total_bets'] as number ?? 0).toLocaleString()}
+                        {((session['total_bets'] as number) ?? 0).toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -181,15 +185,15 @@ export function SessionsPage() {
                   {/* Net indicator (mobile) */}
                   <div className="sm:hidden">
                     {net > 0 ? (
-                      <TrendingUp className="w-5 h-5 text-win" />
+                      <TrendingUp className="text-win h-5 w-5" />
                     ) : net < 0 ? (
-                      <TrendingDown className="w-5 h-5 text-loss" />
+                      <TrendingDown className="text-loss h-5 w-5" />
                     ) : (
-                      <Minus className="w-5 h-5 text-zinc-600" />
+                      <Minus className="h-5 w-5 text-zinc-600" />
                     )}
                   </div>
 
-                  <ChevronRight className="w-4 h-4 text-zinc-700 group-hover:text-zinc-400 transition-colors shrink-0" />
+                  <ChevronRight className="h-4 w-4 shrink-0 text-zinc-700 transition-colors group-hover:text-zinc-400" />
                 </div>
               )
             })}
@@ -198,7 +202,7 @@ export function SessionsPage() {
 
         {/* Pagination */}
         {meta && meta.total > 25 && (
-          <div className="flex items-center justify-between px-5 py-3 border-t border-zinc-800">
+          <div className="flex items-center justify-between border-t border-zinc-800 px-5 py-3">
             <p className="text-xs text-zinc-500">
               Page {meta.page} — {meta.total} total sessions
             </p>
@@ -206,14 +210,14 @@ export function SessionsPage() {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-3 py-1 text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="rounded-lg bg-zinc-800 px-3 py-1 text-xs text-zinc-300 transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Prev
               </button>
               <button
                 onClick={() => setPage((p) => p + 1)}
                 disabled={!meta.hasMore}
-                className="px-3 py-1 text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="rounded-lg bg-zinc-800 px-3 py-1 text-xs text-zinc-300 transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Next
               </button>

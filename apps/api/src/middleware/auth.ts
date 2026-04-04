@@ -9,16 +9,12 @@ import { env } from '../utils/env.js'
 import { logger } from '../utils/logger.js'
 
 // Supabase admin client (server-side only — uses service role key)
-export const supabaseAdmin = createClient(
-  env.SUPABASE_URL,
-  env.SUPABASE_SERVICE_ROLE_KEY,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
-)
+export const supabaseAdmin = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+  },
+})
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -34,10 +30,7 @@ declare module 'fastify' {
  * Prevalidation hook that validates Bearer JWT from Supabase Auth.
  * Attach to routes that require authentication.
  */
-export async function requireAuth(
-  request: FastifyRequest,
-  reply: FastifyReply
-): Promise<void> {
+export async function requireAuth(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   const authHeader = request.headers.authorization
   if (!authHeader?.startsWith('Bearer ')) {
     return reply.code(401).send({
@@ -69,10 +62,7 @@ export async function requireAuth(
  * Optional auth — attaches user if token present, continues if not.
  * Use for routes where auth enhances but isn't required.
  */
-export async function optionalAuth(
-  request: FastifyRequest,
-  _reply: FastifyReply
-): Promise<void> {
+export async function optionalAuth(request: FastifyRequest, _reply: FastifyReply): Promise<void> {
   const authHeader = request.headers.authorization
   if (!authHeader?.startsWith('Bearer ')) {
     request.user = null

@@ -22,9 +22,9 @@ interface AchievementSeed {
   key: string
   name: string
   description: string
-  icon: string          // lucide-react icon name (display only)
-  category: string      // sessions | bonuses | platforms | social | flows
-  tier: string          // bronze | silver | gold | platinum
+  icon: string // lucide-react icon name (display only)
+  category: string // sessions | bonuses | platforms | social | flows
+  tier: string // bronze | silver | gold | platinum
   points: number
   requirement: Record<string, unknown>
   isSecret: boolean

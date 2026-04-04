@@ -6,11 +6,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { requireAuth, optionalAuth } from '../../middleware/auth'
-import {
-  createMockFastifyRequest,
-  createMockFastifyReply,
-  createTestUser,
-} from '../setup'
+import { createMockFastifyRequest, createMockFastifyReply, createTestUser } from '../setup'
 import { FIXTURE_AUTH } from '../fixtures'
 
 describe('Authentication Middleware', () => {
@@ -329,7 +325,12 @@ describe('Authentication Middleware', () => {
       expect(mockRequest.user!.id).toBe('user-test-001')
 
       // Route should proceed (no 401 response)
-      const response = { success: true, data: { /* user data */ } }
+      const response = {
+        success: true,
+        data: {
+          /* user data */
+        },
+      }
       expect(response.success).toBe(true)
     })
 

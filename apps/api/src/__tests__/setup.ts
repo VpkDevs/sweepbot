@@ -63,9 +63,7 @@ export function createTestUser(overrides?: Partial<TestUser>): TestUser {
 /**
  * Create a test subscription with sensible defaults
  */
-export function createTestSubscription(
-  overrides?: Partial<TestSubscription>
-): TestSubscription {
+export function createTestSubscription(overrides?: Partial<TestSubscription>): TestSubscription {
   const now = new Date()
   const nextMonth = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
 
@@ -108,9 +106,7 @@ export function createTestFlow(overrides?: Partial<TestFlow>): TestFlow {
 /**
  * Create a test flow execution with sensible defaults
  */
-export function createTestFlowExecution(
-  overrides?: Partial<TestFlowExecution>
-): TestFlowExecution {
+export function createTestFlowExecution(overrides?: Partial<TestFlowExecution>): TestFlowExecution {
   const now = new Date()
   return {
     id: 'exec-test-001',
@@ -216,10 +212,7 @@ export const createMockSupabaseClient = () => ({
 /**
  * Create a mock Stripe webhook event
  */
-export function createMockStripeEvent(
-  eventType: string,
-  data?: Record<string, unknown>
-) {
+export function createMockStripeEvent(eventType: string, data?: Record<string, unknown>) {
   return {
     id: 'evt_test_123456',
     object: 'event',
@@ -326,9 +319,7 @@ export const createMockStripClient = () => ({
 /**
  * Create a mock FastifyRequest with user context
  */
-export function createMockFastifyRequest(
-  overrides?: Partial<FastifyRequest>
-): FastifyRequest {
+export function createMockFastifyRequest(overrides?: Partial<FastifyRequest>): FastifyRequest {
   return {
     headers: {
       authorization: 'Bearer test-jwt-token-123',
@@ -344,9 +335,7 @@ export function createMockFastifyRequest(
 /**
  * Create a mock FastifyReply
  */
-export function createMockFastifyReply(
-  overrides?: Partial<FastifyReply>
-): FastifyReply {
+export function createMockFastifyReply(overrides?: Partial<FastifyReply>): FastifyReply {
   const mockReply: Partial<FastifyReply> = {
     code: vi.fn().mockReturnThis(),
     send: vi.fn().mockReturnThis(),
@@ -459,9 +448,7 @@ export async function testConcurrentOperations(
   operation: (id: string) => Promise<unknown>,
   count: number = 5
 ) {
-  const promises = Array.from({ length: count }, (_, i) =>
-    operation(`test-${i}`)
-  )
+  const promises = Array.from({ length: count }, (_, i) => operation(`test-${i}`))
   const results = await Promise.all(promises)
   return results
 }

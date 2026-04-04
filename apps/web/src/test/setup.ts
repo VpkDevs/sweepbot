@@ -50,10 +50,7 @@ global.ResizeObserver = class ResizeObserver {
 const originalError = console.error
 beforeAll(() => {
   console.error = (...args: any[]) => {
-    if (
-      typeof args[0] === 'string' &&
-      args[0].includes('Warning: ReactDOM.render')
-    ) {
+    if (typeof args[0] === 'string' && args[0].includes('Warning: ReactDOM.render')) {
       return
     }
     originalError.call(console, ...args)

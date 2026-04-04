@@ -79,7 +79,8 @@ export class VoiceRecorder {
     }
 
     const SR =
-      (window as unknown as { SpeechRecognition: SpeechRecognitionConstructor }).SpeechRecognition ??
+      (window as unknown as { SpeechRecognition: SpeechRecognitionConstructor })
+        .SpeechRecognition ??
       (window as unknown as { webkitSpeechRecognition: SpeechRecognitionConstructor })
         .webkitSpeechRecognition
 
@@ -120,9 +121,7 @@ export class VoiceRecorder {
           reject(new Error('No speech detected. Try again.'))
         } else if (event.error === 'not-allowed') {
           reject(
-            new Error(
-              'Microphone permission denied. Please allow microphone access and try again.',
-            ),
+            new Error('Microphone permission denied. Please allow microphone access and try again.')
           )
         } else {
           reject(new Error(`Speech recognition error: ${event.error}`))
@@ -149,6 +148,17 @@ export class VoiceRecorder {
   /** Manually stop recording */
   stop(): void {
     this.recognition?.stop()
+    this.cleanup()
+  }
+
+  /** Immediately kill the recording without processing or resolving results */
+  abort(): void {
+    if (this.recognition) {
+      this.recognition.onend = null // suppress onend callback
+      this.recognition.onerror = null
+      this.recognition.onresult = null
+      this.recognition.abort()
+    }
     this.cleanup()
   }
 

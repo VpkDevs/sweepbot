@@ -29,7 +29,7 @@ declare module 'node-cron' {
   export function schedule(
     expression: string,
     func: () => void | Promise<void>,
-    options?: ScheduleOptions,
+    options?: ScheduleOptions
   ): ScheduledTask
 
   /** Validate a cron expression */

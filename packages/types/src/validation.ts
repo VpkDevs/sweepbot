@@ -23,49 +23,33 @@ export const userProfileSchema = z.object({
   updatedAt: z.string().datetime(),
 })
 
-export const updateProfileSchema = userProfileSchema.pick({
-  displayName: true,
-  avatarUrl: true,
-  bio: true,
-  timezone: true,
-  locale: true,
-}).partial()
+export const updateProfileSchema = userProfileSchema
+  .pick({
+    displayName: true,
+    avatarUrl: true,
+    bio: true,
+    timezone: true,
+    locale: true,
+  })
+  .partial()
 
 // ──────────────────────────────────────────────────────────────────────
-// Session Schemas
+// Session Schemas (Note: Full schema exported from session module)
 // ──────────────────────────────────────────────────────────────────────
 
-export const sessionSchema = z.object({
-  id: z.string().uuid(),
-  userId: z.string().uuid(),
+// Re-export createSessionSchema for form validation
+export const createSessionSchema = z.object({
   platformId: z.string().uuid(),
   gameId: z.string().uuid().nullable(),
-  status: z.enum(['active', 'paused', 'completed']),
-  startedAt: z.string().datetime(),
-  endedAt: z.string().datetime().nullable(),
-  durationSeconds: z.number().int().positive().nullable(),
   openingBalance: z.number().nonnegative(),
-  closingBalance: z.number().nonnegative().nullable(),
-  totalWagered: z.number().nonnegative(),
-  totalWon: z.number().nonnegative(),
-  rtp: z.number().min(0).max(2).nullable(), // 0-200%
-  spinCount: z.number().int().nonnegative(),
-  bonusTriggers: z.number().int().nonnegative(),
-  largestWin: z.number().nonnegative().nullable(),
-})
-
-export const createSessionSchema = sessionSchema.pick({
-  platformId: true,
-  gameId: true,
-  openingBalance: true,
-}).extend({
   startedAt: z.string().datetime().optional(),
 })
 
 // ──────────────────────────────────────────────────────────────────────
-// Platform Schemas
+// Platform Schemas (Note: Full schema exported from platform module)
 // ──────────────────────────────────────────────────────────────────────
 
+// Re-export platformSchema for form validation (simplified for forms)
 export const platformSchema = z.object({
   id: z.string().uuid(),
   slug: z.string().min(1),
@@ -189,27 +173,26 @@ export const resetPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),
 })
 
-export const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, 'Current password is required'),
-  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
-  confirmPassword: z.string().min(1, 'Please confirm your password'),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ['confirmPassword'],
-})
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Current password is required'),
+    newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  })
 
 // ──────────────────────────────────────────────────────────────────────
-// Type Exports
+// Type Exports (Note: Core types are exported from domain modules)
 // ──────────────────────────────────────────────────────────────────────
 
 export type UserProfile = z.infer<typeof userProfileSchema>
 export type UpdateProfile = z.infer<typeof updateProfileSchema>
-export type Session = z.infer<typeof sessionSchema>
 export type CreateSession = z.infer<typeof createSessionSchema>
-export type Platform = z.infer<typeof platformSchema>
 export type Flow = z.infer<typeof flowSchema>
 export type CreateFlow = z.infer<typeof createFlowSchema>
-export type Subscription = z.infer<typeof subscriptionSchema>
 export type Notification = z.infer<typeof notificationSchema>
 export type LoginForm = z.infer<typeof loginSchema>
 export type SignupForm = z.infer<typeof signupSchema>

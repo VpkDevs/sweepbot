@@ -15,7 +15,7 @@ export function StreakWidget() {
   })
 
   if (isLoading) {
-    return <div className="glass-card rounded-2xl p-4 h-[80px] shimmer" />
+    return <div className="glass-card shimmer h-[80px] rounded-2xl p-4" />
   }
 
   const streaks = (data ?? {}) as Record<string, number>
@@ -25,13 +25,13 @@ export function StreakWidget() {
 
   if (currentWin === 0 && currentLoss === 0) {
     return (
-      <div className="glass-card rounded-2xl p-4 flex items-center gap-3 animate-fade-in">
-        <div className="w-10 h-10 rounded-xl bg-zinc-800/50 flex items-center justify-center">
-          <Minus className="w-4 h-4 text-zinc-600" />
+      <div className="glass-card animate-fade-in flex items-center gap-3 rounded-2xl p-4">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-800/50">
+          <Minus className="h-4 w-4 text-zinc-600" />
         </div>
         <div>
-          <p className="text-[10px] text-zinc-500 uppercase tracking-[0.15em] font-bold">Streak</p>
-          <p className="text-sm text-zinc-500 mt-0.5">No active streak</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-500">Streak</p>
+          <p className="mt-0.5 text-sm text-zinc-500">No active streak</p>
         </div>
       </div>
     )
@@ -45,53 +45,57 @@ export function StreakWidget() {
   return (
     <div
       className={cn(
-        'glass-card rounded-2xl p-4 flex items-center gap-3 animate-fade-in transition-all shine-on-hover',
+        'glass-card animate-fade-in shine-on-hover flex items-center gap-3 rounded-2xl p-4 transition-all',
         isWinStreak && isOnFire && 'gradient-border-win shadow-emerald-500/10',
         isWinStreak && !isOnFire && 'ring-1 ring-emerald-500/15',
-        !isWinStreak && 'ring-1 ring-red-500/15',
+        !isWinStreak && 'ring-1 ring-red-500/15'
       )}
     >
       {/* Icon */}
       <div
         className={cn(
-          'relative flex items-center justify-center w-11 h-11 rounded-xl flex-shrink-0',
+          'relative flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl',
           isWinStreak
             ? isOnFire
               ? 'bg-gradient-to-br from-orange-500/20 to-yellow-500/20'
               : 'bg-emerald-500/10'
-            : 'bg-red-500/10',
+            : 'bg-red-500/10'
         )}
       >
         {isOnFire ? (
           <>
-            <span className="text-2xl animate-float">🔥</span>
-            <div className="absolute inset-0 rounded-xl bg-orange-400/10 animate-glow-pulse" />
-            <div className="absolute -inset-1 rounded-2xl bg-orange-500/5 animate-breathe" />
+            <span className="animate-float text-2xl">🔥</span>
+            <div className="animate-glow-pulse absolute inset-0 rounded-xl bg-orange-400/10" />
+            <div className="animate-breathe absolute -inset-1 rounded-2xl bg-orange-500/5" />
           </>
         ) : isWinStreak ? (
-          <Flame className="w-5 h-5 text-emerald-400" />
+          <Flame className="h-5 w-5 text-emerald-400" />
         ) : (
-          <TrendingDown className="w-5 h-5 text-red-400" />
+          <TrendingDown className="h-5 w-5 text-red-400" />
         )}
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0">
-        <p className="text-[10px] text-zinc-500 uppercase tracking-[0.15em] font-bold">
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-500">
           {isWinStreak ? 'Win Streak' : 'Loss Streak'}
-          {isOnFire && <span className="ml-1.5 text-orange-400 normal-case tracking-normal animate-glow-pulse">On fire!</span>}
+          {isOnFire && (
+            <span className="animate-glow-pulse ml-1.5 normal-case tracking-normal text-orange-400">
+              On fire!
+            </span>
+          )}
         </p>
-        <div className="flex items-baseline gap-1.5 mt-0.5">
+        <div className="mt-0.5 flex items-baseline gap-1.5">
           <p
             className={cn(
               'text-2xl font-black tabular-nums tracking-tight',
               isWinStreak ? 'text-emerald-400' : 'text-red-400',
-              isOnFire && 'gradient-text-fire',
+              isOnFire && 'gradient-text-fire'
             )}
           >
             {streakCount}
           </p>
-          <span className="text-xs text-zinc-500 font-medium">
+          <span className="text-xs font-medium text-zinc-500">
             {streakCount === 1 ? 'session' : 'sessions'}
           </span>
         </div>
@@ -105,7 +109,7 @@ export function StreakWidget() {
                 style={{ width: `${(streakCount / 7) * 100}%` }}
               />
             </div>
-            <span className="text-[10px] text-zinc-600 tabular-nums whitespace-nowrap font-medium">
+            <span className="whitespace-nowrap text-[10px] font-medium tabular-nums text-zinc-600">
               {7 - streakCount} to 🔥
             </span>
           </div>
@@ -114,10 +118,10 @@ export function StreakWidget() {
 
       {/* Best streak badge */}
       {isWinStreak && longestWin > 0 && (
-        <div className="flex flex-col items-center gap-0.5 pl-3 border-l border-white/[0.04]">
-          <Trophy className="w-3.5 h-3.5 text-zinc-600" />
-          <p className="text-sm font-bold text-zinc-400 tabular-nums">{longestWin}</p>
-          <p className="text-[9px] text-zinc-600 leading-none font-medium">best</p>
+        <div className="flex flex-col items-center gap-0.5 border-l border-white/[0.04] pl-3">
+          <Trophy className="h-3.5 w-3.5 text-zinc-600" />
+          <p className="text-sm font-bold tabular-nums text-zinc-400">{longestWin}</p>
+          <p className="text-[9px] font-medium leading-none text-zinc-600">best</p>
         </div>
       )}
     </div>

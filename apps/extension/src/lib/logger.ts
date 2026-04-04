@@ -1,60 +1,18 @@
-/**
- * Lightweight structured logger for the browser extension context.
- * Does NOT import from @sweepbot/utils — extensions have different bundle
- * constraints and no access to Node.js APIs.
- *
- * In development: all levels logged to console.
- * In production: only warn + error logged (debug/info are no-ops).
- */
+const isDev = process.env.NODE_ENV !== 'production'
 
-interface Logger {
-  debug(msg: string, ctx?: unknown): void
-  info(msg: string, ctx?: unknown): void
-  warn(msg: string, ctx?: unknown): void
-  error(msg: string, ctx?: unknown): void
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+const noop = (..._args: unknown[]): void => {}
 
-// WXT sets import.meta.env.MODE; fall back to checking a known dev hostname.
-const isDev =
-  typeof import.meta !== 'undefined'
-    ? (import.meta.env as unknown as Record<string, string | undefined>)['MODE'] !== 'production'
-    : true
+export function createLogger(context: string) {
+  const prefix = `[SweepBot:${context}]`
 
-function formatMsg(scope: string, msg: string): string {
-  return `[SweepBot:${scope}] ${msg}`
-}
-
-export function createLogger(scope: string): Logger {
   return {
-    debug(msg, ctx) {
-      if (!isDev) return
-      if (ctx) {
-        console.debug(formatMsg(scope, msg), ctx)
-      } else {
-        console.debug(formatMsg(scope, msg))
-      }
-    },
-    info(msg, ctx) {
-      if (!isDev) return
-      if (ctx) {
-        console.info(formatMsg(scope, msg), ctx)
-      } else {
-        console.info(formatMsg(scope, msg))
-      }
-    },
-    warn(msg, ctx) {
-      if (ctx) {
-        console.warn(formatMsg(scope, msg), ctx)
-      } else {
-        console.warn(formatMsg(scope, msg))
-      }
-    },
-    error(msg, ctx) {
-      if (ctx) {
-        console.error(formatMsg(scope, msg), ctx)
-      } else {
-        console.error(formatMsg(scope, msg))
-      }
-    },
+    // debug and info are silenced in production builds to avoid console noise
+    // and accidental leakage of session/context data.
+    debug: isDev ? (...args: unknown[]) => console.debug(prefix, ...args) : noop,
+    info: isDev ? (...args: unknown[]) => console.log(prefix, ...args) : noop,
+    // warn and error remain unconditional so production issues are surfaced.
+    warn: (...args: unknown[]) => console.warn(prefix, ...args),
+    error: (...args: unknown[]) => console.error(prefix, ...args),
   }
 }

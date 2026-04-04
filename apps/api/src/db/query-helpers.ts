@@ -11,12 +11,13 @@ import { logger } from '../utils/logger.js'
 import { Redis } from '@upstash/redis'
 
 // Initialize Redis client for query caching
-const redis = process.env['UPSTASH_REDIS_REST_URL'] && process.env['UPSTASH_REDIS_REST_TOKEN']
-  ? new Redis({
-      url: process.env['UPSTASH_REDIS_REST_URL'],
-      token: process.env['UPSTASH_REDIS_REST_TOKEN'],
-    })
-  : null
+const redis =
+  process.env['UPSTASH_REDIS_REST_URL'] && process.env['UPSTASH_REDIS_REST_TOKEN']
+    ? new Redis({
+        url: process.env['UPSTASH_REDIS_REST_URL'],
+        token: process.env['UPSTASH_REDIS_REST_TOKEN'],
+      })
+    : null
 
 interface QueryCacheOptions {
   ttl?: number // Time to live in seconds
@@ -81,20 +82,24 @@ export async function invalidateQueryCache(key: string, prefix = 'query'): Promi
  * Batch operation helper
  * Executes multiple operations in a single transaction
  */
-export async function batchOperation<T>(
-  operations: Array<() => Promise<T>>
-): Promise<T[]> {
+export async function batchOperation<T>(operations: Array<() => Promise<T>>): Promise<T[]> {
   const startTime = performance.now()
 
   try {
     const results = await Promise.all(operations.map((op) => op()))
-    
+
     const duration = performance.now() - startTime
-    logger.debug({ count: operations.length, durationMs: duration.toFixed(2) }, 'Batch operation completed')
+    logger.debug(
+      { count: operations.length, durationMs: duration.toFixed(2) },
+      'Batch operation completed'
+    )
 
     return results
   } catch (error) {
-    logger.error({ count: operations.length, err: error instanceof Error ? error.message : 'Unknown error' }, 'Batch operation failed')
+    logger.error(
+      { count: operations.length, err: error instanceof Error ? error.message : 'Unknown error' },
+      'Batch operation failed'
+    )
     throw error
   }
 }
@@ -115,26 +120,35 @@ export async function monitoredQuery<T>(
     const duration = performance.now() - startTime
 
     if (duration > slowThresholdMs) {
-      logger.warn({
-        query: name,
-        durationMs: duration.toFixed(2),
-        threshold: slowThresholdMs,
-      }, 'Slow query detected')
+      logger.warn(
+        {
+          query: name,
+          durationMs: duration.toFixed(2),
+          threshold: slowThresholdMs,
+        },
+        'Slow query detected'
+      )
     } else {
-      logger.debug({
-        query: name,
-        durationMs: duration.toFixed(2),
-      }, 'Query executed')
+      logger.debug(
+        {
+          query: name,
+          durationMs: duration.toFixed(2),
+        },
+        'Query executed'
+      )
     }
 
     return result
   } catch (error) {
     const duration = performance.now() - startTime
-    logger.error({
-      query: name,
-      durationMs: duration.toFixed(2),
-      err: error instanceof Error ? error.message : 'Unknown error',
-    }, 'Query failed')
+    logger.error(
+      {
+        query: name,
+        durationMs: duration.toFixed(2),
+        err: error instanceof Error ? error.message : 'Unknown error',
+      },
+      'Query failed'
+    )
     throw error
   }
 }
@@ -174,10 +188,7 @@ export async function paginatedQuery<T>(
   const offset = (safePage - 1) * safeLimit
 
   // Execute count and data queries in parallel
-  const [total, data] = await Promise.all([
-    countQuery(),
-    dataQuery(offset, safeLimit),
-  ])
+  const [total, data] = await Promise.all([countQuery(), dataQuery(offset, safeLimit)])
 
   const totalPages = Math.ceil(total / safeLimit)
 
@@ -204,11 +215,14 @@ export async function transaction<T>(
     const result = await db.transaction(async (tx) => {
       return await callback(tx)
     })
-    
+
     logger.debug('Transaction completed successfully')
     return result
   } catch (error) {
-    logger.error({ err: error instanceof Error ? error.message : 'Unknown error' }, 'Transaction failed and rolled back')
+    logger.error(
+      { err: error instanceof Error ? error.message : 'Unknown error' },
+      'Transaction failed and rolled back'
+    )
     throw error
   }
 }

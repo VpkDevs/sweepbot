@@ -196,9 +196,7 @@ export const PLATFORMS: readonly PlatformConfig[] = [
     gameUrlPatterns: [/funrize\.com\/(?:play|games?)\//i],
     signupUrlPatterns: [/funrize\.com\/register/i],
     affiliateInjectionSelectors: ['.signup-container'],
-    balanceApiPatterns: [
-      { urlPattern: /\/api\/wallet/i, scPath: 'sc', gcPath: 'fc' },
-    ],
+    balanceApiPatterns: [{ urlPattern: /\/api\/wallet/i, scPath: 'sc', gcPath: 'fc' }],
     transactionApiPatterns: [],
   },
   {
@@ -226,9 +224,7 @@ export const PLATFORMS: readonly PlatformConfig[] = [
     gameUrlPatterns: [/crowncoinscasino\.com\/games?\//i],
     signupUrlPatterns: [/crowncoinscasino\.com\/register/i],
     affiliateInjectionSelectors: ['.register-page'],
-    balanceApiPatterns: [
-      { urlPattern: /\/balance/i, scPath: 'crown_coins', gcPath: 'gold_coins' },
-    ],
+    balanceApiPatterns: [{ urlPattern: /\/balance/i, scPath: 'crown_coins', gcPath: 'gold_coins' }],
     transactionApiPatterns: [],
   },
   {
@@ -272,7 +268,11 @@ export const PLATFORMS: readonly PlatformConfig[] = [
     signupUrlPatterns: [/globalpoker\.com\/register/i],
     affiliateInjectionSelectors: ['.signup-container'],
     balanceApiPatterns: [
-      { urlPattern: /\/api\/account\/balance/i, scPath: 'sweeps_poker_chips', gcPath: 'gold_poker_chips' },
+      {
+        urlPattern: /\/api\/account\/balance/i,
+        scPath: 'sweeps_poker_chips',
+        gcPath: 'gold_poker_chips',
+      },
     ],
     transactionApiPatterns: [],
   },
@@ -287,11 +287,8 @@ export function detectPlatform(url: string): PlatformConfig | null {
   try {
     const hostname = new URL(url).hostname.replace(/^www\./, '')
     return (
-      PLATFORMS.find((p) =>
-        p.domains.some(
-          (d) => hostname === d || hostname.endsWith(`.${d}`),
-        ),
-      ) ?? null
+      PLATFORMS.find((p) => p.domains.some((d) => hostname === d || hostname.endsWith(`.${d}`))) ??
+      null
     )
   } catch {
     return null

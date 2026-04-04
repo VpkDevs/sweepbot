@@ -19,7 +19,7 @@ import type {
   ReadValueStep,
   SpinStep,
 } from './types'
-import { PLATFORM_SELECTORS } from './interpreter'
+import { PLATFORM_SELECTORS } from './platform-selectors'
 import { createLogger } from '../logger'
 
 const log = createLogger('AutomationExecutor')
@@ -295,10 +295,7 @@ async function runIf(step: IfStep, ctx: ExecutionContext): Promise<void> {
  * - Any other operator returns `false`.
  */
 
-function evaluateCondition(
-  condition: Condition,
-  variables: Record<string, unknown>,
-): boolean {
+function evaluateCondition(condition: Condition, variables: Record<string, unknown>): boolean {
   const left = resolveValue(condition.left, variables)
   const right = resolveValue(condition.right, variables)
 
@@ -306,13 +303,20 @@ function evaluateCondition(
   const r = Number(right)
 
   switch (condition.operator) {
-    case '>': return l > r
-    case '<': return l < r
-    case '>=': return l >= r
-    case '<=': return l <= r
-    case '==': return left == right
-    case '!=': return left != right
-    default: return false
+    case '>':
+      return l > r
+    case '<':
+      return l < r
+    case '>=':
+      return l >= r
+    case '<=':
+      return l <= r
+    case '==':
+      return left == right
+    case '!=':
+      return left != right
+    default:
+      return false
   }
 }
 
@@ -326,10 +330,7 @@ function evaluateCondition(
  * @param variables - Mapping of variable names to their current values used for resolving `"variable"` refs.
  * @returns The resolved value: the variable value or `0` for missing variables, the literal value, or the numeric product for `"multiply"` refs.
  */
-function resolveValue(
-  ref: ValueRef,
-  variables: Record<string, unknown>,
-): unknown {
+function resolveValue(ref: ValueRef, variables: Record<string, unknown>): unknown {
   switch (ref.kind) {
     case 'variable':
       return variables[ref.name] ?? 0
@@ -411,7 +412,7 @@ async function waitForElement(selector: string, timeout: number): Promise<boolea
  */
 async function readValue(
   step: ReadValueStep,
-  _ctx: ExecutionContext,
+  _ctx: ExecutionContext
 ): Promise<number | string | null> {
   const el = document.querySelector(step.selector)
   if (!el) return null
@@ -445,7 +446,7 @@ async function readValue(
 
 async function performLogin(platform: string, _ctx: ExecutionContext): Promise<boolean> {
   const selectors = {
-    ...(PLATFORM_SELECTORS._default),
+    ...PLATFORM_SELECTORS._default,
     ...(PLATFORM_SELECTORS[platform] ?? {}),
   }
 
@@ -504,7 +505,7 @@ async function performLogin(platform: string, _ctx: ExecutionContext): Promise<b
  */
 async function claimBonus(platform: string): Promise<number | null> {
   const selectors = {
-    ...(PLATFORM_SELECTORS._default),
+    ...PLATFORM_SELECTORS._default,
     ...(PLATFORM_SELECTORS[platform] ?? {}),
   }
 
@@ -571,20 +572,16 @@ async function openGame(_platform: string, game: string): Promise<boolean> {
 async function performSpin(_step: SpinStep, _ctx: ExecutionContext): Promise<number | null> {
   // Determine the platform from URL
   const hostname = window.location.hostname
-  const platform = Object.keys(PLATFORM_SELECTORS).find(
-    (k) => k !== '_default' && hostname.includes(k),
-  ) ?? '_default'
+  const platform =
+    Object.keys(PLATFORM_SELECTORS).find((k) => k !== '_default' && hostname.includes(k)) ??
+    '_default'
   const selectors = {
-    ...(PLATFORM_SELECTORS._default),
+    ...PLATFORM_SELECTORS._default,
     ...(PLATFORM_SELECTORS[platform] ?? {}),
   }
 
   // Look for spin button inside iframe first
-  const spinClicked = await clickInFrameOrDoc(
-    selectors.spinButton,
-    selectors.spinButtonText,
-    8000,
-  )
+  const spinClicked = await clickInFrameOrDoc(selectors.spinButton, selectors.spinButtonText, 8000)
 
   if (!spinClicked) {
     log.warn('Spin button not found')
@@ -618,7 +615,8 @@ function findByText(text: string): Element | null {
   const lowerText = text.toLowerCase()
   const candidates = document.querySelectorAll('button, a, [role="button"], span, div')
   for (const el of candidates) {
-    const content = (el as HTMLElement).innerText?.toLowerCase() ?? el.textContent?.toLowerCase() ?? ''
+    const content =
+      (el as HTMLElement).innerText?.toLowerCase() ?? el.textContent?.toLowerCase() ?? ''
     if (content.trim() === lowerText) return el
   }
   return null
@@ -676,7 +674,7 @@ function findInFrameOrDoc(selector: string): Element | null {
 async function clickInFrameOrDoc(
   selector?: string,
   text?: string,
-  timeout = 8000,
+  timeout = 8000
 ): Promise<boolean> {
   const deadline = Date.now() + timeout
   while (Date.now() < deadline) {
@@ -740,21 +738,36 @@ function sleep(ms: number): Promise<void> {
  */
 function describeStep(step: FlowStep): string {
   switch (step.type) {
-    case 'navigate': return `Navigate to ${step.url}`
-    case 'click': return step.description ?? `Click ${step.text ?? step.selector}`
-    case 'wait': return `Wait ${step.ms}ms${step.reason ? ` (${step.reason})` : ''}`
-    case 'wait_for': return `Wait for element: ${step.selector}`
-    case 'read_value': return `Read ${step.variable} from ${step.selector}`
-    case 'loop': return `Loop while condition is true (max ${step.maxIterations} iterations)`
-    case 'if': return `If condition: ${JSON.stringify(step.condition)}`
-    case 'notify': return `Notify: ${step.title}`
-    case 'stop': return `Stop: ${step.reason}`
-    case 'login': return `Login to ${step.platform}`
-    case 'claim_bonus': return `Claim bonus on ${step.platform}`
-    case 'open_game': return `Open game: ${step.game}`
-    case 'spin': return `Spin${step.storeWinAs ? ` → ${step.storeWinAs}` : ''}`
-    case 'store_variable': return `Store variable: ${step.name}`
-    default: return 'unknown'
+    case 'navigate':
+      return `Navigate to ${step.url}`
+    case 'click':
+      return step.description ?? `Click ${step.text ?? step.selector}`
+    case 'wait':
+      return `Wait ${step.ms}ms${step.reason ? ` (${step.reason})` : ''}`
+    case 'wait_for':
+      return `Wait for element: ${step.selector}`
+    case 'read_value':
+      return `Read ${step.variable} from ${step.selector}`
+    case 'loop':
+      return `Loop while condition is true (max ${step.maxIterations} iterations)`
+    case 'if':
+      return `If condition: ${JSON.stringify(step.condition)}`
+    case 'notify':
+      return `Notify: ${step.title}`
+    case 'stop':
+      return `Stop: ${step.reason}`
+    case 'login':
+      return `Login to ${step.platform}`
+    case 'claim_bonus':
+      return `Claim bonus on ${step.platform}`
+    case 'open_game':
+      return `Open game: ${step.game}`
+    case 'spin':
+      return `Spin${step.storeWinAs ? ` → ${step.storeWinAs}` : ''}`
+    case 'store_variable':
+      return `Store variable: ${step.name}`
+    default:
+      return 'unknown'
   }
 }
 

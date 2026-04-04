@@ -7,6 +7,7 @@
 Users need to know if a platform is down before attempting automation. Uptime data feeds the Trust Index. Response time trends can predict platform issues before they become outages.
 
 **Business Impact:**
+
 - **Trust Index component:** Uptime score (higher uptime = higher trust)
 - **User experience:** Block automation attempts when platform is down
 - **Early warning:** Detect degraded performance before full outage
@@ -26,12 +27,14 @@ Users need to know if a platform is down before attempting automation. Uptime da
    - `.env` (create from `.env.example`)
 
 3. **Set environment variables:**
+
    ```bash
    SUPABASE_URL=https://your-project.supabase.co
    SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
    ```
 
 4. **Run:**
+
    ```bash
    python checker.py
    ```
@@ -41,6 +44,7 @@ Users need to know if a platform is down before attempting automation. Uptime da
 ## Database Requirements
 
 ### `platform_health_checks` table
+
 ```sql
 CREATE TABLE platform_health_checks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -53,19 +57,20 @@ CREATE TABLE platform_health_checks (
 );
 
 -- Index for fast queries
-CREATE INDEX idx_platform_health_platform_time 
+CREATE INDEX idx_platform_health_platform_time
   ON platform_health_checks(platform_id, checked_at DESC);
 
-CREATE INDEX idx_platform_health_status 
+CREATE INDEX idx_platform_health_status
   ON platform_health_checks(status, checked_at DESC);
 
 -- Partial index for outages only
-CREATE INDEX idx_platform_health_outages 
+CREATE INDEX idx_platform_health_outages
   ON platform_health_checks(platform_id, checked_at DESC)
   WHERE status = 'down';
 ```
 
 ### Add to existing `platform_alerts` table
+
 Already created for ToS monitor. Reuses same schema.
 
 ## How It Works
@@ -112,6 +117,7 @@ Edit `PLATFORMS` array in `checker.py`:
 ### Adjusting Check Frequency
 
 Edit `CHECK_INTERVAL_SECONDS`:
+
 ```python
 CHECK_INTERVAL_SECONDS = 300  # 5 minutes (default)
 # Or: 60 for 1 minute (more granular, higher cost)
@@ -120,6 +126,7 @@ CHECK_INTERVAL_SECONDS = 300  # 5 minutes (default)
 ## Monitoring Queries
 
 ### Current Platform Status
+
 ```sql
 -- Latest check for each platform
 SELECT DISTINCT ON (p.id)
@@ -133,13 +140,14 @@ ORDER BY p.id, phc.checked_at DESC;
 ```
 
 ### Uptime Percentage (Last 24 Hours)
+
 ```sql
-SELECT 
+SELECT
   p.name,
   COUNT(*) as total_checks,
   COUNT(CASE WHEN phc.status IN ('healthy', 'degraded') THEN 1 END) as successful_checks,
   ROUND(
-    (COUNT(CASE WHEN phc.status IN ('healthy', 'degraded') THEN 1 END)::DECIMAL / COUNT(*)) * 100, 
+    (COUNT(CASE WHEN phc.status IN ('healthy', 'degraded') THEN 1 END)::DECIMAL / COUNT(*)) * 100,
     2
   ) as uptime_percentage
 FROM platform_health_checks phc
@@ -150,8 +158,9 @@ ORDER BY uptime_percentage DESC;
 ```
 
 ### Slowest Platforms
+
 ```sql
-SELECT 
+SELECT
   p.name,
   AVG(phc.avg_response_time_ms) as avg_response_time,
   MAX(phc.avg_response_time_ms) as max_response_time
@@ -164,8 +173,9 @@ ORDER BY avg_response_time DESC;
 ```
 
 ### Recent Outages
+
 ```sql
-SELECT 
+SELECT
   p.name,
   phc.status,
   phc.checked_at,
@@ -187,23 +197,23 @@ async function canExecuteOnPlatform(platformId: string): Promise<boolean> {
   const latestCheck = await db.platformHealthChecks
     .where('platform_id', platformId)
     .orderBy('checked_at', 'desc')
-    .first();
-  
+    .first()
+
   if (!latestCheck) {
-    return true; // No data, allow execution
+    return true // No data, allow execution
   }
-  
+
   // Block if platform is down
   if (latestCheck.status === 'down') {
-    throw new Error('Platform is currently unreachable');
+    throw new Error('Platform is currently unreachable')
   }
-  
+
   // Warn if degraded
   if (latestCheck.status === 'degraded') {
-    logger.warn(`Platform ${platformId} is degraded (slow responses)`);
+    logger.warn(`Platform ${platformId} is degraded (slow responses)`)
   }
-  
-  return true;
+
+  return true
 }
 ```
 
@@ -219,7 +229,7 @@ export function PlatformStatusWidget() {
     queryFn: () => api.get('/platforms/health/current'),
     refetchInterval: 60000 // Refresh every minute
   });
-  
+
   return (
     <div className="grid grid-cols-2 gap-4">
       {statuses?.map(status => (
@@ -245,16 +255,19 @@ export function PlatformStatusWidget() {
 ## Advanced Features
 
 ### 1. Response Time Alerts
+
 ```python
 if health_data['avg_response_time_ms'] > 3000:
-    create_alert(platform_id, 'slow_response', 
+    create_alert(platform_id, 'slow_response',
                  f"Response time: {health_data['avg_response_time_ms']}ms")
 ```
 
 ### 2. Geographic Health Checks
+
 Deploy multiple checkers in different regions (US East, US West, EU) to detect regional outages.
 
 ### 3. SSL Certificate Monitoring
+
 ```python
 import ssl
 import socket
@@ -270,21 +283,22 @@ def check_ssl_expiry(hostname):
 ```
 
 ### 4. Historical Uptime API Endpoint
+
 ```typescript
 // apps/api/src/routes/platforms.ts
 app.get('/platforms/:id/uptime', async (req, res) => {
-  const { id } = req.params;
-  const { period = '24h' } = req.query;
-  
-  const uptime = await calculateUptime(id, period);
-  
+  const { id } = req.params
+  const { period = '24h' } = req.query
+
+  const uptime = await calculateUptime(id, period)
+
   res.json({
     platformId: id,
     period,
     uptimePercentage: uptime,
-    lastCheck: await getLatestCheck(id)
-  });
-});
+    lastCheck: await getLatestCheck(id),
+  })
+})
 ```
 
 ## Next Steps

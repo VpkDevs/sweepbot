@@ -85,7 +85,7 @@ export function registerAuditHook(app: FastifyInstance): void {
         logger.error(auditRecord, 'audit')
       } else if (statusCode >= 400) {
         logger.warn(auditRecord, 'audit')
-      } else {
+      } else {  
         logger.info(auditRecord, 'audit')
       }
     }

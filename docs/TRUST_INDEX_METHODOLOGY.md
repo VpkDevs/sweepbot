@@ -8,9 +8,10 @@
 
 ## Purpose
 
-The SweepBot Trust Index produces a **0–100 composite score** for each sweepstakes casino platform. It answers the question: *"How much should I trust this platform with my time and money?"*
+The SweepBot Trust Index produces a **0–100 composite score** for each sweepstakes casino platform. It answers the question: _"How reliable and transparent is this platform with my time and sweepstakes balance?"_
 
 The score is:
+
 - **Data-driven** — derived from real user-reported and system-collected data, not editorial opinion
 - **Transparent** — methodology is published so users, platforms, and press can evaluate its validity
 - **Bounded** — no score can be purchased; platforms can only achieve certification if their score clears a threshold
@@ -22,15 +23,15 @@ The score is:
 
 The Trust Index is a weighted average of 7 component scores, each also rated 0–100:
 
-| Component | Weight | Data Source |
-|-----------|--------|-------------|
-| Redemption Speed | 25% | User-reported redemption logs |
-| Rejection Rate | 20% | User-reported redemption outcomes |
-| TOS Stability | 15% | Automated daily TOS monitoring (diffs) |
-| Community Satisfaction | 15% | User reviews + ratings |
-| Support Responsiveness | 10% | User-reported support ticket resolution |
-| Regulatory Standing | 10% | Manual research; licensing status, compliance actions |
-| Bonus Generosity | 5% | User-reported bonus value relative to wagering requirements |
+| Component              | Weight | Data Source                                                 |
+| ---------------------- | ------ | ----------------------------------------------------------- |
+| Redemption Speed       | 25%    | User-reported redemption logs                               |
+| Rejection Rate         | 20%    | User-reported redemption outcomes                           |
+| TOS Stability          | 15%    | Automated daily TOS monitoring (diffs)                      |
+| Community Satisfaction | 15%    | User reviews + ratings                                      |
+| Support Responsiveness | 10%    | User-reported support ticket resolution                     |
+| Regulatory Standing    | 10%    | Manual research; licensing status, compliance actions       |
+| Bonus Generosity       | 5%     | User-reported bonus value relative to wagering requirements |
 
 ### Why These Weights
 
@@ -51,6 +52,7 @@ The Trust Index is a weighted average of 7 component scores, each also rated 0�
 **Data:** `redemptions` table — `requested_at` and `received_at` columns compute `processing_days`.
 
 **Formula:**
+
 ```
 avg_processing_days = AVG(processing_days) for this platform (last 6 months, completed redemptions)
 
@@ -76,6 +78,7 @@ score = clamp(100 - (avg_processing_days - 2) * 8, 0, 100)
 **Data:** `redemptions` table — ratio of `status = 'rejected'` to total completed decisions.
 
 **Formula:**
+
 ```
 rejection_rate = COUNT(status='rejected') / COUNT(status IN ('received','rejected'))
 
@@ -100,6 +103,7 @@ score = clamp(100 - (rejection_rate * 400), 0, 100)
 **Data:** `tos_snapshots` table — count of `changes_detected = true` in trailing 12 months.
 
 **Formula:**
+
 ```
 changes_12mo = COUNT(*) WHERE changes_detected = true AND captured_at > NOW() - INTERVAL '12 months'
 
@@ -117,7 +121,7 @@ score = clamp(100 - (changes_12mo * 12), 0, 100)
 
 **Note:** "Changes detected" means a material diff in the TOS page content. Minor cosmetic edits (whitespace, formatting) are filtered out by the TOS monitor. Major changes (removal of provisions, new limitations on redemptions) are weighted more heavily.
 
-*Future improvement: use AI-generated `change_summary` to classify severity of change (minor/moderate/major) and weight accordingly.*
+_Future improvement: use AI-generated `change_summary` to classify severity of change (minor/moderate/major) and weight accordingly._
 
 **Minimum data requirement:** 90+ days of daily TOS snapshots.
 
@@ -128,6 +132,7 @@ score = clamp(100 - (changes_12mo * 12), 0, 100)
 **Data:** User ratings submitted through the platform directory (1–5 stars, with optional comment).
 
 **Formula:**
+
 ```
 weighted_avg = SUM(rating * recency_weight) / SUM(recency_weight)
 
@@ -157,9 +162,9 @@ score = ((weighted_avg - 1) / 4) * 100
 
 This component is **manual / semi-automated** until sufficient crowdsourced data exists.
 
-*Interim approach (Phase 1–2):* Use web research (Trustpilot, Reddit, BBB) to produce an initial score (0–100) via editorial assessment. Flag as `data_source: 'editorial'` in the score breakdown.
+_Interim approach (Phase 1–2):_ Use web research (Trustpilot, Reddit, BBB) to produce an initial score (0–100) via editorial assessment. Flag as `data_source: 'editorial'` in the score breakdown.
 
-*Target approach (Phase 3+):* Community-reported support ticket times via structured form in platform reviews.
+_Target approach (Phase 3+):_ Community-reported support ticket times via structured form in platform reviews.
 
 ---
 
@@ -185,6 +190,7 @@ Scoring rubric:
 **Data:** User-reported wagering requirement ratios and bonus tracking.
 
 **Formula:**
+
 ```
 avg_wr_multiplier = AVG(wagering_requirement / bonus_amount) for this platform
 
@@ -192,7 +198,7 @@ score = clamp(100 - (avg_wr_multiplier - 1) * 10, 0, 100)
 ```
 
 **Minimum data requirement:** 10 data points.
-*This component may be suppressed if data is insufficient, with weight redistributed to other components.*
+_This component may be suppressed if data is insufficient, with weight redistributed to other components._
 
 ---
 
@@ -201,13 +207,13 @@ score = clamp(100 - (avg_wr_multiplier - 1) * 10, 0, 100)
 ```typescript
 function computeTrustIndex(components: ComponentScores): number {
   const weights = {
-    redemptionSpeed:       0.25,
-    rejectionRate:         0.20,
-    tosStability:          0.15,
+    redemptionSpeed: 0.25,
+    rejectionRate: 0.2,
+    tosStability: 0.15,
     communitySatisfaction: 0.15,
-    supportResponsiveness: 0.10,
-    regulatoryStanding:    0.10,
-    bonusGenerosity:       0.05,
+    supportResponsiveness: 0.1,
+    regulatoryStanding: 0.1,
+    bonusGenerosity: 0.05,
   }
 
   // If a component doesn't meet minimum data requirements,
@@ -231,28 +237,28 @@ function computeTrustIndex(components: ComponentScores): number {
 ## Score Tiers (Labels)
 
 | Score Range | Tier Label | Badge Color |
-|-------------|------------|-------------|
-| 85–100 | Excellent | Green |
-| 70–84 | Good | Blue |
-| 55–69 | Fair | Yellow |
-| 40–54 | Concerning | Orange |
-| 0–39 | Poor | Red |
-| No data | Not Rated | Gray |
+| ----------- | ---------- | ----------- |
+| 85–100      | Excellent  | Green       |
+| 70–84       | Good       | Blue        |
+| 55–69       | Fair       | Yellow      |
+| 40–54       | Concerning | Orange      |
+| 0–39        | Poor       | Red         |
+| No data     | Not Rated  | Gray        |
 
 ---
 
 ## Update Cadence
 
-| Component | Recalculation Trigger |
-|-----------|----------------------|
-| Redemption Speed | New redemption marked `received` or `rejected` |
-| Rejection Rate | New redemption marked `received` or `rejected` |
-| TOS Stability | Daily (next morning after TOS monitor run) |
-| Community Satisfaction | New user rating submitted |
-| Support Responsiveness | Quarterly (manual update) |
-| Regulatory Standing | Quarterly (manual update) |
-| Bonus Generosity | New wagering requirement data submitted |
-| **Composite score** | Any component update → recompute same day |
+| Component              | Recalculation Trigger                          |
+| ---------------------- | ---------------------------------------------- |
+| Redemption Speed       | New redemption marked `received` or `rejected` |
+| Rejection Rate         | New redemption marked `received` or `rejected` |
+| TOS Stability          | Daily (next morning after TOS monitor run)     |
+| Community Satisfaction | New user rating submitted                      |
+| Support Responsiveness | Quarterly (manual update)                      |
+| Regulatory Standing    | Quarterly (manual update)                      |
+| Bonus Generosity       | New wagering requirement data submitted        |
+| **Composite score**    | Any component update → recompute same day      |
 
 Scores are stored as a snapshot in `trust_index_scores` with a timestamp. Historical scores are retained indefinitely — this is the Trust Index time series.
 
@@ -273,11 +279,13 @@ Until these thresholds are met, the platform displays "Trust Index: Insufficient
 ## Certification Program
 
 Platforms may apply for **SweepBot Certified** status if:
+
 1. Trust Index score ≥ 75
 2. Minimum data requirements met across all components
 3. No active regulatory actions
 
 Certification is:
+
 - **Annual** — re-evaluated each year
 - **Independent** — certification cannot be purchased; only the badge for a passing score can be purchased
 - **Revocable** — if Trust Index drops below 65, certification is suspended until score recovers
@@ -293,13 +301,13 @@ Platform certification tiers and fees:
 
 ## Methodology Version History
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | 2026-03-05 | Initial release |
+| Version | Date       | Changes         |
+| ------- | ---------- | --------------- |
+| 1.0     | 2026-03-05 | Initial release |
 
-*When methodology changes materially (weight changes, new components, formula changes), increment version number and note historical scores computed under prior versions.*
+_When methodology changes materially (weight changes, new components, formula changes), increment version number and note historical scores computed under prior versions._
 
 ---
 
-*This methodology document should be publicly accessible at `https://sweepbot.app/trust-index/methodology`.*
-*Owner: Vincent Kinney / APPYness*
+_This methodology document should be publicly accessible at `https://sweepbot.app/trust-index/methodology`._
+_Owner: Vincent Kinney / APPYness_

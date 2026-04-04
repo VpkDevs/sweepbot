@@ -63,11 +63,12 @@ const interpreter = new FlowInterpreter()
 
 const result = await interpreter.interpret({
   userId: 'user-123',
-  rawInput: 'Every day at 3:30, open Chumba, grab my daily bonus, throw it on Sweet Bonanza at minimum bet. If I hit over 5x what the bonus was, keep going. If not, stop.',
+  rawInput:
+    'Every day at 3:30, open Chumba, grab my daily bonus, throw it on Sweet Bonanza at minimum bet. If I hit over 5x what the bonus was, keep going. If not, stop.',
 })
 
-console.log(result.flow)              // FlowDefinition (AST)
-console.log(result.confidence)        // 0.85
+console.log(result.flow) // FlowDefinition (AST)
+console.log(result.confidence) // 0.85
 console.log(result.humanReadableSummary)
 // ⏰ Trigger: Daily at 3:30 PM (EST)
 // 🌐 Open Chumba Casino
@@ -103,7 +104,12 @@ import { FlowExecutor } from '@sweepbot/flows'
 
 const executor = new FlowExecutor()
 
-const executionResult = await executor.execute(flow.id, flow.userId)
+const executionResult = await executor.execute(flow, flow.userId, undefined, {
+  responsiblePlay: {
+    // IMPORTANT: cooldown is runtime state (do not persist it into the flow)
+    isInCooldown: false,
+  },
+})
 
 console.log(executionResult.metrics)
 // {
@@ -164,11 +170,7 @@ import { ConversationManager } from '@sweepbot/flows'
 const conversationMgr = new ConversationManager()
 
 // Start conversation
-let state = await conversationMgr.startConversation(
-  userId,
-  'conv-123',
-  'Daily bonus collection'
-)
+let state = await conversationMgr.startConversation(userId, 'conv-123', 'Daily bonus collection')
 
 // User refines
 state = await conversationMgr.continue('conv-123', 'At 3 PM')
@@ -250,7 +252,14 @@ class ResponsiblePlayValidator {
 }
 
 interface ResponsiblePlayGuardrail {
-  type: 'max_duration' | 'max_loss' | 'balance_floor' | 'max_iterations' | 'chase_detection' | 'cool_down_check' | 'daily_aggregate'
+  type:
+    | 'max_duration'
+    | 'max_loss'
+    | 'balance_floor'
+    | 'max_iterations'
+    | 'chase_detection'
+    | 'cool_down_check'
+    | 'daily_aggregate'
   value: number | boolean
   source: 'user_specified' | 'system_default' | 'system_mandatory'
   overridable: boolean
@@ -275,7 +284,11 @@ class FlowScheduler {
 
 ```typescript
 class ConversationManager {
-  async startConversation(userId: string, sessionId: string, initialDescription: string): Promise<ConversationState>
+  async startConversation(
+    userId: string,
+    sessionId: string,
+    initialDescription: string
+  ): Promise<ConversationState>
   async continue(conversationId: string, userMessage: string): Promise<ConversationState>
   async confirm(conversationId: string): Promise<FlowDefinition>
 }
@@ -322,15 +335,15 @@ The AST consists of different node types:
 
 ```typescript
 type FlowNode =
-  | FlowActionNode      // Perform an action
-  | FlowConditionNode   // Branch on condition
-  | FlowLoopNode        // Repeat with caps
-  | FlowSequenceNode    // Execute in order
-  | FlowParallelNode    // Execute in parallel
-  | FlowWaitNode        // Wait for duration
-  | FlowStopNode        // Stop execution
-  | FlowAlertNode       // Send alert
-  | FlowStoreNode       // Store variable
+  | FlowActionNode // Perform an action
+  | FlowConditionNode // Branch on condition
+  | FlowLoopNode // Repeat with caps
+  | FlowSequenceNode // Execute in order
+  | FlowParallelNode // Execute in parallel
+  | FlowWaitNode // Wait for duration
+  | FlowStopNode // Stop execution
+  | FlowAlertNode // Send alert
+  | FlowStoreNode // Store variable
 ```
 
 ### FlowTrigger
@@ -368,7 +381,8 @@ This example also demonstrates the new conditional parsing: phrases like "if mor
 ```typescript
 const result = await interpreter.interpret({
   userId: 'user-456',
-  rawInput: 'Every day at 3:30, open Chumba, grab my daily bonus, throw it on Sweet Bonanza at minimum bet. If I hit over 5x what the bonus was, keep going. If not, stop.',
+  rawInput:
+    'Every day at 3:30, open Chumba, grab my daily bonus, throw it on Sweet Bonanza at minimum bet. If I hit over 5x what the bonus was, keep going. If not, stop.',
 })
 
 // Result:

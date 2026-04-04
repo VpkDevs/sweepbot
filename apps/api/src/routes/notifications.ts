@@ -45,7 +45,7 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
       const { limit, unread_only } = request.query as z.infer<typeof listQuerySchema>
       const userId = request.user!.id
 
-      const rows = await query<{
+      const { rows } = await query<{
         id: string
         type: string
         title: string
@@ -76,7 +76,7 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
       `)
 
       return reply.send({ success: true, data: rows })
-    },
+    }
   )
 
   // ── GET /notifications/count ─────────────────────────────────────────────────
@@ -110,7 +110,7 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
       `)
 
       return reply.send({ success: true, data: { id } })
-    },
+    }
   )
 
   // ── POST /notifications/read-all ─────────────────────────────────────────────
@@ -124,6 +124,113 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
     `)
 
     return reply.send({ success: true, data: { marked: true } })
+  })
+
+  // ── GET /notifications/preferences ──────────────────────────────────────────
+  // Returns the user's notification preference flags as camelCase.
+  app.get('/preferences', async (request, reply) => {
+    const userId = request.user!.id
+
+    const { rows } = await query<{
+      jackpot_alerts: boolean
+      tos_changes: boolean
+      platform_outages: boolean
+      flow_errors: boolean
+      trial_reminders: boolean
+      daily_summary: boolean
+      weekly_report: boolean
+    }>(sql`
+      SELECT
+        jackpot_alerts,
+        tos_changes,
+        platform_outages,
+        flow_errors,
+        trial_reminders,
+        daily_summary,
+        weekly_report
+      FROM notification_preferences
+      WHERE user_id = ${userId}
+    `)
+
+    if (rows.length === 0) {
+      // Return defaults when no row exists yet (matches schema defaults)
+      return reply.send({
+        success: true,
+        data: {
+          jackpotAlerts: true,
+          tosChanges: true,
+          platformOutages: true,
+          flowErrors: true,
+          trialReminders: true,
+          dailySummary: false,
+          weeklyReport: false,
+        },
+      })
+    }
+
+    const row = rows[0]!
+    return reply.send({
+      success: true,
+      data: {
+        jackpotAlerts: row.jackpot_alerts,
+        tosChanges: row.tos_changes,
+        platformOutages: row.platform_outages,
+        flowErrors: row.flow_errors,
+        trialReminders: row.trial_reminders,
+        dailySummary: row.daily_summary,
+        weeklyReport: row.weekly_report,
+      },
+    })
+  })
+
+  // ── PUT /notifications/preferences ───────────────────────────────────────────
+  // Upsert the user's notification preferences (accepts camelCase from client).
+  app.put('/preferences', async (request, reply) => {
+    const userId = request.user!.id
+    const prefsSchema = z.object({
+      jackpotAlerts: z.boolean().optional(),
+      tosChanges: z.boolean().optional(),
+      platformOutages: z.boolean().optional(),
+      flowErrors: z.boolean().optional(),
+      trialReminders: z.boolean().optional(),
+      dailySummary: z.boolean().optional(),
+      weeklyReport: z.boolean().optional(),
+    })
+
+    const body = prefsSchema.parse(request.body)
+
+    await query(sql`
+      INSERT INTO notification_preferences (
+        user_id,
+        jackpot_alerts,
+        tos_changes,
+        platform_outages,
+        flow_errors,
+        trial_reminders,
+        daily_summary,
+        weekly_report
+      ) VALUES (
+        ${userId},
+        ${body.jackpotAlerts ?? true},
+        ${body.tosChanges ?? true},
+        ${body.platformOutages ?? true},
+        ${body.flowErrors ?? true},
+        ${body.trialReminders ?? true},
+        ${body.dailySummary ?? false},
+        ${body.weeklyReport ?? false}
+      )
+      ON CONFLICT (user_id) DO UPDATE SET
+        jackpot_alerts   = COALESCE(${body.jackpotAlerts ?? null}, notification_preferences.jackpot_alerts),
+        tos_changes      = COALESCE(${body.tosChanges ?? null}, notification_preferences.tos_changes),
+        platform_outages = COALESCE(${body.platformOutages ?? null}, notification_preferences.platform_outages),
+        flow_errors      = COALESCE(${body.flowErrors ?? null}, notification_preferences.flow_errors),
+        trial_reminders  = COALESCE(${body.trialReminders ?? null}, notification_preferences.trial_reminders),
+        daily_summary    = COALESCE(${body.dailySummary ?? null}, notification_preferences.daily_summary),
+        weekly_report    = COALESCE(${body.weeklyReport ?? null}, notification_preferences.weekly_report),
+        updated_at       = NOW()
+    `)
+
+    return reply.send({ success: true, data: { updated: true } })
   })
 
   // ── DELETE /notifications/:id ────────────────────────────────────────────────
@@ -144,7 +251,189 @@ export async function notificationsRoutes(app: FastifyInstance): Promise<void> {
       `)
 
       return reply.send({ success: true, data: { deleted: true } })
+    }
+  )
+
+  // ── POST /notifications/subscribe ────────────────────────────────────────────
+  // Save a Web Push subscription endpoint for the current user.
+  app.post(
+    '/subscribe',
+    {
+      schema: {
+        body: {
+          type: 'object',
+          required: ['endpoint', 'keys'],
+          properties: {
+            endpoint: { type: 'string' },
+            keys: {
+              type: 'object',
+              required: ['p256dh', 'auth'],
+              properties: {
+                p256dh: { type: 'string' },
+                auth: { type: 'string' },
+              },
+            },
+            userAgent: { type: 'string' },
+          },
+        },
+      },
     },
+    async (request, reply) => {
+      const body = z
+        .object({
+          endpoint: z.string().url(),
+          keys: z.object({ p256dh: z.string(), auth: z.string() }),
+          userAgent: z.string().max(500).optional(),
+        })
+        .parse(request.body)
+
+      const userId = request.user!.id
+
+      await query(sql`
+        INSERT INTO push_subscriptions (user_id, endpoint, keys, user_agent)
+        VALUES (
+          ${userId},
+          ${body.endpoint},
+          ${JSON.stringify(body.keys)},
+          ${body.userAgent ?? null}
+        )
+        ON CONFLICT (endpoint) DO UPDATE
+          SET user_id = EXCLUDED.user_id,
+              keys = EXCLUDED.keys,
+              user_agent = EXCLUDED.user_agent,
+              is_active = true,
+              last_used_at = NOW()
+      `)
+
+      return reply.code(201).send({ success: true, data: { subscribed: true } })
+    }
+  )
+
+  // ── DELETE /notifications/subscribe ──────────────────────────────────────────
+  // Remove a Web Push subscription by endpoint.
+  app.delete(
+    '/subscribe',
+    {
+      schema: {
+        body: {
+          type: 'object',
+          required: ['endpoint'],
+          properties: { endpoint: { type: 'string' } },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { endpoint } = z.object({ endpoint: z.string() }).parse(request.body)
+
+      const userId = request.user!.id
+
+      await query(sql`
+        DELETE FROM push_subscriptions
+        WHERE endpoint = ${endpoint} AND user_id = ${userId}
+      `)
+
+      return reply.send({ success: true, data: { unsubscribed: true } })
+    }
+  )
+
+  // ── GET /notifications/preferences ───────────────────────────────────────────
+  // Returns the user's notification preference settings, creating defaults if absent.
+  app.get('/preferences', async (request, reply) => {
+    const userId = request.user!.id
+
+    // Upsert defaults so the row always exists after first fetch
+    await query(sql`
+      INSERT INTO notification_preferences (user_id)
+      VALUES (${userId})
+      ON CONFLICT (user_id) DO NOTHING
+    `)
+
+    const { rows } = await query<{
+      user_id: string
+      jackpot_alerts: boolean
+      tos_changes: boolean
+      platform_outages: boolean
+      flow_errors: boolean
+      trial_reminders: boolean
+      daily_summary: boolean
+      weekly_report: boolean
+      updated_at: string
+    }>(sql`
+      SELECT
+        user_id,
+        jackpot_alerts,
+        tos_changes,
+        platform_outages,
+        flow_errors,
+        trial_reminders,
+        daily_summary,
+        weekly_report,
+        updated_at
+      FROM notification_preferences
+      WHERE user_id = ${userId}
+    `)
+
+    return reply.send({ success: true, data: rows[0] ?? null })
+  })
+
+  // ── PUT /notifications/preferences ───────────────────────────────────────────
+  // Update the user's notification preference settings (partial update supported).
+  app.put(
+    '/preferences',
+    {
+      schema: {
+        body: {
+          type: 'object',
+          properties: {
+            jackpotAlerts: { type: 'boolean' },
+            tosChanges: { type: 'boolean' },
+            platformOutages: { type: 'boolean' },
+            flowErrors: { type: 'boolean' },
+            trialReminders: { type: 'boolean' },
+            dailySummary: { type: 'boolean' },
+            weeklyReport: { type: 'boolean' },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const body = z
+        .object({
+          jackpotAlerts: z.boolean().optional(),
+          tosChanges: z.boolean().optional(),
+          platformOutages: z.boolean().optional(),
+          flowErrors: z.boolean().optional(),
+          trialReminders: z.boolean().optional(),
+          dailySummary: z.boolean().optional(),
+          weeklyReport: z.boolean().optional(),
+        })
+        .parse(request.body)
+
+      const userId = request.user!.id
+
+      // Ensure the row exists before updating
+      await query(sql`
+        INSERT INTO notification_preferences (user_id)
+        VALUES (${userId})
+        ON CONFLICT (user_id) DO NOTHING
+      `)
+
+      await query(sql`
+        UPDATE notification_preferences
+        SET
+          jackpot_alerts    = COALESCE(${body.jackpotAlerts ?? null}, jackpot_alerts),
+          tos_changes       = COALESCE(${body.tosChanges ?? null}, tos_changes),
+          platform_outages  = COALESCE(${body.platformOutages ?? null}, platform_outages),
+          flow_errors       = COALESCE(${body.flowErrors ?? null}, flow_errors),
+          trial_reminders   = COALESCE(${body.trialReminders ?? null}, trial_reminders),
+          daily_summary     = COALESCE(${body.dailySummary ?? null}, daily_summary),
+          weekly_report     = COALESCE(${body.weeklyReport ?? null}, weekly_report),
+          updated_at        = NOW()
+        WHERE user_id = ${userId}
+      `)
+
+      return reply.send({ success: true, data: { updated: true } })
+    }
   )
 }
 
@@ -181,7 +470,7 @@ export async function createNotification(opts: {
       ${opts.body},
       ${opts.icon ?? null},
       ${opts.href ?? null},
-      ${opts.data ? sql.raw(`'${JSON.stringify(opts.data)}'::jsonb`) : null}
+      ${opts.data ? sql`${JSON.stringify(opts.data)}::jsonb` : null}
     )
   `)
 }

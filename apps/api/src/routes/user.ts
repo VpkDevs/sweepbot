@@ -50,7 +50,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── GET /user/profile ────────────────────────────────────────────────────
   app.get(
-    '/user/profile',
+    '/profile',
     {
       schema: {
         tags: ['User'],
@@ -89,10 +89,9 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       `)
 
       if (!result.rows.length) {
-        return reply.code(404).send({
-          success: false,
-          error: { code: 'NOT_FOUND', message: 'Profile not found' },
-        })
+        return reply
+          .code(404)
+          .send({ error: 'NOT_FOUND', message: 'Profile not found', status: 404 })
       }
 
       return reply.send({ success: true, data: result.rows[0] })
@@ -101,7 +100,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── PATCH /user/profile ──────────────────────────────────────────────────
   app.patch(
-    '/user/profile',
+    '/profile',
     {
       schema: {
         tags: ['User'],
@@ -157,7 +156,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── GET /user/settings ───────────────────────────────────────────────────
   app.get(
-    '/user/settings',
+    '/settings',
     {
       schema: {
         tags: ['User'],
@@ -198,7 +197,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── PUT /user/settings ───────────────────────────────────────────────────
   app.put(
-    '/user/settings',
+    '/settings',
     {
       schema: {
         tags: ['User'],
@@ -251,7 +250,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── GET /user/platforms ──────────────────────────────────────────────────
   app.get(
-    '/user/platforms',
+    '/platforms',
     {
       schema: {
         tags: ['User'],
@@ -278,7 +277,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
           p.logo_url,
           p.url AS platform_url,
           p.affiliate_url,
-          p.status AS platform_status,
+          p.is_active AS platform_status,
           ti.overall_score AS trust_score,
           (
             SELECT COUNT(*) FROM sessions
@@ -305,7 +304,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── POST /user/platforms ─────────────────────────────────────────────────
   app.post(
-    '/user/platforms',
+    '/platforms',
     {
       schema: {
         tags: ['User'],
@@ -346,11 +345,9 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
       if (count >= limit) {
         return reply.code(403).send({
-          success: false,
-          error: {
-            code: 'FEATURE_GATED',
-            message: `Your ${tier} plan supports up to ${limit} platforms. Upgrade to add more.`,
-          },
+          error: 'FEATURE_GATED',
+          message: `Your ${tier} plan supports up to ${limit} platforms. Upgrade to add more.`,
+          status: 403,
         })
       }
 
@@ -370,7 +367,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── DELETE /user/platforms/:id ───────────────────────────────────────────
   app.delete(
-    '/user/platforms/:id',
+    '/platforms/:id',
     {
       schema: {
         tags: ['User'],
@@ -442,44 +439,20 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
   })
 
   // ─── POST /user/checkout ──────────────────────────────────────────────────
-  // Create a Stripe checkout session for a plan upgrade.
-  // Returns { url } — the client should redirect there.
+  // Create a Stripe Checkout session for a plan upgrade or lifetime purchase.
+  // Returns { url } — the client should redirect to this URL.
   app.post('/checkout', async (request, reply) => {
     const userId = request.user!.id
-    const { tier, cycle } = z
+    const { tier, cycle, promotionCode } = z
       .object({
         tier: z.enum(['starter', 'pro', 'analyst', 'elite', 'lifetime']),
         cycle: z.enum(['monthly', 'annual']).default('monthly'),
+        /** Optional Stripe promotion code ID (promo_XXXX) to pre-apply */
+        promotionCode: z.string().optional(),
       })
       .parse(request.body)
 
-    const stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2025-02-24.acacia' })
-
-    // Look up or create Stripe customer
-    const profileResult = await dbQuery(sql`
-      SELECT p.email, p.display_name, p.stripe_customer_id
-      FROM profiles p
-      WHERE p.id = ${userId}
-      LIMIT 1
-    `)
-    const profile = profileResult.rows[0] as Record<string, string | null> | undefined
-
-    let customerId = profile?.['stripe_customer_id'] as string | null
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: profile?.['email'] as string,
-        name: (profile?.['display_name'] as string) ?? undefined,
-        metadata: { userId },
-      })
-      customerId = customer.id
-
-      await dbQuery(sql`
-        UPDATE profiles SET stripe_customer_id = ${customerId}
-        WHERE id = ${userId}
-      `)
-    }
-
-    // Map tier+cycle to price ID from env
+    // Map tier + cycle → price ID
     const priceMap: Record<string, string | undefined> = {
       'starter-monthly': env.STRIPE_PRICE_STARTER_MONTHLY,
       'starter-annual': env.STRIPE_PRICE_STARTER_ANNUAL,
@@ -496,54 +469,173 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     const priceId = priceMap[`${tier}-${cycle}`]
     if (!priceId) {
       return reply.code(400).send({
-        success: false,
-        error: { code: 'PRICE_NOT_CONFIGURED', message: `Price for ${tier}/${cycle} not configured.` },
+        error: 'PRICE_NOT_CONFIGURED',
+        message: `Price for ${tier}/${cycle} not configured.`,
+        status: 400,
       })
     }
 
-    const isLifetime = tier === 'lifetime'
-    const appUrl = env.CORS_ORIGINS.split(',')[0] ?? 'https://sweepbot.app'
+    // Resolve user email for customer creation
+    const profileResult = await dbQuery(sql`
+      SELECT email, display_name FROM profiles WHERE id = ${userId} LIMIT 1
+    `)
+    const profile = profileResult.rows[0] as Record<string, string | null> | undefined
+    const email = profile?.['email'] as string | undefined
+    if (!email) {
+      return reply
+        .code(400)
+        .send({ error: 'PROFILE_NOT_FOUND', message: 'User profile email not found.', status: 400 })
+    }
 
-    const session = await stripe.checkout.sessions.create({
-      mode: isLifetime ? 'payment' : 'subscription',
-      customer: customerId,
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/settings#subscription?upgraded=1`,
-      cancel_url: `${appUrl}/pricing`,
-      metadata: { userId },
-      allow_promotion_codes: true,
-      ...(isLifetime ? {} : {
-        subscription_data: { metadata: { userId } },
-      }),
-    })
+    const appUrl = (env.CORS_ORIGINS.split(',')[0] ?? 'https://sweepbot.app').trim()
 
-    return reply.send({ success: true, data: { url: session.url } })
+    try {
+      const displayName = profile?.['display_name'] as string | undefined
+      const session = await createCheckoutSession({
+        userId,
+        email,
+        ...(displayName != null ? { displayName } : {}),
+        priceId,
+        successUrl: `${appUrl}/settings#subscription?upgraded=1`,
+        cancelUrl: `${appUrl}/pricing`,
+        ...(promotionCode != null ? { promotionCode } : {}),
+      })
+      return reply.send({ success: true, data: { url: session.url } })
+    } catch (err) {
+      if (err instanceof StripeServiceError) {
+        return reply.code(500).send({ error: err.code, message: err.message, status: 500 })
+      }
+      throw err
+    }
   })
 
   // ─── GET /user/billing-portal ─────────────────────────────────────────────
-  // Create a Stripe billing portal session and redirect there.
-  // Used as a direct href so we redirect instead of returning JSON.
+  // Create a Stripe Billing Portal session and redirect the client to it.
+  // Used as a direct anchor href — returns a redirect, not JSON.
   app.get('/billing-portal', async (request, reply) => {
     const userId = request.user!.id
-    const appUrl = env.CORS_ORIGINS.split(',')[0] ?? 'https://sweepbot.app'
+    const appUrl = (env.CORS_ORIGINS.split(',')[0] ?? 'https://sweepbot.app').trim()
 
-    const result = await dbQuery(sql`
-      SELECT stripe_customer_id FROM profiles WHERE id = ${userId} LIMIT 1
-    `)
-    const customerId = (result.rows[0] as Record<string, string | null> | undefined)?.['stripe_customer_id']
-
-    if (!customerId) {
-      return reply.redirect(`${appUrl}/pricing`)
+    try {
+      const portalSession = await createPortalSession(userId, `${appUrl}/settings#subscription`)
+      return reply.redirect(portalSession.url)
+    } catch (err) {
+      if (err instanceof StripeServiceError && err.code === 'CUSTOMER_NOT_FOUND') {
+        // User hasn't checked out yet — send them to pricing
+        return reply.redirect(`${appUrl}/pricing`)
+      }
+      throw err
     }
+  })
 
-    const stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2025-02-24.acacia' })
+  // ─── POST /user/subscription/change-plan ─────────────────────────────────
+  // Immediately switch to a different Stripe price (tier or billing cycle).
+  // Returns the updated Stripe Subscription object; proration is created by default.
+  app.post('/subscription/change-plan', async (request, reply) => {
+    const userId = request.user!.id
+    const { priceId, prorationBehavior } = z
+      .object({
+        priceId: z
+          .string()
+          .min(1)
+          .regex(/^price_[A-Za-z0-9]+$/, 'Invalid Stripe price ID'),
+        prorationBehavior: z
+          .enum(['create_prorations', 'none', 'always_invoice'])
+          .default('create_prorations'),
+      })
+      .parse(request.body)
 
-    const portalSession = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: `${appUrl}/settings#subscription`,
-    })
+    try {
+      const updated = await changeSubscriptionPlan(userId, priceId, prorationBehavior)
+      return reply.send({ success: true, data: updated })
+    } catch (err) {
+      if (err instanceof StripeServiceError) {
+        const status =
+          err.code === 'SUBSCRIPTION_NOT_FOUND'
+            ? 404
+            : err.code === 'SUBSCRIPTION_NOT_ACTIVE'
+              ? 409
+              : 500
+        return reply.code(status).send({ error: err.code, message: err.message, status })
+      }
+      throw err
+    }
+  })
 
-    return reply.redirect(portalSession.url)
+  // ─── POST /user/subscription/cancel ──────────────────────────────────────
+  // Cancel the user's active subscription.
+  // Pass { immediately: true } to revoke access right away; default is
+  // cancel_at_period_end so the user keeps access until the billing period closes.
+  app.post('/subscription/cancel', async (request, reply) => {
+    const userId = request.user!.id
+    const { immediately } = z
+      .object({ immediately: z.boolean().default(false) })
+      .parse(request.body)
+
+    try {
+      const sub = await cancelSubscription(userId, immediately)
+      return reply.send({
+        success: true,
+        data: {
+          canceled: true,
+          status: sub.status,
+          cancel_at_period_end: sub.cancel_at_period_end,
+        },
+      })
+    } catch (err) {
+      if (err instanceof StripeServiceError) {
+        const status = err.code === 'SUBSCRIPTION_NOT_FOUND' ? 404 : 500
+        return reply.code(status).send({ error: err.code, message: err.message, status })
+      }
+      throw err
+    }
+  })
+
+  // ─── POST /user/subscription/reactivate ──────────────────────────────────
+  // Undo a scheduled cancellation (cancel_at_period_end → false).
+  app.post('/subscription/reactivate', async (request, reply) => {
+    const userId = request.user!.id
+
+    try {
+      const sub = await reactivateSubscription(userId)
+      return reply.send({ success: true, data: { reactivated: true, status: sub.status } })
+    } catch (err) {
+      if (err instanceof StripeServiceError) {
+        const status =
+          err.code === 'SUBSCRIPTION_NOT_FOUND'
+            ? 404
+            : err.code === 'PLAN_ALREADY_ACTIVE'
+              ? 409
+              : 500
+        return reply.code(status).send({ error: err.code, message: err.message, status })
+      }
+      throw err
+    }
+  })
+
+  // ─── POST /user/subscription/apply-promo ─────────────────────────────────
+  // Apply a Stripe promotion code to the user's current active subscription.
+  app.post('/subscription/apply-promo', async (request, reply) => {
+    const userId = request.user!.id
+    const { promotionCodeId } = z
+      .object({
+        promotionCodeId: z
+          .string()
+          .min(1)
+          .regex(/^promo_[A-Za-z0-9]+$/, 'Invalid Stripe promotion code ID (expected promo_XXXX)'),
+      })
+      .parse(request.body)
+
+    try {
+      const sub = await applyPromotionCode(userId, promotionCodeId)
+      return reply.send({ success: true, data: { applied: true, discounts: sub.discounts } })
+    } catch (err) {
+      if (err instanceof StripeServiceError) {
+        const status = err.code === 'SUBSCRIPTION_NOT_FOUND' ? 404 : 500
+        return reply.code(status).send({ error: err.code, message: err.message, status })
+      }
+      throw err
+    }
   })
 
   // ─── GET /user/notification-prefs ────────────────────────────────────────
@@ -655,12 +747,12 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
         p.name AS platform_name,
         COUNT(*)::int AS redemption_count,
         COALESCE(SUM(r.amount_sc), 0)::numeric(12,4) AS total_sc,
-        MAX(r.received_at) AS latest_at
+        MAX(r.completed_at) AS latest_at
       FROM redemptions r
       LEFT JOIN platforms p ON p.id = r.platform_id
       WHERE r.user_id = ${userId}
         AND r.status = 'received'
-        AND DATE(COALESCE(r.received_at, r.created_at))
+        AND DATE(COALESCE(r.completed_at, r.created_at))
             BETWEEN ${startDate}::date AND ${endDate}::date
       GROUP BY r.platform_id, p.name
       ORDER BY total_sc DESC
@@ -674,7 +766,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       FROM redemptions r
       WHERE r.user_id = ${userId}
         AND r.status = 'received'
-        AND DATE(COALESCE(r.received_at, r.created_at))
+        AND DATE(COALESCE(r.completed_at, r.created_at))
             BETWEEN ${startDate}::date AND ${endDate}::date
     `)
 
@@ -682,7 +774,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       success: true,
       data: {
         year: targetYear,
-        ...(totals.rows[0] as Record<string, unknown> ?? {}),
+        ...((totals.rows[0] as Record<string, unknown>) ?? {}),
         by_platform: byPlatform.rows,
       },
     })
@@ -710,7 +802,9 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     const existing = await dbQuery(sql`
       SELECT self_exclusion_until FROM user_settings WHERE user_id = ${userId}
     `)
-    const existingUntil = (existing.rows[0] as Record<string, string | null> | undefined)?.['self_exclusion_until']
+    const existingUntil = (existing.rows[0] as Record<string, string | null> | undefined)?.[
+      'self_exclusion_until'
+    ]
     if (existingUntil && new Date(existingUntil) >= newExclusionUntil) {
       return reply.send({
         success: true,
@@ -769,10 +863,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     const { error } = await supabaseAdmin.auth.admin.deleteUser(userId)
 
     if (error) {
-      return reply.code(500).send({
-        success: false,
-        error: { code: 'DELETE_FAILED', message: error.message },
-      })
+      return reply.code(500).send({ error: 'DELETE_FAILED', message: error.message, status: 500 })
     }
 
     return reply.send({ success: true, data: { deleted: true } })

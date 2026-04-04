@@ -19,6 +19,8 @@ import {
   Sparkles,
   PanelLeftClose,
   PanelLeft,
+  FileText,
+  Scale,
 } from 'lucide-react'
 import { useState, useEffect, useMemo } from 'react'
 import { useAuthStore } from '../../stores/auth'
@@ -43,10 +45,15 @@ const navSections = [
     ],
   },
   {
-    label: 'Automation',
+    label: 'Intelligence',
     items: [
-      { to: '/flows', label: 'SweepBot Flows', icon: Bot },
+      { to: '/tos-monitor', label: 'TOS Monitor', icon: FileText },
+      { to: '/tax-center', label: 'Tax Center', icon: Scale },
     ],
+  },
+  {
+    label: 'Automation',
+    items: [{ to: '/flows', label: 'SweepBot Flows', icon: Bot }],
   },
   {
     label: 'Engage',
@@ -60,11 +67,31 @@ const navSections = [
 ] as const
 
 const TIER_CONFIG = {
-  elite:   { cls: 'bg-gradient-to-r from-brand-600 to-brand-400 text-white shadow-lg shadow-brand-500/25', label: 'Elite', ring: 'ring-brand-500/30' },
-  analyst: { cls: 'bg-purple-500/15 text-purple-300 ring-1 ring-purple-500/20', label: 'Analyst', ring: 'ring-purple-500/20' },
-  pro:     { cls: 'bg-blue-500/15 text-blue-300 ring-1 ring-blue-500/20', label: 'Pro', ring: 'ring-blue-500/20' },
-  starter: { cls: 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/20', label: 'Starter', ring: 'ring-emerald-500/20' },
-  free:    { cls: 'bg-zinc-800/80 text-zinc-300 ring-1 ring-zinc-700/50', label: 'Free', ring: 'ring-zinc-700/30' },
+  elite: {
+    cls: 'bg-gradient-to-r from-brand-600 to-brand-400 text-white shadow-lg shadow-brand-500/25',
+    label: 'Elite',
+    ring: 'ring-brand-500/30',
+  },
+  analyst: {
+    cls: 'bg-purple-500/15 text-purple-300 ring-1 ring-purple-500/20',
+    label: 'Analyst',
+    ring: 'ring-purple-500/20',
+  },
+  pro: {
+    cls: 'bg-blue-500/15 text-blue-300 ring-1 ring-blue-500/20',
+    label: 'Pro',
+    ring: 'ring-blue-500/20',
+  },
+  starter: {
+    cls: 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/20',
+    label: 'Starter',
+    ring: 'ring-emerald-500/20',
+  },
+  free: {
+    cls: 'bg-zinc-800/80 text-zinc-300 ring-1 ring-zinc-700/50',
+    label: 'Free',
+    ring: 'ring-zinc-700/30',
+  },
 } as const
 
 // Map route paths to breadcrumb labels
@@ -81,6 +108,8 @@ const ROUTE_LABELS: Record<string, string> = {
   '/heatmap': 'Heatmap',
   '/records': 'Records',
   '/big-wins': 'Big Wins',
+  '/tos-monitor': 'TOS Monitor',
+  '/tax-center': 'Tax Center',
   '/settings': 'Settings',
   '/pricing': 'Pricing',
 }
@@ -129,26 +158,22 @@ export function AppShell() {
       <NoiseOverlay opacity={0.014} animate />
 
       {/* Ambient background */}
-      <div className="fixed inset-0 pointer-events-none">
+      <div className="pointer-events-none fixed inset-0">
         <div className="gradient-mesh-premium absolute inset-0" />
-        <div className="blob blob-brand w-[600px] h-[600px] -top-[200px] -left-[200px] opacity-20" />
-        <div className="blob blob-accent w-[400px] h-[400px] bottom-[10%] right-[5%] opacity-15" />
+        <div className="blob blob-brand -left-[200px] -top-[200px] h-[600px] w-[600px] opacity-20" />
+        <div className="blob blob-accent bottom-[10%] right-[5%] h-[400px] w-[400px] opacity-15" />
         {/* Floating particles */}
         <div className="floating-particles">
           {Array.from({ length: 12 }).map((_, i) => (
-            <div
-              key={i}
-              className={cn('particle', `particle-${i}`)}
-            />
+            <div key={i} className={cn('particle', `particle-${i}`)} />
           ))}
         </div>
       </div>
 
-
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-20 modal-backdrop lg:hidden animate-fade-in"
+          className="modal-backdrop animate-fade-in fixed inset-0 z-20 lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -156,60 +181,77 @@ export function AppShell() {
       {/* ─── Sidebar ─────────────────────────────────────────────── */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-30 flex flex-col glass-sidebar transition-all duration-300 ease-out lg:static',
+          'glass-sidebar fixed inset-y-0 left-0 z-30 flex flex-col overflow-y-auto transition-all duration-300 ease-out lg:static',
           collapsed ? 'w-[72px]' : 'w-[260px]',
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
+        role="navigation"
+        aria-label="Main navigation"
       >
         {/* Logo */}
-        <div className={cn('flex items-center gap-3 px-5 py-5 transition-all', collapsed && 'px-3 justify-center')}>
-          <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 shadow-lg shadow-brand-500/25 flex-shrink-0">
-            <Zap className="w-4 h-4 text-white" />
-            <div className="absolute inset-0 rounded-xl bg-brand-400/20 animate-glow-pulse" />
+        <div
+          className={cn(
+            'flex items-center gap-3 px-5 py-5 transition-all',
+            collapsed && 'justify-center px-3'
+          )}
+        >
+          <div className="from-brand-500 to-brand-700 shadow-brand-500/25 relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br shadow-lg">
+            <Zap className="h-4 w-4 text-white" />
+            <div className="bg-brand-400/20 animate-glow-pulse absolute inset-0 rounded-xl" />
           </div>
           {!collapsed && (
-            <span className="text-lg font-bold text-white tracking-tight animate-fade-in">SweepBot</span>
+            <span className="animate-fade-in text-lg font-bold tracking-tight text-white">
+              SweepBot
+            </span>
           )}
           <button
-            className={cn('lg:hidden text-zinc-400 hover:text-white transition-colors', collapsed ? 'hidden' : 'ml-auto')}
+            className={cn(
+              'text-zinc-400 transition-colors hover:text-white lg:hidden',
+              collapsed ? 'hidden' : 'ml-auto'
+            )}
             onClick={() => setMobileOpen(false)}
             type="button"
             title="Close navigation"
             aria-label="Close navigation"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Tier badge */}
         {!collapsed && (
-          <div className="px-5 pb-3 animate-fade-in">
+          <div className="animate-fade-in px-5 pb-3">
             <div className="flex items-center gap-2">
-              <span className={cn('inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold tracking-wide', tierCfg.cls)}>
+              <span
+                className={cn(
+                  'inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-bold tracking-wide',
+                  tierCfg.cls
+                )}
+              >
                 {tierCfg.label}
               </span>
               {tier === 'free' && (
                 <Link
                   to="/pricing"
-                  className="inline-flex items-center gap-1 text-xs text-brand-400 hover:text-brand-300 font-medium transition-colors group gradient-underline"
+                  className="text-brand-400 hover:text-brand-300 gradient-underline group inline-flex items-center gap-1 text-xs font-medium transition-colors"
                 >
-                  <Sparkles className="w-3 h-3" />
+                  <Sparkles className="h-3 w-3" />
                   Upgrade
-                  <ChevronRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
+                  <ChevronRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
                 </Link>
               )}
             </div>
           </div>
         )}
 
-        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent mx-3" />
+        <div className="mx-3 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
 
         {/* Navigation */}
-        <nav className="flex-1 px-2 py-3 overflow-y-auto space-y-3">
+        <nav className="flex-1 space-y-3 overflow-y-auto px-2 py-3">
           {navSections.map((section) => (
             <div key={section.label}>
               {!collapsed && (
-                <p className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-600">
+                <p className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-600">
                   {section.label}
                 </p>
               )}
@@ -219,22 +261,22 @@ export function AppShell() {
                     key={to}
                     to={to}
                     className={cn(
-                      'group relative flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200 shine-on-hover',
+                      'shine-on-hover group relative flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200',
                       collapsed ? 'justify-center p-2.5' : 'px-3 py-2',
-                      'text-zinc-400 hover:text-white hover:bg-white/[0.04]',
-                      '[&.active]:text-white [&.active]:bg-brand-500/[0.08] [&.active]:shadow-[inset_0_0_0_1px_rgba(139,92,246,0.12)]'
+                      'text-zinc-400 hover:bg-white/[0.04] hover:text-white',
+                      '[&.active]:bg-brand-500/[0.08] [&.active]:text-white [&.active]:shadow-[inset_0_0_0_1px_rgba(139,92,246,0.12)]'
                     )}
                     activeProps={{ className: 'active' }}
                     activeOptions={{ exact: to === '/' }}
                     {...(collapsed ? { 'data-tooltip': label } : {})}
                   >
-                    <Icon className="w-[18px] h-[18px] flex-shrink-0 transition-colors [.active_&]:text-brand-400" />
+                    <Icon className="[.active_&]:text-brand-400 h-[18px] w-[18px] flex-shrink-0 transition-colors" />
                     {!collapsed && label}
                     {!collapsed && (
-                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-400 opacity-0 [.active_&]:opacity-100 transition-opacity shadow-sm shadow-brand-400/50" />
+                      <div className="bg-brand-400 shadow-brand-400/50 ml-auto h-1.5 w-1.5 rounded-full opacity-0 shadow-sm transition-opacity [.active_&]:opacity-100" />
                     )}
                     {/* Active bar indicator */}
-                    <div className="absolute left-0 top-[20%] bottom-[20%] w-[3px] rounded-r-full bg-gradient-to-b from-brand-400 to-brand-600 opacity-0 [.active_&]:opacity-100 transition-opacity" />
+                    <div className="from-brand-400 to-brand-600 absolute bottom-[20%] left-0 top-[20%] w-[3px] rounded-r-full bg-gradient-to-b opacity-0 transition-opacity [.active_&]:opacity-100" />
                   </Link>
                 ))}
               </div>
@@ -242,50 +284,54 @@ export function AppShell() {
           ))}
         </nav>
 
-        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent mx-3" />
+        <div className="mx-3 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
 
         {/* Bottom section */}
-        <div className="px-2 py-2 space-y-0.5">
+        <div className="space-y-0.5 px-2 py-2">
           {/* Collapse toggle (desktop only) */}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="hidden lg:flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm font-medium text-zinc-500 hover:text-white hover:bg-white/[0.04] transition-all"
+            className="hidden w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-zinc-500 transition-all hover:bg-white/[0.04] hover:text-white lg:flex"
           >
-            {collapsed ? <PanelLeft className="w-[18px] h-[18px]" /> : <PanelLeftClose className="w-[18px] h-[18px]" />}
+            {collapsed ? (
+              <PanelLeft className="h-[18px] w-[18px]" />
+            ) : (
+              <PanelLeftClose className="h-[18px] w-[18px]" />
+            )}
             {!collapsed && 'Collapse'}
           </button>
 
           <Link
             to="/settings"
             className={cn(
-              'flex items-center gap-3 rounded-xl text-sm font-medium text-zinc-400 hover:text-white hover:bg-white/[0.04] transition-all',
-              collapsed ? 'justify-center p-2.5' : 'px-3 py-2',
+              'flex items-center gap-3 rounded-xl text-sm font-medium text-zinc-400 transition-all hover:bg-white/[0.04] hover:text-white',
+              collapsed ? 'justify-center p-2.5' : 'px-3 py-2'
             )}
           >
-            <Settings className="w-[18px] h-[18px] flex-shrink-0" />
+            <Settings className="h-[18px] w-[18px] flex-shrink-0" />
             {!collapsed && 'Settings'}
           </Link>
           <button
             onClick={handleSignOut}
             className={cn(
-              'flex items-center gap-3 w-full rounded-xl text-sm font-medium text-zinc-400 hover:text-white hover:bg-white/[0.04] transition-all',
-              collapsed ? 'justify-center p-2.5' : 'px-3 py-2',
+              'flex w-full items-center gap-3 rounded-xl text-sm font-medium text-zinc-400 transition-all hover:bg-white/[0.04] hover:text-white',
+              collapsed ? 'justify-center p-2.5' : 'px-3 py-2'
             )}
           >
-            <LogOut className="w-[18px] h-[18px] flex-shrink-0" />
+            <LogOut className="h-[18px] w-[18px] flex-shrink-0" />
             {!collapsed && 'Sign out'}
           </button>
 
           {/* User row */}
           {!collapsed && (
-            <div className="flex items-center gap-3 px-3 py-3 mt-1 animate-fade-in">
-              <div className="relative flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-lg shadow-brand-500/20 ring-2 ring-brand-500/10">
-                <span className="text-[11px] font-bold text-white uppercase">
+            <div className="animate-fade-in mt-1 flex items-center gap-3 px-3 py-3">
+              <div className="from-brand-500 to-brand-700 shadow-brand-500/20 ring-brand-500/10 relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br shadow-lg ring-2">
+                <span className="text-[11px] font-bold uppercase text-white">
                   {user?.email?.charAt(0) ?? '?'}
                 </span>
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-zinc-400 truncate">{user?.email}</p>
+                <p className="truncate text-xs text-zinc-400">{user?.email}</p>
               </div>
             </div>
           )}
@@ -293,32 +339,38 @@ export function AppShell() {
       </aside>
 
       {/* ─── Main content ────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* Topbar */}
-        <header className="flex items-center gap-4 px-6 h-14 glass-panel shrink-0 z-10">
+        <header
+          className="glass-panel z-10 flex h-14 shrink-0 items-center gap-3 px-4 sm:px-6"
+          role="banner"
+        >
           <button
-            className="lg:hidden text-zinc-400 hover:text-white transition-colors press-scale"
+            className="press-scale focus:outline-brand-500 rounded-lg p-1 text-zinc-400 transition-colors hover:text-white focus:outline-2 focus:outline-offset-2 lg:hidden"
             onClick={() => setMobileOpen(true)}
             type="button"
             title="Open navigation"
-            aria-label="Open navigation"
+            aria-label="Open navigation menu"
+            aria-expanded={mobileOpen}
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="h-5 w-5" />
           </button>
 
           {/* Breadcrumb / Page title */}
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-zinc-600 hidden sm:inline">{getGreeting()}</span>
-            <span className="text-zinc-700 hidden sm:inline">·</span>
-            <span className="text-zinc-300 font-medium">{currentLabel}</span>
+          <div className="flex min-w-0 items-center gap-2 text-sm">
+            <span className="hidden whitespace-nowrap text-zinc-600 sm:inline">
+              {getGreeting()}
+            </span>
+            <span className="hidden text-zinc-700 sm:inline">·</span>
+            <span className="truncate font-medium text-zinc-300">{currentLabel}</span>
           </div>
 
           <div className="flex-1" />
 
           {/* Search trigger (placeholder for future) */}
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.04] text-zinc-600 text-sm cursor-pointer hover:bg-white/[0.05] hover:border-white/[0.06] transition-all">
+          <div className="focus-within:ring-brand-500/20 hidden cursor-pointer items-center gap-2 rounded-xl border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-sm text-zinc-600 transition-all focus-within:ring-2 hover:border-white/[0.06] hover:bg-white/[0.05] md:flex">
             <span className="text-xs">⌘K</span>
-            <span className="text-zinc-600">Search...</span>
+            <span className="hidden text-zinc-600 lg:inline">Search...</span>
           </div>
 
           <NotificationPanel />
@@ -328,11 +380,47 @@ export function AppShell() {
         <div className="glow-line shrink-0" />
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto scroll-smooth">
+        <main
+          className="focus:outline-brand-500 flex-1 overflow-y-auto scroll-smooth focus:outline-2 focus:outline-offset-0"
+          id="main-content"
+          role="main"
+        >
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>
         </main>
+
+        {/* ─── Compliance disclaimer strip ─────────────────────────── */}
+        {/* Required persistent notice: SweepBot is a data-tracking tool,
+            not a gambling product. Historical data only. No advice given. */}
+        <footer
+          className="flex shrink-0 flex-wrap items-center justify-center gap-1.5 border-t border-white/[0.03] bg-zinc-950/80 px-4 py-1.5 backdrop-blur-sm"
+          aria-label="Legal disclaimer"
+        >
+          <ShieldCheck className="h-3 w-3 flex-shrink-0 text-zinc-600" aria-hidden="true" />
+          <p className="text-center text-[10px] leading-snug text-zinc-600">
+            SweepBot is a data-tracking and transparency tool, not a gambling product or service.
+            All data shown is historical and informational only. SweepBot does not provide gambling
+            advice, predict outcomes, or recommend play strategies.{' '}
+            <a
+              href="https://sweepbot.app/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 transition-colors hover:text-zinc-400"
+            >
+              Terms
+            </a>
+            {' · '}
+            <a
+              href="https://sweepbot.app/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 transition-colors hover:text-zinc-400"
+            >
+              Privacy
+            </a>
+          </p>
+        </footer>
       </div>
     </div>
   )

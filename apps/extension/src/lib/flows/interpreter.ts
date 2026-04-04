@@ -16,53 +16,6 @@ import type {
   SpinStep,
 } from './types'
 
-// ─── Platform selectors (best-effort; user can override) ──────────────────────
-
-export const PLATFORM_SELECTORS: Record<
-  string,
-  {
-    loginButton?: string
-    loginButtonText?: string
-    bonusButton?: string
-    bonusButtonText?: string
-    bonusAmount?: string
-    gameFrame?: string
-    spinButton?: string
-    spinButtonText?: string
-    winAmount?: string
-    balanceAmount?: string
-  }
-> = {
-  chumba: {
-    loginButton: '[data-testid="login-btn"], .login-button, a[href*="login"]',
-    loginButtonText: 'Log In',
-    bonusButton: '[data-testid="daily-bonus"], .bonus-claim-btn, .daily-reward-btn',
-    bonusButtonText: 'Collect',
-    bonusAmount: '.bonus-amount, [data-bonus-amount], .reward-coins',
-    gameFrame: 'iframe[src*="game"], iframe.game-iframe',
-    spinButton: '.spin-btn, [data-action="spin"], .spin-button',
-    spinButtonText: 'Spin',
-    winAmount: '.win-display, [data-win], .win-amount',
-    balanceAmount: '.sc-balance, [data-sc-balance], .sweeps-coins-balance',
-  },
-  luckyland: {
-    loginButtonText: 'Log In',
-    bonusButtonText: 'Collect',
-    spinButtonText: 'Spin',
-  },
-  stake: {
-    loginButtonText: 'Sign In',
-    bonusButtonText: 'Claim',
-    spinButtonText: 'Spin',
-  },
-  // Generic fallback
-  _default: {
-    loginButtonText: 'Log In',
-    bonusButtonText: 'Collect',
-    spinButtonText: 'Spin',
-  },
-}
-
 // ─── Interpreter ──────────────────────────────────────────────────────────────
 
 export class FlowInterpreter {
@@ -95,15 +48,16 @@ export class FlowInterpreter {
     // ── Build steps ───────────────────────────────────────────────────────────
 
     const steps: FlowStep[] = []
-    const platform =
-      entities.platforms[0]?.canonical ?? null
+    const platform = entities.platforms[0]?.canonical ?? null
     const platformUrl = entities.platforms[0]?.url ?? null
     const game = entities.games[0]?.canonical ?? null
     // 1. Navigate to platform
     if (platformUrl) {
       steps.push({ type: 'navigate', url: platformUrl, waitForLoad: true })
     } else if (platform) {
-      ambiguities.push(`Unknown URL for platform "${platform}" — you may need to set it in Settings.`)
+      ambiguities.push(
+        `Unknown URL for platform "${platform}" — you may need to set it in Settings.`
+      )
     }
 
     // 2. Login (if mentioned)
@@ -197,11 +151,12 @@ export class FlowInterpreter {
     }
 
     // ── Assemble flow ─────────────────────────────────────────────────────────
+    const sanitizedInput = this.sanitize(rawInput)
 
     const flow: FlowDefinition = {
       id: this.generateId(),
-      name: this.generateName(entities, rawInput),
-      description: rawInput,
+      name: this.generateName(entities, sanitizedInput),
+      description: sanitizedInput,
       status: 'draft',
       trigger,
       steps,
@@ -221,13 +176,26 @@ export class FlowInterpreter {
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
+  /**
+   * Simple PII scrubber to ensure raw transcripts don't persist emails or phone numbers.
+   */
+  private sanitize(text: string): string {
+    return (
+      text
+        // Scrub emails
+        .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '[EMAIL]')
+        // Scrub phone numbers (basic US/Intl patterns)
+        .replace(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g, '[PHONE]')
+    )
+  }
+
   private generateId(): string {
     return `flow_${Date.now()}_${crypto.randomUUID().replace(/-/g, '').slice(0, 8)}`
   }
 
   private generateName(
     entities: ReturnType<EntityRecognizer['recognize']>,
-    rawInput: string,
+    rawInput: string
   ): string {
     const parts: string[] = []
     if (entities.schedule) parts.push(entities.schedule.humanReadable)
@@ -244,7 +212,7 @@ export class FlowInterpreter {
     entities: ReturnType<EntityRecognizer['recognize']>,
     platform: string | null,
     game: string | null,
-    trigger: FlowTrigger,
+    trigger: FlowTrigger
   ): string {
     const parts: string[] = []
 
@@ -261,7 +229,7 @@ export class FlowInterpreter {
 
     if (entities.hasSpin && entities.multiplierThreshold !== null && entities.hasContinueOnWin) {
       parts.push(
-        `🔄 Spins once, then loops while win ≥ ${entities.multiplierThreshold}× bonusAmount`,
+        `🔄 Spins once, then loops while win ≥ ${entities.multiplierThreshold}× bonusAmount`
       )
       if (entities.hasStopOnLoss) parts.push('🛑 Stops if win < threshold')
     } else if (entities.hasSpin) {

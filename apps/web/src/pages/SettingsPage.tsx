@@ -46,10 +46,10 @@ function Section({
   children: React.ReactNode
 }) {
   return (
-    <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-5 space-y-4">
+    <div className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900 p-5">
       <div>
         <h2 className="text-sm font-semibold text-white">{title}</h2>
-        {description && <p className="text-xs text-zinc-500 mt-0.5">{description}</p>}
+        {description && <p className="mt-0.5 text-xs text-zinc-500">{description}</p>}
       </div>
       <div className="space-y-4">{children}</div>
     </div>
@@ -73,33 +73,41 @@ function InputField({
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-zinc-400 mb-1.5">{label}</label>
+      <label className="mb-1.5 block text-xs font-medium text-zinc-400">{label}</label>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
-        className="w-full px-3 py-2 bg-zinc-950 border border-zinc-700 text-white placeholder-zinc-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="focus:ring-brand-500 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
       />
     </div>
   )
 }
 
-function SaveButton({ saving, saved, onClick }: { saving: boolean; saved: boolean; onClick: () => void }) {
+function SaveButton({
+  saving,
+  saved,
+  onClick,
+}: {
+  saving: boolean
+  saved: boolean
+  onClick: () => void
+}) {
   return (
     <button
       onClick={onClick}
       disabled={saving}
       className={cn(
-        'px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2',
+        'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors',
         saved
           ? 'bg-green-800 text-green-200'
           : 'bg-brand-600 hover:bg-brand-500 text-white disabled:opacity-50'
       )}
     >
-      {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-      {saved && <CheckCircle2 className="w-3.5 h-3.5" />}
+      {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+      {saved && <CheckCircle2 className="h-3.5 w-3.5" />}
       {saving ? 'Saving…' : saved ? 'Saved' : 'Save Changes'}
     </button>
   )
@@ -128,11 +136,7 @@ function ProfileTab() {
 
   return (
     <Section title="Profile" description="Your public identity on SweepBot.">
-      <InputField
-        label="Email"
-        value={user?.email ?? ''}
-        disabled
-      />
+      <InputField label="Email" value={user?.email ?? ''} disabled />
       <InputField
         label="Display Name"
         value={displayName}
@@ -157,13 +161,21 @@ function SecurityTab() {
 
   async function handleChangePassword() {
     setError(null)
-    if (newPw !== confirmPw) { setError('Passwords do not match.'); return }
-    if (newPw.length < 8) { setError('New password must be at least 8 characters.'); return }
+    if (newPw !== confirmPw) {
+      setError('Passwords do not match.')
+      return
+    }
+    if (newPw.length < 8) {
+      setError('New password must be at least 8 characters.')
+      return
+    }
 
     setSaving(true)
     try {
       // Re-authenticate then update
-      const { data: { user } } = await supabaseClient.auth.getUser()
+      const {
+        data: { user },
+      } = await supabaseClient.auth.getUser()
       if (!user?.email) throw new Error('No user found.')
 
       // Sign in with old password to verify
@@ -176,7 +188,9 @@ function SecurityTab() {
       const { error: updateError } = await supabaseClient.auth.updateUser({ password: newPw })
       if (updateError) throw updateError
 
-      setOldPw(''); setNewPw(''); setConfirmPw('')
+      setOldPw('')
+      setNewPw('')
+      setConfirmPw('')
       setSuccess(true)
       setTimeout(() => setSuccess(false), 4000)
     } catch (err) {
@@ -189,24 +203,24 @@ function SecurityTab() {
   return (
     <Section title="Password & Security">
       {error && (
-        <div className="px-3 py-2 rounded-lg bg-red-950/50 border border-red-800 text-red-300 text-sm">
+        <div className="rounded-lg border border-red-800 bg-red-950/50 px-3 py-2 text-sm text-red-300">
           {error}
         </div>
       )}
       {success && (
-        <div className="px-3 py-2 rounded-lg bg-green-950/50 border border-green-800 text-green-300 text-sm flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4" /> Password updated successfully.
+        <div className="flex items-center gap-2 rounded-lg border border-green-800 bg-green-950/50 px-3 py-2 text-sm text-green-300">
+          <CheckCircle2 className="h-4 w-4" /> Password updated successfully.
         </div>
       )}
 
       <div>
-        <label className="block text-xs font-medium text-zinc-400 mb-1.5">Current Password</label>
+        <label className="mb-1.5 block text-xs font-medium text-zinc-400">Current Password</label>
         <div className="relative">
           <input
             type={showPw ? 'text' : 'password'}
             value={oldPw}
             onChange={(e) => setOldPw(e.target.value)}
-            className="w-full px-3 py-2 bg-zinc-950 border border-zinc-700 text-white placeholder-zinc-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 pr-10"
+            className="focus:ring-brand-500 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 pr-10 text-sm text-white placeholder-zinc-600 focus:outline-none focus:ring-2"
             placeholder="••••••••"
           />
           <button
@@ -216,7 +230,7 @@ function SecurityTab() {
             title={showPw ? 'Hide current password' : 'Show current password'}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
           >
-            {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
       </div>
@@ -239,9 +253,9 @@ function SecurityTab() {
       <button
         onClick={handleChangePassword}
         disabled={saving || !oldPw || !newPw || !confirmPw}
-        className="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+        className="bg-brand-600 hover:bg-brand-500 flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
       >
-        {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+        {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
         Update Password
       </button>
     </Section>
@@ -277,14 +291,46 @@ function NotificationsTab() {
   })
 
   const toggles: { key: keyof NotifPrefs; label: string; description: string }[] = [
-    { key: 'jackpot_surge', label: 'Jackpot Surge Alerts', description: 'When a jackpot is growing unusually fast' },
-    { key: 'jackpot_near_ceiling', label: 'Must-Hit-By Alerts', description: 'When a jackpot approaches its ceiling' },
-    { key: 'tos_change_major', label: 'Major TOS Changes', description: 'When a platform makes a significant policy change' },
-    { key: 'tos_change_any', label: 'All TOS Changes', description: 'Any detected change to platform terms' },
-    { key: 'redemption_status', label: 'Redemption Updates', description: 'Status changes on your active redemptions' },
-    { key: 'weekly_digest', label: 'Weekly Digest', description: 'A summary of your stats and notable events' },
-    { key: 'platform_trust_drop', label: 'Trust Score Drops', description: 'When a platform\'s Trust Index falls significantly' },
-    { key: 'bonus_calendar', label: 'Bonus Calendar', description: 'Upcoming promotions and bonus opportunities' },
+    {
+      key: 'jackpot_surge',
+      label: 'Jackpot Surge Alerts',
+      description: 'When a jackpot is growing unusually fast',
+    },
+    {
+      key: 'jackpot_near_ceiling',
+      label: 'Must-Hit-By Alerts',
+      description: 'When a jackpot approaches its ceiling',
+    },
+    {
+      key: 'tos_change_major',
+      label: 'Major TOS Changes',
+      description: 'When a platform makes a significant policy change',
+    },
+    {
+      key: 'tos_change_any',
+      label: 'All TOS Changes',
+      description: 'Any detected change to platform terms',
+    },
+    {
+      key: 'redemption_status',
+      label: 'Redemption Updates',
+      description: 'Status changes on your active redemptions',
+    },
+    {
+      key: 'weekly_digest',
+      label: 'Weekly Digest',
+      description: 'A summary of your stats and notable events',
+    },
+    {
+      key: 'platform_trust_drop',
+      label: 'Trust Score Drops',
+      description: "When a platform's Trust Index falls significantly",
+    },
+    {
+      key: 'bonus_calendar',
+      label: 'Bonus Calendar',
+      description: 'Upcoming promotions and bonus opportunities',
+    },
   ]
 
   return (
@@ -303,14 +349,16 @@ function NotificationsTab() {
               aria-label={`${enabled ? 'Disable' : 'Enable'} ${label}`}
               title={`${enabled ? 'Disable' : 'Enable'} ${label}`}
               className={cn(
-                'relative w-10 h-6 rounded-full transition-colors focus:outline-none',
+                'relative h-6 w-10 rounded-full transition-colors focus:outline-none',
                 enabled ? 'bg-brand-600' : 'bg-zinc-700'
               )}
             >
-              <span className={cn(
-                'absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform',
-                enabled ? 'translate-x-5' : 'translate-x-1'
-              )} />
+              <span
+                className={cn(
+                  'absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform',
+                  enabled ? 'translate-x-5' : 'translate-x-1'
+                )}
+              />
             </button>
           </div>
         )
@@ -348,17 +396,16 @@ function SubscriptionTab() {
               {TIER_NAMES[sub?.['tier'] as string] ?? 'Free'}
             </p>
             {!!sub?.['current_period_end'] && (
-              <p className="text-xs text-zinc-500 mt-0.5">
+              <p className="mt-0.5 text-xs text-zinc-500">
                 {sub['cancel_at_period_end']
                   ? `Cancels on ${new Date(sub['current_period_end'] as string).toLocaleDateString()}`
-                  : `Renews on ${new Date(sub['current_period_end'] as string).toLocaleDateString()}`
-                }
+                  : `Renews on ${new Date(sub['current_period_end'] as string).toLocaleDateString()}`}
               </p>
             )}
           </div>
           {sub?.['tier'] !== 'free' && sub?.['tier'] !== 'lifetime' && (
             <div className="flex items-center gap-2 text-xs text-zinc-400">
-              <Zap className="w-3.5 h-3.5 text-brand-400" />
+              <Zap className="text-brand-400 h-3.5 w-3.5" />
               {sub?.['stripe_subscription_id'] ? 'Stripe Billing' : 'Active'}
             </div>
           )}
@@ -366,24 +413,27 @@ function SubscriptionTab() {
 
         <a
           href="/pricing"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium rounded-lg transition-colors"
+          className="bg-brand-600 hover:bg-brand-500 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
         >
           {sub?.['tier'] === 'free' ? 'Upgrade Plan' : 'Change Plan'}
-          <ExternalLink className="w-3.5 h-3.5" />
+          <ExternalLink className="h-3.5 w-3.5" />
         </a>
       </Section>
 
       {sub?.['tier'] !== 'free' && !!sub?.['stripe_subscription_id'] && (
-        <Section title="Billing Portal" description="Manage payment methods, view invoices, and cancel.">
+        <Section
+          title="Billing Portal"
+          description="Manage payment methods, view invoices, and cancel."
+        >
           <a
             href="/api/v1/user/billing-portal"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium rounded-lg transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
           >
-            <CreditCard className="w-4 h-4" />
+            <CreditCard className="h-4 w-4" />
             Open Stripe Billing Portal
-            <ExternalLink className="w-3 h-3" />
+            <ExternalLink className="h-3 w-3" />
           </a>
         </Section>
       )}
@@ -415,60 +465,73 @@ function TaxTab() {
     <div className="space-y-4">
       <Section title="Tax Summary" description="Total redemptions by platform for tax reporting.">
         <div className="flex items-center gap-3">
-          <label htmlFor="tax-year" className="text-xs text-zinc-400">Tax Year</label>
+          <label htmlFor="tax-year" className="text-xs text-zinc-400">
+            Tax Year
+          </label>
           <select
             id="tax-year"
             aria-label="Tax year"
             value={taxYear}
             onChange={(e) => setTaxYear(Number(e.target.value))}
-            className="bg-zinc-950 border border-zinc-700 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="focus:ring-brand-500 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2"
           >
             {[currentYear, currentYear - 1, currentYear - 2].map((y) => (
-              <option key={y} value={y}>{y}</option>
+              <option key={y} value={y}>
+                {y}
+              </option>
             ))}
           </select>
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center h-20">
-            <Loader2 className="w-5 h-5 animate-spin text-zinc-500" />
+          <div className="flex h-20 items-center justify-center">
+            <Loader2 className="h-5 w-5 animate-spin text-zinc-500" />
           </div>
         ) : taxData ? (
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-3">
               {[
-                { label: 'Total Redeemed', value: `${formatSC(taxData['total_redeemed_sc'] as number)} SC` },
-                { label: 'Est. USD Value', value: `$${((taxData['total_redeemed_sc'] as number) ?? 0).toFixed(2)}` },
+                {
+                  label: 'Total Redeemed',
+                  value: `${formatSC(taxData['total_redeemed_sc'] as number)} SC`,
+                },
+                {
+                  label: 'Est. USD Value',
+                  value: `$${((taxData['total_redeemed_sc'] as number) ?? 0).toFixed(2)}`,
+                },
                 { label: 'Platforms Used', value: String(taxData['platform_count'] ?? 0) },
               ].map(({ label, value }) => (
-                <div key={label} className="bg-zinc-800/50 rounded-lg p-3">
+                <div key={label} className="rounded-lg bg-zinc-800/50 p-3">
                   <p className="text-xs text-zinc-500">{label}</p>
-                  <p className="text-sm font-semibold text-white mt-0.5">{value}</p>
+                  <p className="mt-0.5 text-sm font-semibold text-white">{value}</p>
                 </div>
               ))}
             </div>
 
             {/* By platform */}
             {((taxData['by_platform'] as Record<string, unknown>[]) ?? []).map((p) => (
-              <div key={p['platform_id'] as string} className="flex items-center justify-between py-2 border-b border-zinc-800/50 last:border-0">
+              <div
+                key={p['platform_id'] as string}
+                className="flex items-center justify-between border-b border-zinc-800/50 py-2 last:border-0"
+              >
                 <p className="text-sm text-zinc-300">{p['platform_name'] as string}</p>
-                <p className="text-sm font-medium text-white tabular-nums">
+                <p className="text-sm font-medium tabular-nums text-white">
                   {formatSC(p['total_sc'] as number)} SC
                 </p>
               </div>
             ))}
 
             <div className="flex items-center gap-3">
-              <p className="text-xs text-zinc-500 flex-1">
-                <AlertTriangle className="w-3 h-3 inline mr-1 text-yellow-400" />
+              <p className="flex-1 text-xs text-zinc-500">
+                <AlertTriangle className="mr-1 inline h-3 w-3 text-yellow-400" />
                 SweepBot is not a tax advisor. Consult a qualified professional.
               </p>
               <button
                 type="button"
                 title="Export tax summary as PDF"
-                className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium rounded-lg transition-colors"
+                className="flex items-center gap-2 rounded-lg bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
               >
-                <Download className="w-3 h-3" />
+                <Download className="h-3 w-3" />
                 Export PDF
               </button>
             </div>
@@ -522,7 +585,9 @@ function DangerZoneTab() {
     try {
       await api.user.selfExclude(SELF_EXCLUDE_DAYS)
     } catch (err) {
-      setExcludeError(err instanceof Error ? err.message : 'Self-exclusion failed. Please try again.')
+      setExcludeError(
+        err instanceof Error ? err.message : 'Self-exclusion failed. Please try again.'
+      )
     } finally {
       setExcluding(false)
     }
@@ -531,43 +596,48 @@ function DangerZoneTab() {
   return (
     <Section title="Danger Zone" description="Irreversible actions. Proceed with extreme caution.">
       {/* Self-exclusion */}
-      <div className="space-y-3 border border-zinc-700/50 rounded-xl p-4 bg-zinc-900/50">
+      <div className="space-y-3 rounded-xl border border-zinc-700/50 bg-zinc-900/50 p-4">
         <div className="flex items-start gap-2">
-          <AlertTriangle className="w-5 h-5 text-zinc-400 shrink-0" />
+          <AlertTriangle className="h-5 w-5 shrink-0 text-zinc-400" />
           <div>
             <p className="text-sm font-semibold text-zinc-200">Self-Exclusion</p>
-            <p className="text-xs text-zinc-400 mt-1">
-              Lock yourself out of the SweepBot UI for {SELF_EXCLUDE_DAYS} days. Automations keep running — your
-              daily bonuses will still be collected. You can contact support to lift it early.
+            <p className="mt-1 text-xs text-zinc-400">
+              Lock yourself out of the SweepBot UI for {SELF_EXCLUDE_DAYS} days. Automations keep
+              running — your daily bonuses will still be collected. You can contact support to lift
+              it early.
             </p>
           </div>
         </div>
         {excludeError && (
-          <div className="px-3 py-2 rounded-lg bg-red-950/50 border border-red-800 text-red-300 text-sm">
+          <div className="rounded-lg border border-red-800 bg-red-950/50 px-3 py-2 text-sm text-red-300">
             {excludeError}
           </div>
         )}
         <button
           onClick={() => {
-            if (confirm(`Lock yourself out of SweepBot for ${SELF_EXCLUDE_DAYS} days? Automations will keep running.`)) {
+            if (
+              confirm(
+                `Lock yourself out of SweepBot for ${SELF_EXCLUDE_DAYS} days? Automations will keep running.`
+              )
+            ) {
               void handleSelfExclude()
             }
           }}
           disabled={excluding}
-          className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-semibold rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+          className="flex items-center gap-2 rounded-lg bg-zinc-800 px-4 py-2 text-sm font-semibold text-zinc-200 transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {excluding && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+          {excluding && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
           Activate {SELF_EXCLUDE_DAYS}-day self-exclusion
         </button>
       </div>
 
       {/* Delete account */}
-      <div className="space-y-4 border border-red-800/50 rounded-xl p-4 bg-red-950/10">
+      <div className="space-y-4 rounded-xl border border-red-800/50 bg-red-950/10 p-4">
         <div className="flex items-start gap-2">
-          <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" />
+          <AlertTriangle className="h-5 w-5 shrink-0 text-red-400" />
           <div>
             <p className="text-sm font-semibold text-red-300">Delete Account</p>
-            <p className="text-xs text-zinc-400 mt-1">
+            <p className="mt-1 text-xs text-zinc-400">
               This permanently deletes your account, all tracked data, redemption history, and
               analytics. This cannot be undone.
             </p>
@@ -575,25 +645,25 @@ function DangerZoneTab() {
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-zinc-400 mb-1.5">
-            Type <span className="text-red-400 font-mono">delete my account</span> to confirm
+          <label className="mb-1.5 block text-xs font-medium text-zinc-400">
+            Type <span className="font-mono text-red-400">delete my account</span> to confirm
           </label>
           <input
             type="text"
             value={confirmText}
             onChange={(e) => setConfirmText(e.target.value)}
             placeholder="delete my account"
-            className="w-full px-3 py-2 bg-zinc-950 border border-red-800/50 text-white placeholder-zinc-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="w-full rounded-lg border border-red-800/50 bg-zinc-950 px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-red-500"
           />
         </div>
 
         <button
           onClick={handleDeleteAccount}
           disabled={confirmText !== 'delete my account' || deleting}
-          className="px-4 py-2 bg-red-800 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+          className="flex items-center gap-2 rounded-lg bg-red-800 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {deleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-          <Trash2 className="w-3.5 h-3.5" />
+          {deleting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+          <Trash2 className="h-3.5 w-3.5" />
           Permanently Delete Account
         </button>
       </div>
@@ -630,10 +700,12 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="mx-auto max-w-4xl p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">Settings</h1>
-        <p className="text-zinc-400 text-sm mt-1">Manage your account, preferences, and subscription.</p>
+        <p className="mt-1 text-sm text-zinc-400">
+          Manage your account, preferences, and subscription.
+        </p>
       </div>
 
       <div className="flex gap-6">
@@ -647,14 +719,14 @@ export function SettingsPage() {
                 window.history.replaceState(null, '', `#${id}`)
               }}
               className={cn(
-                'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left',
+                'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition-colors',
                 activeTab === id
-                  ? 'bg-brand-600/20 text-brand-300 border border-brand-600/30'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800',
+                  ? 'bg-brand-600/20 text-brand-300 border-brand-600/30 border'
+                  : 'text-zinc-400 hover:bg-zinc-800 hover:text-white',
                 id === 'danger' && activeTab !== 'danger' && 'text-red-500 hover:text-red-400'
               )}
             >
-              <Icon className="w-4 h-4 shrink-0" />
+              <Icon className="h-4 w-4 shrink-0" />
               {label}
             </button>
           ))}

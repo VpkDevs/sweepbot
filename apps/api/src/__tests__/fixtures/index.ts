@@ -143,12 +143,8 @@ export const FIXTURE_FLOWS = {
           operator: 'greaterThan',
           leftOperand: { type: 'variable', name: 'balance' },
           rightOperand: { type: 'literal', value: 100 },
-          trueBranch: [
-            { type: 'action', action: 'play_game', game: 'lucky-slots' },
-          ],
-          falseBranch: [
-            { type: 'alert', message: 'Balance too low, skipping play' },
-          ],
+          trueBranch: [{ type: 'action', action: 'play_game', game: 'lucky-slots' }],
+          falseBranch: [{ type: 'alert', message: 'Balance too low, skipping play' }],
         },
       ],
     },
@@ -325,11 +321,7 @@ export function getScenarioConcurrentUsers(): {
   flows: TestFlow[]
 } {
   return {
-    users: [
-      FIXTURE_USERS.STARTER_USER,
-      FIXTURE_USERS.PRO_USER,
-      FIXTURE_USERS.USER_3,
-    ],
+    users: [FIXTURE_USERS.STARTER_USER, FIXTURE_USERS.PRO_USER, FIXTURE_USERS.USER_3],
     subscriptions: [
       FIXTURE_SUBSCRIPTIONS.ACTIVE_STARTER,
       FIXTURE_SUBSCRIPTIONS.TRIALING,
@@ -386,8 +378,7 @@ export const FIXTURE_AUTH = {
   VALID_TOKEN: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.valid',
 
   /** Expired JWT token */
-  EXPIRED_TOKEN:
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.expired_long_ago',
+  EXPIRED_TOKEN: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.expired_long_ago',
 
   /** Invalid/corrupted JWT token */
   INVALID_TOKEN: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.corrupted',

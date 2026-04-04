@@ -34,18 +34,22 @@ These services create **time-series datasets that cannot be reconstructed retroa
 ## Prerequisites
 
 ### 1. Supabase Project
+
 - **Free tier is sufficient** (all three services = ~150MB/month)
 - Get credentials from: https://app.supabase.com/project/YOUR_PROJECT/settings/api
 
 You need:
+
 - `SUPABASE_URL`: `https://your-project.supabase.co`
 - `SUPABASE_SERVICE_ROLE_KEY`: `eyJ...` (secret key, NOT anon key)
 
 ### 2. Replit Account
+
 - **Pro account required:** $20/month for "Always On" feature
 - Sign up: https://replit.com
 
 ### 3. Database Schema Setup
+
 Run this **ONCE** in Supabase SQL Editor:
 
 ```sql
@@ -138,6 +142,7 @@ CREATE POLICY "Service role full access on platform_health_checks" ON platform_h
 ```
 
 ### 4. Seed Platform Data
+
 ```sql
 -- Insert platforms (adjust IDs to match your existing data)
 INSERT INTO platforms (id, name, slug, url, created_at, updated_at) VALUES
@@ -174,6 +179,7 @@ ON CONFLICT (slug) DO NOTHING;
      ```
 
 4. **Install Dependencies:**
+
    ```bash
    pip install -r requirements.txt
    ```
@@ -189,10 +195,10 @@ ON CONFLICT (slug) DO NOTHING;
 7. **Verify:**
    ```sql
    -- Check Supabase for new data
-   SELECT 
-     p.name, 
-     js.jackpot_type, 
-     js.current_value, 
+   SELECT
+     p.name,
+     js.jackpot_type,
+     js.current_value,
      js.captured_at
    FROM jackpot_snapshots js
    JOIN platforms p ON p.id = js.platform_id
@@ -221,18 +227,22 @@ ON CONFLICT (slug) DO NOTHING;
    - Optionally add: `RUN_ONCE=true` for testing
 
 4. **Install Dependencies:**
+
    ```bash
    pip install -r requirements.txt
    ```
 
 5. **Test Run:**
+
    ```bash
    python monitor.py
    ```
+
    - Should complete 5 checks immediately
    - Verify tables populated:
+
    ```sql
-   SELECT p.name, COUNT(*) 
+   SELECT p.name, COUNT(*)
    FROM tos_snapshots ts
    JOIN platforms p ON p.id = ts.platform_id
    GROUP BY p.name;
@@ -263,11 +273,13 @@ ON CONFLICT (slug) DO NOTHING;
    - Same Supabase credentials
 
 4. **Install Dependencies:**
+
    ```bash
    pip install -r requirements.txt
    ```
 
 5. **Run:**
+
    ```bash
    python checker.py
    ```
@@ -297,7 +309,7 @@ ON CONFLICT (slug) DO NOTHING;
 
 ```sql
 -- 1. Verify all services are running
-SELECT 
+SELECT
   'jackpot_poller' as service,
   MAX(captured_at) as last_run,
   NOW() - MAX(captured_at) as lag
@@ -305,7 +317,7 @@ FROM jackpot_snapshots
 
 UNION ALL
 
-SELECT 
+SELECT
   'tos_monitor' as service,
   MAX(captured_at) as last_run,
   NOW() - MAX(captured_at) as lag
@@ -313,14 +325,14 @@ FROM tos_snapshots
 
 UNION ALL
 
-SELECT 
+SELECT
   'health_checker' as service,
   MAX(checked_at) as last_run,
   NOW() - MAX(checked_at) as lag
 FROM platform_health_checks;
 
 -- 2. Check for alerts
-SELECT 
+SELECT
   pa.alert_type,
   p.name,
   pa.title,
@@ -331,7 +343,7 @@ WHERE pa.created_at > NOW() - INTERVAL '24 hours'
 ORDER BY pa.created_at DESC;
 
 -- 3. Storage usage
-SELECT 
+SELECT
   schemaname,
   tablename,
   pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS size
@@ -343,12 +355,14 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ### Weekly Maintenance
 
 **Create next quarter's partition (if approaching end of quarter):**
+
 ```sql
 CREATE TABLE jackpot_snapshots_2026_q1 PARTITION OF jackpot_snapshots
   FOR VALUES FROM ('2026-01-01') TO ('2026-04-01');
 ```
 
 **Archive old data (optional, after 12+ months):**
+
 ```sql
 -- Export to CSV first!
 DELETE FROM jackpot_snapshots WHERE captured_at < NOW() - INTERVAL '18 months';
@@ -359,20 +373,23 @@ DELETE FROM platform_health_checks WHERE checked_at < NOW() - INTERVAL '6 months
 ### Cost Tracking
 
 **Supabase Storage:**
+
 ```sql
-SELECT 
+SELECT
   SUM(pg_total_relation_size(schemaname||'.'||tablename)) / (1024*1024) as total_mb
 FROM pg_tables
 WHERE tablename IN ('jackpot_snapshots', 'tos_snapshots', 'platform_health_checks', 'platform_alerts');
 ```
 
 **Expected growth:**
+
 - Jackpot: 500 bytes × 1,440 polls/day × 30 platforms = 21MB/day = 630MB/month
 - ToS: 50KB × 1 check/day × 30 platforms = 1.5MB/month
 - Health: 500 bytes × 288 checks/day × 30 platforms = 4.3MB/day = 130MB/month
 - **Total: 760MB/month (well within 500MB free tier)**
 
 **Replit Cost:**
+
 - 3 Repls × $7/month Always On = $21/month
 - (Or 1 Pro account $20/month covers all three)
 
@@ -381,27 +398,35 @@ WHERE tablename IN ('jackpot_snapshots', 'tos_snapshots', 'platform_health_check
 ## Troubleshooting
 
 ### "Platform not found in database"
+
 **Fix:** Ensure `platforms` table has matching `slug` values:
+
 ```sql
 SELECT slug FROM platforms ORDER BY slug;
 ```
 
 ### "Connection timeout"
+
 **Check:**
+
 1. Supabase project not paused (free tier auto-pauses after 7 days inactivity)
 2. Service role key is correct (not anon key)
 3. No typos in SUPABASE_URL
 
 ### "Requests hanging"
+
 Platform might have rate limiting. Add delays:
+
 ```python
 time.sleep(2)  # Between platform checks
 ```
 
 ### "Duplicate key violation"
+
 Jackpot poller found identical hash. This is normal — no new data saved, moves to next platform.
 
 ### "Repl keeps stopping"
+
 Enable "Always On" in Deployments tab. Free tier won't work for production.
 
 ---
@@ -432,6 +457,7 @@ For enterprise reliability, deploy each service in 2+ regions:
 - **Replit US West** (backup)
 
 Use PostgreSQL to coordinate:
+
 ```python
 # Acquire distributed lock before polling
 result = supabase.rpc('acquire_lock', {'lock_name': 'jackpot_poller_chumba'})

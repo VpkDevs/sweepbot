@@ -64,7 +64,13 @@ export async function generateHMAC(secret: string, message: string): Promise<str
   const keyData = encoder.encode(secret)
   const messageData = encoder.encode(message)
 
-  const key = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+  const key = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  )
   const signature = await crypto.subtle.sign('HMAC', key, messageData)
 
   const signatureArray = Array.from(new Uint8Array(signature))

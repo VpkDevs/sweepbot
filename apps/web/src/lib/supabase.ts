@@ -4,10 +4,14 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 // In development, allow the app to run without Supabase configured
-// by creating a mock client that won't cause hangs
-const isDevStub = import.meta.env.DEV && supabaseUrl?.includes('placeholder')
+// by creating a mock client that won't cause hangs.
+// VITE_DEV_STUB=true bypasses auth regardless of which Supabase URL is configured —
+// this lets .env.local carry real credentials for the API while still previewing the UI.
+const isDevStub =
+  import.meta.env.DEV &&
+  (supabaseUrl?.includes('placeholder') || import.meta.env.VITE_DEV_STUB === 'true')
 
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!isDevStub && (!supabaseUrl || !supabaseAnonKey)) {
   if (import.meta.env.DEV) {
     console.warn(
       '⚠️  Supabase environment variables are missing. Running in stub mode for development.'
@@ -17,24 +21,25 @@ if (!supabaseUrl || !supabaseAnonKey) {
   }
 }
 
-export const supabase = (supabaseUrl && supabaseAnonKey)
-  ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        storageKey: 'sweepbot-auth',
-      },
-      // Add timeout to prevent hanging
-      global: {
-        fetch: (url, options) =>
-          fetch(url, {
-            ...options,
-            signal: AbortSignal.timeout(10000), // 10 second timeout
-          }),
-      },
-    })
-  : null
+export const supabase =
+  !isDevStub && supabaseUrl && supabaseAnonKey
+    ? createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          storageKey: 'sweepbot-auth',
+        },
+        // Add timeout to prevent hanging
+        global: {
+          fetch: (url, options) =>
+            fetch(url, {
+              ...options,
+              signal: AbortSignal.timeout(10000), // 10 second timeout
+            }),
+        },
+      })
+    : null
 
 // Stub auth methods when Supabase is not configured
 export const supabaseStub = {

@@ -31,7 +31,10 @@ export function AnimatedCounter({
   }, [value, prefix, suffix, decimals])
 
   return (
-    <span className={cn('inline-flex items-baseline tabular-nums', className)} aria-label={formatted}>
+    <span
+      className={cn('inline-flex items-baseline tabular-nums', className)}
+      aria-label={formatted}
+    >
       {formatted.split('').map((char, i) => {
         const isDigit = /\d/.test(char)
         if (isDigit) {
@@ -108,15 +111,13 @@ function RollingDigit({
   return (
     <span
       ref={containerRef}
-      className={cn('inline-block overflow-hidden relative', className)}
+      className={cn('relative inline-block overflow-hidden', className)}
       style={{ height: digitHeight, lineHeight: digitHeight }}
     >
       <span
         className="inline-flex flex-col transition-transform"
         style={{
-          transform: isAnimating
-            ? `translateY(-${(strip.length - 1) * 100}%)`
-            : 'translateY(0%)',
+          transform: isAnimating ? `translateY(-${(strip.length - 1) * 100}%)` : 'translateY(0%)',
           transition: isAnimating
             ? `transform ${duration}ms cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms`
             : 'none',
@@ -155,18 +156,21 @@ export function AnimatedValue({
   className?: string
 }) {
   const [displayed, setDisplayed] = useState(0)
+  const displayedRef = useRef(0)
   const rafRef = useRef<number>(0)
 
   useEffect(() => {
     const startTime = performance.now()
-    const startVal = displayed
+    const startVal = displayedRef.current
 
     function tick(now: number) {
       const elapsed = now - startTime
       const progress = Math.min(elapsed / duration, 1)
       // Spring-like easing
       const eased = 1 - Math.pow(1 - progress, 4)
-      setDisplayed(startVal + (value - startVal) * eased)
+      const next = startVal + (value - startVal) * eased
+      displayedRef.current = next
+      setDisplayed(next)
       if (progress < 1) rafRef.current = requestAnimationFrame(tick)
     }
 
