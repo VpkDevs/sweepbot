@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import React, { ReactNode } from 'react'
 import { cn } from '../../lib/utils'
 
 export function Card({
@@ -34,7 +34,7 @@ export function CardTitle({
   className?: string
   as?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
 }) {
-  const Component = Comp as any
+  const Component = Comp as React.ElementType
   return (
     <Component
       className={cn('text-lg font-bold leading-tight tracking-tight text-white', className)}

@@ -574,7 +574,7 @@ const TabMonitor = {
         // Could check URL against platform patterns here — for now just track
         // that the platform tab is still alive
         if (this._pendingEnd.has(tabId)) {
-          clearTimeout(this._pendingEnd.get(tabId)!)
+          clearTimeout(this._pendingEnd.get(tabId))
           this._pendingEnd.delete(tabId)
           log.info('Tab navigation — session end timer cancelled', { tabId, url })
         }

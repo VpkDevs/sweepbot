@@ -1,4 +1,5 @@
-import { NetworkInterceptor } from '../lib/interceptor'
+import { NetworkInterceptor, type InterceptedBalance, type InterceptedTransaction } from '../lib/interceptor'
+import type { PlatformConfig } from '../lib/platforms'
 
 describe('NetworkInterceptor', () => {
   let interceptor: NetworkInterceptor
@@ -22,7 +23,7 @@ describe('NetworkInterceptor', () => {
         roundIdPath: 'data.roundId',
       },
     ],
-  } as any
+  } as unknown as PlatformConfig
 
   beforeEach(() => {
     interceptor = new NetworkInterceptor()
@@ -37,13 +38,13 @@ describe('NetworkInterceptor', () => {
 
   it('calls onBalance when matching response arrives', () => {
     interceptor.initialize(fakePlatform)
-    const results: any[] = []
+    const results: InterceptedBalance[] = []
     interceptor.onBalanceDetected((b) => results.push(b))
 
     const url = 'https://api.test.com/user/balance'
     const data = { data: { sc: 42, gc: 100 } }
     // call private method directly
-    ;(interceptor as any).extractDataFromResponse(url, data)
+    ;(interceptor as unknown as { extractDataFromResponse: (url: string, data: unknown) => void }).extractDataFromResponse(url, data)
 
     expect(results.length).toBe(1)
     expect(results[0]).toMatchObject({ platformSlug: 'test', scBalance: 42, gcBalance: 100 })
@@ -51,12 +52,12 @@ describe('NetworkInterceptor', () => {
 
   it('calls onTransaction when matching spin response arrives', () => {
     interceptor.initialize(fakePlatform)
-    const txs: any[] = []
+    const txs: InterceptedTransaction[] = []
     interceptor.onTransactionDetected((t) => txs.push(t))
 
     const url = 'https://api.test.com/game/spin'
     const data = { data: { bet: 5, win: 15, gameId: 'g1', roundId: 'r1' } }
-    ;(interceptor as any).extractDataFromResponse(url, data)
+    ;(interceptor as unknown as { extractDataFromResponse: (url: string, data: unknown) => void }).extractDataFromResponse(url, data)
 
     expect(txs.length).toBe(1)
     expect(txs[0]).toMatchObject({

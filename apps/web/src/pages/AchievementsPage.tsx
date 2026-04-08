@@ -10,7 +10,6 @@ import {
   Zap,
   BarChart3,
   RefreshCw,
-  Sparkles,
 } from 'lucide-react'
 import { api } from '../lib/api'
 import { cn } from '../lib/utils'

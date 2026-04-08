@@ -1,14 +1,14 @@
 import { storage, AnalyticsEvent } from '../lib/storage'
 
 describe('StorageManager', () => {
-  let mockStorage: Record<string, any>
+  let mockStorage: Record<string, unknown>
   beforeEach(() => {
     mockStorage = {}
     // stub chrome.storage.local
-    ;(global as any).chrome = {
+    ;(global as Record<string, unknown>).chrome = {
       storage: {
         local: {
-          get: vi.fn((keys?: any, cb?: any) => {
+          get: vi.fn((keys?: string | string[] | null | ((r: Record<string, unknown>) => void), cb?: (r: Record<string, unknown>) => void) => {
             // support promise-style and callback-style
             if (typeof keys === 'function') {
               cb = keys
@@ -17,7 +17,7 @@ describe('StorageManager', () => {
             if (cb) {
               if (keys == null) cb(mockStorage)
               else if (Array.isArray(keys)) {
-                const res: any = {}
+                const res: Record<string, unknown> = {}
                 for (const k of keys) res[k] = mockStorage[k]
                 cb(res)
               } else {
@@ -26,9 +26,9 @@ describe('StorageManager', () => {
               return
             }
             // return promise
-            return Promise.resolve(keys == null ? mockStorage : { [keys]: mockStorage[keys] })
+            return Promise.resolve(keys == null ? mockStorage : typeof keys === 'string' ? { [keys]: mockStorage[keys] } : mockStorage)
           }),
-          set: vi.fn((obj: any) => {
+          set: vi.fn((obj: Record<string, unknown>) => {
             Object.assign(mockStorage, obj)
             return Promise.resolve()
           }),
@@ -91,7 +91,7 @@ describe('StorageManager', () => {
     const cb = vi.fn()
     storage.onChanged(cb)
     // simulate chrome event
-    const listener = (chrome.storage.onChanged.addListener as any).mock.calls[0][0]
+    const listener = vi.mocked(chrome.storage.onChanged.addListener).mock.calls[0][0]
     const changes = { hudEnabled: { oldValue: true, newValue: false } }
     listener(changes, 'local')
     expect(cb).toHaveBeenCalledWith(changes)

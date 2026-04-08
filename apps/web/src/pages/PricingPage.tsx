@@ -233,7 +233,7 @@ function PlanCard({
               <p className="mt-0.5 text-xs text-zinc-500">
                 Billed ${plan.priceAnnual} annually
                 <span className="ml-1 text-green-400">
-                  (save ${(plan.priceMonthly! * 12 - plan.priceAnnual!).toFixed(0)})
+                  (save ${((plan.priceMonthly ?? 0) * 12 - (plan.priceAnnual ?? 0)).toFixed(0)})
                 </span>
               </p>
             )}

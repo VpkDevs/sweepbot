@@ -41,7 +41,7 @@ describe('<FlowChatPage />', () => {
       ],
     }
 
-    const startSpy = vi.spyOn(api.flows, 'startConversation').mockResolvedValue(fakeState as any)
+    const startSpy = vi.spyOn(api.flows, 'startConversation').mockResolvedValue(fakeState as Record<string, unknown>)
 
     renderWithClient(<FlowChatPage />)
 
@@ -68,8 +68,8 @@ describe('<FlowChatPage />', () => {
       ],
     }
 
-    const startSpy = vi.spyOn(api.flows, 'startConversation').mockResolvedValue(fakeStart as any)
-    const convSpy = vi.spyOn(api.flows, 'converse').mockResolvedValue(fakeContinue as any)
+    const startSpy = vi.spyOn(api.flows, 'startConversation').mockResolvedValue(fakeStart as Record<string, unknown>)
+    const convSpy = vi.spyOn(api.flows, 'converse').mockResolvedValue(fakeContinue as Record<string, unknown>)
 
     renderWithClient(<FlowChatPage />)
     const input = screen.getByPlaceholderText(/describe your automation/i)

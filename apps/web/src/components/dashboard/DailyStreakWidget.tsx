@@ -34,7 +34,7 @@ export function DailyStreakWidget() {
   const checkedIn = isTodayCheckedIn(lastActivity)
   const nextMilestone = getNextMilestone(currentStreak)
   const nextIdx = MILESTONES.findIndex((m) => m >= nextMilestone)
-  const prevMilestone = nextIdx > 0 ? MILESTONES[nextIdx - 1]! : 0
+  const prevMilestone = nextIdx > 0 ? (MILESTONES[nextIdx - 1] ?? 0) : 0
   const progressPct =
     nextMilestone === prevMilestone
       ? 100

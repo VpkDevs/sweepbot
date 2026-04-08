@@ -406,7 +406,7 @@ export default defineContentScript({
         // ── Flow execution ────────────────────────────────────────────────────
 
         case 'EXECUTE_FLOW': {
-          const { flow } = message.payload!
+          const { flow } = message.payload
           if (activeFlowId) {
             log.warn(`Flow ${activeFlowId} already running — ignoring new request`)
             return { success: false, error: 'A flow is already running' }
@@ -453,7 +453,7 @@ export default defineContentScript({
         }
 
         case 'FLOW_CANCEL': {
-          const { flowId } = message.payload!
+          const { flowId } = message.payload
           if (activeFlowId === flowId) {
             // The executor checks a cancel flag — we set it via a window event
             window.dispatchEvent(new CustomEvent('sweepbot:cancel-flow', { detail: { flowId } }))

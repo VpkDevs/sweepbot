@@ -65,19 +65,20 @@ export class NetworkInterceptor {
     if (!this.platform || this.originalFetch) return
 
     this.originalFetch = window.fetch
-    const self = this
+    const originalFetch = this.originalFetch
+    const extractData = (url: string, data: unknown) => this.extractDataFromResponse(url, data)
 
     window.fetch = function (this: typeof globalThis, ...args: Parameters<typeof fetch>) {
       const [resource] = args
       const url = typeof resource === 'string' ? resource : (resource as Request).url
 
-      return self.originalFetch!.apply(this, args).then((response) => {
+      return originalFetch.apply(this, args).then((response) => {
         // Clone response for parsing without consuming the stream
         const cloned = response.clone()
         cloned
           .json()
           .then((data) => {
-            self.extractDataFromResponse(url, data)
+            extractData(url, data)
           })
           .catch(() => {
             // Not JSON or failed to parse, ignore
@@ -94,7 +95,7 @@ export class NetworkInterceptor {
     if (!this.platform || this.originalXhr) return
 
     this.originalXhr = XMLHttpRequest
-    const self = this
+    const extractData = (url: string, data: unknown) => this.extractDataFromResponse(url, data)
 
     this.originalXhrOpen = XMLHttpRequest.prototype.open
     this.originalXhrSend = XMLHttpRequest.prototype.send
@@ -120,7 +121,7 @@ export class NetworkInterceptor {
         if (this.readyState === 4) {
           try {
             const data = JSON.parse(this.responseText)
-            self.extractDataFromResponse(url, data)
+            extractData(url, data)
           } catch {
             // Ignore non-JSON responses
           }

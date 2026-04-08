@@ -8,11 +8,7 @@ import {
   Gamepad2,
   ArrowUpRight,
   Sparkles,
-  Target,
   Activity,
-  Star,
-  Flame,
-  Wallet,
   Coins,
   BarChart3,
 } from 'lucide-react'
@@ -33,7 +29,7 @@ import { SpotlightCard } from '../components/fx/SpotlightCard'
 import { TextReveal } from '../components/fx/TextReveal'
 import { ScrollReveal } from '../components/fx/ScrollReveal'
 import { MarqueeStrip, MarqueeItem } from '../components/fx/MarqueeStrip'
-import { AnimatedCounter, AnimatedValue } from '../components/fx/AnimatedCounter'
+import { AnimatedValue } from '../components/fx/AnimatedCounter'
 import { MagneticButton } from '../components/fx/MagneticButton'
 
 // ── Time-based greeting ──────────────────────────────────────────────────────

@@ -283,7 +283,7 @@ function MarkCompleteModal({
 
   const mutation = useMutation({
     mutationFn: () =>
-      api.redemptions.update(redemption!['redemption_id'] as string, {
+      api.redemptions.update((redemption?.['redemption_id'] ?? '') as string, {
         status: 'completed',
         completed_at: completedAt,
       }),

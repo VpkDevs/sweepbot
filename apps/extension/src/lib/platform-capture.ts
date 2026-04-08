@@ -147,17 +147,17 @@ export function installPlatformCapture(): {
   const originalXhrOpen = XMLHttpRequest.prototype.open
   const originalXhrSend = XMLHttpRequest.prototype.send
 
-  XMLHttpRequest.prototype.open = function (method: string, url: string | URL) {
+  XMLHttpRequest.prototype.open = function (method: string, url: string | URL, ...rest: unknown[]) {
     ;(
       this as XMLHttpRequest & { __sweepbotCaptureMeta__?: { method: string; url: string } }
     ).__sweepbotCaptureMeta__ = {
       method,
       url: String(url),
     }
-    return originalXhrOpen.apply(this, arguments as unknown as Parameters<XMLHttpRequest['open']>)
+    return originalXhrOpen.apply(this, [method, url, ...rest] as unknown as Parameters<XMLHttpRequest['open']>)
   }
 
-  XMLHttpRequest.prototype.send = function () {
+  XMLHttpRequest.prototype.send = function (...args: unknown[]) {
     this.addEventListener('load', () => {
       const meta = (
         this as XMLHttpRequest & { __sweepbotCaptureMeta__?: { method: string; url: string } }
@@ -170,7 +170,7 @@ export function installPlatformCapture(): {
         url: meta.url,
       })
     })
-    return originalXhrSend.apply(this, arguments as unknown as [])
+    return originalXhrSend.apply(this, args as unknown as [])
   }
 
   globalScope.__SWEEPBOT_PLATFORM_CAPTURE__ = state

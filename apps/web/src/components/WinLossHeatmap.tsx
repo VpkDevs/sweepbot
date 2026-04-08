@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Calendar, Clock, TrendingUp, TrendingDown, BarChart3, Filter } from 'lucide-react'
+import { Calendar, Clock, TrendingUp, BarChart3 } from 'lucide-react'
 import { api } from '../lib/api'
 import { cn } from '../lib/utils'
 import { SpotlightCard } from './fx/SpotlightCard'
-import { ScrollReveal } from './fx/ScrollReveal'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -62,7 +61,7 @@ export function WinLossHeatmap({ className, timeRange = '30d' }: HeatmapProps) {
   }
 
   const data = (heatmapData as HeatmapData[]) || []
-  const metric = METRICS.find((m) => m.key === selectedMetric)!
+  const metric = METRICS.find((m) => m.key === selectedMetric) ?? METRICS[0]
 
   // Create 2D grid for heatmap
   const grid = Array.from({ length: 7 }, () =>
@@ -72,7 +71,8 @@ export function WinLossHeatmap({ className, timeRange = '30d' }: HeatmapProps) {
   // Populate grid with data
   data.forEach((item) => {
     if (item.day >= 0 && item.day <= 6 && item.hour >= 0 && item.hour <= 23) {
-      grid[item.day]![item.hour] = item
+      const row = grid[item.day]
+      if (row) row[item.hour] = item
     }
   })
 
@@ -175,7 +175,7 @@ export function WinLossHeatmap({ className, timeRange = '30d' }: HeatmapProps) {
               {/* Hour cells */}
               <div className="grid-cols-24 grid flex-1 gap-0.5">
                 {HOURS.map((hour) => {
-                  const cell = grid[dayIndex]![hour]
+                  const cell = grid[dayIndex]?.[hour]
                   const hasData = cell && cell.sessions > 0
 
                   return (

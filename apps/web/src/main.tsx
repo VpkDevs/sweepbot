@@ -5,6 +5,7 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 import './index.css'
 import { routeTree } from './routeTree'
 import { useAuthStore } from './stores/auth'
+import type { AuthState } from './stores/auth'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
 // analytics & monitoring
@@ -45,7 +46,7 @@ const router = createRouter({
   routeTree,
   context: {
     queryClient,
-    auth: undefined!, // populated in RouterProvider wrapper
+    auth: undefined as unknown as AuthState, // populated in RouterProvider wrapper
   },
 })
 
@@ -77,7 +78,8 @@ function App() {
   )
 }
 
-const rootEl = document.getElementById('root')!
+const rootEl = document.getElementById('root')
+if (!rootEl) throw new Error('Root element #root not found')
 createRoot(rootEl).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>

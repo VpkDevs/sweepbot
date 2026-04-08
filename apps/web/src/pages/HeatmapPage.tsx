@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { api } from '../lib/api'
 import { formatSC, cn } from '../lib/utils'
 import { ScrollReveal } from '../components/fx/ScrollReveal'
@@ -53,14 +53,13 @@ function buildCalendarGrid(year: number): Date[][] {
   const weeks: Date[][] = []
   const cursor = new Date(start)
 
-  while (true) {
+  while (cursor.getFullYear() <= year) {
     const week: Date[] = []
     for (let d = 0; d < 7; d++) {
       week.push(new Date(cursor))
       cursor.setDate(cursor.getDate() + 1)
     }
     weeks.push(week)
-    if (cursor.getFullYear() > year) break
   }
 
   return weeks
@@ -227,7 +226,7 @@ export function HeatmapPage() {
                   <div className="flex h-4 items-end pb-0.5">
                     {weekIndexToMonth.has(wi) && (
                       <span className="whitespace-nowrap text-[9px] font-medium leading-none text-zinc-500">
-                        {MONTHS[weekIndexToMonth.get(wi)!]}
+                        {MONTHS[weekIndexToMonth.get(wi) ?? 0]}
                       </span>
                     )}
                   </div>

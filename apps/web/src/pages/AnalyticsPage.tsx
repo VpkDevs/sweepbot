@@ -82,7 +82,7 @@ export function AnalyticsPage() {
   const byDow = (temporal?.['by_dow'] as Record<string, unknown>[]) ?? []
 
   const bonusTriggerRate = (bonus?.['trigger_rate'] as number) ?? 0
-  const bonusAvgPayout = (bonus?.['avg_payout'] as number) ?? 0
+  const _bonusAvgPayout = (bonus?.['avg_payout'] as number) ?? 0
   const bonusRTPContribution = (bonus?.['rtp_contribution_percent'] as number) ?? 0
   const bonusByGame = (bonus?.['by_game'] as Record<string, unknown>[]) ?? []
 

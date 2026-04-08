@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   AreaChart,
@@ -10,7 +10,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Cell,
   Legend,
 } from 'recharts'
 import {
@@ -18,12 +17,9 @@ import {
   Download,
   FileText,
   TrendingUp,
-  TrendingDown,
   AlertCircle,
-  CheckCircle2,
   Calendar,
   Info,
-  ChevronRight,
   ExternalLink,
   ReceiptText,
   Landmark,
@@ -31,10 +27,10 @@ import {
   Calculator,
 } from 'lucide-react'
 import { api } from '../lib/api'
-import { cn, formatSC, CHART_TOOLTIP_STYLE } from '../lib/utils'
+import { cn, CHART_TOOLTIP_STYLE } from '../lib/utils'
 import { ScrollReveal } from '../components/fx/ScrollReveal'
 import { SpotlightCard } from '../components/fx/SpotlightCard'
-import { AnimatedCounter, AnimatedValue } from '../components/fx/AnimatedCounter'
+import { AnimatedCounter } from '../components/fx/AnimatedCounter'
 import { TextReveal } from '../components/fx/TextReveal'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -85,7 +81,7 @@ interface TaxSummaryData {
 
 // ─── Stub data ────────────────────────────────────────────────────────────────
 
-function buildMonthlyStub(year: number): MonthlyBreakdown[] {
+function buildMonthlyStub(_year: number): MonthlyBreakdown[] {
   const months = [
     'Jan',
     'Feb',
@@ -304,7 +300,7 @@ function TaxStat({
   icon: Icon,
   color,
   prefix = '$',
-  decimals = 0,
+  decimals: _decimals = 0,
 }: {
   label: string
   value: number
@@ -679,7 +675,7 @@ export function TaxCenterPage() {
   const summary =
     (summaryData as TaxSummaryData | undefined) ??
     STUB_SUMMARIES[selectedYear] ??
-    STUB_SUMMARIES[2025]!
+    STUB_SUMMARIES[2025] as TaxSummaryData
   const transactions = (txData as TaxTransaction[] | undefined) ?? STUB_TRANSACTIONS
   const yoy = (yoyData as YearSummary[] | undefined) ?? STUB_YOY
 
