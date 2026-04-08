@@ -45,7 +45,7 @@ const METRICS = [
   { key: 'sessions', label: 'Sessions', icon: Calendar, format: (v: number) => v.toString() },
 ] as const
 
-const [DEFAULT_METRIC] = METRICS
+const DEFAULT_METRIC = METRICS[0]
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -63,10 +63,6 @@ export function WinLossHeatmap({ className, timeRange = '30d' }: HeatmapProps) {
   }
 
   const data = (heatmapData as HeatmapData[]) || []
-  if (!DEFAULT_METRIC) {
-    throw new Error('Heatmap metrics are not configured')
-  }
-
   const metric = METRICS.find((m) => m.key === selectedMetric) ?? DEFAULT_METRIC
 
   // Create 2D grid for heatmap
