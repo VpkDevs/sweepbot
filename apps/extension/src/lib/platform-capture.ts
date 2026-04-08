@@ -150,7 +150,9 @@ export function installPlatformCapture(): {
   XMLHttpRequest.prototype.open = function (
     method: string,
     url: string | URL,
-    ...args: unknown[]
+    async?: boolean,
+    username?: string | null,
+    password?: string | null
   ) {
     ;(
       this as XMLHttpRequest & { __sweepbotCaptureMeta__?: { method: string; url: string } }
@@ -158,13 +160,7 @@ export function installPlatformCapture(): {
       method,
       url: String(url),
     }
-    return originalXhrOpen.apply(this, [
-      method,
-      url,
-      ...(args as Parameters<XMLHttpRequest['open']> extends [string, string | URL, ...infer Rest]
-        ? Rest
-        : []),
-    ] as Parameters<XMLHttpRequest['open']>)
+    return originalXhrOpen.apply(this, [method, url, async ?? true, username, password])
   }
 
   XMLHttpRequest.prototype.send = function (...args: unknown[]) {
