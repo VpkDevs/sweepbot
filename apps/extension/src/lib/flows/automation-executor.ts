@@ -263,7 +263,7 @@ async function runLoop(step: LoopStep, ctx: ExecutionContext): Promise<void> {
     const conditionMet = evaluateCondition(step.condition, ctx.variables)
     if (!conditionMet) {
       shouldContinue = false
-      continue
+      break
     }
 
     await runSteps(step.body, ctx)

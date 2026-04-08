@@ -150,6 +150,21 @@ const STUB_SUMMARIES: Record<number, TaxSummaryData> = {
   },
 }
 
+const DEFAULT_TAX_SUMMARY: TaxSummaryData = {
+  year: 2025,
+  total_redemptions_usd: 0,
+  total_prizes_usd: 0,
+  total_taxable_usd: 0,
+  est_federal_liability: 0,
+  est_state_liability: 0,
+  est_total_liability: 0,
+  effective_rate: 0,
+  transaction_count: 0,
+  platforms_count: 0,
+  monthly: [],
+  top_platforms: [],
+}
+
 const STUB_TRANSACTIONS: TaxTransaction[] = [
   {
     id: 't1',
@@ -673,7 +688,8 @@ export function TaxCenterPage() {
   const summary =
     (summaryData as TaxSummaryData | undefined) ??
     STUB_SUMMARIES[selectedYear] ??
-    Object.values(STUB_SUMMARIES)[0]
+    Object.values(STUB_SUMMARIES)[0] ??
+    DEFAULT_TAX_SUMMARY
   const transactions = (txData as TaxTransaction[] | undefined) ?? STUB_TRANSACTIONS
   const yoy = (yoyData as YearSummary[] | undefined) ?? STUB_YOY
 
