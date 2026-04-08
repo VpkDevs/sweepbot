@@ -84,20 +84,21 @@ export class VoiceRecorder {
       (window as unknown as { webkitSpeechRecognition: SpeechRecognitionConstructor })
         .webkitSpeechRecognition
 
-    this.recognition = new SR()
-    this.recognition.lang = this.options.lang
-    this.recognition.continuous = true
-    this.recognition.interimResults = true
-    this.recognition.maxAlternatives = 1
+    const recognition = new SR()
+    this.recognition = recognition
+    recognition.lang = this.options.lang
+    recognition.continuous = true
+    recognition.interimResults = true
+    recognition.maxAlternatives = 1
 
     this.finalTranscript = ''
 
     return new Promise<string>((resolve, reject) => {
-      this.recognition!.onstart = () => {
+      recognition.onstart = () => {
         this.options.onStateChange('listening')
       }
 
-      this.recognition!.onresult = (event: SpeechRecognitionEvent) => {
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
         let interimTranscript = ''
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -115,7 +116,7 @@ export class VoiceRecorder {
         this.resetSilenceTimer()
       }
 
-      this.recognition!.onerror = (event: SpeechRecognitionErrorEvent) => {
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         this.cleanup()
         if (event.error === 'no-speech') {
           reject(new Error('No speech detected. Try again.'))
@@ -129,7 +130,7 @@ export class VoiceRecorder {
         this.options.onStateChange('error')
       }
 
-      this.recognition!.onend = () => {
+      recognition.onend = () => {
         if (this.finalTranscript.trim()) {
           this.options.onStateChange('processing')
           resolve(this.finalTranscript.trim())
@@ -140,7 +141,7 @@ export class VoiceRecorder {
         this.cleanup()
       }
 
-      this.recognition!.start()
+      recognition.start()
       this.resetSilenceTimer()
     })
   }

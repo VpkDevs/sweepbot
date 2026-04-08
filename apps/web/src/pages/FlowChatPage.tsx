@@ -6,14 +6,12 @@ import {
   Bot,
   User,
   Loader2,
-  AlertTriangle,
   CheckCircle2,
   Sparkles,
   ArrowRight,
   Shield,
   Clock,
   Zap,
-  Target,
   AlertCircle,
 } from 'lucide-react'
 import { api } from '../lib/api'
@@ -132,7 +130,7 @@ export function FlowChatPage() {
         const result = await converseMutation.mutateAsync({ id: conversationId, text })
         syncMessagesFromState(result)
       }
-    } catch (err) {
+    } catch {
       setMessages((prev) => [
         ...prev,
         {

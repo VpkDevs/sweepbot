@@ -6,7 +6,7 @@ describe('Playwright harness', () => {
     let browser
     try {
       browser = await chromium.launch()
-    } catch (err) {
+    } catch {
       console.warn('Playwright browser not available, skipping test')
       return
     }

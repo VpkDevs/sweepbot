@@ -45,21 +45,18 @@ import {
   Minus,
   Search,
   Info,
-  Star,
   AlertTriangle,
   CheckCircle2,
-  Clock,
   Bell,
   BellOff,
   User,
   Award,
   ExternalLink,
   ChevronRight,
-  Filter,
   X,
 } from 'lucide-react'
 import { api } from '../lib/api'
-import { cn, CHART_TOOLTIP_STYLE, formatRTP } from '../lib/utils'
+import { cn, CHART_TOOLTIP_STYLE } from '../lib/utils'
 
 // ============================================================================
 // Types
@@ -332,6 +329,7 @@ function Sparkline({ points, trend }: { points: SparkPoint[]; trend: number }) {
     .join(' ')
 
   const color = trend > 0.5 ? '#22c55e' : trend < -0.5 ? '#ef4444' : '#71717a'
+  const lastScore = scores.at(-1) ?? min
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="h-8 w-20" preserveAspectRatio="none">
@@ -344,7 +342,7 @@ function Sparkline({ points, trend }: { points: SparkPoint[]; trend: number }) {
         strokeLinejoin="round"
       />
       {/* Last point dot */}
-      <circle cx={W} cy={H - ((scores[scores.length - 1]! - min) / range) * H} r="2" fill={color} />
+      <circle cx={W} cy={H - ((lastScore - min) / range) * H} r="2" fill={color} />
     </svg>
   )
 }
@@ -392,7 +390,6 @@ function PlatformTrustCard({
   onAlertToggle: (platformId: string, current: boolean) => void
 }) {
   const tier = tierMeta(entry.score_tier)
-  const TierIcon = tier.icon
   const trendDelta = entry.score_change_30d ?? 0
 
   return (

@@ -45,7 +45,7 @@ const router = createRouter({
   routeTree,
   context: {
     queryClient,
-    auth: undefined!, // populated in RouterProvider wrapper
+    auth: undefined as unknown as ReturnType<typeof useAuthStore>, // populated in RouterProvider wrapper
   },
 })
 
@@ -77,7 +77,12 @@ function App() {
   )
 }
 
-const rootEl = document.getElementById('root')!
+const rootEl = document.getElementById('root')
+
+if (!rootEl) {
+  throw new Error('Root element "#root" not found')
+}
+
 createRoot(rootEl).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>

@@ -221,7 +221,7 @@ export class EntityRecognizer {
       }
     }
     // Generic "slot X" pattern
-    const slotMatch = lower.match(/slot\s+([a-z0-9\s\-]+)(?:\s|$)/i)
+    const slotMatch = lower.match(/slot\s+([a-z0-9\s-]+)(?:\s|$)/i)
     if (slotMatch && !found.length) {
       found.push({
         canonical: (slotMatch[1] ?? '').trim().replace(/\s+/g, '-'),

@@ -8,11 +8,7 @@ import {
   Gamepad2,
   ArrowUpRight,
   Sparkles,
-  Target,
   Activity,
-  Star,
-  Flame,
-  Wallet,
   Coins,
   BarChart3,
 } from 'lucide-react'
@@ -33,7 +29,7 @@ import { SpotlightCard } from '../components/fx/SpotlightCard'
 import { TextReveal } from '../components/fx/TextReveal'
 import { ScrollReveal } from '../components/fx/ScrollReveal'
 import { MarqueeStrip, MarqueeItem } from '../components/fx/MarqueeStrip'
-import { AnimatedCounter, AnimatedValue } from '../components/fx/AnimatedCounter'
+import { AnimatedValue } from '../components/fx/AnimatedCounter'
 import { MagneticButton } from '../components/fx/MagneticButton'
 
 // ── Time-based greeting ──────────────────────────────────────────────────────
@@ -84,8 +80,6 @@ export function DashboardPage() {
         <div className="from-brand-900/40 absolute inset-0 bg-gradient-to-br via-zinc-950/80 to-zinc-950" />
         <div className="bg-brand-600/20 pointer-events-none absolute right-0 top-0 h-[800px] w-[800px] -translate-y-1/2 translate-x-1/3 animate-pulse rounded-full blur-[120px]" />
         <div className="animate-float-slow pointer-events-none absolute bottom-0 left-0 h-[600px] w-[600px] -translate-x-1/4 translate-y-1/2 rounded-full bg-emerald-600/10 blur-[100px]" />
-        <div className="pointer-events-none absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay" />
-
         <div className="relative z-10 flex flex-col items-start justify-between gap-8 lg:flex-row">
           <div className="max-w-2xl">
             <div className="bg-brand-500/10 border-brand-500/20 mb-6 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 backdrop-blur-md">

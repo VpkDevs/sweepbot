@@ -4,11 +4,11 @@ import type { FlowDefinition } from '../lib/flows/types'
 describe('flow automation executor (extension)', () => {
   beforeAll(() => {
     // stub chrome.runtime.sendMessage for tests
-    ;(global as any).chrome = {
+    ;(global as typeof globalThis & { chrome: typeof chrome }).chrome = {
       runtime: {
         sendMessage: vi.fn(() => Promise.resolve({})),
       },
-    }
+    } as typeof chrome
   })
 
   it('completes a trivial flow with no steps', async () => {

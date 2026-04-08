@@ -189,6 +189,10 @@ function PlanCard({
 }) {
   const price = cycle === 'annual' ? plan.priceAnnual : plan.priceMonthly
   const monthlyEquiv = cycle === 'annual' && plan.priceAnnual ? plan.priceAnnual / 12 : price
+  const annualSavings =
+    plan.priceMonthly !== null && plan.priceAnnual !== null
+      ? plan.priceMonthly * 12 - plan.priceAnnual
+      : null
   const isCurrentPlan = currentTier === plan.id
   const isUpgrade = !isCurrentPlan
 
@@ -225,15 +229,15 @@ function PlanCard({
           <div>
             <div className="flex items-baseline gap-1">
               <span className="text-3xl font-black text-white">
-                ${cycle === 'annual' ? monthlyEquiv?.toFixed(2) : price}
+                ${cycle === 'annual' ? monthlyEquiv?.toFixed(2) ?? price?.toFixed(2) : price}
               </span>
               <span className="text-sm text-zinc-500">/mo</span>
             </div>
-            {cycle === 'annual' && (
+            {cycle === 'annual' && annualSavings !== null && (
               <p className="mt-0.5 text-xs text-zinc-500">
                 Billed ${plan.priceAnnual} annually
                 <span className="ml-1 text-green-400">
-                  (save ${(plan.priceMonthly! * 12 - plan.priceAnnual!).toFixed(0)})
+                  (save ${annualSavings.toFixed(0)})
                 </span>
               </p>
             )}

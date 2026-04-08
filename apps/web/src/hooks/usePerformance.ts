@@ -8,12 +8,14 @@
 import React, { useRef, useEffect, useCallback, DependencyList } from 'react'
 import { logger } from '@sweepbot/utils'
 
+type CallbackFn = (...args: unknown[]) => unknown
+
 /**
  * Debounced callback hook
  * Delays invoking callback until after wait milliseconds have elapsed
  * since the last time the debounced function was invoked
  */
-export function useDebounce<T extends (...args: any[]) => any>(
+export function useDebounce<T extends CallbackFn>(
   callback: T,
   delay: number
 ): (...args: Parameters<T>) => void {
@@ -45,7 +47,7 @@ export function useDebounce<T extends (...args: any[]) => any>(
  * Throttled callback hook
  * Creates a throttled function that only invokes callback at most once per every wait milliseconds
  */
-export function useThrottle<T extends (...args: any[]) => any>(
+export function useThrottle<T extends CallbackFn>(
   callback: T,
   delay: number
 ): (...args: Parameters<T>) => void {
@@ -153,7 +155,7 @@ export function useIntersectionObserver(
     if (!element) return
 
     const observer = new IntersectionObserver(([entry]) => {
-      setIsIntersecting(entry!.isIntersecting)
+      setIsIntersecting(entry?.isIntersecting ?? false)
     }, optionsRef.current)
 
     observer.observe(element)
@@ -185,7 +187,7 @@ export function usePrevious<T>(value: T): T | undefined {
  * Creates a stable callback reference that doesn't change between renders
  * but always calls the latest version of the callback
  */
-export function useStableCallback<T extends (...args: any[]) => any>(callback: T): T {
+export function useStableCallback<T extends CallbackFn>(callback: T): T {
   const callbackRef = useRef(callback)
 
   useEffect(() => {

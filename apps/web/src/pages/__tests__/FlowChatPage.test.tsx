@@ -6,6 +6,8 @@ import React from 'react'
 import { FlowChatPage } from '../FlowChatPage'
 import { api } from '../../lib/api'
 
+type ConversationResponse = Awaited<ReturnType<typeof api.flows.startConversation>>
+
 // Simple mock for navigation
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => () => {},
@@ -41,7 +43,9 @@ describe('<FlowChatPage />', () => {
       ],
     }
 
-    const startSpy = vi.spyOn(api.flows, 'startConversation').mockResolvedValue(fakeState as any)
+    const startSpy = vi
+      .spyOn(api.flows, 'startConversation')
+      .mockResolvedValue(fakeState as ConversationResponse)
 
     renderWithClient(<FlowChatPage />)
 
@@ -68,8 +72,12 @@ describe('<FlowChatPage />', () => {
       ],
     }
 
-    const startSpy = vi.spyOn(api.flows, 'startConversation').mockResolvedValue(fakeStart as any)
-    const convSpy = vi.spyOn(api.flows, 'converse').mockResolvedValue(fakeContinue as any)
+    const startSpy = vi
+      .spyOn(api.flows, 'startConversation')
+      .mockResolvedValue(fakeStart as ConversationResponse)
+    const convSpy = vi
+      .spyOn(api.flows, 'converse')
+      .mockResolvedValue(fakeContinue as ConversationResponse)
 
     renderWithClient(<FlowChatPage />)
     const input = screen.getByPlaceholderText(/describe your automation/i)
