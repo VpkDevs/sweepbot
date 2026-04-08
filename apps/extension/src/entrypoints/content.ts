@@ -17,6 +17,7 @@ import { createLogger } from '@/lib/logger'
 import { streakTracker } from '@/lib/streak-tracker'
 import { recordsTracker } from '@/lib/records-tracker'
 import type { ContentScriptMessage } from '@/types/extension'
+import type { FlowDefinition } from '@/lib/flows/types'
 
 const log = createLogger('Content')
 
@@ -410,7 +411,7 @@ export default defineContentScript({
           if (!payload || typeof payload !== 'object' || !('flow' in payload)) {
             return { success: false, error: 'Missing flow payload' }
           }
-          const { flow } = payload as { flow: { id: string; name: string } }
+          const { flow } = payload as { flow: FlowDefinition }
           if (activeFlowId) {
             log.warn(`Flow ${activeFlowId} already running — ignoring new request`)
             return { success: false, error: 'A flow is already running' }

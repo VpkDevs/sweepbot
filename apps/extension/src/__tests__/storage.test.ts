@@ -29,7 +29,10 @@ describe('StorageManager', () => {
               return
             }
             // return promise
-            return Promise.resolve(keys == null ? mockStorage : { [keys]: mockStorage[keys] })
+            if (typeof keys === 'string') {
+              return Promise.resolve({ [keys]: mockStorage[keys] })
+            }
+            return Promise.resolve(mockStorage)
           }),
           set: vi.fn((obj: Record<string, unknown>) => {
             Object.assign(mockStorage, obj)
@@ -44,7 +47,7 @@ describe('StorageManager', () => {
           addListener: vi.fn(),
         },
       },
-    } as typeof chrome
+    } as unknown as typeof chrome
   })
 
   it('returns default values when empty', async () => {

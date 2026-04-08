@@ -5,6 +5,7 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 import './index.css'
 import { routeTree } from './routeTree'
 import { useAuthStore } from './stores/auth'
+import type { AuthState } from './stores/auth'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
 // analytics & monitoring
@@ -45,7 +46,7 @@ const router = createRouter({
   routeTree,
   context: {
     queryClient,
-    auth: undefined as unknown as ReturnType<typeof useAuthStore>, // populated in RouterProvider wrapper
+    auth: {} as AuthState, // populated in RouterProvider wrapper
   },
 })
 

@@ -16,7 +16,7 @@ describe('NetworkInterceptor', () => {
     domains: ['test.com'],
     gameUrlPatterns: [],
     signupUrlPatterns: [],
-    affiliateUrlPatterns: [],
+    affiliateUrl: null,
     affiliateInjectionSelectors: [],
     color: '',
     name: '',

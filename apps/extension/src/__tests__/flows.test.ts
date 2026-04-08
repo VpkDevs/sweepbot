@@ -8,7 +8,7 @@ describe('flow automation executor (extension)', () => {
       runtime: {
         sendMessage: vi.fn(() => Promise.resolve({})),
       },
-    } as typeof chrome
+    } as unknown as typeof chrome
   })
 
   it('completes a trivial flow with no steps', async () => {
