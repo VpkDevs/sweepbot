@@ -354,6 +354,14 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
         const name = sanitizeString(validated.name)
         const description = sanitizeMultilineString(validated.description)
 
+        // Reject if sanitization stripped required fields to empty
+        if (!name) {
+          return reply.code(400).send({ error: 'VALIDATION_ERROR', message: 'name must not be empty after sanitization', status: 400 })
+        }
+        if (!description) {
+          return reply.code(400).send({ error: 'VALIDATION_ERROR', message: 'description must not be empty after sanitization', status: 400 })
+        }
+
         // Insert flow into database
         const { rows } = await unsafeQuery(
           `INSERT INTO flows (id, user_id, name, description, definition, trigger, status, guardrails)

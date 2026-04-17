@@ -6,10 +6,11 @@
 
 import { timingSafeEqual } from 'node:crypto'
 import type { FastifyInstance } from 'fastify'
-import { sql } from 'drizzle-orm'
 import { requireAuth } from '../middleware/auth.js'
-import { query } from '../db/client.js'
 import { env } from '../utils/env.js'
+import { streakManager } from '../services/streak-manager.js'
+import { query } from '../db/client.js'
+import { sql } from 'drizzle-orm'
 
 // ─── Shared row type ─────────────────────────────────────────────────────────
 
@@ -100,19 +101,11 @@ export async function streaksRoutes(app: FastifyInstance): Promise<void> {
     }
 
     try {
-      // Reset current_streak to 0 for any user whose last_activity_date is
-      // strictly before yesterday (i.e. they missed at least one day).
-      const { rows } = await query<{ affected: number }>(sql`
-        UPDATE user_streaks
-        SET current_streak = 0, updated_at = NOW()
-        WHERE last_activity_date < CURRENT_DATE - INTERVAL '1 day'
-          AND current_streak > 0
-        RETURNING user_id
-      `)
+      await streakManager.processNightlyCheck()
 
       return reply.send({
         success: true,
-        data: { usersReset: rows.length },
+        data: { processed: true },
       })
     } catch (error) {
       app.log.error({ error }, 'POST /streaks/nightly-check error')
