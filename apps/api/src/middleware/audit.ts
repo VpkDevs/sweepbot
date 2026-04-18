@@ -67,7 +67,7 @@ export function registerAuditHook(app: FastifyInstance): void {
         requestId: request.id as string,
         userId: request.user?.id ?? null,
         method,
-        path: request.routeOptions?.url ?? request.url,
+        path: request.routeOptions?.url ?? request.url.split('?')[0],
         statusCode,
         // x-forwarded-for can be a string, a comma-separated string, or an
         // array (multiple headers).  Normalise all three cases before splitting.

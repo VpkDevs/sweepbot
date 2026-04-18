@@ -132,8 +132,9 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
         const safeUrl = sanitizeUrl(body.avatarUrl)
         if (!safeUrl) {
           return reply.code(400).send({
-            success: false,
-            error: { code: 'VALIDATION_ERROR', message: 'Invalid avatar URL' },
+            error: 'VALIDATION_ERROR',
+            message: 'Invalid avatar URL',
+            status: 400,
           })
         }
         updates.push(`avatar_url = $${idx++}`)
