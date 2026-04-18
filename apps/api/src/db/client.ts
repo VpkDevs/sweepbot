@@ -42,3 +42,35 @@ export async function unsafeQuery<T = Record<string, unknown>>(
   const result = await connection.unsafe(rawSql, params as Parameters<typeof connection.unsafe>[1])
   return { rows: Array.from(result) as T[] }
 }
+
+/**
+ * Execute multiple operations inside a single database transaction.
+ *
+ * The callback receives a transaction-scoped SQL instance.  All queries
+ * inside the callback run atomically: if any query throws, the entire
+ * transaction is rolled back automatically.
+ *
+ * Usage:
+ * ```ts
+ * await withTransaction(async (txn) => {
+ *   await txn`INSERT INTO foo VALUES (${val1})`
+ *   await txn`UPDATE bar SET x = ${val2} WHERE id = ${id}`
+ * })
+ * ```
+ *
+ * Note: postgres.js defines `TransactionSql` via `Omit<Sql, ...>` which
+ * causes TypeScript to lose the tagged-template call signature.  We type the
+ * callback as `(txn: ReturnType<typeof postgres>) => Promise<T>` (i.e. the
+ * full `Sql` type) so callers can use template literal syntax normally.
+ * The internal cast is safe because `TransactionSql` is structurally a
+ * subset of `Sql`.
+ */
+export async function withTransaction<T>(
+  fn: (txn: ReturnType<typeof postgres>) => Promise<T>
+): Promise<T> {
+  // postgres.js TransactionSql is structurally compatible with Sql at runtime;
+  // the TypeScript definitions just don't reflect the call signature through Omit.
+  return connection.begin(
+    fn as unknown as (sql: postgres.TransactionSql) => Promise<T>
+  ) as Promise<T>
+}

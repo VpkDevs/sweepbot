@@ -14,13 +14,17 @@ import sensible from '@fastify/sensible'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
 
+import { randomUUID } from 'node:crypto'
 import { env } from './utils/env.js'
 import { logger } from './utils/logger.js'
 import { registerRoutes } from './routes/index.js'
+import { registerAuditHook, registerRequestTimingHook } from './middleware/audit.js'
 
 export async function buildServer(): Promise<FastifyInstance> {
   const server = Fastify({
     logger: false, // We use our own Pino logger
+    // Generate a unique request ID for every request (correlation / audit trail)
+    genReqId: () => randomUUID(),
     ajv: {
       customOptions: {
         coerceTypes: 'array',
@@ -104,6 +108,20 @@ export async function buildServer(): Promise<FastifyInstance> {
       docExpansion: 'list',
       deepLinking: false,
     },
+  })
+
+  // ─── Observability ───────────────────────────────────────────────────────
+
+  // Stamp every request with its start time (used by audit latency calculation)
+  registerRequestTimingHook(server)
+
+  // Emit structured audit records for all mutating requests and auth failures
+  registerAuditHook(server)
+
+  // Echo back the request ID so clients can correlate responses with logs
+  server.addHook('onSend', (_request, reply, _payload, done) => {
+    reply.header('x-request-id', _request.id)
+    done()
   })
 
   // ─── Routes ──────────────────────────────────────────────────────────────

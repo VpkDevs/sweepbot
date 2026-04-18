@@ -5,15 +5,7 @@ import { requireAuth } from '../middleware/auth.js'
 import { sql } from 'drizzle-orm'
 import Stripe from 'stripe'
 import { env } from '../utils/env.js'
-import {
-  createCheckoutSession,
-  createPortalSession,
-  changeSubscriptionPlan,
-  cancelSubscription,
-  reactivateSubscription,
-  applyPromotionCode,
-  StripeServiceError,
-} from '../services/stripe.service.js'
+import { sanitizeString, sanitizeMultilineString, sanitizeUrl } from '../utils/sanitize.js'
 
 const AddPlatformBody = z.object({
   platformId: z.string().uuid(),
@@ -134,15 +126,23 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
       if (body.displayName !== undefined) {
         updates.push(`display_name = $${idx++}`)
-        values.push(body.displayName)
+        values.push(sanitizeString(body.displayName))
       }
       if (body.avatarUrl !== undefined) {
+        const safeUrl = sanitizeUrl(body.avatarUrl)
+        if (!safeUrl) {
+          return reply.code(400).send({
+            error: 'VALIDATION_ERROR',
+            message: 'Invalid avatar URL',
+            status: 400,
+          })
+        }
         updates.push(`avatar_url = $${idx++}`)
-        values.push(body.avatarUrl)
+        values.push(safeUrl)
       }
       if (body.bio !== undefined) {
         updates.push(`bio = $${idx++}`)
-        values.push(body.bio)
+        values.push(sanitizeMultilineString(body.bio))
       }
 
       values.push(userId)
