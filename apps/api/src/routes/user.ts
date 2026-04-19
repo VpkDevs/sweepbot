@@ -15,6 +15,10 @@ import {
   StripeServiceError,
 } from '../services/stripe.service.js'
 
+const updateProfileValidationMessages: Record<string, string> = {
+  avatarUrl: 'Invalid avatar URL',
+}
+
 const AddPlatformBody = z.object({
   platformId: z.string().uuid(),
   platformUsername: z.string().min(1).max(255),
@@ -131,12 +135,14 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
         body = UpdateProfileBody.parse(request.body)
       } catch (error) {
         if (error instanceof z.ZodError) {
-          const avatarUrlIssue = error.issues.some(
-            (issue) => issue.path.length === 1 && issue.path[0] === 'avatarUrl'
-          )
+          const message =
+            error.issues
+              .map((issue) => updateProfileValidationMessages[issue.path.join('.')])
+              .find(Boolean) ?? 'Invalid profile update payload'
+
           return reply.code(400).send({
             error: 'VALIDATION_ERROR',
-            message: avatarUrlIssue ? 'Invalid avatar URL' : 'Invalid profile update payload',
+            message,
             status: 400,
           })
         }
