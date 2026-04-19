@@ -135,10 +135,18 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
         body = UpdateProfileBody.parse(request.body)
       } catch (error) {
         if (error instanceof z.ZodError) {
-          const message =
+          const invalidFields = new Set(
             error.issues
-              .map((issue) => updateProfileValidationMessages[issue.path.join('.')])
-              .find(Boolean) ?? 'Invalid profile update payload'
+              .map((issue) => issue.path.at(-1))
+              .filter((field): field is string => typeof field === 'string')
+          )
+          const customMessages = Array.from(invalidFields)
+            .map((field) => updateProfileValidationMessages[field])
+            .filter((message): message is string => Boolean(message))
+          const message =
+            customMessages.length === 1 && invalidFields.size === 1
+              ? customMessages[0]
+              : 'Invalid profile update payload'
 
           return reply.code(400).send({
             error: 'VALIDATION_ERROR',

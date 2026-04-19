@@ -50,7 +50,8 @@ function getClientIp(request: FastifyRequest): string {
 }
 
 export function getRequestPath(request: FastifyRequest): string {
-  return request.routeOptions?.url ?? (request.url.split('?')[0] || request.url)
+  const normalizedPath = request.url.split('?')[0] ?? ''
+  return request.routeOptions?.url ?? (normalizedPath.length > 0 ? normalizedPath : '/')
 }
 
 interface AuditLogRow {
