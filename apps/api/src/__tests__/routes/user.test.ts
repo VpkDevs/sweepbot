@@ -1,16 +1,16 @@
 import Fastify from 'fastify'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../db/client', () => ({
+vi.mock('../../db/client.js', () => ({
   query: vi.fn(),
   unsafeQuery: vi.fn(),
 }))
 
-vi.mock('../../middleware/auth', () => ({
+vi.mock('../../middleware/auth.js', () => ({
   requireAuth: vi.fn(),
 }))
 
-import { requireAuth } from '../../middleware/auth'
+import { requireAuth } from '../../middleware/auth.js'
 import { userRoutes } from '../../routes/user'
 
 describe('user routes', () => {

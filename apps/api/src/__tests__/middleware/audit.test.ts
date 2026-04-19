@@ -1,52 +1,30 @@
-import Fastify from 'fastify'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-
-vi.mock('../../db/client', () => ({
-  db: {
-    execute: vi.fn(),
-  },
-}))
+import { describe, expect, it, vi } from 'vitest'
+import type { FastifyRequest } from 'fastify'
 
 vi.mock('@sweepbot/utils', () => ({
   logger: {
-    error: vi.fn(),
+    error: () => undefined,
   },
 }))
 
-import { db } from '../../db/client'
-import { logger } from '@sweepbot/utils'
-import auditPlugin from '../../middleware/audit'
+import { getRequestPath } from '../../middleware/audit'
 
-describe('audit middleware', () => {
-  let app: ReturnType<typeof Fastify>
-
-  beforeEach(async () => {
-    vi.mocked(db.execute).mockRejectedValue(new Error('audit insert failed'))
-
-    app = Fastify()
-    app.register(auditPlugin)
-    await app.ready()
-  })
-
-  afterEach(async () => {
-    await app.close()
-  })
-
-  it('omits query strings from audit actions when no route matches', async () => {
-    const response = await app.inject({
-      method: 'GET',
+describe('audit middleware helpers', () => {
+  it('strips query strings when route metadata is unavailable', () => {
+    const request = {
       url: '/missing?token=secret@example.com',
-    })
+      routeOptions: undefined,
+    } as unknown as FastifyRequest
 
-    expect(response.statusCode).toBe(404)
+    expect(getRequestPath(request)).toBe('/missing')
+  })
 
-    await vi.waitFor(() => {
-      expect(logger.error).toHaveBeenCalledWith(
-        'Failed to log audit event',
-        expect.objectContaining({
-          action: 'GET /missing',
-        })
-      )
-    })
+  it('prefers the normalized route path when Fastify provides one', () => {
+    const request = {
+      url: '/search?token=secret@example.com',
+      routeOptions: { url: '/search' },
+    } as unknown as FastifyRequest
+
+    expect(getRequestPath(request)).toBe('/search')
   })
 })

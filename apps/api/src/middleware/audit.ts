@@ -49,7 +49,7 @@ function getClientIp(request: FastifyRequest): string {
   return 'unknown'
 }
 
-function getRequestPath(request: FastifyRequest): string {
+export function getRequestPath(request: FastifyRequest): string {
   return request.routeOptions?.url ?? request.url.split('?')[0] ?? request.url
 }
 
