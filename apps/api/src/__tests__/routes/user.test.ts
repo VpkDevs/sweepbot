@@ -1,14 +1,6 @@
 import Fastify from 'fastify'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-type AuthenticatedRequest = {
-  user?: {
-    id: string
-    email: string
-    tier: string
-  }
-}
-
 vi.mock('../../db/client', () => ({
   query: vi.fn(),
   unsafeQuery: vi.fn(),
@@ -58,7 +50,7 @@ describe('User routes sanitization', () => {
   let app: ReturnType<typeof Fastify>
 
   beforeEach(async () => {
-    vi.mocked(requireAuth).mockImplementation(async (req: AuthenticatedRequest) => {
+    vi.mocked(requireAuth).mockImplementation(async (req) => {
       req.user = { id: 'user-test-001', email: 'test@example.com', tier: 'free' }
     })
 

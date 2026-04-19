@@ -401,7 +401,9 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
           SET
             is_active = TRUE,
             platform_username = EXCLUDED.platform_username,
-            display_name = EXCLUDED.display_name,
+            display_name = ${displayName !== null
+              ? sql`EXCLUDED.display_name`
+              : sql`user_platforms.display_name`},
             updated_at = NOW()
         RETURNING *
       `)

@@ -16,5 +16,6 @@ describe('sanitize helpers', () => {
     expect(sanitizeUrl('https://example.com/avatar.png')).toBe('https://example.com/avatar.png')
     expect(sanitizeUrl('javascript:alert(1)')).toBeNull()
     expect(sanitizeUrl('ftp://example.com/avatar.png')).toBeNull()
+    expect(sanitizeUrl('http://localhost/avatar.png')).toBeNull()
   })
 })

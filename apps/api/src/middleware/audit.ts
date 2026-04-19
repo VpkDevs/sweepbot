@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify'
 import { sql } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { logger } from '@sweepbot/utils'
+import { logger } from '../utils/logger.js'
 
 /**
  * Audit Logging Middleware
@@ -36,7 +36,8 @@ export function getRequestPath(request: FastifyRequest): string {
     return routePath
   }
 
-  return request.url.split('?')[0] || request.url
+  const [path] = request.url.split('?')
+  return path ?? request.url
 }
 
 export function getUserAgent(request: FastifyRequest): string | null {
@@ -84,19 +85,25 @@ const auditPlugin: FastifyPluginAsync = async (app) => {
             VALUES (${userId}, ${action}, ${clientIp}, ${userAgent}, ${statusCode}, NOW())
           `)
         } catch (err) {
-          logger.error('Failed to log audit event', {
-            error: err instanceof Error ? err.message : String(err),
-            userId,
-            action,
-            clientIp,
-          })
+          logger.error(
+            {
+              error: err instanceof Error ? err.message : String(err),
+              userId,
+              action,
+              clientIp,
+            },
+            'Failed to log audit event'
+          )
           // Don't throw - audit logging should never fail user requests
         }
       })()
     } catch (err) {
-      logger.error('Audit middleware error', {
-        error: err instanceof Error ? err.message : String(err),
-      })
+      logger.error(
+        {
+          error: err instanceof Error ? err.message : String(err),
+        },
+        'Audit middleware error'
+      )
       // Don't throw - middleware should never crash user requests
     }
   })

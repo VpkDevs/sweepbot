@@ -9,7 +9,7 @@ describe('audit helpers', () => {
       url: '/missing?token=secret&email=test@example.com',
     }
 
-    expect(getRequestPath(request as FastifyRequest)).toBe('/missing')
+    expect(getRequestPath(request as unknown as FastifyRequest)).toBe('/missing')
   })
 
   it('prefers Fastify request.ip instead of x-forwarded-for', () => {
@@ -20,15 +20,15 @@ describe('audit helpers', () => {
       },
     }
 
-    expect(getClientIp(request as FastifyRequest)).toBe('203.0.113.9')
+    expect(getClientIp(request as unknown as FastifyRequest)).toBe('203.0.113.9')
   })
 
   it('normalizes user-agent headers to a string or null', () => {
     expect(
       getUserAgent({
         headers: { 'user-agent': ['SweepBotTest/1.0', 'ignored'] },
-      } as FastifyRequest)
+      } as unknown as FastifyRequest)
     ).toBe('SweepBotTest/1.0')
-    expect(getUserAgent({ headers: {} } as FastifyRequest)).toBeNull()
+    expect(getUserAgent({ headers: {} } as unknown as FastifyRequest)).toBeNull()
   })
 })
