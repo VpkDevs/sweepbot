@@ -15,7 +15,7 @@ import { logger } from '@sweepbot/utils'
  *
  * IP address extraction prioritizes safety:
  * 1. Use Fastify's request.ip (validated against trustProxy config)
- * 2. Only trusts x-forwarded-for if behind a configured trusted proxy
+ * 2. Never trust raw forwarding headers directly inside the middleware
  * 3. Falls back to 'unknown' if neither available
  */
 
@@ -26,27 +26,30 @@ import { logger } from '@sweepbot/utils'
  * @param request - Fastify request object
  * @returns Client IP address or 'unknown'
  */
-function getClientIp(request: FastifyRequest): string {
-  // Fastify parses and validates IP based on trustProxy setting
-  // This is the safest way to get the client IP
-  if (request.ip) {
-    return request.ip
+export function getClientIp(request: FastifyRequest): string {
+  return request.ip || 'unknown'
+}
+
+export function getRequestPath(request: FastifyRequest): string {
+  const routePath = request.routeOptions?.url
+  if (routePath) {
+    return routePath
   }
 
-  // Fallback: Try x-forwarded-for, but only if we trust it
-  // (This should only happen if trustProxy is misconfigured)
-  const forwarded = request.headers['x-forwarded-for']
-  if (typeof forwarded === 'string') {
-    const ips = forwarded.split(',').map((ip) => ip.trim())
-    return ips[0] || 'unknown'
+  return request.url.split('?')[0] || request.url
+}
+
+export function getUserAgent(request: FastifyRequest): string | null {
+  const userAgent = request.headers['user-agent']
+  if (typeof userAgent === 'string') {
+    return userAgent
   }
 
-  // If forwarded is array (malformed header), take first element
-  if (Array.isArray(forwarded) && forwarded.length > 0) {
-    return String(forwarded[0])
+  if (Array.isArray(userAgent)) {
+    return userAgent[0] ?? null
   }
 
-  return 'unknown'
+  return null
 }
 
 interface AuditLogRow {
@@ -68,8 +71,8 @@ const auditPlugin: FastifyPluginAsync = async (app) => {
     try {
       const clientIp = getClientIp(request)
       const userId = request.user?.id ?? null
-      const action = `${request.method} ${request.url}`
-      const userAgent = request.headers['user-agent'] ?? null
+      const action = `${request.method} ${getRequestPath(request)}`
+      const userAgent = getUserAgent(request)
       const statusCode = reply.statusCode
 
       // Log asynchronously to avoid blocking response

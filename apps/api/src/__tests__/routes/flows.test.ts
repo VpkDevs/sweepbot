@@ -62,4 +62,26 @@ describe('Flow routes (conversation endpoints)', () => {
     expect(res.statusCode).toBe(404)
     expect(res.json().success).toBe(false)
   })
+
+  it('rejects tag-only flow names after sanitization', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/flows',
+      payload: {
+        name: '<script></script>',
+        description: 'Valid description',
+        definition: { type: 'sequence' },
+        trigger: { type: 'manual' },
+        guardrails: [],
+      },
+    })
+
+    expect(res.statusCode).toBe(400)
+    expect(res.json()).toEqual({
+      error: 'VALIDATION_ERROR',
+      message: 'name and description must contain visible text',
+      status: 400,
+    })
+    expect(unsafeQuery).not.toHaveBeenCalled()
+  })
 })

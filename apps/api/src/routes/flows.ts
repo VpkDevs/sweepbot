@@ -9,6 +9,7 @@ import { query as dbQuery, unsafeQuery } from '../db/client.js'
 import { sql } from 'drizzle-orm'
 import { requireAuth } from '../middleware/auth.js'
 import { randomUUID } from 'node:crypto'
+import { sanitizeMultilineString, sanitizeString } from '../utils/sanitize.js'
 import {
   FlowInterpreter,
   FlowExecutor,
@@ -348,6 +349,16 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
       try {
         const validated = FlowCreateSchema.parse(request.body)
         const flowId = crypto.randomUUID()
+        const name = sanitizeString(validated.name)
+        const description = sanitizeMultilineString(validated.description)
+
+        if (!name || !description) {
+          return reply.code(400).send({
+            error: 'VALIDATION_ERROR',
+            message: 'name and description must contain visible text',
+            status: 400,
+          })
+        }
 
         // Insert flow into database
         const { rows } = await unsafeQuery(
@@ -357,8 +368,8 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
           [
             flowId,
             request.user!.id,
-            validated.name,
-            validated.description,
+            name,
+            description,
             JSON.stringify(validated.definition),
             JSON.stringify(validated.trigger),
             'draft',

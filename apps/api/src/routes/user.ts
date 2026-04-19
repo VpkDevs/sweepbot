@@ -14,6 +14,7 @@ import {
   applyPromotionCode,
   StripeServiceError,
 } from '../services/stripe.service.js'
+import { sanitizeMultilineString, sanitizeString, sanitizeUrl } from '../utils/sanitize.js'
 
 const AddPlatformBody = z.object({
   platformId: z.string().uuid(),
@@ -127,22 +128,43 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const userId = request.user!.id
       const body = UpdateProfileBody.parse(request.body)
+      const sanitizedDisplayName =
+        body.displayName !== undefined ? sanitizeString(body.displayName) : undefined
+      const sanitizedAvatarUrl =
+        body.avatarUrl !== undefined ? sanitizeUrl(body.avatarUrl) : undefined
+      const sanitizedBio = body.bio !== undefined ? sanitizeMultilineString(body.bio) : undefined
+
+      if (body.displayName !== undefined && !sanitizedDisplayName) {
+        return reply.code(400).send({
+          error: 'VALIDATION_ERROR',
+          message: 'displayName must contain visible text',
+          status: 400,
+        })
+      }
+
+      if (body.avatarUrl !== undefined && !sanitizedAvatarUrl) {
+        return reply.code(400).send({
+          error: 'VALIDATION_ERROR',
+          message: 'Invalid avatar URL',
+          status: 400,
+        })
+      }
 
       const updates: string[] = ['updated_at = NOW()']
       const values: unknown[] = []
       let idx = 1
 
-      if (body.displayName !== undefined) {
+      if (sanitizedDisplayName !== undefined) {
         updates.push(`display_name = $${idx++}`)
-        values.push(body.displayName)
+        values.push(sanitizedDisplayName)
       }
-      if (body.avatarUrl !== undefined) {
+      if (sanitizedAvatarUrl !== undefined) {
         updates.push(`avatar_url = $${idx++}`)
-        values.push(body.avatarUrl)
+        values.push(sanitizedAvatarUrl)
       }
-      if (body.bio !== undefined) {
+      if (sanitizedBio !== undefined) {
         updates.push(`bio = $${idx++}`)
-        values.push(body.bio)
+        values.push(sanitizedBio)
       }
 
       values.push(userId)
@@ -326,6 +348,24 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       const userId = request.user!.id
       const body = AddPlatformBody.parse(request.body)
       const tier = request.user!.tier
+      const platformUsername = sanitizeString(body.platformUsername)
+      const displayName = body.displayName !== undefined ? sanitizeString(body.displayName) : null
+
+      if (!platformUsername) {
+        return reply.code(400).send({
+          error: 'VALIDATION_ERROR',
+          message: 'platformUsername must contain visible text',
+          status: 400,
+        })
+      }
+
+      if (body.displayName !== undefined && !displayName) {
+        return reply.code(400).send({
+          error: 'VALIDATION_ERROR',
+          message: 'displayName must contain visible text',
+          status: 400,
+        })
+      }
 
       // Enforce platform limits by tier
       const tierLimits: Record<string, number> = {
@@ -356,9 +396,13 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
         INSERT INTO user_platforms
           (user_id, platform_id, platform_username, display_name)
         VALUES
-          (${userId}, ${body.platformId}, ${body.platformUsername}, ${body.displayName ?? body.platformUsername})
+          (${userId}, ${body.platformId}, ${platformUsername}, ${displayName ?? platformUsername})
         ON CONFLICT (user_id, platform_id) DO UPDATE
-          SET is_active = TRUE, platform_username = EXCLUDED.platform_username, updated_at = NOW()
+          SET
+            is_active = TRUE,
+            platform_username = EXCLUDED.platform_username,
+            display_name = EXCLUDED.display_name,
+            updated_at = NOW()
         RETURNING *
       `)
 
