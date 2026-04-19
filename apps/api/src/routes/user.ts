@@ -131,7 +131,9 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
         body = UpdateProfileBody.parse(request.body)
       } catch (error) {
         if (error instanceof z.ZodError) {
-          const avatarUrlIssue = error.issues.some((issue) => issue.path[0] === 'avatarUrl')
+          const avatarUrlIssue = error.issues.some(
+            (issue) => issue.path.length === 1 && issue.path[0] === 'avatarUrl'
+          )
           return reply.code(400).send({
             error: 'VALIDATION_ERROR',
             message: avatarUrlIssue ? 'Invalid avatar URL' : 'Invalid profile update payload',
