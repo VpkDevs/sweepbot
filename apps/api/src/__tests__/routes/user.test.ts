@@ -46,12 +46,16 @@ import { query as dbQuery, unsafeQuery } from '../../db/client'
 import { requireAuth } from '../../middleware/auth'
 import { userRoutes } from '../../routes/user'
 
+function createMockUser() {
+  return { id: 'user-test-001', email: 'test@example.com', tier: 'free' }
+}
+
 describe('User routes sanitization', () => {
   let app: ReturnType<typeof Fastify>
 
   beforeEach(async () => {
     vi.mocked(requireAuth).mockImplementation(async (req) => {
-      req.user = { id: 'user-test-001', email: 'test@example.com', tier: 'free' }
+      req.user = createMockUser()
     })
 
     app = Fastify()

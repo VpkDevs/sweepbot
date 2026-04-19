@@ -2,6 +2,8 @@
  * Input sanitization helpers for user-controlled strings persisted by the API.
  */
 
+import { isIP } from 'node:net'
+
 const HTML_TAG_PATTERN = /<[^>]*>/g
 const ANGLE_BRACKET_PATTERN = /[<>]/g
 // eslint-disable-next-line no-control-regex
@@ -26,29 +28,22 @@ function isBlockedHostname(hostname: string): boolean {
 
   if (
     normalized === 'localhost' ||
-    normalized === '127.0.0.1' ||
     normalized === '::1' ||
     normalized.endsWith('.local')
   ) {
     return true
   }
 
-  if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(normalized)) {
-    return true
-  }
+  if (isIP(normalized) === 4) {
+    const octets = normalized.split('.').map((part) => Number(part))
 
-  if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(normalized)) {
-    return true
-  }
-
-  if (/^169\.254\.\d{1,3}\.\d{1,3}$/.test(normalized)) {
-    return true
-  }
-
-  const private172 = normalized.match(/^172\.(\d{1,3})\.\d{1,3}\.\d{1,3}$/)
-  if (private172) {
-    const secondOctet = Number(private172[1])
-    return secondOctet >= 16 && secondOctet <= 31
+    return (
+      octets[0] === 10 ||
+      octets[0] === 127 ||
+      (octets[0] === 172 && octets[1] !== undefined && octets[1] >= 16 && octets[1] <= 31) ||
+      (octets[0] === 192 && octets[1] === 168) ||
+      (octets[0] === 169 && octets[1] === 254)
+    )
   }
 
   return false
