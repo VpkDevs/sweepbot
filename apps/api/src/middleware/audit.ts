@@ -49,6 +49,10 @@ function getClientIp(request: FastifyRequest): string {
   return 'unknown'
 }
 
+function getRequestPath(request: FastifyRequest): string {
+  return request.routeOptions?.url ?? request.url.split('?')[0] ?? request.url
+}
+
 interface AuditLogRow {
   user_id: string | null
   action: string
@@ -68,7 +72,7 @@ const auditPlugin: FastifyPluginAsync = async (app) => {
     try {
       const clientIp = getClientIp(request)
       const userId = request.user?.id ?? null
-      const action = `${request.method} ${request.url}`
+      const action = `${request.method} ${getRequestPath(request)}`
       const userAgent = request.headers['user-agent'] ?? null
       const statusCode = reply.statusCode
 

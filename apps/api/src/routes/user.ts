@@ -126,7 +126,21 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     },
     async (request, reply) => {
       const userId = request.user!.id
-      const body = UpdateProfileBody.parse(request.body)
+      let body: z.infer<typeof UpdateProfileBody>
+      try {
+        body = UpdateProfileBody.parse(request.body)
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          const avatarUrlIssue = error.issues.some((issue) => issue.path[0] === 'avatarUrl')
+          return reply.code(400).send({
+            error: 'VALIDATION_ERROR',
+            message: avatarUrlIssue ? 'Invalid avatar URL' : 'Invalid profile update payload',
+            status: 400,
+          })
+        }
+
+        throw error
+      }
 
       const updates: string[] = ['updated_at = NOW()']
       const values: unknown[] = []
