@@ -130,7 +130,7 @@ async function runStep(step: FlowStep, ctx: ExecutionContext): Promise<void> {
         result.success = await clickElement(step)
         break
 
-      case 'wait':
+      case 'wait': {
         // sleep in small chunks so we can abort if the duration limit is reached
         let remaining = step.ms
         while (remaining > 0 && !ctx.aborted) {
@@ -145,6 +145,7 @@ async function runStep(step: FlowStep, ctx: ExecutionContext): Promise<void> {
         }
         result.success = !ctx.aborted
         break
+      }
 
       case 'wait_for':
         result.success = await waitForElement(step.selector, step.timeout)
@@ -246,7 +247,8 @@ async function runLoop(step: LoopStep, ctx: ExecutionContext): Promise<void> {
   const loopStart = Date.now()
   let iterations = 0
 
-  while (true) {
+  let shouldContinue = true
+  while (shouldContinue) {
     // Safety caps
     if (iterations >= step.maxIterations) {
       ctx.execution.status = 'limit_reached'
@@ -259,7 +261,10 @@ async function runLoop(step: LoopStep, ctx: ExecutionContext): Promise<void> {
     if (ctx.aborted) break
 
     const conditionMet = evaluateCondition(step.condition, ctx.variables)
-    if (!conditionMet) break
+    if (!conditionMet) {
+      shouldContinue = false
+      break
+    }
 
     await runSteps(step.body, ctx)
     iterations++

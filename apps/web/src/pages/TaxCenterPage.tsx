@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   AreaChart,
@@ -10,7 +10,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Cell,
   Legend,
 } from 'recharts'
 import {
@@ -18,12 +17,9 @@ import {
   Download,
   FileText,
   TrendingUp,
-  TrendingDown,
   AlertCircle,
-  CheckCircle2,
   Calendar,
   Info,
-  ChevronRight,
   ExternalLink,
   ReceiptText,
   Landmark,
@@ -31,10 +27,10 @@ import {
   Calculator,
 } from 'lucide-react'
 import { api } from '../lib/api'
-import { cn, formatSC, CHART_TOOLTIP_STYLE } from '../lib/utils'
+import { cn, CHART_TOOLTIP_STYLE } from '../lib/utils'
 import { ScrollReveal } from '../components/fx/ScrollReveal'
 import { SpotlightCard } from '../components/fx/SpotlightCard'
-import { AnimatedCounter, AnimatedValue } from '../components/fx/AnimatedCounter'
+import { AnimatedCounter } from '../components/fx/AnimatedCounter'
 import { TextReveal } from '../components/fx/TextReveal'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -85,7 +81,7 @@ interface TaxSummaryData {
 
 // ─── Stub data ────────────────────────────────────────────────────────────────
 
-function buildMonthlyStub(year: number): MonthlyBreakdown[] {
+function buildMonthlyStub(_year: number): MonthlyBreakdown[] {
   const months = [
     'Jan',
     'Feb',
@@ -152,6 +148,21 @@ const STUB_SUMMARIES: Record<number, TaxSummaryData> = {
       { name: 'Others', amount: 980, pct: 16.1 },
     ],
   },
+}
+
+const DEFAULT_TAX_SUMMARY: TaxSummaryData = {
+  year: 2025,
+  total_redemptions_usd: 0,
+  total_prizes_usd: 0,
+  total_taxable_usd: 0,
+  est_federal_liability: 0,
+  est_state_liability: 0,
+  est_total_liability: 0,
+  effective_rate: 0,
+  transaction_count: 0,
+  platforms_count: 0,
+  monthly: [],
+  top_platforms: [],
 }
 
 const STUB_TRANSACTIONS: TaxTransaction[] = [
@@ -304,7 +315,6 @@ function TaxStat({
   icon: Icon,
   color,
   prefix = '$',
-  decimals = 0,
 }: {
   label: string
   value: number
@@ -312,7 +322,6 @@ function TaxStat({
   icon: React.ElementType
   color: string
   prefix?: string
-  decimals?: number
 }) {
   return (
     <SpotlightCard className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
@@ -679,7 +688,8 @@ export function TaxCenterPage() {
   const summary =
     (summaryData as TaxSummaryData | undefined) ??
     STUB_SUMMARIES[selectedYear] ??
-    STUB_SUMMARIES[2025]!
+    STUB_SUMMARIES[2025] ??
+    DEFAULT_TAX_SUMMARY
   const transactions = (txData as TaxTransaction[] | undefined) ?? STUB_TRANSACTIONS
   const yoy = (yoyData as YearSummary[] | undefined) ?? STUB_YOY
 

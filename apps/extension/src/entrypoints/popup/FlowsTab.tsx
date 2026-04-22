@@ -171,7 +171,7 @@ export default function FlowsTab() {
 
       setSaving(true)
       try {
-        const targetFlow = customFlow && (customFlow as any).id ? customFlow : interpretation.flow
+        const targetFlow = customFlow?.id ? customFlow : interpretation.flow
         const flow: FlowDefinition = {
           ...targetFlow,
           status: targetFlow.trigger.type === 'scheduled' ? 'active' : 'draft',
@@ -476,7 +476,7 @@ function InterpretationPreview({
       try {
         const parsed = JSON.parse(editJson)
         setEditedFlow(parsed)
-      } catch (e) {
+      } catch {
         alert('Invalid JSON format. Please fix errors before saving edits.')
         return
       }

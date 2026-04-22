@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   FileText,
@@ -8,7 +8,6 @@ import {
   Bell,
   BellOff,
   Search,
-  Filter,
   Shield,
   RefreshCw,
   Clock,
@@ -18,7 +17,6 @@ import {
   EyeOff,
   Zap,
   CheckCircle2,
-  XCircle,
   TrendingUp,
   Calendar,
   ExternalLink,

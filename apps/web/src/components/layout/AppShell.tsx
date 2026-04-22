@@ -22,7 +22,7 @@ import {
   FileText,
   Scale,
 } from 'lucide-react'
-import { useState, useEffect, useMemo } from 'react'
+import { useState } from 'react'
 import { useAuthStore } from '../../stores/auth'
 import { cn } from '../../lib/utils'
 import { NotificationPanel } from '../ui/NotificationPanel'

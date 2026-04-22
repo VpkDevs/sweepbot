@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { FlowInterpreter } from './interpreter'
+import type { NavigateStep, OpenGameStep } from './types'
 
 describe('FlowInterpreter', () => {
   const interpreter = new FlowInterpreter()
@@ -54,13 +55,17 @@ describe('FlowInterpreter', () => {
 
       // The interpreter produces a navigate step with a url for the platform,
       // and an open_game step for the game.
-      const navigateStep = result.flow.steps.find((s: any) => s.type === 'navigate')
+      const navigateStep = result.flow.steps.find(
+        (step): step is NavigateStep => step.type === 'navigate'
+      )
       expect(navigateStep).toBeDefined()
-      expect((navigateStep as any)?.url).toContain('high5casino')
+      expect(navigateStep?.url).toContain('high5casino')
 
-      const openGameStep = result.flow.steps.find((s: any) => s.type === 'open_game')
+      const openGameStep = result.flow.steps.find(
+        (step): step is OpenGameStep => step.type === 'open_game'
+      )
       expect(openGameStep).toBeDefined()
-      expect((openGameStep as any)?.game).toBe('gates-of-olympus')
+      expect(openGameStep?.game).toBe('gates-of-olympus')
     })
   })
 })

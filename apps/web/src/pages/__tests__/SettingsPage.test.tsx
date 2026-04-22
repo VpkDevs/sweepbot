@@ -9,11 +9,6 @@ import { api } from '../../lib/api'
 // mock out auth store — fixes module path and prevents Supabase/Zustand init side-effects
 vi.mock('../../stores/auth', () => ({ useAuthStore: () => ({ user: { id: 'user-1' } }) }))
 
-const renderWithClient = (ui: React.ReactElement) => {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>)
-}
-
 describe('<SettingsPage />', () => {
   beforeEach(() => {
     vi.resetAllMocks()

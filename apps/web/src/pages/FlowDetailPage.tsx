@@ -21,7 +21,6 @@ import {
 import { api } from '../lib/api'
 import { cn, timeAgo } from '../lib/utils'
 import { ScrollReveal } from '../components/fx/ScrollReveal'
-import { TextReveal } from '../components/fx/TextReveal'
 import { FlowExecutionStatus } from '../components/FlowExecutionStatus'
 
 const EXEC_STATUS = {
@@ -40,13 +39,6 @@ const EXEC_STATUS = {
   },
   pending: { icon: Clock, cls: 'text-yellow-400', dot: 'status-dot-warning', label: 'Pending' },
 } as const
-
-const STEP_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  trigger: Clock,
-  action: Zap,
-  guardrail: Shield,
-  complete: CheckCircle2,
-}
 
 function formatDurationHuman(ms: number): string {
   if (ms < 1000) return `${ms}ms`

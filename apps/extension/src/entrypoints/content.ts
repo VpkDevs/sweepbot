@@ -17,6 +17,7 @@ import { createLogger } from '@/lib/logger'
 import { streakTracker } from '@/lib/streak-tracker'
 import { recordsTracker } from '@/lib/records-tracker'
 import type { ContentScriptMessage } from '@/types/extension'
+import type { FlowDefinition } from '@/lib/flows/types'
 
 const log = createLogger('Content')
 
@@ -406,7 +407,11 @@ export default defineContentScript({
         // ── Flow execution ────────────────────────────────────────────────────
 
         case 'EXECUTE_FLOW': {
-          const { flow } = message.payload!
+          const { payload } = message
+          if (!payload || typeof payload !== 'object' || !('flow' in payload)) {
+            return { success: false, error: 'Missing flow payload' }
+          }
+          const { flow } = payload as { flow: FlowDefinition }
           if (activeFlowId) {
             log.warn(`Flow ${activeFlowId} already running — ignoring new request`)
             return { success: false, error: 'A flow is already running' }
@@ -453,7 +458,11 @@ export default defineContentScript({
         }
 
         case 'FLOW_CANCEL': {
-          const { flowId } = message.payload!
+          const { payload } = message
+          if (!payload || typeof payload !== 'object' || !('flowId' in payload)) {
+            return { success: false, error: 'Missing flow ID payload' }
+          }
+          const { flowId } = payload as { flowId: string }
           if (activeFlowId === flowId) {
             // The executor checks a cancel flag — we set it via a window event
             window.dispatchEvent(new CustomEvent('sweepbot:cancel-flow', { detail: { flowId } }))

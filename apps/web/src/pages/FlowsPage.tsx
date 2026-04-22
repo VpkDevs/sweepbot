@@ -479,7 +479,7 @@ export function FlowsPage() {
     },
   })
 
-  const handleUseTemplate = (template: FlowTemplate) => {
+  const handleUseTemplate = (_template: FlowTemplate) => {
     navigate({ to: '/flows/new' })
   }
 

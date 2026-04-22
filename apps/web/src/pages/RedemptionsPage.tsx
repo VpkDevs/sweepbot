@@ -278,12 +278,15 @@ function MarkCompleteModal({
   redemption: Record<string, unknown> | null
   onClose: () => void
 }) {
+  if (!redemption) return null
+
   const qc = useQueryClient()
   const [completedAt, setCompletedAt] = useState(new Date().toISOString().split('T')[0])
+  const redemptionId = redemption['redemption_id'] as string
 
   const mutation = useMutation({
     mutationFn: () =>
-      api.redemptions.update(redemption!['redemption_id'] as string, {
+      api.redemptions.update(redemptionId, {
         status: 'completed',
         completed_at: completedAt,
       }),
@@ -293,8 +296,6 @@ function MarkCompleteModal({
       onClose()
     },
   })
-
-  if (!redemption) return null
 
   const requestedDate = new Date(redemption['requested_at'] as string)
   const completedDate = new Date(completedAt)
