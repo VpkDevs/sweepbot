@@ -648,6 +648,28 @@ function ExportButton({ year }: { year: number }) {
 
 const AVAILABLE_YEARS = [2026, 2025, 2024, 2023]
 
+function getFallbackSummary(year: number): TaxSummaryData {
+  const summary = STUB_SUMMARIES[year] ?? STUB_SUMMARIES[2025] ?? STUB_SUMMARIES[2024]
+  if (summary) {
+    return summary.year === year ? summary : { ...summary, year, monthly: buildMonthlyStub(year) }
+  }
+
+  return {
+    year,
+    total_redemptions_usd: 0,
+    total_prizes_usd: 0,
+    total_taxable_usd: 0,
+    est_federal_liability: 0,
+    est_state_liability: 0,
+    est_total_liability: 0,
+    effective_rate: 0,
+    transaction_count: 0,
+    platforms_count: 0,
+    monthly: buildMonthlyStub(year),
+    top_platforms: [],
+  }
+}
+
 export function TaxCenterPage() {
   const currentYear = new Date().getFullYear()
   const [selectedYear, setSelectedYear] = useState(
@@ -676,10 +698,7 @@ export function TaxCenterPage() {
   })
 
   // Graceful fallback
-  const summary =
-    (summaryData as TaxSummaryData | undefined) ??
-    STUB_SUMMARIES[selectedYear] ??
-    STUB_SUMMARIES[2025]!
+  const summary = (summaryData as TaxSummaryData | undefined) ?? getFallbackSummary(selectedYear)
   const transactions = (txData as TaxTransaction[] | undefined) ?? STUB_TRANSACTIONS
   const yoy = (yoyData as YearSummary[] | undefined) ?? STUB_YOY
 

@@ -54,13 +54,24 @@ class MockIntersectionObserver {
   readonly root: Element | Document | null = null
   readonly rootMargin: string = '0px'
   readonly thresholds: ReadonlyArray<number> = []
-  constructor() {}
+  constructor(
+    readonly callback: IntersectionObserverCallback,
+    options?: IntersectionObserverInit
+  ) {
+    this.root = options?.root ?? null
+    this.rootMargin = options?.rootMargin ?? '0px'
+    this.thresholds = Array.isArray(options?.threshold)
+      ? options.threshold
+      : options?.threshold != null
+        ? [options.threshold]
+        : []
+  }
   disconnect() {}
-  observe() {}
+  observe(_target: Element) {}
   takeRecords(): IntersectionObserverEntry[] {
     return []
   }
-  unobserve() {}
+  unobserve(_target: Element) {}
 }
 global.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver
 // Also assign to window for jsdom compatibility
@@ -71,11 +82,11 @@ Object.defineProperty(window, 'IntersectionObserver', {
 })
 
 // Mock ResizeObserver (used by Recharts, HUD overlay)
-global.ResizeObserver = class ResizeObserver {
-  constructor() {}
+global.ResizeObserver = class ResizeObserver implements ResizeObserver {
+  constructor(readonly callback: ResizeObserverCallback) {}
   disconnect() {}
-  observe() {}
-  unobserve() {}
+  observe(_target: Element, _options?: ResizeObserverOptions) {}
+  unobserve(_target: Element) {}
 } as unknown as typeof ResizeObserver
 
 // scrollIntoView is not implemented in jsdom

@@ -2,6 +2,27 @@ import { storage, AnalyticsEvent } from '../lib/storage'
 
 describe('StorageManager', () => {
   let mockStorage: Record<string, any>
+
+  const resolveMockGet = (keys?: any) => {
+    if (keys == null) return { ...mockStorage }
+    if (Array.isArray(keys)) {
+      const result: Record<string, any> = {}
+      for (const key of keys) result[key] = mockStorage[key]
+      return result
+    }
+    if (typeof keys === 'string') {
+      return { [keys]: mockStorage[keys] }
+    }
+    if (typeof keys === 'object') {
+      const result: Record<string, any> = { ...keys }
+      for (const key of Object.keys(keys)) {
+        if (key in mockStorage) result[key] = mockStorage[key]
+      }
+      return result
+    }
+    return {}
+  }
+
   beforeEach(() => {
     mockStorage = {}
     // stub chrome.storage.local
@@ -15,18 +36,11 @@ describe('StorageManager', () => {
               keys = undefined
             }
             if (cb) {
-              if (keys == null) cb(mockStorage)
-              else if (Array.isArray(keys)) {
-                const res: any = {}
-                for (const k of keys) res[k] = mockStorage[k]
-                cb(res)
-              } else {
-                cb({ [keys]: mockStorage[keys] })
-              }
+              cb(resolveMockGet(keys))
               return
             }
             // return promise
-            return Promise.resolve(keys == null ? mockStorage : { [keys]: mockStorage[keys] })
+            return Promise.resolve(resolveMockGet(keys))
           }),
           set: vi.fn((obj: any) => {
             Object.assign(mockStorage, obj)
@@ -68,6 +82,24 @@ describe('StorageManager', () => {
     await storage.set('hudPosition', 'top-left')
     const vals = await storage.getMultiple(['hudEnabled', 'hudPosition'])
     expect(vals).toEqual({ hudEnabled: false, hudPosition: 'top-left' })
+  })
+
+  it('supports promise-style chrome.storage.local.get for array keys', async () => {
+    mockStorage = { hudEnabled: false, hudPosition: 'top-left', extra: 'ignore-me' }
+    await expect(chrome.storage.local.get(['hudEnabled', 'hudPosition'])).resolves.toEqual({
+      hudEnabled: false,
+      hudPosition: 'top-left',
+    })
+  })
+
+  it('supports promise-style chrome.storage.local.get for object defaults', async () => {
+    mockStorage = { hudEnabled: false }
+    await expect(
+      chrome.storage.local.get({ hudEnabled: true, hudPosition: 'bottom-right' })
+    ).resolves.toEqual({
+      hudEnabled: false,
+      hudPosition: 'bottom-right',
+    })
   })
 
   it('logEvent appends and prunes events', async () => {

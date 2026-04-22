@@ -28,22 +28,36 @@ Object.defineProperty(window, 'matchMedia', {
 })
 
 // Mock IntersectionObserver (used by many UI components)
-global.IntersectionObserver = class IntersectionObserver {
-  constructor() {}
+global.IntersectionObserver = class IntersectionObserver implements IntersectionObserver {
+  readonly root: Element | Document | null
+  readonly rootMargin: string
+  readonly thresholds: ReadonlyArray<number>
+  constructor(
+    readonly callback: IntersectionObserverCallback,
+    options?: IntersectionObserverInit
+  ) {
+    this.root = options?.root ?? null
+    this.rootMargin = options?.rootMargin ?? '0px'
+    this.thresholds = Array.isArray(options?.threshold)
+      ? options.threshold
+      : options?.threshold != null
+        ? [options.threshold]
+        : []
+  }
   disconnect() {}
-  observe() {}
+  observe(_target: Element) {}
   takeRecords() {
     return []
   }
-  unobserve() {}
+  unobserve(_target: Element) {}
 } as any
 
 // Mock ResizeObserver (used by many chart components)
-global.ResizeObserver = class ResizeObserver {
-  constructor() {}
+global.ResizeObserver = class ResizeObserver implements ResizeObserver {
+  constructor(readonly callback: ResizeObserverCallback) {}
   disconnect() {}
-  observe() {}
-  unobserve() {}
+  observe(_target: Element, _options?: ResizeObserverOptions) {}
+  unobserve(_target: Element) {}
 } as any
 
 // Suppress specific console errors in tests (optional)
