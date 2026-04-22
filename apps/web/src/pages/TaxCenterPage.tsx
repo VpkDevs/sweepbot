@@ -688,7 +688,7 @@ export function TaxCenterPage() {
   const summary =
     (summaryData as TaxSummaryData | undefined) ??
     STUB_SUMMARIES[selectedYear] ??
-    Object.values(STUB_SUMMARIES)[0] ??
+    STUB_SUMMARIES[2025] ??
     DEFAULT_TAX_SUMMARY
   const transactions = (txData as TaxTransaction[] | undefined) ?? STUB_TRANSACTIONS
   const yoy = (yoyData as YearSummary[] | undefined) ?? STUB_YOY
