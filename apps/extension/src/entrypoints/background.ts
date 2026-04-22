@@ -575,7 +575,7 @@ const TabMonitor = {
         // that the platform tab is still alive
         if (this._pendingEnd.has(tabId)) {
           const pendingTimer = this._pendingEnd.get(tabId)
-          if (pendingTimer) {
+          if (pendingTimer !== undefined) {
             clearTimeout(pendingTimer)
           }
           this._pendingEnd.delete(tabId)
