@@ -647,9 +647,16 @@ function ExportButton({ year }: { year: number }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 const AVAILABLE_YEARS = [2026, 2025, 2024, 2023]
+const SUMMARY_FALLBACK_YEARS = [2025, 2024] as const
 
 function getFallbackSummary(year: number): TaxSummaryData {
-  const summary = STUB_SUMMARIES[year] ?? STUB_SUMMARIES[2025] ?? STUB_SUMMARIES[2024]
+  let summary = STUB_SUMMARIES[year]
+  if (!summary) {
+    for (const fallbackYear of SUMMARY_FALLBACK_YEARS) {
+      summary = STUB_SUMMARIES[fallbackYear]
+      if (summary) break
+    }
+  }
   if (summary) {
     return summary.year === year ? summary : { ...summary, year, monthly: buildMonthlyStub(year) }
   }

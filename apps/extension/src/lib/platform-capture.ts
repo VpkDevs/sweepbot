@@ -146,8 +146,20 @@ export function installPlatformCapture(): {
 
   const originalXhrOpen = XMLHttpRequest.prototype.open
   const originalXhrSend = XMLHttpRequest.prototype.send
+  type XhrOpenArgs =
+    | [method: string, url: string | URL]
+    | [
+        method: string,
+        url: string | URL,
+        async: boolean,
+        username?: string | null,
+        password?: string | null,
+      ]
 
-  XMLHttpRequest.prototype.open = function (...args: Parameters<XMLHttpRequest['open']>) {
+  const openWithCapture: XMLHttpRequest['open'] = function (
+    this: XMLHttpRequest,
+    ...args: XhrOpenArgs
+  ) {
     const [method, url] = args
     ;(
       this as XMLHttpRequest & { __sweepbotCaptureMeta__?: { method: string; url: string } }
@@ -155,8 +167,13 @@ export function installPlatformCapture(): {
       method,
       url: String(url),
     }
-    return originalXhrOpen.apply(this, args)
+    return Reflect.apply(
+      originalXhrOpen as (...applyArgs: XhrOpenArgs) => void,
+      this,
+      args as unknown[]
+    )
   }
+  XMLHttpRequest.prototype.open = openWithCapture
 
   XMLHttpRequest.prototype.send = function (...args: Parameters<XMLHttpRequest['send']>) {
     this.addEventListener('load', () => {
