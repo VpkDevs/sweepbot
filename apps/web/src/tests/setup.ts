@@ -50,17 +50,17 @@ Object.defineProperty(window, 'matchMedia', {
 
 // Mock IntersectionObserver (used by lazy-loading, charts, TextReveal)
 // Assign to both window and globalThis to ensure jsdom picks it up
-class MockIntersectionObserver {
+class MockIntersectionObserver implements IntersectionObserver {
   readonly root: Element | Document | null = null
   readonly rootMargin: string = '0px'
   readonly thresholds: ReadonlyArray<number> = []
-  constructor() {}
+  constructor(_callback: IntersectionObserverCallback, _options?: IntersectionObserverInit) {}
   disconnect() {}
-  observe() {}
+  observe(_target: Element) {}
   takeRecords(): IntersectionObserverEntry[] {
     return []
   }
-  unobserve() {}
+  unobserve(_target: Element) {}
 }
 global.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver
 // Also assign to window for jsdom compatibility
@@ -71,12 +71,13 @@ Object.defineProperty(window, 'IntersectionObserver', {
 })
 
 // Mock ResizeObserver (used by Recharts, HUD overlay)
-global.ResizeObserver = class ResizeObserver {
-  constructor() {}
+class MockResizeObserver implements ResizeObserver {
+  constructor(_callback: ResizeObserverCallback) {}
   disconnect() {}
-  observe() {}
-  unobserve() {}
-} as unknown as typeof ResizeObserver
+  observe(_target: Element, _options?: ResizeObserverOptions) {}
+  unobserve(_target: Element) {}
+}
+global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver
 
 // scrollIntoView is not implemented in jsdom
 window.HTMLElement.prototype.scrollIntoView = vi.fn()

@@ -186,9 +186,10 @@ export class StreakManagerService {
       WITH updated AS (
         UPDATE user_streaks
         SET
-          current_streak = CASE WHEN freeze_credits > 0 THEN current_streak ELSE 0 END,
-          freeze_credits = GREATEST(0, freeze_credits - 1),
-          updated_at = NOW()
+          current_streak     = CASE WHEN freeze_credits > 0 THEN current_streak ELSE 0 END,
+          last_activity_date = CASE WHEN freeze_credits > 0 THEN CURRENT_DATE - 1 ELSE last_activity_date END,
+          freeze_credits     = GREATEST(0, freeze_credits - 1),
+          updated_at         = NOW()
         WHERE
           last_activity_date < CURRENT_DATE
           AND current_streak > 0

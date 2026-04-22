@@ -347,6 +347,19 @@ export async function flowRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       try {
         const validated = FlowCreateSchema.parse(request.body)
+
+        // Reject name/description that contain HTML markup. These are plain-text
+        // fields; accepting and stripping tags is error-prone, so we validate
+        // before persisting instead of sanitizing after.
+        const htmlTagPattern = /<[^>]*>/
+        if (htmlTagPattern.test(validated.name) || htmlTagPattern.test(validated.description)) {
+          return reply.code(400).send({
+            error: 'VALIDATION_ERROR',
+            message: 'name and description must not contain HTML markup',
+            status: 400,
+          })
+        }
+
         const flowId = crypto.randomUUID()
 
         // Insert flow into database

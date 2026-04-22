@@ -68,7 +68,11 @@ const auditPlugin: FastifyPluginAsync = async (app) => {
     try {
       const clientIp = getClientIp(request)
       const userId = request.user?.id ?? null
-      const action = `${request.method} ${request.url}`
+      // Use routeOptions.url (pattern without params/query) when available,
+      // otherwise fall back to request.url with query string stripped to avoid
+      // leaking tokens or PII from query parameters into audit logs.
+      const path = request.routeOptions?.url ?? request.url.split('?')[0]
+      const action = `${request.method} ${path}`
       const userAgent = request.headers['user-agent'] ?? null
       const statusCode = reply.statusCode
 
