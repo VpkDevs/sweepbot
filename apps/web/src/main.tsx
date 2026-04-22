@@ -46,7 +46,7 @@ const router = createRouter({
   routeTree,
   context: {
     queryClient,
-    auth: {} as AuthState, // populated in RouterProvider wrapper
+    auth: useAuthStore.getState(), // default to the current store state until RouterProvider injects the live value
   },
 })
 
